@@ -10,14 +10,74 @@
 
 /**
  * HkDockBar.scss — the shared dock surface chrome (single source of
- * truth). `--hk-dock-inset` is declared by the foundation layer so every
- * dock reads a defined value; change it once, all surfaces move
- * together.
+ * truth).
+ *
+ * Geometry contract — the dock edge gap family (2026-11-15). A dock owns
+ * BOTH distances on its content side, and reads both from ONE token
+ * family:
+ *
+ *   1. RESTING INSET — how far the dock box sits from the viewport edge it
+ *      hugs, plus that edge's safe-area inset (0 on desktop, so the gap is
+ *      the visual distance everywhere a notch is absent);
+ *   2. CONTENT BAND — a transparent padding on the face that points at the
+ *      content, so content never comes closer to the surface than the same
+ *      gap.
+ *
+ *   G(edge) = var(--hk-dock-gap-<edge>, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))))
+ *
+ * `--hk-dock-gap` is DECLARED exactly once, on `:root` in scale.scss (16px
+ * by default); `--hk-dock-gap-<edge>` and the older single-value
+ * `--hk-dock-inset` are override-only (any host ancestor, or inline), and
+ * the `gap` prop writes `--hk-dock-gap` inline on the dock itself.
+ *
+ * The per-edge public names are NEVER pre-declared: a custom property
+ * resolves on the element that DECLARES it, so a `:root`-level
+ * `--hk-dock-gap-bottom: var(--hk-dock-gap)` would freeze the bottom edge
+ * against every descendant `--hk-dock-gap` override (the cascade trap this
+ * contract exists to avoid). The four `--_hk-dock-gap-*` private names
+ * below are the ONLY place the fallback chain is written, and they are
+ * resolved on the dock element itself.
+ *
+ * Why the band lives in the DOCK's box, never in a view padding:
+ *   - pin slot — the dock is a flex SIBLING of the scroll viewport, so the
+ *     wrapper box IS the dock box (band + surface + inset) and the viewport
+ *     yields the band by layout: the content end rests `gap` above the
+ *     surface with NO view padding at all, so a content box that inflates
+ *     itself to `min-height: 100%` cannot resurrect the phantom-scroll
+ *     trap;
+ *   - floating docks (page / plane) — the occupancy a host measures and
+ *     publishes (its own getBoundingClientRect, which already includes
+ *     padding) now contains the band, so a consumer's tail reservation
+ *     automatically becomes "surface + inset + band" and no JS ever has to
+ *     read a CSS length.
+ *
+ * Which is also why HkScrollContainer's measurement / gate formulas did not
+ * change: they read scrollHeight / clientHeight / gBCR, all decided by
+ * layout — this sheet only changes what the dock's own box contains.
+ *
+ * PHYSICAL bands on the inline faces (2026-11-15, review S1). The anchors are
+ * physical too: `left` / `right` and `env(safe-area-inset-left/right)` mean the
+ * literal edges, not the writing-mode ones. A logical band — a
+ * `padding-inline-start` / `padding-inline-end` — therefore flips under
+ * `dir="rtl"`: on a left-anchored dock it would land on the SAME side as the
+ * pinned edge (the surface pushed one gap further in, reading `gap + gap` from
+ * the edge) while the face that actually points at the content stays bare, so
+ * content touches the surface again. The block axis is direction-independent
+ * in the writing modes a dock lives in, so `padding-block-start/end` stay
+ * logical.
  */
 
 @use "../styles/polyfill" as *;
 
 .hk-dock-bar {
+  /* The edge gap family, resolved once per edge. Read by the anchor rules
+   * below (inset) and by the surface rules (max-width / max-height); never
+   * set by a host — a host overrides the PUBLIC names in the chain. */
+  --_hk-dock-gap-top: var(--hk-dock-gap-top, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  --_hk-dock-gap-right: var(--hk-dock-gap-right, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  --_hk-dock-gap-bottom: var(--hk-dock-gap-bottom, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  --_hk-dock-gap-left: var(--hk-dock-gap-left, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+
   /* Transparent anchor box — never intercepts canvas gestures around
    * the docked surface. */
   pointer-events: none;
@@ -27,22 +87,25 @@
   gap: var(--space-4, 4px);
 
   /* ── page anchor (SOUTH edge): absolute bottom-center of the nearest
-   *     positioned ancestor, resting --hk-dock-inset above its content
-   *     floor. `bottom` below is the compass spelling of the same
-   *     geometry. */
+   *     positioned ancestor, resting one bottom gap above its content
+   *     floor; the block-start band is the content side. `bottom` below is
+   *     the compass spelling of the same geometry. */
   &[data-anchor="page"] {
     position: absolute;
     left: 50%;
-    bottom: var(--hk-dock-inset, 12px);
+    bottom: calc(var(--_hk-dock-gap-bottom) + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
     z-index: 50;
+    padding-block-start: var(--_hk-dock-gap-bottom);
   }
 
   /* ── plane anchor: in-flow inside a host plane (a fixed footer band);
    *     the host owns the positioning, this container centers the
-   *     surface horizontally and lifts it by the shared dock inset. */
+   *     surface horizontally, lifts it by one bottom gap and opens the
+   *     same gap above it toward the content. */
   &[data-anchor="plane"] {
-    margin: 0 auto var(--hk-dock-inset, 12px);
+    margin: 0 auto calc(var(--_hk-dock-gap-bottom) + env(safe-area-inset-bottom, 0px));
+    padding-block-start: var(--_hk-dock-gap-bottom);
   }
 
   /* ── horizontal edge anchors: north and the compass spelling of the
@@ -56,15 +119,19 @@
   }
 
   &[data-anchor="top"] {
-    top: var(--hk-dock-inset, 12px);
+    top: calc(var(--_hk-dock-gap-top) + env(safe-area-inset-top, 0px));
+    padding-block-end: var(--_hk-dock-gap-top);
   }
 
   &[data-anchor="bottom"] {
-    bottom: var(--hk-dock-inset, 12px);
+    bottom: calc(var(--_hk-dock-gap-bottom) + env(safe-area-inset-bottom, 0px));
+    padding-block-start: var(--_hk-dock-gap-bottom);
   }
 
   /* ── vertical edge anchors (west / east): the dock runs vertically,
-   *     centered on the edge midpoint. */
+   *     centered on the edge midpoint, with the band on the PHYSICAL side
+   *     that faces the content (see the header note: a logical padding would
+   *     flip under dir="rtl" and leave the content face bare). */
   &[data-anchor="left"],
   &[data-anchor="right"] {
     position: absolute;
@@ -74,15 +141,19 @@
   }
 
   &[data-anchor="left"] {
-    left: var(--hk-dock-inset, 12px);
+    left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="right"] {
-    right: var(--hk-dock-inset, 12px);
+    right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
+    padding-left: var(--_hk-dock-gap-right);
   }
 
-  /* ── corner anchors: absolute attachment with the same inset, for
-   *     pagers, toolbars and HUD panels that live off-center. */
+  /* ── corner anchors: absolute attachment with both edge gaps, for
+   *     pagers, toolbars and HUD panels that live off-center. The band opens
+   *     on both content-facing sides — physical on the inline face, logical on
+   *     the block one. */
   &[data-anchor="top-left"],
   &[data-anchor="top-right"],
   &[data-anchor="bottom-left"],
@@ -92,27 +163,35 @@
   }
 
   &[data-anchor="top-left"] {
-    top: var(--hk-dock-inset, 12px);
-    left: var(--hk-dock-inset, 12px);
+    top: calc(var(--_hk-dock-gap-top) + env(safe-area-inset-top, 0px));
+    left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
     align-items: flex-start;
+    padding-block-end: var(--_hk-dock-gap-top);
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="top-right"] {
-    top: var(--hk-dock-inset, 12px);
-    right: var(--hk-dock-inset, 12px);
+    top: calc(var(--_hk-dock-gap-top) + env(safe-area-inset-top, 0px));
+    right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
     align-items: flex-end;
+    padding-block-end: var(--_hk-dock-gap-top);
+    padding-left: var(--_hk-dock-gap-right);
   }
 
   &[data-anchor="bottom-left"] {
-    bottom: var(--hk-dock-inset, 12px);
-    left: var(--hk-dock-inset, 12px);
+    bottom: calc(var(--_hk-dock-gap-bottom) + env(safe-area-inset-bottom, 0px));
+    left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
     align-items: flex-start;
+    padding-block-start: var(--_hk-dock-gap-bottom);
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="bottom-right"] {
-    bottom: var(--hk-dock-inset, 12px);
-    right: var(--hk-dock-inset, 12px);
+    bottom: calc(var(--_hk-dock-gap-bottom) + env(safe-area-inset-bottom, 0px));
+    right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
     align-items: flex-end;
+    padding-block-start: var(--_hk-dock-gap-bottom);
+    padding-left: var(--_hk-dock-gap-right);
   }
 }
 
@@ -122,7 +201,10 @@
   flex-direction: column;
   align-items: stretch;
   width: var(--dock-width, auto);
-  max-width: var(--dock-max-width, calc(100vw - var(--space-16, 16px)));
+  /* The viewport cap reads the same edge gaps as the anchoring rules: the
+   * surface may never come closer to a horizontal edge than the dock would
+   * rest from one. */
+  max-width: var(--dock-max-width, calc(100vw - var(--_hk-dock-gap-left) - var(--_hk-dock-gap-right)));
   max-height: var(--dock-max-height, none);
   padding: var(--dock-padding, var(--space-8, 8px) var(--space-12, 12px));
   background: rgb(var(--color-surface));
@@ -140,11 +222,13 @@
 }
 
 /* Vertical side docks (west / east edges) stack along the viewport's
- * tall axis — cap them viewport-aware by default so a tall dock never
- * runs off-screen; --dock-max-height still overrides. */
+ * tall axis — cap them viewport-aware by default so a tall dock never runs
+ * off-screen; the cap subtracts the top AND bottom gaps, so a side dock
+ * can never out-reach the resting inset of a dock on either horizontal
+ * edge. --dock-max-height still overrides. */
 .hk-dock-bar[data-anchor="left"] .hk-dock-bar-surface,
 .hk-dock-bar[data-anchor="right"] .hk-dock-bar-surface {
-  max-height: var(--dock-max-height, calc(100dvh - var(--space-16, 16px)));
+  max-height: var(--dock-max-height, calc(100dvh - var(--_hk-dock-gap-top) - var(--_hk-dock-gap-bottom)));
 }
 
 /* Glass surface (default) — blur the page canvas behind the dock. */

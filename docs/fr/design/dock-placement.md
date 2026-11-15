@@ -60,6 +60,35 @@ jamais le contenu. Le corps du dock en mode ride est l'enfant dans le flux : rie
 pré-réservé pour quelque chose peint ailleurs, et c'est la boîte sticky qui fait suivre le
 contenu plutôt que la fenêtre.
 
+## L'espace de bord
+
+Un dock garde une **distance minimale** de deux côtés à la fois, et les deux viennent d'une seule
+famille de tokens, jamais du padding propre d'une page :
+
+- **l'inset de repos** — la distance entre la surface du dock et le bord du viewport qu'il longe,
+  plus l'`env(safe-area-inset-*)` de ce bord (un appareil à encoche garde donc l'écart au-dessus de
+  la zone sûre système, tandis qu'un bureau le résout à 0) ;
+- **la bande de contenu** — un padding transparent sur la face du dock tournée vers le contenu, si
+  bien que le contenu ne s'approche jamais de la surface à moins de ce même écart.
+
+La valeur par défaut est de 16px sur chaque bord (`--hk-dock-gap`, déclaré une seule fois par la
+couche foundation). Un dock qui a besoin de plus de place passe `gap` (une longueur CSS) à
+`HkDockBar` / `DockBar` ; un hôte peut aussi remplacer un seul bord avec
+`--hk-dock-gap-<top|right|bottom|left>` sur n'importe quel ancêtre, ou tous les bords d'un coup avec
+l'ancien `--hk-dock-inset`. Les noms par bord sont résolus là où ils sont lus, donc une surcharge de
+`--hk-dock-gap` en dessous atteint encore tous les bords.
+
+La bande appartient au dock, jamais à la vue qui l'héberge — d'où l'absence de padding côté vue :
+dans un slot `pin` le dock est un frère flex du viewport défilant, donc le viewport cède la bande
+par la mise en page et un contenu étiré à `min-height: 100%` ne peut pas la masquer ; pour un dock
+flottant, la boîte que l'hôte mesure (son propre `getBoundingClientRect`, padding compris) la
+contient déjà.
+
+**Occupation publiée = bande + surface + inset**, quel que soit le mode de placement. Un
+consommateur qui réserve la queue du dock lit la valeur publiée et ne doit PAS rajouter la hauteur
+du dock (ni un inset de dock) une seconde fois : les deux distances y sont déjà. Les empiler à
+nouveau est exactement la bande morte que ce contrat supprime.
+
 ## Choisir
 
 | Hôte | Placement |

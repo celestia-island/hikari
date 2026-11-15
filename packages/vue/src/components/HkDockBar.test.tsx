@@ -83,6 +83,17 @@ describe("HkDockBar", () => {
     expect(style.getPropertyValue("--dock-padding")).toBe("4px 6px");
   });
 
+  it("writes the gap prop to the shared --hk-dock-gap token", async () => {
+    // One CSS length in, the foundation token out: every edge of this dock
+    // (resting inset, content band, surface cap) then resolves the override
+    // through the sheet's own chain, so a host never re-declares per-edge.
+    const root = await mountDock({ gap: "1.5rem" });
+    expect(root.style.getPropertyValue("--hk-dock-gap")).toBe("1.5rem");
+    // An unset prop must not emit an empty declaration.
+    const bare = await mountDock();
+    expect(bare.getAttribute("style") ?? "").not.toContain("--hk-dock-gap");
+  });
+
   it("drops the blur on the solid surface", async () => {
     const root = await mountDock({ surface: "solid" });
     expect(root.dataset.surface).toBe("solid");
@@ -93,8 +104,9 @@ describe("HkDockBar", () => {
 // SCSS source contract (house pattern, cf. HkButton icon-only contract):
 // happy-dom does not lay out, so each compass direction's geometry is
 // pinned textually against HkDockBar.scss. Dropping any one direction's
-// rule — or regressing its mapping (inset side / centering transform) —
-// turns the matching assertion red.
+// rule — or regressing its mapping (inset side / centering transform /
+// content band) — turns the matching assertion red. The COMPILED
+// declarations are pinned separately in HkDockBar.styles.test.ts.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const scss = readFileSync(join(here, "HkDockBar.scss"), "utf8");
@@ -105,8 +117,29 @@ function rulesFor(anchor: string): string {
   return scss.match(re)?.join("\n") ?? "";
 }
 
+/** The private resolved gap one edge reads (declared once on the base). */
+function gap(edge: string): string {
+  return `var(--_hk-dock-gap-${edge})`;
+}
+
+/** The resting inset of an anchored edge: the gap plus its safe-area. */
+function inset(edge: string): string {
+  return `calc(${gap(edge)} + env(safe-area-inset-${edge}, 0px))`;
+}
+
 describe("HkDockBar anchor geometry contract", () => {
-  const INSET = "var(--hk-dock-inset, 12px)";
+  it("declares the four resolved edge gaps on the base class", () => {
+    const base = scss.match(/\.hk-dock-bar\s*\{[^}]*\}/)?.[0];
+    expect(base, "base dock rule must exist").toBeTruthy();
+    for (const edge of ["top", "right", "bottom", "left"]) {
+      // One chain per edge, written ONCE: per-edge public names are read-time
+      // fallbacks (a `:root` pre-declaration would freeze them against any
+      // descendant override).
+      expect(base).toContain(
+        `--_hk-dock-gap-${edge}: var(--hk-dock-gap-${edge}, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))))`,
+      );
+    }
+  });
 
   it.each(["page", "bottom"] as const)(
     "%s docks to the south edge, centered (the two spellings share geometry)",
@@ -115,8 +148,9 @@ describe("HkDockBar anchor geometry contract", () => {
       expect(rules, `${anchor} rules must exist`).toBeTruthy();
       expect(rules).toContain("position: absolute");
       expect(rules).toContain("left: 50%");
-      expect(rules).toContain(`bottom: ${INSET}`);
+      expect(rules).toContain(`bottom: ${inset("bottom")}`);
       expect(rules).toContain("transform: translateX(-50%)");
+      expect(rules).toContain(`padding-block-start: ${gap("bottom")}`);
     },
   );
 
@@ -124,10 +158,11 @@ describe("HkDockBar anchor geometry contract", () => {
     const rules = rulesFor("top");
     expect(rules, "top rules must exist").toBeTruthy();
     expect(rules).toContain("position: absolute");
-    expect(rules).toContain("top: " + INSET);
+    expect(rules).toContain("top: " + inset("top"));
     expect(rules).toContain("left: 50%");
     expect(rules).toContain("transform: translateX(-50%)");
-    expect(rules).not.toContain(`bottom: ${INSET}`);
+    expect(rules).toContain(`padding-block-end: ${gap("top")}`);
+    expect(rules).not.toContain(`bottom: ${inset("bottom")}`);
   });
 
   it.each(["left", "right"] as const)(
@@ -137,7 +172,12 @@ describe("HkDockBar anchor geometry contract", () => {
       expect(rules, `${anchor} rules must exist`).toBeTruthy();
       expect(rules).toContain("position: absolute");
       expect(rules).toContain("top: 50%");
-      expect(rules).toContain(`${anchor}: ${INSET}`);
+      expect(rules).toContain(`${anchor}: ${inset(anchor)}`);
+      // The anchor is a PHYSICAL edge, so the band is physical too: a logical
+      // longhand would flip under dir="rtl" onto the pinned side.
+      expect(rules).toContain(
+        `padding-${anchor === "left" ? "right" : "left"}: ${gap(anchor)}`,
+      );
       expect(rules).toContain("transform: translateY(-50%)");
       // A side dock must not pick up the horizontal-edge centering.
       expect(rules).not.toContain("transform: translateX(-50%)");
@@ -151,12 +191,18 @@ describe("HkDockBar anchor geometry contract", () => {
       ["bottom-left", "bottom", "left", "flex-start"],
       ["bottom-right", "bottom", "right", "flex-end"],
     ] as const,
-  )("%s docks into its corner with both insets", (anchor, side1, side2, align) => {
+  )("%s docks into its corner with both insets and both bands", (anchor, side1, side2, align) => {
     const rules = rulesFor(anchor);
     expect(rules, `${anchor} rules must exist`).toBeTruthy();
     expect(rules).toContain("position: absolute");
-    expect(rules).toContain(`${side1}: ${INSET}`);
-    expect(rules).toContain(`${side2}: ${INSET}`);
+    expect(rules).toContain(`${side1}: ${inset(side1)}`);
+    expect(rules).toContain(`${side2}: ${inset(side2)}`);
+    expect(rules).toContain(
+      `padding-block-${side1 === "top" ? "end" : "start"}: ${gap(side1)}`,
+    );
+    expect(rules).toContain(
+      `padding-${side2 === "left" ? "right" : "left"}: ${gap(side2)}`,
+    );
     expect(rules).toContain(`align-items: ${align}`);
   });
 
@@ -166,6 +212,8 @@ describe("HkDockBar anchor geometry contract", () => {
     expect(page).toContain("position: absolute");
     expect(plane, "plane rule must exist").toBeTruthy();
     expect(plane).toContain("margin: 0 auto");
+    expect(plane).toContain(`margin: 0 auto ${inset("bottom")}`);
+    expect(plane).toContain(`padding-block-start: ${gap("bottom")}`);
     expect(plane).not.toContain("position: absolute");
   });
 
@@ -179,7 +227,10 @@ describe("HkDockBar anchor geometry contract", () => {
     const base = scss.match(/\.hk-dock-bar-surface\s*\{[^}]*\}/)?.[0];
     expect(base, "base surface rule must exist").toBeTruthy();
     expect(base).toContain("width: var(--dock-width, auto)");
-    expect(base).toContain("max-width: var(--dock-max-width");
+    // The viewport cap reads the SAME edge gaps the anchoring rules read.
+    expect(base).toContain(
+      `max-width: var(--dock-max-width, calc(100vw - ${gap("left")} - ${gap("right")}))`,
+    );
     expect(base).toContain("max-height: var(--dock-max-height, none)");
     expect(base).toContain("padding: var(--dock-padding");
   });
@@ -189,7 +240,9 @@ describe("HkDockBar anchor geometry contract", () => {
       /\.hk-dock-bar\[data-anchor="left"\] \.hk-dock-bar-surface[^{]*\{[^}]*\}/,
     )?.[0];
     expect(sideCap, "side-anchor surface cap rule must exist").toBeTruthy();
-    expect(sideCap).toContain("max-height: var(--dock-max-height");
+    expect(sideCap).toContain(
+      `max-height: var(--dock-max-height, calc(100dvh - ${gap("top")} - ${gap("bottom")}))`,
+    );
     expect(sideCap).toContain("100dvh");
   });
 
@@ -199,5 +252,37 @@ describe("HkDockBar anchor geometry contract", () => {
     )?.[0];
     expect(solid, "solid surface rule must exist").toBeTruthy();
     expect(solid).toContain("@include backdrop-filter(none)");
+  });
+
+  it("keeps inline bands PHYSICAL so dir=rtl cannot flip them onto the pinned side", () => {
+    // The anchors are physical (`left:` / `right:` + `env(safe-area-inset-left/
+    // right)`), so an inline band must be physical too: `padding-inline-end` on
+    // a left-anchored dock resolves to the physical LEFT under `dir="rtl"` —
+    // the same side as the pinned edge (the surface pushed one extra gap in,
+    // reading `gap + gap` from the edge) while the content face stays bare, so
+    // content touches the surface again. Physical longhands are
+    // direction-independent, which is exactly what keeps the band on the
+    // content-facing face in both directions.
+    // Only declarations: the header prose explains the trap and names both
+    // logical longhands.
+    expect(scss.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/padding-inline-(start|end)/);
+    for (const [anchor, band] of [
+      ["left", "padding-right"],
+      ["right", "padding-left"],
+    ] as const) {
+      expect(rulesFor(anchor)).toContain(`${band}: ${gap(anchor)}`);
+    }
+  });
+
+  it("reads the legacy single inset only inside the edge chain", () => {
+    // Wrapping-count guard: `--hk-dock-inset` may appear only as the second
+    // link of the four edge chains. A rule reading it directly would bypass
+    // the per-edge override and re-split the family into two mechanisms. The
+    // header comment quotes the chain, so only declarations are counted.
+    const code = scss.replace(/\/\*[\s\S]*?\*\//g, "");
+    const direct = code.match(/var\(--hk-dock-inset(?!, var\(--hk-dock-gap)/g) ?? [];
+    expect(direct).toHaveLength(0);
+    const chains = code.match(/var\(--hk-dock-inset, var\(--hk-dock-gap, /g) ?? [];
+    expect(chains).toHaveLength(4);
   });
 });

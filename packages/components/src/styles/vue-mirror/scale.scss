@@ -136,6 +136,17 @@
    * reads the same token so the JS clamps and the CSS caps never drift). */
   --viewport-gutter: 16px;
 
+  /* Dock edge gap — the ONE minimum distance a dock keeps from the viewport
+   * edge it hugs AND from the content it covers (the dock's own content
+   * band), 16px by default. Per-dock / per-edge overrides use
+   * `--hk-dock-gap-<top|right|bottom|left>` or the older single-value
+   * `--hk-dock-inset`; the resolver chain lives in HkDockBar.scss. This is
+   * the ONLY place a gap token is DECLARED — a custom property resolves on
+   * its declaring element, so pre-declaring `--hk-dock-gap-<edge>` here
+   * would freeze that edge against every descendant `--hk-dock-gap`
+   * override (the 2026-11-15 cascade trap). */
+  --hk-dock-gap: var(--space-16, 1rem);
+
   /* Fonts — keep in sync with packages/vue/src/theme/fontContext.ts */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
   --font-reading: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;

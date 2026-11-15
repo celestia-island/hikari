@@ -23,22 +23,55 @@ export type HkDockBarSurface = "glass" | "solid";
  * (surface, blur, border, radius, reverse glow) means no dock surface
  * ever re-declares its own background or shadow again.
  *
+ * Edge gap contract (2026-11-15): a dock owns BOTH of its content-side
+ * distances, and reads both from one CSS token family — the resting
+ * inset from the viewport edge it hugs, and a transparent CONTENT BAND on
+ * the face that points at the content:
+ *
+ *   G(edge) = var(--hk-dock-gap-<edge>,
+ *                 var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))))
+ *
+ * `--hk-dock-gap` is declared once by the foundation layer (16px); a host
+ * overrides it through the `gap` prop (one CSS length, written inline as
+ * `--hk-dock-gap`), or per edge through `--hk-dock-gap-<edge>` /
+ * `--hk-dock-inset` on any ancestor. Every edge also adds its safe-area
+ * inset to the resting distance, so a notched device keeps the gap on top
+ * of the system inset while a desktop resolves it to 0.
+ *
+ * The band belongs to the DOCK, not to the view that hosts it, and that
+ * is what makes both placements self-consistent with no host recipe:
+ *   - in a `HkScrollContainer` PIN slot the dock is a flex SIBLING of the
+ *     scroll viewport, so the wrapper box (band + surface + inset) makes
+ *     the viewport yield the band by layout: content ends `gap` above the
+ *     surface with no view padding, so `min-height: 100%` content cannot
+ *     resurrect the phantom-scroll trap;
+ *   - a FLOATING dock (page / plane) is measured by its own
+ *     getBoundingClientRect, which already includes padding — so the
+ *     occupancy a host publishes to its content (the tail padding a
+ *     consumer reads) automatically contains "surface + inset + band", and
+ *     scrolling content stops `gap` short of the surface. Nothing in JS
+ *     reads a CSS length.
+ *
  * Anchors — the full eight-way compass (4 edges + 4 corners):
  *   - `page` (default) and `bottom`: absolute bottom-center of the
- *     nearest positioned ancestor (the SOUTH edge), `--hk-dock-inset`
- *     above its content floor. `page` is the 2026-09-02 spelling kept
- *     for existing callers; `bottom` is its compass alias — identical
- *     geometry, pick either.
- *   - `top`: absolute top-center (north edge) with the same inset.
+ *     nearest positioned ancestor (the SOUTH edge), one bottom gap above
+ *     its content floor, with the band on the block-start side. `page` is
+ *     the 2026-09-02 spelling kept for existing callers; `bottom` is its
+ *     compass alias — identical geometry, pick either.
+ *   - `top`: absolute top-center (north edge) with the top gap, band on
+ *     the block-end side.
  *   - `left` / `right`: absolute middle of the west / east edge — the
- *     dock runs vertically and is centered with translateY; its surface
- *     gets a viewport-aware default max-height.
+ *     dock runs vertically and is centered with translateY; the band is
+ *     on the inline content side and its surface gets a viewport-aware
+ *     default max-height (both horizontal gaps subtracted).
  *   - `top-left` / `top-right` / `bottom-left` / `bottom-right`:
- *     absolute corner attachment with the same inset, for pagers,
- *     toolbars and HUD panels that live off-center.
+ *     absolute corner attachment with both edge gaps, for pagers,
+ *     toolbars and HUD panels that live off-center; the band opens on
+ *     both content-facing sides.
  *   - `plane`: NOT a compass direction — in-flow; the host provides
  *     the plane (e.g. a fixed footer band) and this container centers
- *     the surface horizontally. Use it when the host owns positioning.
+ *     the surface horizontally, lifts it by the bottom gap and opens the
+ *     same gap above it. Use it when the host owns positioning.
  *
  * Relationship to HkScrollContainer: that component's dockTop /
  * dockBottom named slots are the contract for docks that live INSIDE a
@@ -95,6 +128,12 @@ const HkDockBar = defineComponent({
     maxHeight: { type: String, default: undefined },
     /** CSS padding override; defaults to the shared chrome rhythm. */
     padding: { type: String, default: undefined },
+    /** CSS length of this dock's edge gap (a larger-than-default dock
+     *  passes e.g. `1.5rem`); inline `--hk-dock-gap`, which the sheet
+     *  resolves per edge through `--hk-dock-gap-<edge>` →
+     *  `--hk-dock-inset` → default. Leave unset to inherit the host's
+     *  value (the foundation 16px when nothing overrides it). */
+    gap: { type: String, default: undefined },
   },
   setup(props, { slots }) {
     const style = computed(() => {
@@ -103,6 +142,7 @@ const HkDockBar = defineComponent({
       if (props.maxWidth) s["--dock-max-width"] = props.maxWidth;
       if (props.maxHeight) s["--dock-max-height"] = props.maxHeight;
       if (props.padding) s["--dock-padding"] = props.padding;
+      if (props.gap) s["--hk-dock-gap"] = props.gap;
       return s;
     });
 

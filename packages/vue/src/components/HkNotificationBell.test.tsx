@@ -133,6 +133,7 @@ describe("panel rows", () => {
     const row = rows()[0];
     expect(row.classList.contains("is-snoozed")).toBe(true);
     expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toBe("· Hidden");
+    expect(row.querySelector(".hk-notification-row__title .hk-notification-row__title-state")).toBeNull();
     // The standalone chip is gone (folded into the title, user ruling).
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
     const restoreBtns = row.querySelectorAll<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button");

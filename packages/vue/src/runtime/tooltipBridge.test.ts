@@ -193,6 +193,26 @@ describe("installHkTooltipBridge", () => {
     expect(el.hasAttribute("aria-describedby")).toBe(false);
   });
 
+  it("typing restores the keyboard modality after a finger tap (sticky-modality pin)", () => {
+    vi.useFakeTimers();
+    install();
+    const el = trigger("Hybrid keyboard");
+    el.dispatchEvent(
+      new PointerEvent("pointerover", { pointerType: "touch", bubbles: true }),
+    );
+    el.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    );
+    el.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    expect(el.hasAttribute("title")).toBe(true);
+    el.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
+    el.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+    el.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    expect(el.hasAttribute("title")).toBe(false);
+    vi.advanceTimersByTime(400);
+    expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(true);
+  });
+
   it("never engages a touch pointerover (the touch hint bar owns touch)", () => {
     vi.useFakeTimers();
     install();

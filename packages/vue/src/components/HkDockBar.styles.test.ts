@@ -24,6 +24,14 @@ import { describe, expect, it } from "vitest";
  * every descendant `--hk-dock-gap` override (a custom property resolves on
  * the element that DECLARES it), and a per-anchor re-spelling of the chain
  * would let the family drift back into several mechanisms.
+ *
+ * Inline bands are PHYSICAL (`padding-right` / `padding-left`, review S1): the
+ * anchors are physical, so on a left-anchored dock a logical `padding-inline-
+ * end` resolves to the physical LEFT under `dir="rtl"` — the pinned side — and
+ * the surface reads `gap + gap` from the edge while the content face goes bare.
+ * The band table below therefore resolves each declaration under BOTH writing
+ * directions and demands the same content-facing side, which is only true for
+ * physical longhands.
  */
 
 const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
@@ -113,8 +121,8 @@ const ANCHOR_TABLE: AnchorRow[] = [
     bands: [["padding-block-start", "bottom"]],
   },
   { anchor: "top", insets: [["top", "top"]], bands: [["padding-block-end", "top"]] },
-  { anchor: "left", insets: [["left", "left"]], bands: [["padding-inline-end", "left"]] },
-  { anchor: "right", insets: [["right", "right"]], bands: [["padding-inline-start", "right"]] },
+  { anchor: "left", insets: [["left", "left"]], bands: [["padding-right", "left"]] },
+  { anchor: "right", insets: [["right", "right"]], bands: [["padding-left", "right"]] },
   {
     anchor: "top-left",
     insets: [
@@ -123,7 +131,7 @@ const ANCHOR_TABLE: AnchorRow[] = [
     ],
     bands: [
       ["padding-block-end", "top"],
-      ["padding-inline-end", "left"],
+      ["padding-right", "left"],
     ],
   },
   {
@@ -134,7 +142,7 @@ const ANCHOR_TABLE: AnchorRow[] = [
     ],
     bands: [
       ["padding-block-end", "top"],
-      ["padding-inline-start", "right"],
+      ["padding-left", "right"],
     ],
   },
   {
@@ -145,7 +153,7 @@ const ANCHOR_TABLE: AnchorRow[] = [
     ],
     bands: [
       ["padding-block-start", "bottom"],
-      ["padding-inline-end", "left"],
+      ["padding-right", "left"],
     ],
   },
   {
@@ -156,7 +164,7 @@ const ANCHOR_TABLE: AnchorRow[] = [
     ],
     bands: [
       ["padding-block-start", "bottom"],
-      ["padding-inline-start", "right"],
+      ["padding-left", "right"],
     ],
   },
 ];
@@ -239,8 +247,63 @@ describe("dock edge gap — anchor geometry", () => {
   it("opens exactly two bands on each corner and one elsewhere", () => {
     for (const { anchor, bands } of ANCHOR_TABLE) {
       const rule = ruleFor(dockCss, `.hk-dock-bar[data-anchor=${anchor}]`);
-      const padding = rule.match(/padding-(block|inline)-(start|end):/g) ?? [];
+      const padding = rule.match(/padding-(?:inline-|block-)?(?:start|end|left|right):/g) ?? [];
       expect(padding, anchor).toHaveLength(bands.length);
+    }
+  });
+
+  it("resolves the same content-facing band side in BOTH writing directions", () => {
+    // What a browser does with a padding longhand depends on the writing
+    // direction — but only for LOGICAL longhands. Each band is therefore
+    // resolved under `dir="ltr"` and `dir="rtl"` and must land on the physical
+    // side that faces the content both times: that is what makes the band hold
+    // on an RTL page instead of flipping onto the pinned edge (review S1).
+    type Side = "left" | "right" | "block-start" | "block-end";
+    // The physical face each anchor's content sits on, per axis.
+    const CONTENT_SIDES: Record<string, Side[]> = {
+      page: ["block-start"],
+      bottom: ["block-start"],
+      plane: ["block-start"],
+      top: ["block-end"],
+      left: ["right"],
+      right: ["left"],
+      "top-left": ["block-end", "right"],
+      "top-right": ["block-end", "left"],
+      "bottom-left": ["block-start", "right"],
+      "bottom-right": ["block-start", "left"],
+    };
+    /** Where one declared padding longhand actually lands, per direction. */
+    function resolve(decl: string, dir: "ltr" | "rtl"): Side | null {
+      switch (decl) {
+        case "padding-left":
+          return "left";
+        case "padding-right":
+          return "right";
+        case "padding-block-start":
+          return "block-start";
+        case "padding-block-end":
+          return "block-end";
+        case "padding-inline-start":
+          return dir === "ltr" ? "left" : "right";
+        case "padding-inline-end":
+          return dir === "ltr" ? "right" : "left";
+        default:
+          return null;
+      }
+    }
+    for (const { anchor } of ANCHOR_TABLE) {
+      const rule = ruleFor(dockCss, `.hk-dock-bar[data-anchor=${anchor}]`);
+      const declared = [...rule.matchAll(/padding-(?:inline-|block-)?(start|end|left|right):/g)].map(
+        (m) => m[0].slice(0, -1),
+      );
+      expect(declared.length, anchor).toBe(CONTENT_SIDES[anchor].length);
+      for (const dir of ["ltr", "rtl"] as const) {
+        const resolved = declared.map((decl) => resolve(decl, dir));
+        expect(resolved, `${anchor} in dir=${dir}`).toEqual(CONTENT_SIDES[anchor]);
+      }
+      // …which can only hold for BOTH directions when no logical inline
+      // longhand is used at all: the negative control for the S1 defect.
+      expect(rule, anchor).not.toMatch(/padding-inline-(start|end)/);
     }
   });
 

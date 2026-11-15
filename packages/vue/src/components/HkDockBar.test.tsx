@@ -173,8 +173,10 @@ describe("HkDockBar anchor geometry contract", () => {
       expect(rules).toContain("position: absolute");
       expect(rules).toContain("top: 50%");
       expect(rules).toContain(`${anchor}: ${inset(anchor)}`);
+      // The anchor is a PHYSICAL edge, so the band is physical too: a logical
+      // longhand would flip under dir="rtl" onto the pinned side.
       expect(rules).toContain(
-        `padding-inline-${anchor === "left" ? "end" : "start"}: ${gap(anchor)}`,
+        `padding-${anchor === "left" ? "right" : "left"}: ${gap(anchor)}`,
       );
       expect(rules).toContain("transform: translateY(-50%)");
       // A side dock must not pick up the horizontal-edge centering.
@@ -199,7 +201,7 @@ describe("HkDockBar anchor geometry contract", () => {
       `padding-block-${side1 === "top" ? "end" : "start"}: ${gap(side1)}`,
     );
     expect(rules).toContain(
-      `padding-inline-${side2 === "left" ? "end" : "start"}: ${gap(side2)}`,
+      `padding-${side2 === "left" ? "right" : "left"}: ${gap(side2)}`,
     );
     expect(rules).toContain(`align-items: ${align}`);
   });
@@ -250,6 +252,26 @@ describe("HkDockBar anchor geometry contract", () => {
     )?.[0];
     expect(solid, "solid surface rule must exist").toBeTruthy();
     expect(solid).toContain("@include backdrop-filter(none)");
+  });
+
+  it("keeps inline bands PHYSICAL so dir=rtl cannot flip them onto the pinned side", () => {
+    // The anchors are physical (`left:` / `right:` + `env(safe-area-inset-left/
+    // right)`), so an inline band must be physical too: `padding-inline-end` on
+    // a left-anchored dock resolves to the physical LEFT under `dir="rtl"` —
+    // the same side as the pinned edge (the surface pushed one extra gap in,
+    // reading `gap + gap` from the edge) while the content face stays bare, so
+    // content touches the surface again. Physical longhands are
+    // direction-independent, which is exactly what keeps the band on the
+    // content-facing face in both directions.
+    // Only declarations: the header prose explains the trap and names both
+    // logical longhands.
+    expect(scss.replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/padding-inline-(start|end)/);
+    for (const [anchor, band] of [
+      ["left", "padding-right"],
+      ["right", "padding-left"],
+    ] as const) {
+      expect(rulesFor(anchor)).toContain(`${band}: ${gap(anchor)}`);
+    }
   });
 
   it("reads the legacy single inset only inside the edge chain", () => {

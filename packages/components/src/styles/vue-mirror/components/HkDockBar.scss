@@ -54,6 +54,17 @@
  * Which is also why HkScrollContainer's measurement / gate formulas did not
  * change: they read scrollHeight / clientHeight / gBCR, all decided by
  * layout — this sheet only changes what the dock's own box contains.
+ *
+ * PHYSICAL bands on the inline faces (2026-11-15, review S1). The anchors are
+ * physical too: `left` / `right` and `env(safe-area-inset-left/right)` mean the
+ * literal edges, not the writing-mode ones. A logical band — a
+ * `padding-inline-start` / `padding-inline-end` — therefore flips under
+ * `dir="rtl"`: on a left-anchored dock it would land on the SAME side as the
+ * pinned edge (the surface pushed one gap further in, reading `gap + gap` from
+ * the edge) while the face that actually points at the content stays bare, so
+ * content touches the surface again. The block axis is direction-independent
+ * in the writing modes a dock lives in, so `padding-block-start/end` stay
+ * logical.
  */
 
 @use "../styles/polyfill" as *;
@@ -118,8 +129,9 @@
   }
 
   /* ── vertical edge anchors (west / east): the dock runs vertically,
-   *     centered on the edge midpoint, with the band on the inline side
-   *     that faces the content. */
+   *     centered on the edge midpoint, with the band on the PHYSICAL side
+   *     that faces the content (see the header note: a logical padding would
+   *     flip under dir="rtl" and leave the content face bare). */
   &[data-anchor="left"],
   &[data-anchor="right"] {
     position: absolute;
@@ -130,17 +142,18 @@
 
   &[data-anchor="left"] {
     left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
-    padding-inline-end: var(--_hk-dock-gap-left);
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="right"] {
     right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
-    padding-inline-start: var(--_hk-dock-gap-right);
+    padding-left: var(--_hk-dock-gap-right);
   }
 
   /* ── corner anchors: absolute attachment with both edge gaps, for
-   *     pagers, toolbars and HUD panels that live off-center. The band
-   *     opens on both content-facing sides. */
+   *     pagers, toolbars and HUD panels that live off-center. The band opens
+   *     on both content-facing sides — physical on the inline face, logical on
+   *     the block one. */
   &[data-anchor="top-left"],
   &[data-anchor="top-right"],
   &[data-anchor="bottom-left"],
@@ -154,7 +167,7 @@
     left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
     align-items: flex-start;
     padding-block-end: var(--_hk-dock-gap-top);
-    padding-inline-end: var(--_hk-dock-gap-left);
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="top-right"] {
@@ -162,7 +175,7 @@
     right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
     align-items: flex-end;
     padding-block-end: var(--_hk-dock-gap-top);
-    padding-inline-start: var(--_hk-dock-gap-right);
+    padding-left: var(--_hk-dock-gap-right);
   }
 
   &[data-anchor="bottom-left"] {
@@ -170,7 +183,7 @@
     left: calc(var(--_hk-dock-gap-left) + env(safe-area-inset-left, 0px));
     align-items: flex-start;
     padding-block-start: var(--_hk-dock-gap-bottom);
-    padding-inline-end: var(--_hk-dock-gap-left);
+    padding-right: var(--_hk-dock-gap-left);
   }
 
   &[data-anchor="bottom-right"] {
@@ -178,7 +191,7 @@
     right: calc(var(--_hk-dock-gap-right) + env(safe-area-inset-right, 0px));
     align-items: flex-end;
     padding-block-start: var(--_hk-dock-gap-bottom);
-    padding-inline-start: var(--_hk-dock-gap-right);
+    padding-left: var(--_hk-dock-gap-right);
   }
 }
 

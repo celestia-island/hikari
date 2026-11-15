@@ -127,9 +127,11 @@ pub fn dock_bar_inset(edge: &str) -> String {
 /// the gap on that face.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct DockBarBand {
-    /// The logical padding property, exactly as the sheet spells it
-    /// (`padding-block-start`, `padding-block-end`, `padding-inline-start`,
-    /// `padding-inline-end`).
+    /// The padding property, exactly as the sheet spells it. Block-axis bands
+    /// stay logical (`padding-block-start` / `padding-block-end`); inline bands
+    /// are PHYSICAL (`padding-right` / `padding-left`) because the anchors are
+    /// physical — a logical inline pad would flip under `dir="rtl"` onto the
+    /// pinned side and leave the content face bare.
     pub padding: &'static str,
     /// The edge whose resolved gap fills it.
     pub edge: &'static str,
@@ -234,14 +236,16 @@ const BAND_NORTH: &[DockBarBand] = &[DockBarBand {
     padding: "padding-block-end",
     edge: "top",
 }];
-/// West-edge dock: the band faces the content on the inline end.
+/// West-edge dock: the band faces the content on the PHYSICAL right (the anchors
+/// are physical, so a logical `padding-inline-end` would flip under `dir="rtl"`
+/// onto the pinned side and leave the content face bare).
 const BAND_WEST: &[DockBarBand] = &[DockBarBand {
-    padding: "padding-inline-end",
+    padding: "padding-right",
     edge: "left",
 }];
-/// East-edge dock: the band faces the content on the inline start.
+/// East-edge dock: the band faces the content on the PHYSICAL left.
 const BAND_EAST: &[DockBarBand] = &[DockBarBand {
-    padding: "padding-inline-start",
+    padding: "padding-left",
     edge: "right",
 }];
 /// North-west corner: both content-facing faces open.
@@ -251,7 +255,7 @@ const BAND_NORTH_WEST: &[DockBarBand] = &[
         edge: "top",
     },
     DockBarBand {
-        padding: "padding-inline-end",
+        padding: "padding-right",
         edge: "left",
     },
 ];
@@ -262,7 +266,7 @@ const BAND_NORTH_EAST: &[DockBarBand] = &[
         edge: "top",
     },
     DockBarBand {
-        padding: "padding-inline-start",
+        padding: "padding-left",
         edge: "right",
     },
 ];
@@ -273,7 +277,7 @@ const BAND_SOUTH_WEST: &[DockBarBand] = &[
         edge: "bottom",
     },
     DockBarBand {
-        padding: "padding-inline-end",
+        padding: "padding-right",
         edge: "left",
     },
 ];
@@ -284,7 +288,7 @@ const BAND_SOUTH_EAST: &[DockBarBand] = &[
         edge: "bottom",
     },
     DockBarBand {
-        padding: "padding-inline-start",
+        padding: "padding-left",
         edge: "right",
     },
 ];
@@ -616,23 +620,23 @@ mod tests {
             (DockBarAnchor::Bottom, &[("padding-block-start", "bottom")]),
             (DockBarAnchor::Plane, &[("padding-block-start", "bottom")]),
             (DockBarAnchor::Top, &[("padding-block-end", "top")]),
-            (DockBarAnchor::Left, &[("padding-inline-end", "left")]),
-            (DockBarAnchor::Right, &[("padding-inline-start", "right")]),
+            (DockBarAnchor::Left, &[("padding-right", "left")]),
+            (DockBarAnchor::Right, &[("padding-left", "right")]),
             (
                 DockBarAnchor::TopLeft,
-                &[("padding-block-end", "top"), ("padding-inline-end", "left")],
+                &[("padding-block-end", "top"), ("padding-right", "left")],
             ),
             (
                 DockBarAnchor::TopRight,
-                &[("padding-block-end", "top"), ("padding-inline-start", "right")],
+                &[("padding-block-end", "top"), ("padding-left", "right")],
             ),
             (
                 DockBarAnchor::BottomLeft,
-                &[("padding-block-start", "bottom"), ("padding-inline-end", "left")],
+                &[("padding-block-start", "bottom"), ("padding-right", "left")],
             ),
             (
                 DockBarAnchor::BottomRight,
-                &[("padding-block-start", "bottom"), ("padding-inline-start", "right")],
+                &[("padding-block-start", "bottom"), ("padding-left", "right")],
             ),
         ];
         assert_eq!(cases.len(), ALL_ANCHORS.len());
@@ -650,10 +654,16 @@ mod tests {
                         padding,
                         "padding-block-start"
                             | "padding-block-end"
-                            | "padding-inline-start"
-                            | "padding-inline-end"
+                            | "padding-right"
+                            | "padding-left"
                     ),
                     "{anchor:?}: {padding}"
+                );
+                // Inline bands must be PHYSICAL: a logical one would flip onto
+                // the pinned side under dir="rtl" (review S1).
+                assert!(
+                    !padding.starts_with("padding-inline"),
+                    "{anchor:?}: inline band must be physical, got {padding}"
                 );
             }
         }
@@ -819,8 +829,8 @@ mod tests {
         for band in [
             "padding-block-start: var(--_hk-dock-gap-bottom)",
             "padding-block-end: var(--_hk-dock-gap-top)",
-            "padding-inline-end: var(--_hk-dock-gap-left)",
-            "padding-inline-start: var(--_hk-dock-gap-right)",
+            "padding-right: var(--_hk-dock-gap-left)",
+            "padding-left: var(--_hk-dock-gap-right)",
         ] {
             assert!(css.contains(band), "missing {band}\n{css}");
         }

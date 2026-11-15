@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref, type App } from "vue";
 
 import HkDiffViewer from "./HkDiffViewer";
+import * as useHighlightModule from "../composables/useHighlight";
 
 /**
  * HkDiffViewer — the rendered half: hunk grouping, collapsed unchanged
@@ -350,3 +351,105 @@ describe("HkDiffViewer scroll map", () => {
     expect(hunkRows.length).toBeGreaterThan(4);
   });
 });
+
+
+// ── Line-highlight memo (S2) ───────────────────────────────────────────
+// A fold toggle re-renders the rows it kept; it must not re-run the wasm
+// pest parser over them. The memo keys on (language, text) and is
+// module-scoped (one page, one set of grammars), so each case below uses
+// its own language id — that keeps the counts in this file independent
+// while still exercising the shared cache.
+describe("HkDiffViewer highlight memo", () => {
+  /** The wasm parser's per-line entry point (see useHighlight). */
+  const spyOnHighlight = () => vi.spyOn(useHighlightModule, "highlight");
+
+  it("re-expanding a fold re-renders rows without re-parsing them", async () => {
+    const spy = spyOnHighlight();
+    try {
+      const root = mount({ diff: DIFF, totalLines: 19, language: "memo-iron" });
+      await nextTick();
+      expect(root.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(6);
+      // First paint: one parse per rendered row, no more.
+      expect(spy).toHaveBeenCalledTimes(6);
+
+      const head = root.querySelector(".hk-diff-viewer__hunk-head") as HTMLButtonElement;
+      head.click(); // collapse: the body leaves the tree, nothing to parse
+      await nextTick();
+      expect(root.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(0);
+      expect(spy).toHaveBeenCalledTimes(6);
+
+      head.click(); // expand: same rows, served from the memo
+      await nextTick();
+      expect(root.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(6);
+      // Three passes over the same rows used to mean 3 × 6 parses.
+      expect(spy).toHaveBeenCalledTimes(6);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("keeps one memo entry per (language, text) pair, not per pane", async () => {
+    const spy = spyOnHighlight();
+    try {
+      const root = mount({ diff: DIFF, totalLines: 19, language: "memo-silver" });
+      await nextTick();
+      expect(spy).toHaveBeenCalledTimes(6);
+      // A second viewer on the same content rides the shared memo: the rows
+      // are identical bytes, so a list of diffs pays once.
+      const second = mount({ diff: DIFF, totalLines: 19, language: "memo-silver" });
+      await nextTick();
+      expect(second.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(6);
+      expect(spy).toHaveBeenCalledTimes(6);
+      // …while a different language is a different key.
+      const other = mount({ diff: DIFF, totalLines: 19, language: "memo-gold" });
+      await nextTick();
+      expect(other.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(6);
+      expect(spy).toHaveBeenCalledTimes(12);
+      expect(root.querySelectorAll(".hk-diff-viewer__line")).toHaveLength(6);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("hovering a row is a CSS-only state change (no render, no parse)", async () => {
+    const spy = spyOnHighlight();
+    try {
+      const root = mount({ diff: DIFF, totalLines: 19, language: "memo-jade" });
+      await nextTick();
+      const row = root.querySelector(".hk-diff-viewer__line") as HTMLElement;
+      expect(spy).toHaveBeenCalledTimes(6);
+      // Hover carries no component state — the class/colour comes from the
+      // stylesheet — so the same node must survive the interaction.
+      row.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      row.dispatchEvent(new MouseEvent("mouseenter"));
+      await nextTick();
+      expect(root.querySelector(".hk-diff-viewer__line")).toBe(row);
+      expect(spy).toHaveBeenCalledTimes(6);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("parses only the newly revealed rows when a gap fetches context", async () => {
+    const spy = spyOnHighlight();
+    try {
+      const loadContext = vi.fn(async (start: number, count: number) =>
+        Array.from({ length: count }, (_, i) => `line-${start + i}`),
+      );
+      const root = mount({
+        diff: DIFF, totalLines: 19, loadContext, contextChunk: 2, language: "memo-onyx",
+      });
+      await nextTick();
+      expect(spy).toHaveBeenCalledTimes(6);
+      (root.querySelectorAll(".hk-diff-viewer__gap")[1] as HTMLButtonElement).click();
+      await tick();
+      await nextTick();
+      // The two revealed rows are new bytes (exactly two parses); the six
+      // rows the fold kept are memo hits.
+      expect(spy).toHaveBeenCalledTimes(8);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+

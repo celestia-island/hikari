@@ -673,3 +673,99 @@ describe("HkTooltip closed-popup reachability (R2 S2)", () => {
     expect(document.querySelector(".hk-tooltip-popup")).toBeNull();
   });
 });
+
+// ── Position tracking budget (S2) ──────────────────────────────────────
+// The bubble used to hold a permanent per-frame loop while visible: two
+// getBoundingClientRect reads plus the computed-style zoom lookup, 60 times
+// a second, whether or not anything had moved. Geometry now rides explicit
+// signals (ResizeObserver on trigger + popup, scroll / resize / wheel), and
+// the frame sampler that catches un-evented motion retires on its own once
+// the trigger holds still.
+describe("HkTooltip position tracking budget", () => {
+  it("observes the trigger and the popup through a ResizeObserver", async () => {
+    const observe = vi.spyOn(ResizeObserver.prototype, "observe");
+    const disconnect = vi.spyOn(ResizeObserver.prototype, "disconnect");
+    try {
+      const { app, container } = mount({ text: "observed", delay: 0 });
+      enter(container);
+      await settle();
+      const trigger = wrapper(container);
+      expect(observe.mock.calls.some(([el]) => el === trigger)).toBe(true);
+      // The bubble's own box reflows when its text lands; that is a
+      // geometry change too.
+      expect(observe.mock.calls.some(([el]) => el === popup())).toBe(true);
+      // Observers outlive a hide (re-shows must not churn them) but never
+      // the component.
+      leave(container);
+      await nextTick();
+      expect(disconnect).not.toHaveBeenCalled();
+      app.unmount();
+      expect(disconnect).toHaveBeenCalled();
+    } finally {
+      observe.mockRestore();
+      disconnect.mockRestore();
+    }
+  });
+
+  it("retires the frame sampler at rest and re-arms on a signal", async () => {
+    const { container } = mount({ text: "resting", delay: 0, placement: "bottom" });
+    const anchor = wrapper(container);
+    let top = 100;
+    let rectReads = 0;
+    anchor.getBoundingClientRect = () => {
+      rectReads += 1;
+      return {
+        x: 200, y: top, left: 200, top, right: 280, bottom: top + 40,
+        width: 80, height: 40, toJSON: () => ({}),
+      } as DOMRect;
+    };
+    enter(container);
+    await settle();
+    expect(popup().style.top).toBe("148px");
+
+    // Past the quiet window the loop is gone: nothing measures the trigger,
+    // frame after frame, for a bubble that is simply sitting there.
+    await new Promise((r) => setTimeout(r, 240));
+    const parked = rectReads;
+    await new Promise((r) => setTimeout(r, 120));
+    expect(rectReads).toBe(parked);
+
+    // …and the signals bring it straight back, on the event's own turn (no
+    // waiting for the next frame): a scrolled container, then a wheel-pan.
+    top = 130;
+    document.dispatchEvent(new Event("scroll"));
+    expect(popup().style.top).toBe("178px"); // 130 + 40 + 8
+    top = 160;
+    window.dispatchEvent(new Event("wheel"));
+    expect(popup().style.top).toBe("208px");
+
+    leave(container);
+    await nextTick();
+    expect(popup().className).not.toContain("hk-tooltip-visible");
+  });
+
+  it("stops measuring the trigger once the bubble is hidden", async () => {
+    const { container } = mount({ text: "gone", delay: 0 });
+    const anchor = wrapper(container);
+    let rectReads = 0;
+    anchor.getBoundingClientRect = () => {
+      rectReads += 1;
+      return {
+        x: 0, y: 0, left: 0, top: 0, right: 10, bottom: 10,
+        width: 10, height: 10, toJSON: () => ({}),
+      } as DOMRect;
+    };
+    enter(container);
+    await settle();
+    leave(container);
+    await nextTick();
+    const parked = rectReads;
+    // A scroll with the bubble down must not measure (or place) anything.
+    document.dispatchEvent(new Event("scroll"));
+    await new Promise((r) => setTimeout(r, 60));
+    expect(rectReads).toBe(parked);
+    expect(document.querySelector(".hk-tooltip-popup")!.className).not.toContain(
+      "hk-tooltip-visible",
+    );
+  });
+});

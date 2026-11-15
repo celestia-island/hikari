@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";
+import { marked } from "marked";
 
 import HkMarkdownRenderer from "./HkMarkdownRenderer";
 import { setMermaidEngineForTests } from "../mermaid/engine";
@@ -144,5 +145,81 @@ describe("mermaid sub-app lifecycle pins", () => {
     entry.app.unmount();
     expect((host as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
     expect(host.isConnected).toBe(false);
+  });
+});
+
+// ── Streaming reuse (S2) ───────────────────────────────────────────────
+// A streamed reply re-emits every fence above the growing tail byte for
+// byte on every chunk. The diagram under such a fence must survive the
+// re-parse: unmounting a live board and mounting a byte-identical one is
+// the expensive half of a mermaid block (engine layout), and it is the
+// half the fence text itself can rule out.
+describe("mermaid streaming reuse", () => {
+  /** Poll for a text token (the body is innerHTML, not vdom). */
+  async function settleForText(root: HTMLElement, text: string, tries = 160): Promise<void> {
+    for (let i = 0; i < tries; i += 1) {
+      if ((root.textContent ?? "").includes(text)) return;
+      await new Promise((r) => setTimeout(r, 5));
+      await nextTick();
+    }
+  }
+
+  it("reuses the mounted diagram when the fence source is unchanged", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const parseSpy = vi.spyOn(marked, "parse");
+    try {
+      const { container, set } = mount(DOC);
+      await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
+      const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
+      const board = host.querySelector(".hk-board");
+      expect(board).not.toBeNull();
+      expect(parseSpy).toHaveBeenCalledTimes(1);
+
+      // The stream appends prose BELOW the fence — the fence text is
+      // byte-identical, so the rendered board must ride along.
+      set(`${DOC}\n\nmore streamed prose`);
+      await settleForText(container, "more streamed prose");
+      await nextTick();
+      expect(parseSpy).toHaveBeenCalledTimes(2); // the BODY was re-parsed…
+
+      const after = container.querySelector(".hk-md-mermaid") as HTMLElement;
+      expect(after).toBe(host); // …and the diagram node was not rebuilt
+      expect(host.isConnected).toBe(true);
+      expect(host.querySelector(".hk-board")).toBe(board); // same live board
+      expect(container.querySelectorAll(".hk-md-mermaid")).toHaveLength(1);
+    } finally {
+      parseSpy.mockRestore();
+    }
+  });
+
+  it("still rebuilds the diagram when the fence source itself changes", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const { container, set } = mount(DOC);
+    await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
+    const first = container.querySelector(".hk-md-mermaid") as HTMLElement;
+
+    // Streaming INTO the fence: the source grows, so the board must be new.
+    set(DOC.replace("A[Alpha] --> B[Beta]", "A[Alpha] --> B[Beta]\n  B --> C[Gamma]"));
+    await settleForText(container, "Gamma");
+    await new Promise((r) => setTimeout(r, 60));
+    await nextTick();
+    const fresh = container.querySelector(".hk-md-mermaid") as HTMLElement;
+    expect(fresh).not.toBe(first);
+    expect(first.isConnected).toBe(false);
+    expect((first as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+  });
+
+  it("retires the sub-app when the fence disappears from the body", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    const { container, set } = mount(DOC);
+    await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
+    const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
+
+    set("prose only now");
+    await settleForText(container, "prose only now");
+    await new Promise((r) => setTimeout(r, 60));
+    await nextTick();
+    expect(container.querySelector(".hk-md-mermaid")).toBeNull();
+    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
   });
 });

@@ -28,9 +28,16 @@
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 55%));
   pointer-events: none;
 
+  /* The glyph rides a REMOTE-SCREEN surface, which is dark in every
+   * app theme (the HkTerminal doctrine: a remote canvas does not follow
+   * the page palette). Theme ink is therefore wrong here: in a light
+   * theme --color-text is near-black, and the pointer vanished against
+   * the black screen (measured: computed fill rgb(30 30 30) over
+   * #0b0d12 → effectively invisible). Fixed light ink + dark outline
+   * keeps the pointer legible on both dark and light remote content. */
   path {
-    fill: rgb(var(--color-text));
-    stroke: rgb(0 0 0 / 65%);
+    fill: rgb(255 255 255 / 96%);
+    stroke: rgb(0 0 0 / 70%);
     stroke-width: 1;
   }
 }
@@ -45,9 +52,13 @@
   place-items: center;
   width: 30px;
   height: 24px;
-  border: 1px solid rgb(var(--color-border));
-  background: rgb(var(--color-background) / 92%);
-  color: rgb(var(--color-text));
+  /* Same doctrine as the arrow: the lobes ride the remote screen, not
+   * the page, so they speak a fixed dark-glass face (a theme-tinted
+   * pill vanishes on the remote black in dark themes and glares in
+   * light ones). Held state keeps the brand accent. */
+  border: 1px solid rgb(255 255 255 / 28%);
+  background: rgb(0 0 0 / 55%);
+  color: rgb(255 255 255 / 92%);
   border-radius: 8px;
   vertical-align: top;
   cursor: pointer;
@@ -72,9 +83,9 @@
   }
 
   &[data-held] {
-    background: rgb(var(--color-primary) / 80%);
+    background: rgb(var(--color-primary) / 85%);
     border-color: rgb(var(--color-primary));
-    color: rgb(var(--color-on-primary, 255 255 255));
+    color: rgb(255 255 255);
 
     &::after {
       opacity: 1;

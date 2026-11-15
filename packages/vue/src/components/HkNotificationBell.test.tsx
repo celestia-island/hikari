@@ -156,6 +156,21 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
   });
 
+  it("an emergency row carries NO dismiss button (live episode is not user-dismissable)", async () => {
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out", dismissible: true });
+    snoozeEmergencyAlert("quota");
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    expect(
+      rows()[0].querySelector(".hk-notification-row__actions .hk-icon-button"),
+      "the emergency row must not carry the dismiss control",
+    ).toBeNull();
+  });
+
   it("a same-millisecond tie renders the LATER push above (append order)", async () => {
     // R8/R9 pin (PR #1322): with updatedAt equal the journal's own
     // append order judges — the later push must sit above the earlier

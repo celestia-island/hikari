@@ -28,8 +28,11 @@ describe("HkNotificationBell scss contract", () => {
   it("the dismiss glyph ink rides --hi-icon-button-icon-color (ancestor color is inert)", () => {
     // Rest ink on the button, plus the row-hover/focus-within brighten —
     // both through the var channel the ghost button itself consumes.
+    // The rest rule is anchored at line start so the joint block's
+    // :focus-within selector line cannot satisfy it for the 40% value
+    // (round-6 review: deleting just the rest arm kept the file green).
     expect(scss).toMatch(
-      /\.hk-notification-row__actions \.hk-icon-button\s*\{\s*--hi-icon-button-icon-color:/,
+      /^\.hk-notification-row__actions \.hk-icon-button \{[^}]*--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 40%\)/m,
     );
     // The joint rule block: BOTH pseudo-classes must key the var, each
     // in its own selector arm (a mutant that keeps only :focus-within

@@ -147,16 +147,25 @@ export default defineComponent({
               </div>
             )}
           </div>
-          <div class="hk-notification-row__actions">
-            <HIconButton
-              size={24}
-              variant="ghost"
-              aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
-              onClick={() => forget(entry.id)}
-            >
-              {{ icon: () => <X size={14} /> }}
-            </HIconButton>
-          </div>
+          {/* The unified per-row dismiss (user ruling 2026-11-15) is for
+              RECORDS — never for a live emergency episode: a snoozed
+              alert's entry carries the app's ONLY restore handle
+              (onResummon), and forgetting it would strand the alert with
+              no recall path while the polled episode self-reverts the
+              row (round-6 review, PR #1333). Emergency rows therefore
+              render no X at all. */}
+          {entry.kind !== "emergency" && (
+            <div class="hk-notification-row__actions">
+              <HIconButton
+                size={24}
+                variant="ghost"
+                aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
+                onClick={() => forget(entry.id)}
+              >
+                {{ icon: () => <X size={14} /> }}
+              </HIconButton>
+            </div>
+          )}
         </li>
       );
     }

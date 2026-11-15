@@ -56,9 +56,9 @@ Host-recorded ids share one flat string space: the `toast:` / `blocking:` / `eme
 
 ## The emergency carve-out
 
-Emergency rows are the one exception: while an episode is live
+Emergency rows are the one exception: while an episode is LIVE
 (active or snoozed) the row carries no dismiss control — its journal
 entry holds the ONLY restore handle for the alert, and a polled
 re-raise would resurrect a deleted row. A user dismiss therefore
-applies to records (toasts, gates, resolved emergencies — which the
-clear path keeps reviewable), never to a live episode.
+applies to records (toasts, gates) and to resolved emergencies once
+their episode has cleared; never to a live episode.

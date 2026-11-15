@@ -233,7 +233,31 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
-  it("a cleared emergency shows Resolved without a restore button", async () => {
+  it("a cleared emergency shows Resolved WITH its dismiss control", async () => {
+    // Round-8 (PR #1333): the gate is state-scoped, not kind-scoped — a
+    // RESOLVED episode is a record again (kept reviewable by the clear
+    // path), so the user may dismiss it; only LIVE states are exempt.
+    await setLocale("en");
+    recordNotification({
+      id: "emergency:done",
+      kind: "emergency",
+      tone: "warning",
+      title: "resolved",
+      state: "cleared",
+    });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const row = rows()[0];
+    expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
+    expect(
+      row.querySelector(".hk-notification-row__actions .hk-icon-button"),
+      "a resolved record is dismissable",
+    ).not.toBeNull();
+  });
+
+  it("a snoozed emergency shows Hidden + a working restore button", async () => {
     await setLocale("en");
     recordNotification({
       id: "emergency:done",

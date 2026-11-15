@@ -65,4 +65,4 @@ Los ids que registra el anfitrión comparten un espacio de cadenas plano con los
 
 ## La excepción de emergencia
 
-Las filas de emergencia son la única excepción: mientras el episodio está vivo (activo o snoozed), la fila no lleva control de descarte — su entrada del diario contiene la única guía de restauración de la alerta, y un re-raise sondeado resucitaría una fila borrada. El gesto del usuario se aplica a registros (toasts, puertas de confirmación, emergencias resueltas que siguen consultables), nunca a un episodio vivo.
+Las filas de emergencia son la única excepción: mientras el episodio está VIVO (activo o snoozed), la fila no lleva control de descarte — su entrada del diario contiene la única guía de restauración de la alerta, y un re-raise sondeado resucitaría una fila borrada. El gesto del usuario se aplica a registros (toasts, puertas de confirmación, emergencias resueltas que siguen consultables), nunca a un episodio vivo.

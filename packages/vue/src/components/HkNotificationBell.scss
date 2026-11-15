@@ -82,7 +82,7 @@
 
 .hk-notification-row {
   display: flex;
-  gap: var(--space-10, 0.625rem);
+  gap: var(--space-12, 0.75rem);
   padding: var(--space-8, 0.5rem) var(--space-8, 0.5rem);
   border-bottom: 1px solid rgb(var(--color-border) / 6%);
 
@@ -141,6 +141,12 @@
   color: rgb(var(--color-text) / 92%);
 }
 
+.hk-notification-row__title-state {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: rgb(var(--color-muted, 108 108 108));
+}
+
 .hk-notification-row__time {
   flex: none;
   font-size: 0.6875rem;
@@ -177,7 +183,11 @@
   flex: none;
   display: flex;
   align-items: center;
-  align-self: flex-start;
+  /* Centered against the WHOLE row (2026-11-15 user ruling): other list
+     rows carry their trailing action vertically centered — an align-self
+     flex-start pinned the RotateCcw beside the timestamp line and read
+     as floating. */
+  align-self: center;
   gap: var(--space-4, 0.25rem);
 }
 
@@ -195,14 +205,4 @@
   --hi-icon-button-icon-color: rgb(var(--color-text) / 85%);
 }
 
-.hk-notification-row__meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8, 0.5rem);
-  margin-top: 2px;
-}
 
-.hk-notification-row__state {
-  font-size: 0.6875rem;
-  color: rgb(var(--color-text) / 45%);
-}

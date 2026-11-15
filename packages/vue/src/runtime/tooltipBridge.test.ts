@@ -150,6 +150,45 @@ describe("installHkTooltipBridge", () => {
     expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
   });
 
+  it("never focus-engages after a touch pointer (per-modality strategy)", () => {
+    // 2026-11-15 field report: tapping a title-carrying button focused
+    // it, and the focus path — unmodality-gated — stuck the gray popup
+    // on screen with nothing on a touch page ever blurring it. The
+    // strategy split: touch taps own titles via the hint bar; the
+    // focus path engages only after a mouse/pen pointer.
+    vi.useFakeTimers();
+    install();
+    const el = trigger("Touch focused");
+    el.dispatchEvent(
+      new PointerEvent("pointerover", { pointerType: "touch", bubbles: true }),
+    );
+    el.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    );
+    el.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    expect(el.hasAttribute("title")).toBe(true);
+    vi.advanceTimersByTime(1000);
+    expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
+  });
+
+  it("a touch pointerdown fully disconnects a stale mouse hold", () => {
+    vi.useFakeTimers();
+    install();
+    const el = trigger("Stale hold");
+    hover(el);
+    vi.advanceTimersByTime(400);
+    expect(el.hasAttribute("title")).toBe(false);
+    // Modality switch: the finger tap must RESTORE the title (the
+    // hide-only mouse path would leave the attribute stripped while the
+    // pointer rests — the touch hint bar reads title ?? data-hk-title,
+    // but view-source/AT expect the real attribute back).
+    el.dispatchEvent(
+      new PointerEvent("pointerdown", { pointerType: "touch", bubbles: true }),
+    );
+    expect(el.hasAttribute("title")).toBe(true);
+    expect(bridgePopup()?.classList.contains("hk-tooltip-visible")).toBe(false);
+  });
+
   it("never engages a touch pointerover (the touch hint bar owns touch)", () => {
     vi.useFakeTimers();
     install();

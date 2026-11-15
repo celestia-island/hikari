@@ -107,6 +107,20 @@ export default defineComponent({
             <div class="hk-notification-row__top">
               <span class="hk-notification-row__title" title={entry.title}>
                 {entry.title}
+                {/* The state word rides the TITLE as a muted suffix
+                    (2026-11-15 user ruling: the standalone chip was a
+                    meaningless extra label). */}
+                {(entry.state === "snoozed" || entry.state === "cleared") && (
+                  <span class="hk-notification-row__title-state">
+                    {" · "}
+                    {t(
+                      entry.state === "snoozed"
+                        ? "hikari::notificationCenter.stateHidden"
+                        : "hikari::notificationCenter.stateResolved",
+                      entry.state === "snoozed" ? "Hidden" : "Resolved",
+                    )}
+                  </span>
+                )}
               </span>
               <time
                 class="hk-notification-row__time"
@@ -120,20 +134,6 @@ export default defineComponent({
                 {entry.code && <code class="hk-notification-row__code">{entry.code}</code>}
                 {entry.detail && <span class="hk-notification-row__detail-text">{entry.detail}</span>}
               </p>
-            )}
-            {(entry.state === "snoozed" || entry.state === "cleared") && (
-              <div class="hk-notification-row__meta">
-                {entry.state === "snoozed" && (
-                  <span class="hk-notification-row__state">
-                    {t("hikari::notificationCenter.stateHidden", "Hidden")}
-                  </span>
-                )}
-                {entry.state === "cleared" && (
-                  <span class="hk-notification-row__state">
-                    {t("hikari::notificationCenter.stateResolved", "Resolved")}
-                  </span>
-                )}
-              </div>
             )}
           </div>
           <div class="hk-notification-row__actions">

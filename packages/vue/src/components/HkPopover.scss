@@ -256,14 +256,14 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  // Same heading grammar as the select sheet title: semibold, slightly
-  // letterspaced — one step up from the old 0.75rem so the sheet names
-  // itself at body-text size, and window chrome never participates in
-  // text selection.
-  font-size: var(--text-base, 0.875rem);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: rgb(var(--color-muted, 108 108 108));
+  // 2026-11-15 user ruling: a sheet IS a window — its title uses the
+  // SAME grammar as .hk-modal-title (bold primary at 1.125rem, no
+  // letterspacing). The old muted/semibold/0.875rem style was a
+  // special-cased framework the ruling retired ("不需要特立独行").
+  // Window chrome never participates in text selection.
+  font-size: var(--hk-modal-title-font-size, 1.125rem);
+  font-weight: var(--hk-modal-title-font-weight, 700);
+  color: var(--hk-modal-title-color, var(--hi-color-text-primary, #1e1e1e));
   @include user-select(none);
 }
 

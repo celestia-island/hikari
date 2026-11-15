@@ -13,7 +13,10 @@
 //     → after the delay the shared `.hk-tooltip-popup` element is filled,
 //       positioned (applyTooltipPosition: same placement/zoom math as
 //       HkTooltip, plus the viewport-gutter clamp) and faded in
-//   disengage (pointerout / focusout / scroll / resize / Esc); pointerdown
+//   disengage (pointerout / focusout / scroll / resize / Esc / a touch
+//     pointerdown anywhere — touch uses the per-modality strategy: the
+//     hint bar owns titles, so touch never hover- or focus-engages and
+//     any tap fully disconnects a stale hold); a mouse pointerdown
 //     only hides the popup — the hold stays so no native tooltip flashes
 //     → the popup fades out and the title attribute is RESTORED, so
 //       view-source fidelity and non-pointer readers keep the original
@@ -68,6 +71,11 @@ export interface HkTooltipBridgeOptions {
 }
 
 interface BridgeState {
+  /** The pointer modality of the last pointer event (mouse/touch/pen).
+   * Touch never hover-engages and never focus-engages — the touch hint
+   * bar owns titles there (2026-11-15 user ruling: per-modality
+   * strategy). Empty until the first pointer event. */
+  lastPointerType: string;
   root: Document;
   popup: HTMLDivElement;
   content: HTMLDivElement;
@@ -253,6 +261,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
   overlayRoot.appendChild(popup);
 
   const state: BridgeState = {
+    lastPointerType: "",
     root: document,
     popup,
     content,
@@ -306,6 +315,7 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
     // anchored popup the touch mode never shows, and break the touch
     // bar's own title fallback. Pen keeps hover (stylus users hover).
     // Focus (focusin below) is untouched: keyboard a11y still engages.
+    state.lastPointerType = (e as PointerEvent).pointerType || "mouse";
     if ((e as PointerEvent).pointerType === "touch") return;
     const el = shouldEngage(state, e.target);
     if (el) engage(state, el);
@@ -325,11 +335,28 @@ export function installHkTooltipBridge(options: HkTooltipBridgeOptions = {}): ()
     }
   }, { capture: true, passive: true });
 
-  on("pointerdown", () => {
+  on("pointerdown", (e) => {
+    const pointerType = (e as PointerEvent).pointerType || "mouse";
+    state.lastPointerType = pointerType;
+    if (pointerType === "touch") {
+      // A finger tap DISCONNECTS any hold (mouse keeps it — pressing
+      // with the tooltip up must not flash a native tooltip). On touch
+      // the popup can only be stale (focus/pointer paths are gated);
+      // restoring the title returns the element to the pre-engage state
+      // the touch hint bar reads from.
+      if (state.active) disengage(state);
+      return;
+    }
     if (state.active) hidePopup(state); // native also hides on press; stay engaged
   }, { capture: true, passive: true });
 
   on("focusin", (e) => {
+    // Touch taps focus buttons (Android), and nothing on a touch page
+    // ever blurs them — an unmodality-gated focus path stuck the gray
+    // tooltip on screen permanently (2026-11-15 field report). When the
+    // last pointer was a finger, the touch hint bar owns titles; the
+    // title attribute stays in place for AT announcement.
+    if (state.lastPointerType === "touch") return;
     const el = shouldEngage(state, e.target);
     if (el) engage(state, el);
   }, { capture: true });

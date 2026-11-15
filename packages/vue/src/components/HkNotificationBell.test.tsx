@@ -210,6 +210,13 @@ describe("panel rows", () => {
     const row = rows()[0];
     expect(row.querySelector(".hk-notification-row__state")?.textContent).toBe("Resolved");
     expect(row.querySelector(".hk-notification-row__restore")).toBeFalsy();
+    // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
+    // row IS dismissable — this is the pin that was lost in eb492e44's
+    // wrong-sibling deletion.
+    expect(
+      row.querySelector(".hk-notification-row__actions .hk-icon-button"),
+      "a resolved record is dismissable",
+    ).not.toBeNull();
   });
 
   it("the row dismiss button forgets that entry only", async () => {

@@ -53,6 +53,35 @@
 //     element's style. Legitimate CSS values for these four properties never
 //     contain those characters.
 //
+// Edge gap contract (2026-11-15) — the sheet's per-edge resolver:
+//
+//   G(edge) = var(--hk-dock-gap-<edge>,
+//                 var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))))
+//
+// `--hk-dock-gap` is declared exactly ONCE by the foundation layer (Vue:
+// scale.scss, 16px); the per-edge names and the older single-value
+// `--hk-dock-inset` are overrides only (any ancestor), and the Vue `gap` prop
+// writes `--hk-dock-gap` inline. Nothing is pre-declared per edge on `:root`: a
+// custom property resolves on the element that DECLARES it, so a root-level
+// `--hk-dock-gap-bottom: var(--hk-dock-gap)` would freeze that edge against
+// every descendant override. [`dock_bar_gap`] / [`dock_bar_inset`] transcribe
+// the resolved chain; each [`DockBarPlacement`] row carries the content-side
+// band.
+//
+// A dock owns BOTH distances on its content side: the RESTING INSET from the
+// viewport edge it hugs (the gap plus that edge's safe-area inset — 0 on a
+// desktop viewport) and a transparent CONTENT BAND on the face that points at
+// the content. The band lives in the dock's own box, which is why a host that
+// measures the box (Vue: getBoundingClientRect, padding included) reserves
+// band + surface + inset with no JS ever reading a CSS length, and why the
+// pin-slot form needs no view padding at all.
+//
+// Deltas vs Vue (documented, not accidental):
+//   * [D] no `gap` prop: the four size props stay the whole style surface. A
+//     Rust host that wants a larger (or per-edge) gap sets `--hk-dock-gap` /
+//     `--hk-dock-gap-<edge>` on an ancestor or its own wrapper style; the
+//     sheet's chain resolves it exactly as the Vue inline prop would.
+//
 // Replaces nothing: the family had no Rust counterpart for the dock container.
 // Relationship to the scroll family (kept from Vue): docks that live INSIDE a
 // scrolling region belong to the scroll container's dock slots; this component
@@ -64,9 +93,47 @@ use crate::styled::StyledComponent;
 
 pub struct DockBarComponent;
 
-/// The shared inset token every anchored mode reads (declared by the
-/// foundation layer; the sheet's fallback is 12px).
-pub const DOCK_BAR_INSET: &str = "var(--hk-dock-inset, 12px)";
+/// The terminal fallback of the edge gap family — the foundation default
+/// (`scale.scss` DECLARES `--hk-dock-gap: var(--space-16, 1rem)`).
+pub const DOCK_BAR_GAP_DEFAULT: &str = "var(--space-16, 1rem)";
+
+/// The edge-agnostic part of the chain: the legacy single-value entry over the
+/// foundation default. This is what any edge resolves to when no
+/// `--hk-dock-gap-<edge>` override exists (the sheet composes it inside each
+/// private `--_hk-dock-gap-<edge>` declaration, see [`dock_bar_gap`]).
+pub const DOCK_BAR_INSET: &str = "var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem)))";
+
+/// The fallback chain ONE edge resolves through, spelled exactly as the sheet's
+/// private `--_hk-dock-gap-<edge>` declaration. `edge` is a logical edge token:
+/// `top` / `right` / `bottom` / `left`.
+pub fn dock_bar_gap(edge: &str) -> String {
+    format!("var(--hk-dock-gap-{edge}, {DOCK_BAR_INSET})")
+}
+
+/// The RESTING INSET one anchored edge applies: the resolved gap plus that
+/// edge's safe-area inset (which is 0 on a viewport without a notch, so the gap
+/// is the visual distance there). The `plane` anchor reads the same value as
+/// its `margin-block-end`.
+pub fn dock_bar_inset(edge: &str) -> String {
+    format!(
+        "calc({} + env(safe-area-inset-{edge}, 0px))",
+        dock_bar_gap(edge)
+    )
+}
+
+/// One content-side band an anchor opens: which logical padding property the
+/// sheet sets, and which edge's resolved gap fills it. Transcribed from the
+/// sheet's anchor rules — the content never comes closer to the surface than
+/// the gap on that face.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct DockBarBand {
+    /// The logical padding property, exactly as the sheet spells it
+    /// (`padding-block-start`, `padding-block-end`, `padding-inline-start`,
+    /// `padding-inline-end`).
+    pub padding: &'static str,
+    /// The edge whose resolved gap fills it.
+    pub edge: &'static str,
+}
 
 /// Which plane carries the dock: a compass anchor (4 edges + 4 corners,
 /// `page` being the south edge) or a host plane (in-flow). Vue default `page`.
@@ -140,12 +207,87 @@ pub struct DockBarPlacement {
     /// The `align-items` override the corner anchors set on the flex column;
     /// `None` keeps the base `center`.
     pub align_items: Option<&'static str>,
-    /// The edges pinned with [`DOCK_BAR_INSET`], in the sheet's order.
+    /// The edges whose resolved gap ([`dock_bar_inset`]) sets the dock's
+    /// RESTING distance from that viewport edge, in the sheet's order.
+    /// Absolute anchors pin them through `bottom` / `top` / `left` / `right`;
+    /// the in-flow `plane` anchor reads the bottom edge as its
+    /// `margin-block-end` instead of pinning anything.
     pub inset_edges: &'static [&'static str],
+    /// The content-side bands the anchor opens, in the sheet's declaration
+    /// order (block axis first, then inline).
+    pub bands: &'static [DockBarBand],
     /// The vertical side anchors cap the surface height viewport-aware
-    /// (`calc(100dvh - …)`) by default; `--dock-max-height` still overrides.
+    /// (`calc(100dvh - top gap - bottom gap)`) by default; `--dock-max-height`
+    /// still overrides.
     pub caps_viewport_height: bool,
 }
+
+/// The content-side band of a south-edge dock: the block-start face points at
+/// the content above the dock.
+const BAND_SOUTH: &[DockBarBand] = &[DockBarBand {
+    padding: "padding-block-start",
+    edge: "bottom",
+}];
+/// The content-side band of a north-edge dock: the block-end face points down
+/// at the content.
+const BAND_NORTH: &[DockBarBand] = &[DockBarBand {
+    padding: "padding-block-end",
+    edge: "top",
+}];
+/// West-edge dock: the band faces the content on the inline end.
+const BAND_WEST: &[DockBarBand] = &[DockBarBand {
+    padding: "padding-inline-end",
+    edge: "left",
+}];
+/// East-edge dock: the band faces the content on the inline start.
+const BAND_EAST: &[DockBarBand] = &[DockBarBand {
+    padding: "padding-inline-start",
+    edge: "right",
+}];
+/// North-west corner: both content-facing faces open.
+const BAND_NORTH_WEST: &[DockBarBand] = &[
+    DockBarBand {
+        padding: "padding-block-end",
+        edge: "top",
+    },
+    DockBarBand {
+        padding: "padding-inline-end",
+        edge: "left",
+    },
+];
+/// North-east corner.
+const BAND_NORTH_EAST: &[DockBarBand] = &[
+    DockBarBand {
+        padding: "padding-block-end",
+        edge: "top",
+    },
+    DockBarBand {
+        padding: "padding-inline-start",
+        edge: "right",
+    },
+];
+/// South-west corner.
+const BAND_SOUTH_WEST: &[DockBarBand] = &[
+    DockBarBand {
+        padding: "padding-block-start",
+        edge: "bottom",
+    },
+    DockBarBand {
+        padding: "padding-inline-end",
+        edge: "left",
+    },
+];
+/// South-east corner.
+const BAND_SOUTH_EAST: &[DockBarBand] = &[
+    DockBarBand {
+        padding: "padding-block-start",
+        edge: "bottom",
+    },
+    DockBarBand {
+        padding: "padding-inline-start",
+        edge: "right",
+    },
+];
 
 /// The placement of one anchor, transcribed from `HkDockBar.scss`.
 pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
@@ -157,6 +299,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "translateX(-50%)",
             align_items: None,
             inset_edges: &["bottom"],
+            bands: BAND_SOUTH,
             caps_viewport_height: false,
         },
         DockBarAnchor::Top => DockBarPlacement {
@@ -164,6 +307,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "translateX(-50%)",
             align_items: None,
             inset_edges: &["top"],
+            bands: BAND_NORTH,
             caps_viewport_height: false,
         },
         // Vertical docks run along the tall axis and are centered by
@@ -173,6 +317,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "translateY(-50%)",
             align_items: None,
             inset_edges: &["left"],
+            bands: BAND_WEST,
             caps_viewport_height: true,
         },
         DockBarAnchor::Right => DockBarPlacement {
@@ -180,6 +325,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "translateY(-50%)",
             align_items: None,
             inset_edges: &["right"],
+            bands: BAND_EAST,
             caps_viewport_height: true,
         },
         DockBarAnchor::TopLeft => DockBarPlacement {
@@ -187,6 +333,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "",
             align_items: Some("flex-start"),
             inset_edges: &["top", "left"],
+            bands: BAND_NORTH_WEST,
             caps_viewport_height: false,
         },
         DockBarAnchor::TopRight => DockBarPlacement {
@@ -194,6 +341,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "",
             align_items: Some("flex-end"),
             inset_edges: &["top", "right"],
+            bands: BAND_NORTH_EAST,
             caps_viewport_height: false,
         },
         DockBarAnchor::BottomLeft => DockBarPlacement {
@@ -201,6 +349,7 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "",
             align_items: Some("flex-start"),
             inset_edges: &["bottom", "left"],
+            bands: BAND_SOUTH_WEST,
             caps_viewport_height: false,
         },
         DockBarAnchor::BottomRight => DockBarPlacement {
@@ -208,15 +357,19 @@ pub fn dock_bar_placement(anchor: DockBarAnchor) -> DockBarPlacement {
             transform: "",
             align_items: Some("flex-end"),
             inset_edges: &["bottom", "right"],
+            bands: BAND_SOUTH_EAST,
             caps_viewport_height: false,
         },
         // NOT a compass direction: the host provides the plane (e.g. a fixed
         // footer band) and this container only centers the surface in flow.
+        // Its rest distance is the bottom gap as a margin, and the content band
+        // opens on the block-start face like any other south-edge dock.
         DockBarAnchor::Plane => DockBarPlacement {
             absolute: false,
             transform: "",
             align_items: None,
-            inset_edges: &[],
+            inset_edges: &["bottom"],
+            bands: BAND_SOUTH,
             caps_viewport_height: false,
         },
     }
@@ -435,12 +588,106 @@ mod tests {
             assert_eq!(placement.align_items, Some(align), "{anchor:?}");
             assert!(!placement.caps_viewport_height, "{anchor:?}");
         }
-        // plane is the ONLY in-flow anchor: the host provides the plane.
+        // plane is the ONLY in-flow anchor: the host provides the plane, and
+        // its rest distance is the bottom gap as a margin (see the field doc).
         let plane = dock_bar_placement(DockBarAnchor::Plane);
         assert!(!plane.absolute);
-        assert!(plane.inset_edges.is_empty());
+        assert_eq!(plane.inset_edges.to_vec(), vec!["bottom"]);
         assert_eq!(plane.transform, "");
-        assert_eq!(DOCK_BAR_INSET, "var(--hk-dock-inset, 12px)");
+    }
+
+    /** One anchor's content bands as (padding property, edge) pairs. */
+    fn bands_of(anchor: DockBarAnchor) -> Vec<(&'static str, &'static str)> {
+        dock_bar_placement(anchor)
+            .bands
+            .iter()
+            .map(|band| (band.padding, band.edge))
+            .collect()
+    }
+
+    #[test]
+    fn dock_bar_content_bands_cover_every_anchor() {
+        // The sheet's band table, transcribed: the padding face that points at
+        // the content, and the edge gap that fills it. A dock that lost its
+        // band would let content touch the surface again (the 2026-11-15 bug);
+        // a band on the wrong face would push the surface off its edge.
+        let cases: [(DockBarAnchor, &[(&str, &str)]); 10] = [
+            (DockBarAnchor::Page, &[("padding-block-start", "bottom")]),
+            (DockBarAnchor::Bottom, &[("padding-block-start", "bottom")]),
+            (DockBarAnchor::Plane, &[("padding-block-start", "bottom")]),
+            (DockBarAnchor::Top, &[("padding-block-end", "top")]),
+            (DockBarAnchor::Left, &[("padding-inline-end", "left")]),
+            (DockBarAnchor::Right, &[("padding-inline-start", "right")]),
+            (
+                DockBarAnchor::TopLeft,
+                &[("padding-block-end", "top"), ("padding-inline-end", "left")],
+            ),
+            (
+                DockBarAnchor::TopRight,
+                &[("padding-block-end", "top"), ("padding-inline-start", "right")],
+            ),
+            (
+                DockBarAnchor::BottomLeft,
+                &[("padding-block-start", "bottom"), ("padding-inline-end", "left")],
+            ),
+            (
+                DockBarAnchor::BottomRight,
+                &[("padding-block-start", "bottom"), ("padding-inline-start", "right")],
+            ),
+        ];
+        assert_eq!(cases.len(), ALL_ANCHORS.len());
+        for (anchor, expected) in cases {
+            assert_eq!(bands_of(anchor), expected.to_vec(), "{anchor:?}");
+            // Every band reads a compass edge through the same chain the rest
+            // inset uses — no band invents a fourth distance.
+            for (padding, edge) in bands_of(anchor) {
+                assert!(
+                    matches!(edge, "top" | "right" | "bottom" | "left"),
+                    "{anchor:?}: {padding} reads {edge}"
+                );
+                assert!(
+                    matches!(
+                        padding,
+                        "padding-block-start"
+                            | "padding-block-end"
+                            | "padding-inline-start"
+                            | "padding-inline-end"
+                    ),
+                    "{anchor:?}: {padding}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn dock_bar_edge_gap_matches_the_sheet_chain() {
+        // `--hk-dock-gap` is DECLARED once by the foundation layer; the
+        // per-edge name, then the legacy single value, then the 16px default
+        // are read-time fallbacks. Pre-declaring a per-edge alias on :root
+        // would freeze it against descendant overrides, so the per-edge token
+        // may only appear as the chain's FIRST link.
+        assert_eq!(DOCK_BAR_GAP_DEFAULT, "var(--space-16, 1rem)");
+        assert_eq!(
+            DOCK_BAR_INSET,
+            "var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem)))"
+        );
+        assert!(!DOCK_BAR_INSET.contains("--hk-dock-gap-"));
+        for edge in ["top", "right", "bottom", "left"] {
+            assert_eq!(
+                dock_bar_gap(edge),
+                format!("var(--hk-dock-gap-{edge}, {DOCK_BAR_INSET})"),
+                "{edge}"
+            );
+            // The resting inset is the resolved gap PLUS that edge's
+            // safe-area inset (0 on a desktop viewport).
+            assert_eq!(
+                dock_bar_inset(edge),
+                format!(
+                    "calc(var(--hk-dock-gap-{edge}, {DOCK_BAR_INSET}) + env(safe-area-inset-{edge}, 0px))"
+                ),
+                "{edge}"
+            );
+        }
     }
 
     #[test]
@@ -549,6 +796,45 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored dock-bar sheet"
+        );
+    }
+
+    #[test]
+    fn dock_bar_styles_compile_the_whole_edge_gap_geometry() {
+        // The Rust form renders the SAME sheet, so the grass compile has to
+        // carry the whole family: the four private per-edge resolvers, the
+        // resting insets (gap + safe-area), the content bands and the two
+        // viewport caps. A compiler that dropped or rewrote one of them would
+        // ship unstyled geometry while the Vue form looked right.
+        let css = DockBarComponent::styles();
+        for edge in ["top", "right", "bottom", "left"] {
+            let chain = format!(
+                "--_hk-dock-gap-{edge}: var(--hk-dock-gap-{edge}, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))))"
+            );
+            assert!(css.contains(&chain), "missing {chain}\n{css}");
+            let inset =
+                format!("calc(var(--_hk-dock-gap-{edge}) + env(safe-area-inset-{edge}, 0px))");
+            assert!(css.contains(&inset), "missing {inset}\n{css}");
+        }
+        for band in [
+            "padding-block-start: var(--_hk-dock-gap-bottom)",
+            "padding-block-end: var(--_hk-dock-gap-top)",
+            "padding-inline-end: var(--_hk-dock-gap-left)",
+            "padding-inline-start: var(--_hk-dock-gap-right)",
+        ] {
+            assert!(css.contains(band), "missing {band}\n{css}");
+        }
+        assert!(
+            css.contains(
+                "max-width: var(--dock-max-width, calc(100vw - var(--_hk-dock-gap-left) - var(--_hk-dock-gap-right)))"
+            ),
+            "{css}"
+        );
+        assert!(
+            css.contains(
+                "max-height: var(--dock-max-height, calc(100dvh - var(--_hk-dock-gap-top) - var(--_hk-dock-gap-bottom)))"
+            ),
+            "{css}"
         );
     }
 }

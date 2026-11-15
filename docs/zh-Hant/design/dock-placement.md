@@ -46,6 +46,29 @@ ride **不是**那條已退役的配方：在視口上用 `::after` 為「漂浮
 就出現死氣，且 dock 從不跟隨內容。ride 的 dock 本體就是內容流裡的子節點：沒有任何空間是為
 別處繪製的東西預留下來的，而 sticky 才是讓空氣跟隨內容而不是視窗的原因。
 
+## 邊緣間距
+
+dock 同時守住兩側的**最小間距**，兩者來自同一套 token，而不是任何頁面自己的內距：
+
+- **休止 inset**——dock 面到它所貼的那條視口邊緣的距離，再加上該邊的
+  `env(safe-area-inset-*)`（有凹口的裝置在系統安全區之上仍保留這段間距，桌面端則解析為 0）；
+- **內容帶（band）**——dock 朝向內容那一側的透明 padding，內容因此永遠不會比這段間距更靠近
+  dock 面。
+
+預設每條邊都是 16px（`--hk-dock-gap`，由 foundation 層宣告唯一一處）。需要更大間距的 dock 在
+`HkDockBar` / `DockBar` 上傳 `gap`（一個 CSS 長度）；宿主也可以在任意祖先上用
+`--hk-dock-gap-<top|right|bottom|left>` 覆蓋單條邊，或用舊的 `--hk-dock-inset` 一次覆蓋全部四邊。
+per-edge 名字在讀取處解析，所以在其下覆蓋 `--hk-dock-gap` 仍然會作用到每一條邊。
+
+這條 band 屬於 dock，而不屬於承載它的視口，正因如此**視口不需要任何 padding**：`pin` 插槽裡 dock
+是捲動視口的 flex 兄弟，視口按佈局讓出 band，撐到 `min-height: 100%` 的內容也遮不住它；浮動
+dock 則因為宿主測量的就是它自己的盒子（`getBoundingClientRect` 已含 padding），band 天然算在
+佔用裡。
+
+**發佈給捲動容器的佔用 = band + surface + inset**，與放置模式無關。為 dock 尾部預留空間的消費側
+只讀這個發佈值，**不要再疊一次 dock 高度（或 dock inset）**——兩段距離已經在裡面了；再疊一次正是
+這套契約要消掉的死區。
+
 ## 如何選擇
 
 | 宿主 | 落位 |

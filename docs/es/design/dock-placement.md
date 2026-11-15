@@ -59,6 +59,35 @@ del final del scroll, y el dock nunca seguía el contenido. El cuerpo del dock e
 dentro del flujo: no se pre-reserva nada para algo pintado en otro lugar, y es la caja sticky la
 que hace que el aire siga al contenido y no a la ventana.
 
+## El espacio de borde
+
+Un dock mantiene una **distancia mínima** en dos lados a la vez, y ambas vienen de una única
+familia de tokens, nunca del padding de una página:
+
+- el **inset de reposo** — a qué distancia queda la superficie del dock del borde del viewport al
+  que se pega, más el `env(safe-area-inset-*)` de ese borde (un dispositivo con muesca conserva el
+  hueco por encima del área segura del sistema, mientras que un escritorio lo resuelve a 0);
+- la **banda de contenido** — un padding transparente en la cara del dock que mira al contenido,
+  para que el contenido nunca se acerque a la superficie menos que ese mismo hueco.
+
+El valor predeterminado es 16px en cada borde (`--hk-dock-gap`, declarado una sola vez por la capa
+foundation). Un dock que necesite más espacio pasa `gap` (una longitud CSS) a `HkDockBar` /
+`DockBar`; un host también puede sobrescribir un solo borde con
+`--hk-dock-gap-<top|right|bottom|left>` en cualquier ancestro, o todos los bordes a la vez con el
+antiguo `--hk-dock-inset`. Los nombres por borde se resuelven donde se leen, así que una
+sobrescritura de `--hk-dock-gap` por debajo sigue llegando a todos los bordes.
+
+La banda pertenece al dock, nunca a la vista que lo aloja, y por eso no hace falta padding en la
+vista: en una ranura `pin` el dock es un hermano flex del viewport con scroll, así que el viewport
+cede la banda por maquetación y un contenido estirado a `min-height: 100%` no puede ocultarla; en un
+dock flotante, la caja que el host mide (su propio `getBoundingClientRect`, padding incluido) ya la
+contiene.
+
+**La ocupación publicada = banda + superficie + inset**, sea cual sea el modo de colocación. Un
+consumidor que reserva la cola del dock lee el valor publicado y NO debe volver a sumar la altura
+del dock (ni un inset de dock): ambas distancias ya están dentro. Volver a apilarlas es justo la
+banda muerta que este contrato elimina.
+
 ## Cómo elegir
 
 | Host | Ubicación |

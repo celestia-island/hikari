@@ -1135,7 +1135,11 @@ export default defineComponent({
      *  a consumer's content end-padding can clear the dock with breathing
      *  room (padding-bottom: calc(var(--hk-scroll-dock-bottom, 0px) +
      *  2rem)) instead of hand-rolled px guesses that go stale when the dock
-     *  reflows. In `dockMode="ride"` the same var IS the layout: the ride
+     *  reflows. The measured box is the dock's WHOLE box, so it already
+     *  contains the dock's own edge gap band and resting inset
+     *  (HkDockBar.scss, 2026-11-15): a consumer reserves the dock once and
+     *  never adds a dock inset on top. In `dockMode="ride"` the same var IS
+     *  the layout: the ride
      *  spacer spends it as the one-dock-height air above the dock, so the
      *  measurement feeds the geometry instead of only a consumer's padding
      *  (see the dockMode prop doc). ResizeObserver keeps it live across

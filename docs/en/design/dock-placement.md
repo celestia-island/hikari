@@ -62,6 +62,33 @@ the scroll end, and the dock never followed the content. A ride dock's own box i
 child: nothing is pre-reserved for something painted elsewhere, and the sticky box is what
 makes the air track the content instead of the window.
 
+## The edge gap
+
+A dock keeps a **minimum distance** on two sides at once, and both come from one token family
+rather than from any page's own padding:
+
+- the **resting inset** — how far the dock surface sits from the viewport edge it hugs, plus that
+  edge's `env(safe-area-inset-*)` (a notched device keeps the gap on top of the system safe area,
+  while a desktop resolves it to 0);
+- the **content band** — a transparent padding on the face of the dock that points at the content,
+  so the content never comes closer to the surface than the same gap.
+
+The default is 16px on every edge (`--hk-dock-gap`, declared once by the foundation layer). A dock
+that needs more room passes `gap` (one CSS length) on `HkDockBar` / `DockBar`; a host can also
+override a single edge with `--hk-dock-gap-<top|right|bottom|left>` on any ancestor, or every edge
+at once with the older `--hk-dock-inset`. The per-edge names are resolved where they are read, so
+an `--hk-dock-gap` override still reaches every edge below it.
+
+The band belongs to the dock, never to the view that hosts it, and that is why no view padding is
+needed: in a `pin` slot the dock is a flex sibling of the scroll viewport, so the viewport yields
+the band by layout and content inflated to `min-height: 100%` cannot hide it; for a floating dock
+the box a host measures (its own `getBoundingClientRect`, padding included) already contains it.
+
+**Published occupancy = band + surface + inset**, whichever mode placed the dock. A consumer that
+reserves the dock's tail reads the published value and must NOT add the dock height (or a dock
+inset) a second time — both distances are already inside it. Stacking them again is exactly the
+dead band this contract removes.
+
 ## Choosing
 
 | Host | Placement |

@@ -19,8 +19,6 @@
 export const MASK_LEFT = 0b001 as const;
 export const MASK_MIDDLE = 0b010 as const;
 export const MASK_RIGHT = 0b100 as const;
-export const MASK_ANY = 0b111 as const;
-
 /**
  * The minimal action surface a dock needs from the host. The host
  * closes over its own pointer state (the virtual pointer's current
@@ -54,10 +52,12 @@ export interface VirtualPointerState {
   buttons: number;
 }
 
-/** Display pixels per remote pixel along an axis (≥ 0). */
-export function displayScale(viewport: RemoteViewport, displayPx: number): number {
-  if (displayPx <= 0 || viewport.width <= 0) return 1;
-  return viewport.width / displayPx;
+/** Remote pixels per display pixel along ONE axis (degenerate boxes
+ *  stay 1:1 instead of exploding). Callers scale each axis with its
+ *  own pair — a fill/cover transform stretches them differently. */
+export function displayScale(remotePx: number, displayPx: number): number {
+  if (displayPx <= 0 || remotePx <= 0) return 1;
+  return remotePx / displayPx;
 }
 
 /** Clamp a point into the remote viewport (inclusive pixel edges). */

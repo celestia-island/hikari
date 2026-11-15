@@ -4,6 +4,7 @@ import { reactive, watch, type Ref } from "vue";
 
 import {
   clampToViewport,
+  displayScale,
   type RemoteViewport,
   type VirtualPointerState,
 } from "../components/remoteInputTypes";
@@ -14,16 +15,25 @@ import {
  * instead of BEING the finger).
  *
  * The pointer lives in REMOTE pixels inside the viewport; gestures and
- * dock buttons mutate it through the only four transitions it has
- * (nudge / press / tap / wheel), and every transition reports through
- * the caller's sinks — the composable never talks to a transport
- * itself, so the same state feeds a wire, a HUD, or a test.
+ * dock buttons mutate it through its transitions (nudge / press /
+ * click / wheel), and every transition reports through the caller's
+ * sinks — the composable never talks to a transport itself, so the
+ * same state feeds a wire, a HUD, or a test.
+ *
+ * Two button semantics, deliberately distinct (the R2 ownership
+ * finding): `press(mask, down)` is a HELD button (dock pads, cursor
+ * lobes — persistent state); `click(mask)` is a TRANSIENT click (a
+ * gesture tap / long-press) that rides ALONGSIDE whatever is held —
+ * the down frame ORs the bit in, the up frame restores the held
+ * baseline, and `state.buttons` is never touched. A tap can therefore
+ * never silently release a button another surface holds.
  *
  * Consumers compose:
- * - touch gestures (`useRemoteTouchGestures`) call `nudge`/`tap`/
+ * - touch gestures (`useRemoteTouchGestures`) call `nudge`/`click`/
  *   `wheel` with DISPLAY-pixel deltas plus the display box, and the
- *   composable rescales into remote pixels;
- * - the dock (HkRemoteInputDock) calls `press`/`wheel` through a
+ *   composable rescales into remote pixels (per-axis: a fill/cover
+ *   transform stretches differently on each axis);
+ * - the dock (HkRemoteInputDock) drives `press` through a
  *   RemoteButtonActions adapter the host builds from this state.
  */
 export interface VirtualPointerSinks {
@@ -37,10 +47,13 @@ export interface VirtualPointerSinks {
 export interface UseVirtualPointer {
   /** Live state (reactive; remote px + UI mask). */
   state: VirtualPointerState;
-  /** Move by display-pixel delta, rescaled to remote px. */
-  nudge(displayDx: number, displayDy: number, displayPx: number): void;
+  /** Move by a display-pixel delta inside a display box, rescaled
+   *  per-axis into remote px. */
+  nudge(displayDx: number, displayDy: number, display: { width: number; height: number }): void;
   /** Press and release a mask (tap-click); reports both transitions. */
   tap(mask: number): void;
+  /** A TRANSIENT click alongside held buttons (see the docblock). */
+  click(mask: number): void;
   /** Press (down=true) or release one mask's buttons. */
   press(mask: number, down: boolean): void;
   /** Wheel notches at the pointer's position. */
@@ -65,24 +78,31 @@ export function useVirtualPointer(
   }
 
   // Keep the pointer inside the viewport as frames resize (a pointer
-  // stranded outside the new bounds could never reach edge UI).
+  // stranded outside the new bounds could never reach edge UI). Watch
+  // the DIMENSIONS: hosts commonly mutate the viewport object in place
+  // (the ResizeObserver shape), which a reference watch never sees.
   watch(
-    () => viewport.value,
-    (vp) => {
-      const clamped = clampToViewport(state.x, state.y, vp);
+    () => [viewport.value.width, viewport.value.height],
+    () => {
+      const clamped = clampToViewport(state.x, state.y, viewport.value);
       if (clamped.x !== state.x || clamped.y !== state.y) {
         state.x = clamped.x;
         state.y = clamped.y;
+        // The wire must learn the new position too — a silent clamp
+        // would leave the remote cursor outside the visible screen.
+        report();
       }
     },
   );
 
-  function nudge(displayDx: number, displayDy: number, displayPx: number) {
-    if (displayPx <= 0 || viewport.value.width <= 0) return;
-    const scale = viewport.value.width / displayPx;
+  function nudge(displayDx: number, displayDy: number, display: { width: number; height: number }) {
+    // Per-axis scales: a fill/cover transform stretches each axis
+    // differently; one shared scale would skew vertical sensitivity.
+    const sx = displayScale(viewport.value.width, display.width);
+    const sy = displayScale(viewport.value.height, display.height);
     const next = clampToViewport(
-      state.x + displayDx * scale,
-      state.y + displayDy * scale,
+      state.x + displayDx * sx,
+      state.y + displayDy * sy,
       viewport.value,
     );
     if (next.x === state.x && next.y === state.y) return;
@@ -98,6 +118,13 @@ export function useVirtualPointer(
     report();
   }
 
+  function click(mask: number) {
+    // Transient: the down frame carries held|mask, the up frame
+    // restores the held baseline — held buttons survive the click.
+    sinks.pointer(state.x, state.y, state.buttons | mask);
+    sinks.pointer(state.x, state.y, state.buttons);
+  }
+
   function tap(mask: number) {
     press(mask, true);
     press(mask, false);
@@ -110,9 +137,12 @@ export function useVirtualPointer(
 
   function setViewport(vp: RemoteViewport) {
     const clamped = clampToViewport(state.x, state.y, vp);
-    state.x = clamped.x;
-    state.y = clamped.y;
+    if (clamped.x !== state.x || clamped.y !== state.y) {
+      state.x = clamped.x;
+      state.y = clamped.y;
+      report();
+    }
   }
 
-  return { state, nudge, tap, press, wheel, setViewport };
+  return { state, nudge, tap, click, press, wheel, setViewport };
 }

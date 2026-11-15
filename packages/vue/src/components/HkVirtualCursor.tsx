@@ -1,7 +1,8 @@
 // AI-generated: developed with the DeepSeek Harness agent (model GLM-5.3 Flash); human-directed.
 
-import { computed, defineComponent, type PropType } from "vue";
+import { computed, defineComponent, ref, type PropType } from "vue";
 
+import { useI18n } from "../i18n/context";
 import {
   MASK_LEFT,
   MASK_RIGHT,
@@ -22,10 +23,16 @@ import "./HkVirtualCursor.scss";
  * release pair, emitted through `press`), which is how a phone without
  * mouse buttons clicks.
  *
+ * Ownership rule (R2): a lobe releases ONLY a button IT pressed — the
+ * local `pressedHere` set tracks which bits this surface put down, so
+ * a bit held by another surface (the dock pad, a host-side hold)
+ * survives an unrelated pointerleave here, and this surface never
+ * re-releases what it never pressed.
+ *
  * The component is presentation + lobes only: position and pressed
  * state come in as props (a `useVirtualPointer` state), and every
- * interaction reports upward — it owns no pointer state and never
- * talks to a transport.
+ * interaction reports upward — it owns no pointer state beyond the
+ * ownership set and never talks to a transport.
  */
 export default defineComponent({
   name: "HkVirtualCursor",
@@ -46,6 +53,11 @@ export default defineComponent({
     press: (_mask: number, _down: boolean) => true,
   },
   setup(props, { emit }) {
+    const { t } = useI18n();
+
+    /** Bits THIS surface pressed and has not yet released. */
+    const pressedHere = ref(0);
+
     const leftPct = computed(() =>
       props.viewport.width > 0 ? (props.x / props.viewport.width) * 100 : 0,
     );
@@ -56,9 +68,13 @@ export default defineComponent({
     const rightHeld = computed(() => (props.buttons & MASK_RIGHT) !== 0);
 
     function lobeDown(mask: number) {
+      pressedHere.value |= mask;
       emit("press", mask, true);
     }
+    /** Release ONLY what this surface pressed (the ownership rule). */
     function lobeUp(mask: number) {
+      if ((pressedHere.value & mask) === 0) return;
+      pressedHere.value &= ~mask;
       emit("press", mask, false);
     }
 
@@ -79,22 +95,22 @@ export default defineComponent({
             class="hk-virtual-cursor__lobe"
             data-lobe="left"
             data-held={leftHeld.value || undefined}
-            aria-label="left button"
+            aria-label={t("hikari::remoteInput.btn.left", "left button")}
             onPointerdown={(e) => { e.preventDefault(); lobeDown(MASK_LEFT); }}
             onPointerup={() => lobeUp(MASK_LEFT)}
-            onPointerleave={() => leftHeld.value && lobeUp(MASK_LEFT)}
-            onPointercancel={() => leftHeld.value && lobeUp(MASK_LEFT)}
+            onPointerleave={() => lobeUp(MASK_LEFT)}
+            onPointercancel={() => lobeUp(MASK_LEFT)}
           />
           <button
             type="button"
             class="hk-virtual-cursor__lobe"
             data-lobe="right"
             data-held={rightHeld.value || undefined}
-            aria-label="right button"
+            aria-label={t("hikari::remoteInput.btn.right", "right button")}
             onPointerdown={(e) => { e.preventDefault(); lobeDown(MASK_RIGHT); }}
             onPointerup={() => lobeUp(MASK_RIGHT)}
-            onPointerleave={() => rightHeld.value && lobeUp(MASK_RIGHT)}
-            onPointercancel={() => rightHeld.value && lobeUp(MASK_RIGHT)}
+            onPointerleave={() => lobeUp(MASK_RIGHT)}
+            onPointercancel={() => lobeUp(MASK_RIGHT)}
           />
         </div>
       </div>

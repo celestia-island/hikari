@@ -2,7 +2,7 @@
 
 import { MousePointerClick } from "lucide-vue-next";
 
-import { defineComponent, onBeforeUnmount, ref, type PropType } from "vue";
+import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import type { RemoteButtonActions } from "./remoteInputTypes";
@@ -16,15 +16,23 @@ import "./HkRemoteInputDock.scss";
  * surface) that expands into the remote-input control card:
  *
  * - the MODE switch — direct touch (the finger is the pointer) vs the
- *   virtual mouse (a pointer that MOVES with the finger; v-model);
+ *   virtual mouse (a pointer that moves relatively; v-model);
  * - the BUTTON pad — left / middle / right hold-buttons plus wheel
  *   up/down taps, wired straight into the `actions` prop (the host's
  *   transport closure; the dock never owns pointer state);
  * - the HOST slot — view controls the owning surface adds beside them
  *   (fit/fill, the landscape-lock toggle, …).
  *
+ * Hold semantics (the flagship phone flow: one thumb HOLDS a pad
+ * button while the other works the canvas): a held pad KEEPS the card
+ * open — the outside-pointerdown dismissal stands down while any pad
+ * bit is held — and any path that unmounts the card anyway (Escape,
+ * `hidden`, component teardown) force-releases every held bit, so a
+ * removed button can never leave the remote button latched.
+ *
  * Dismissal follows the HkFab grammar: outside pointerdown or Escape
- * closes the card (Escape is swallowed so an ancestor modal survives).
+ * closes the card (Escape is swallowed so an ancestor modal survives;
+ * a hidden dock swallows nothing).
  */
 export default defineComponent({
   name: "HkRemoteInputDock",
@@ -45,6 +53,34 @@ export default defineComponent({
     const open = ref(false);
     const rootRef = ref<HTMLElement>();
 
+    /** Hold-buttons: pointerdown presses, pointerup/leave/cancel
+     *  releases — the pad speaks the absolute-mask action, so the
+     *  mask of CURRENTLY HELD pads is sent on every transition. */
+    const held = ref(0);
+
+    /** Release every held bit. Unconditional on `held` itself; the
+     *  wire call is best-effort (actions may have vanished with the
+     *  session) — called from every teardown path so a removed button
+     *  can never stay latched on the remote. */
+    function releaseAll() {
+      if (held.value === 0) return;
+      held.value = 0;
+      props.actions?.setButtons(0);
+    }
+
+    function padDown(mask: number) {
+      if (!props.actions) return;
+      held.value |= mask;
+      props.actions.setButtons(held.value);
+    }
+    function padUp(mask: number) {
+      // Clear the bit FIRST: `actions` may vanish mid-gesture (the
+      // session dropped) and the local bookkeeping must not strand it.
+      if ((held.value & mask) === 0) return;
+      held.value &= ~mask;
+      props.actions?.setButtons(held.value);
+    }
+
     function setOpen(next: boolean) {
       open.value = next;
       if (next) {
@@ -52,6 +88,7 @@ export default defineComponent({
         document.addEventListener("pointerdown", onDocPointerdown, true);
       } else {
         unbind();
+        releaseAll();
       }
     }
 
@@ -61,7 +98,7 @@ export default defineComponent({
     }
 
     function onDocKeydown(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
+      if (e.key !== "Escape" || props.hidden) return;
       e.preventDefault();
       e.stopPropagation();
       setOpen(false);
@@ -70,28 +107,44 @@ export default defineComponent({
     function onDocPointerdown(e: PointerEvent) {
       const root = rootRef.value;
       if (root && e.target instanceof Node && root.contains(e.target)) return;
+      // A HELD pad keeps the card open (the hold-and-work flow): the
+      // dismissal stands down while any bit is held.
+      if (held.value !== 0) return;
       setOpen(false);
     }
 
-    onBeforeUnmount(unbind);
+    // hidden while open: the card vanishes with the session — release
+    // everything and stand the listeners down (an invisible dock must
+    // not swallow Escape for the whole app).
+    watch(
+      () => props.hidden,
+      (h) => {
+        if (h && open.value) setOpen(false);
+      },
+    );
+    onBeforeUnmount(() => {
+      unbind();
+      releaseAll();
+    });
 
     function setMode(mode: "direct" | "virtual") {
       emit("update:mode", mode);
     }
 
-    /** Hold-buttons: pointerdown presses, pointerup/leave/cancel
-     *  releases — the pad speaks the absolute-mask action, so a
-     *  mask-of-held-pads is sent on every transition. */
-    const held = ref(0);
-    function padDown(mask: number) {
-      if (!props.actions) return;
-      held.value |= mask;
-      props.actions.setButtons(held.value);
+    const padItems = computed(() => [
+      { key: "left", mask: 0b001 },
+      { key: "middle", mask: 0b010 },
+      { key: "right", mask: 0b100 },
+    ] as const);
+
+    /** Roving-tab tabindex: only the checked radio is a tab stop. */
+    function radioTabindex(mode: "direct" | "virtual") {
+      return props.mode === mode ? 0 : -1;
     }
-    function padUp(mask: number) {
-      if (!props.actions) return;
-      held.value &= ~mask;
-      props.actions.setButtons(held.value);
+    function onRadiogroupKeydown(e: KeyboardEvent) {
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      e.preventDefault();
+      setMode(props.mode === "direct" ? "virtual" : "direct");
     }
 
     return () =>
@@ -111,10 +164,16 @@ export default defineComponent({
             </button>
             {open.value ? (
               <div class="hk-remote-input-dock__card" role="group" aria-label={t("hikari::remoteInput.card", "Remote input controls")}>
-                <div class="hk-remote-input-dock__modes" role="radiogroup" aria-label={t("hikari::remoteInput.mode", "Pointer mode")}>
+                <div
+                  class="hk-remote-input-dock__modes"
+                  role="radiogroup"
+                  aria-label={t("hikari::remoteInput.mode", "Pointer mode")}
+                  onKeydown={onRadiogroupKeydown}
+                >
                   <button
                     type="button"
                     role="radio"
+                    tabindex={radioTabindex("direct")}
                     aria-checked={props.mode === "direct"}
                     class="hk-remote-input-dock__mode"
                     data-active={props.mode === "direct" || undefined}
@@ -125,6 +184,7 @@ export default defineComponent({
                   <button
                     type="button"
                     role="radio"
+                    tabindex={radioTabindex("virtual")}
                     aria-checked={props.mode === "virtual"}
                     class="hk-remote-input-dock__mode"
                     data-active={props.mode === "virtual" || undefined}
@@ -133,24 +193,20 @@ export default defineComponent({
                     {t("hikari::remoteInput.mode.virtual", "Virtual mouse")}
                   </button>
                 </div>
-                <div class="hk-remote-input-dock__pad" aria-label={t("hikari::remoteInput.pad", "Buttons and wheel")}>
-                  {([
-                    ["left", 0b001],
-                    ["middle", 0b010],
-                    ["right", 0b100],
-                  ] as const).map(([name, mask]) => (
+                <div class="hk-remote-input-dock__pad" role="group" aria-label={t("hikari::remoteInput.pad", "Buttons and wheel")}>
+                  {padItems.value.map(({ key, mask }) => (
                     <button
-                      key={name}
+                      key={key}
                       type="button"
                       class="hk-remote-input-dock__btn"
                       disabled={!props.actions}
-                      aria-label={t(`hikari::remoteInput.btn.${name}`, name)}
+                      aria-label={t(`hikari::remoteInput.btn.${key}`, key)}
                       onPointerdown={(e) => { e.preventDefault(); padDown(mask); }}
                       onPointerup={() => padUp(mask)}
-                      onPointerleave={() => held.value & mask && padUp(mask)}
-                      onPointercancel={() => held.value & mask && padUp(mask)}
+                      onPointerleave={() => padUp(mask)}
+                      onPointercancel={() => padUp(mask)}
                     >
-                      {t(`hikari::remoteInput.btn.${name}`, name).slice(0, 1).toUpperCase()}
+                      {t(`hikari::remoteInput.btn.${key}`, key).slice(0, 1).toUpperCase()}
                     </button>
                   ))}
                   <button

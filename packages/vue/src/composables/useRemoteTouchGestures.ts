@@ -7,6 +7,7 @@ import {
   TAP_MAX_MS,
   TAP_MAX_TRAVEL_PX,
   TWO_FINGER_PX_PER_NOTCH,
+  wheelNotches,
 } from "../components/remoteInputTypes";
 
 /**
@@ -94,6 +95,9 @@ export function useRemoteTouchGestures(
     longPressFired = false;
     clearLongPress();
     longPressTimer = setTimeout(() => {
+      // The timer is the one path that fires OUTSIDE an event entry —
+      // re-check the gate so a disarm between events stays disarmed.
+      if (!enabled.value) return;
       const t0 = [...active.values()][0];
       if (!t0 || active.size !== 1) return;
       if (travelOf(t0) < TAP_MAX_TRAVEL_PX) {
@@ -117,12 +121,13 @@ export function useRemoteTouchGestures(
       const [a, b] = [e.touches[0]!, e.touches[1]!];
       const midY = (a.clientY + b.clientY) / 2;
       const fingersUp = wheelBaseY - midY; // >0: fingers moved up
-      const px = Math.abs(fingersUp);
-      if (px >= TWO_FINGER_PX_PER_NOTCH) {
-        const direction = fingersUp > 0 ? 1 : -1;
-        const units = direction * Math.floor(px / TWO_FINGER_PX_PER_NOTCH);
-        handlers.onWheel(units);
-        wheelBaseY = midY; // consumed; the next notch starts fresh
+      if (Math.abs(fingersUp) >= TWO_FINGER_PX_PER_NOTCH) {
+        // The shared coefficient (wheelNotches); the threshold keeps
+        // sub-notch jitter from re-triggering, and the consumed travel
+        // resets the base so the residue never double-counts.
+        const units = wheelNotches(-fingersUp);
+        if (units !== 0) handlers.onWheel(units);
+        wheelBaseY = midY;
       }
       return;
     }
@@ -166,11 +171,20 @@ export function useRemoteTouchGestures(
   }
 
   let unbind: (() => void) | null = null;
+  let prevTouchAction: string | null = null;
 
   function attach(el: HTMLElement | null) {
     unbind?.();
     unbind = null;
     if (!el) return;
+    // A stale half-gesture (a finger left over from a disabled or
+    // rebound session) must not poison the next one's bookkeeping.
+    reset();
+    // Claim the touch stream: without this the browser takes the
+    // two-finger moves as pinch-zoom and cancels our touches before a
+    // single notch lands (useContextMenu documents the same trap).
+    prevTouchAction = el.style.touchAction || null;
+    el.style.touchAction = "none";
     el.addEventListener("touchstart", onStart, { passive: true });
     el.addEventListener("touchmove", onMove, { passive: true });
     el.addEventListener("touchend", onEnd);
@@ -180,12 +194,26 @@ export function useRemoteTouchGestures(
       el.removeEventListener("touchmove", onMove);
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onCancel);
+      // Restore the host's own value; an absent prior value clears the
+      // property (assigning "" is a no-op in some engines' style sets).
+      if (prevTouchAction === null) {
+        el.style.removeProperty("touch-action");
+      } else {
+        el.style.touchAction = prevTouchAction;
+      }
     };
   }
 
   const stop = watch(host, attach, { immediate: true });
+  // Disarming mid-gesture (the mode radio flipped while a finger rests
+  // on the surface) must not leave a live long-press timer or stale
+  // records — the grammar stops AT the flip, not after the next event.
+  const stopEnabled = watch(enabled, (on) => {
+    if (!on) reset();
+  });
   onBeforeUnmount(() => {
     stop();
+    stopEnabled();
     unbind?.();
     reset();
   });

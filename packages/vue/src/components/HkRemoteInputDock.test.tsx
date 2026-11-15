@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vitest } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkRemoteInputDock from "./HkRemoteInputDock";
 
@@ -117,6 +117,67 @@ describe("HkRemoteInputDock", () => {
     );
     await nextTick();
     expect(m.container.querySelector(".hk-remote-input-dock__card")).toBeNull();
+  });
+
+  it("a HELD pad keeps the card open across outside touches", async () => {
+    const actions = { setButtons: vitest.fn(), wheel: vitest.fn() };
+    const m = mountDock({ actions });
+    m.dial.click();
+    await nextTick();
+    const btns = m.btns();
+    btns[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    // A touch on the canvas (outside the dock) while the pad is held:
+    // the card must stay open — the held button is still in use.
+    document.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(m.container.querySelector(".hk-remote-input-dock__card")).not.toBeNull();
+    // Releasing the pad: an outside touch now closes.
+    btns[0]!.dispatchEvent(new Event("pointerup", { bubbles: true }));
+    document.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(m.container.querySelector(".hk-remote-input-dock__card")).toBeNull();
+  });
+
+  it("every card-unmount path force-releases held bits", async () => {
+    // (a) Escape closes → release
+    const a = { setButtons: vitest.fn(), wheel: vitest.fn() };
+    const ma = mountDock({ actions: a });
+    ma.dial.click();
+    await nextTick();
+    ma.btns()[2]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    await nextTick();
+    expect(a.setButtons).toHaveBeenLastCalledWith(0);
+
+    // (b) hidden while open → release
+    const b = { setButtons: vitest.fn(), wheel: vitest.fn() };
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      setup() {
+        const hidden = ref(false);
+        return () => [
+          h(HkRemoteInputDock, { actions: b, hidden: hidden.value }),
+          h("button", { class: "flip", onClick: () => { hidden.value = true; } }, "flip"),
+        ];
+      },
+    });
+    mounts.push(app);
+    app.mount(container);
+    (container.querySelector<HTMLButtonElement>(".hk-remote-input-dock__dial"))!.click();
+    await nextTick();
+    const padBtns = [...container.querySelectorAll<HTMLButtonElement>(".hk-remote-input-dock__btn")];
+    padBtns[0]!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    expect(b.setButtons).toHaveBeenLastCalledWith(0b001);
+    (container.querySelector<HTMLButtonElement>(".flip"))!.click();
+    await nextTick();
+    expect(container.querySelector(".hk-remote-input-dock")).toBeNull();
+    expect(b.setButtons).toHaveBeenLastCalledWith(0); // hidden force-releases
+    // A hidden dock swallows no Escape: the listener stood down.
+    const esc = new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true });
+    document.dispatchEvent(esc);
+    expect(esc.defaultPrevented).toBe(false);
   });
 
   it("renders host view controls through the default slot", async () => {

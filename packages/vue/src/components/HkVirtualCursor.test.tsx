@@ -96,16 +96,23 @@ describe("HkVirtualCursor", () => {
     ]);
   });
 
-  it("a held mask renders the matching lobe held; leave releases only held lobes", async () => {
+  it("ownership: a leave releases only what THIS lobe pressed", async () => {
+    // The left bit is held by ANOTHER surface (the dock pad — it flows
+    // in through props.buttons): this surface's leave must NOT release
+    // it, and this surface never re-releases what it never pressed.
     const { lobes, presses } = mountCursor({
       x: 10, y: 10, viewport: { width: 100, height: 100 }, buttons: 0b001,
     });
     const [left, right] = lobes;
-    expect(left!.hasAttribute("data-held")).toBe(true);
-    expect(right!.hasAttribute("data-held")).toBe(false);
-    left!.dispatchEvent(new Event("pointerleave", { bubbles: true }));
+    expect(left!.hasAttribute("data-held")).toBe(true); // rendered held…
+    left!.dispatchEvent(new Event("pointerleave", { bubbles: true })); // …but not pressed here
     right!.dispatchEvent(new Event("pointerleave", { bubbles: true }));
     await nextTick();
-    expect(presses, "only the held lobe releases").toEqual([[0b001, false]]);
+    expect(presses, "neither leave releases the foreign hold").toEqual([]);
+    // A lobe pressed HERE still releases on leave.
+    right!.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    right!.dispatchEvent(new Event("pointerleave", { bubbles: true }));
+    await nextTick();
+    expect(presses).toEqual([[0b100, true], [0b100, false]]);
   });
 });

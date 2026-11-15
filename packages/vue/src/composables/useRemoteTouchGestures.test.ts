@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 
 import { useRemoteTouchGestures } from "./useRemoteTouchGestures";
 
@@ -77,7 +77,8 @@ describe("useRemoteTouchGestures", () => {
     const { el, h } = setup();
     touch(el, "touchstart", [{ id: 1, x: 100, y: 100 }]);
     touch(el, "touchstart", [{ id: 1, x: 100, y: 100 }, { id: 2, x: 150, y: 150 }]);
-    // Fingers rise 60px together: one notch up, 7px remainder kept as base.
+    // Fingers rise 60px together: one notch up; the consumed travel
+    // resets the base (residue discarded).
     touch(el, "touchmove", [{ id: 1, x: 100, y: 40 }, { id: 2, x: 150, y: 90 }]);
     expect(h.onWheel).toHaveBeenCalledWith(1);
     expect(h.onDelta).not.toHaveBeenCalled();
@@ -101,5 +102,31 @@ describe("useRemoteTouchGestures", () => {
     touch(el, "touchend", [], [{ id: 1, x: 130, y: 100 }]);
     expect(h.onDelta).not.toHaveBeenCalled();
     expect(h.onTap).not.toHaveBeenCalled();
+  });
+
+  it("disarmed MID-GESTURE: the pending long-press dies with the flip", () => {
+    vi.useFakeTimers();
+    const { el, h, enabled } = setup();
+    touch(el, "touchstart", [{ id: 1, x: 50, y: 50 }]);
+    enabled.value = false; // the mode radio flips while the finger rests
+    vi.advanceTimersByTime(600);
+    expect(h.onLongPress, "no right-click after the disarm").not.toHaveBeenCalled();
+    // And the stale record is gone: a fresh tap works immediately.
+    enabled.value = true;
+    touch(el, "touchend", [], [{ id: 1, x: 51, y: 50 }]);
+    expect(h.onTap).not.toHaveBeenCalled(); // the old gesture's tail — dead
+    touch(el, "touchstart", [{ id: 2, x: 80, y: 80 }]);
+    touch(el, "touchend", [], [{ id: 2, x: 81, y: 80 }]);
+    expect(h.onTap).toHaveBeenCalledWith(0b001); // fresh finger: alive
+    vi.useRealTimers();
+  });
+
+  it("the host element's touch-action is claimed and restored", async () => {
+    const { host } = setup();
+    const el = host.value!;
+    expect(el.style.touchAction, "claimed while attached").toBe("none");
+    host.value = null; // rebind to nothing → restore
+    await nextTick(); // the host watch flushes pre-render
+    expect(el.style.touchAction, "restored on detach").not.toBe("none");
   });
 });

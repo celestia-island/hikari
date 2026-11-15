@@ -21,12 +21,15 @@ describe("remoteInputTypes pure helpers", () => {
     expect(clampToViewport(100, 100, { width: 0, height: 0 })).toEqual({ x: 0, y: 0 });
   });
 
-  it("scales display pixels per remote pixel", () => {
-    // A 1920px remote screen shown in 960 display px: one display px
+  it("scales remote pixels per display pixel along one axis", () => {
+    // A 1920px remote axis shown in 960 display px: one display px
     // covers two remote px.
-    expect(displayScale({ width: 1920, height: 1080 }, 960)).toBe(2);
-    // Degenerate display box keeps 1:1 instead of exploding.
-    expect(displayScale({ width: 1920, height: 1080 }, 0)).toBe(1);
+    expect(displayScale(1920, 960)).toBe(2);
+    // The vertical axis scales independently (fill/cover transforms).
+    expect(displayScale(1080, 540)).toBe(2);
+    // Degenerate boxes keep 1:1 instead of exploding.
+    expect(displayScale(1920, 0)).toBe(1);
+    expect(displayScale(0, 960)).toBe(1);
   });
 
   it("maps display deltas into remote deltas", () => {

@@ -1172,3 +1172,28 @@ export {
 //   2. the `/plugins` barrel is TypeScript, which Node cannot load from inside
 //      node_modules (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`) — the
 //      dedicated subpath exists precisely to avoid that.
+
+// ── Remote input (2026-11-15 remote-control direction) ────────────────
+// The virtual-mouse / touch-gesture vocabulary for remote-control
+// surfaces: the dial (HkRemoteInputDock), the rendered pointer
+// (HkVirtualCursor), the state machine (useVirtualPointer), the touch
+// grammar (useRemoteTouchGestures) and the fullscreen landscape lock
+// (useOrientationLock).
+export { default as HkRemoteInputDock, default as HRemoteInputDock } from "./components/HkRemoteInputDock";
+export { default as HkVirtualCursor, default as HVirtualCursor } from "./components/HkVirtualCursor";
+export {
+  MASK_LEFT,
+  MASK_MIDDLE,
+  MASK_RIGHT,
+  type RemoteButtonActions,
+  type RemoteViewport,
+  type VirtualPointerState,
+} from "./components/remoteInputTypes";
+export { useVirtualPointer } from "./composables/useVirtualPointer";
+export type {
+  VirtualPointerSinks,
+  UseVirtualPointer,
+} from "./composables/useVirtualPointer";
+export { useRemoteTouchGestures } from "./composables/useRemoteTouchGestures";
+export type { TouchGestureHandlers } from "./composables/useRemoteTouchGestures";
+export { useOrientationLock } from "./composables/useOrientationLock";

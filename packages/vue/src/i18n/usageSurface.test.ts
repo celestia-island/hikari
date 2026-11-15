@@ -128,6 +128,7 @@ const DYNAMIC_KEY_FAMILIES: Record<string, string> = {
   "hikari::statusBar.tier.": "HkStatusBar transport tiers — constructed into a variable at a distance from its t() call (F1); the four concrete ids are pinned by name in CONSTRUCTED_FAMILY_KEYS below.",
   "hikari::theme.groups.": "Registry type: group/slot ids are registered by downstream apps; t() resolves via a resolveLocalizedText fallback, never a hikari bundle.",
   "hikari::theme.tokens.": "HkColorSchemeEditor token enum — closed set defined in platform.json locales.",
+  "hikari::remoteInput.btn.": "HkRemoteInputDock — the button pad's per-button labels (left/middle/right).",
 };
 
 /** Concrete suffixes each constructed family resolves to, for families whose
@@ -144,6 +145,9 @@ const CONSTRUCTED_FAMILY_KEYS: Record<string, string[]> = {
   // every locale; listing them here keeps the existence loop from going
   // blind if both suffixes vanish from all bundles at once (R6 S2).
   "hikari::emergencyAlert.kicker.": ["danger", "warning"],
+  // The pad is a closed three-button set inside hikari; the concrete
+  // keys must exist in every locale.
+  "hikari::remoteInput.btn.": ["left", "middle", "right"],
 };
 
 describe("t() usage surface vs locale bundles", () => {

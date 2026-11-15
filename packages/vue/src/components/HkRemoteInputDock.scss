@@ -1,0 +1,125 @@
+/* HkRemoteInputDock — the remote-control dial.
+ *
+ * A fixed-corner dial button that expands into the control card. The
+ * card speaks the panel grammar (sheet surface, fine radius) so it
+ * reads as a floating panel, not a popup menu. */
+
+@use "../styles/polyfill" as *;
+
+.hk-remote-input-dock {
+  position: absolute;
+  /* The dock-gap law (#1340): every dock's edge gap reads the shared
+   * override chain, never a private constant. */
+  right: var(--hk-dock-gap-right, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  bottom: var(--hk-dock-gap-bottom, var(--hk-dock-inset, var(--hk-dock-gap, var(--space-16, 1rem))));
+  z-index: 3; /* above the session surface + virtual cursor */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.hk-remote-input-dock__dial {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--color-border));
+  background: rgb(var(--color-background) / 92%);
+  color: rgb(var(--color-text));
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
+  @include backdrop-filter(blur(6px));
+
+  &[data-open] {
+    background: rgb(var(--color-primary) / 90%);
+    color: rgb(var(--color-on-primary, 255 255 255));
+    border-color: rgb(var(--color-primary));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 2px;
+  }
+}
+
+.hk-remote-input-dock__card {
+  width: 13rem;
+  padding: 0.6rem;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid rgb(var(--color-border));
+  background: rgb(var(--color-background) / 96%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
+  @include backdrop-filter(blur(8px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hk-remote-input-dock__modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+}
+
+.hk-remote-input-dock__mode {
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid rgb(var(--color-border));
+  background: transparent;
+  color: rgb(var(--color-text));
+  font-size: 0.78rem;
+  cursor: pointer;
+
+  &[data-active] {
+    background: rgb(var(--color-primary) / 14%);
+    border-color: rgb(var(--color-primary) / 60%);
+    color: rgb(var(--color-primary));
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
+  }
+}
+
+.hk-remote-input-dock__pad {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.3rem;
+}
+
+.hk-remote-input-dock__btn {
+  height: 2rem;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid rgb(var(--color-border));
+  background: rgb(var(--color-surface, var(--color-background)));
+  color: rgb(var(--color-text));
+  font-size: 0.8rem;
+  cursor: pointer;
+  touch-action: none;
+  @include user-select(none);
+
+  &:active:not(:disabled) {
+    background: rgb(var(--color-primary) / 22%);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 70%);
+    outline-offset: 1px;
+  }
+}
+
+.hk-remote-input-dock__host {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgb(var(--color-border) / 60%);
+}

@@ -25,6 +25,23 @@ describe("HkNotificationBell scss contract", () => {
     );
   });
 
+  it("the row centers its columns against the ROW height (one-line rows included)", () => {
+    // Default stretch stretched a one-line body to the 24px dismiss
+    // button and hugged the title to the body's top — visibly off the
+    // shared center line exactly when the row has a single line
+    // (user report 2026-11-17).
+    expect(scss).toMatch(/^\.hk-notification-row \{[^}]*align-items:\s*center;/m);
+  });
+
+  it("the tone glyph carries no stretch-era first-line padding hack", () => {
+    // `padding-top: 2px` was an optical nudge for the first line under
+    // stretch; under row centering it parks the glyph below the shared
+    // center line, so the icon rule must not carry any padding-top.
+    const iconBlock = scss.match(/^\.hk-notification-row__icon \{([^}]*)\}/m);
+    expect(iconBlock).toBeTruthy();
+    expect(iconBlock![1]).not.toContain("padding-top");
+  });
+
   it("the dismiss glyph ink rides --hi-icon-button-icon-color (ancestor color is inert)", () => {
     // Rest ink on the button, plus the row-hover/focus-within brighten —
     // both through the var channel the ghost button itself consumes.

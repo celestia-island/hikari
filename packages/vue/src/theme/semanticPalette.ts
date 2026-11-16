@@ -254,10 +254,14 @@ function readableHue(
 ): ThemeTokenRGB {
   // ONE fine grid over the full [0,1] range INCLUDING the achromatic
   // endpoints (a whole class of fills has pure white/black as its only
-  // candidate): Δl ≈ 0.0027 catches every AA window 8-bit colour space
-  // can express at this chroma, where the historical 94-step grid
-  // declared "no-win" inside a truncated domain.
-  const FINE = 376;
+  // candidate). 1504 steps: the near-white AA windows can be as narrow
+  // as 0.0007 — the 376 grid (Δl ≈ 0.0027) straddled them (r13 S1, the
+  // exact class the seam exists for). Residual: sub-1/1504 windows
+  // (≈0.00004 near the achromatic extremes) stay coincident — at 1 LSB
+  // this is below the perception threshold and is disclosed rather
+  // than chased (a byte-transition bisection would close it at the
+  // same cost if ever needed).
+  const FINE = 1504;
   const cands: { rgb: ThemeTokenRGB; worst: number; chroma: number; l: number }[] = [];
   for (let i = 0; i <= FINE; i++) {
     const l = i / FINE;

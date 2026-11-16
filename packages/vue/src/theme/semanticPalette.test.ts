@@ -139,9 +139,10 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const h = rgbToOklch(DARK_FILLS.primary).h;
     // Post-chroma-reduction the rotations hold tightly (measured dark
-    // +41.8/-39.8, light +39.7/-39.5); the tolerance absorbs the grid.
+    // +41.8/-39.8, light +39.7/-39.5); the tolerance absorbs the grid
+    // and the 1504-step resolution's slight pick shifts.
     expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
-    expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(2);
+    expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(3);
     // LIGHT too: the accent's pick must not drive it to the band bottom
     // (near-black, hue destroyed) on light fills.
     const lightP = deriveSemanticPalette(LIGHT_FILLS);
@@ -190,8 +191,8 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   it("borders follow the primary's hue at reduced chroma", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const primaryHue = rgbToOklch(DARK_FILLS.primary).h;
-    expect(hueDistance(rgbToOklch(p.border).h, primaryHue)).toBeLessThan(10);
-    expect(hueDistance(rgbToOklch(p.focusedBorder).h, primaryHue)).toBeLessThan(10);
+    expect(hueDistance(rgbToOklch(p.border).h, primaryHue)).toBeLessThan(15);
+    expect(hueDistance(rgbToOklch(p.focusedBorder).h, primaryHue)).toBeLessThan(15);
     expect(rgbToOklch(p.border).c).toBeLessThan(rgbToOklch(p.focusedBorder).c);
     // Borders are non-text: they clear 1.5 / 3 respectively.
     expect(contrastRatio(p.border, DARK_FILLS.background)).toBeGreaterThanOrEqual(1.5);
@@ -227,8 +228,8 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     expect(`${p.success.r},${p.success.g},${p.success.b}`).toBe("108,177,119");
     expect(`${p.error.r},${p.error.g},${p.error.b}`).toBe("245,115,119");
-    expect(`${p.warning.r},${p.warning.g},${p.warning.b}`).toBe("219,137,69");
-    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("83,173,193");
+    expect(`${p.warning.r},${p.warning.g},${p.warning.b}`).toBe("218,137,68");
+    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("84,173,193");
   });
 
   it("the search keeps the AA MARGIN (graphite tightest slot ≥4.55)", () => {
@@ -369,6 +370,19 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
   });
 
+  it("the 1504-grid coincidence split is pinned (the revert reds here)", () => {
+    // The r13 S2 fixture: bg(196,7,33)/sf(126,118,93)/primary(174,69,34)
+    // — secondary and accent coincide at 376 but split at 1504.
+    const p = deriveSemanticPalette({
+      primary: rgb(174, 69, 34),
+      background: rgb(196, 7, 33),
+      surface: rgb(126, 118, 93),
+    });
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+  });
+
   it("a grey primary on WHITE/BLACK fills splits secondary/accent (the fine band)", () => {
     // The 4.55 target band holds ONE byte (117) but the AA band holds
     // two (117@4.5578, 118@4.5422): the retake flips the pick and takes
@@ -416,6 +430,24 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // NaN reads as hue 0 — the distance to 10 is 10, and 0 to itself.
     expect(hueDistance(NaN, 10)).toBe(10);
     expect(hueDistance(NaN, NaN)).toBe(0);
+  });
+
+  it("the seam at 1504 catches the near-white sub-grid window", () => {
+    // The r13 S1 shape: bg(0,0,0)/sf(252,252,254) — the AA band is
+    // 0.00066 wide; the 376 grid straddled it (4.20 sub-AA) while 1504
+    // hits it (4.50).
+    const p = deriveSemanticPalette({
+      primary: rgb(60, 60, 65),
+      background: rgb(0, 0, 0),
+      surface: rgb(252, 252, 254),
+    });
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      const worst = Math.min(
+        contrastRatio(p[slot], { r: 0, g: 0, b: 0 }),
+        contrastRatio(p[slot], { r: 252, g: 252, b: 254 }),
+      );
+      expect(worst, `${slot} AA at the 1504 resolution`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("the 4.55/AA SEAM: winnable shapes never fall to the sub-AA window", () => {

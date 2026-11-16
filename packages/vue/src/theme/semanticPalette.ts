@@ -114,7 +114,12 @@ export interface OKLCH {
   h: number;
 }
 
-export function rgbToOklch({ r, g, b }: ThemeTokenRGB): OKLCH {
+export function rgbToOklch(input: ThemeTokenRGB): OKLCH {
+  // A public primitive, like its counterpart: NaN members degrade to a
+  // neutral grey rather than poisoning every downstream slot.
+  const clamp = (v: number) =>
+    Math.min(255, Math.max(0, Math.round(Number.isFinite(v) ? v : 128)));
+  const { r, g, b } = { r: clamp(input.r), g: clamp(input.g), b: clamp(input.b) };
   const lin = LINEAR_FROM_SRGB.map(
     (row) =>
       row[0] * channelToLinear(r) +
@@ -274,6 +279,9 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   const primary = rgbToOklch(fills.primary);
   const both = [fills.background, fills.surface];
   const brandChroma = Math.min(primary.c, 0.12);
+  // An ACHROMATIC primary (c≈0) makes the ±40° rotations vacuous — both
+  // slots would collapse to the same grey. Split them by LIGHTNESS.
+  const achromatic = primary.c < 0.01;
   // The resting border prefers the FILLS' lightness (low emphasis); the
   // focused border the mid-light sweet spot (high emphasis) — sharing
   // one bias collapsed them onto the same rung and erased the focus
@@ -286,8 +294,20 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     ...both.map((f) => contrastRatio(focused, f)),
   );
   return {
-    secondary: readableHue((primary.h + 40) % 360, brandChroma, both, 4.55),
-    accent: readableHue((primary.h + 320) % 360, brandChroma, both, 4.55),
+    secondary: readableHue(
+      (primary.h + 40) % 360,
+      brandChroma,
+      both,
+      4.55,
+      achromatic ? 0.82 : 0.7,
+    ),
+    accent: readableHue(
+      (primary.h + 320) % 360,
+      brandChroma,
+      both,
+      4.55,
+      achromatic ? 0.52 : 0.7,
+    ),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
     focusedBorder: focused,
     // 4.55, not 4.5: a hair of margin so a 1-LSB rounding change never

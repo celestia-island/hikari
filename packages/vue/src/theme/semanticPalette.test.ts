@@ -138,10 +138,10 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   it("secondary/accent are the primary's hue rotated ±40° (before clamping)", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const h = rgbToOklch(DARK_FILLS.primary).h;
-    // The dark fixture barely clamps (measured offsets 41.8/39.8); the
-    // light fixture's accent clamps to -34.5, hence "before clamping".
-    expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(6);
-    expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(6);
+    // Post-chroma-reduction the rotations hold tightly (measured dark
+    // +41.8/-39.8, light +39.6/-40.1); the tolerance absorbs the grid.
+    expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
+    expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(2);
   });
 
   it("opposite-polarity fills sit at the chroma-rich NEAR-optimum (≥3.6, distinct)", () => {
@@ -238,12 +238,12 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(tightest).toBeGreaterThanOrEqual(4.55);
   });
 
-  it("the border rungs never invert on SAME-polarity fills", () => {
+  it("the border rungs never invert (the ceiling holds the order everywhere)", () => {
     // On MIXED-polarity fills the ordering necessarily inverts (to
     // under-contrast a light fill the border must be lighter than
     // focused; a dark fill darker — mutually exclusive), so the pin
     // covers same-polarity fixtures and the thresholds hold everywhere.
-    for (const fills of [DARK_FILLS, LIGHT_FILLS, GRAPHITE_FILLS]) {
+    for (const fills of [DARK_FILLS, LIGHT_FILLS, GRAPHITE_FILLS, OPPOSITE_FILLS]) {
       const p = deriveSemanticPalette(fills);
       const rest = Math.min(
         contrastRatio(p.border, fills.background),
@@ -288,14 +288,31 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     }
   });
 
-  it("both barrels export the derivation (string pins)", async () => {
+  it("both barrels export the derivation (anchored export statements)", async () => {
+    // An anchored ^export{} regex, not a substring: a commented-out
+    // export line no longer matches. (A real import of the package root
+    // pulls the whole component tree — 5s+ — so the statement form is
+    // the honest cheap pin.)
     const { readFileSync } = await import("node:fs");
     const { resolve } = await import("node:path");
     const root = readFileSync(resolve(process.cwd(), "src/index.ts"), "utf-8");
     const theme = readFileSync(resolve(process.cwd(), "src/theme/index.ts"), "utf-8");
-    for (const src of [root, theme]) {
-      expect(src).toContain("deriveSemanticPalette");
-      expect(src).toContain("CANONICAL_SEMANTIC");
+    const names = [
+      "deriveSemanticPalette",
+      "CANONICAL_SEMANTIC",
+      "contrastRatio",
+      "hueDistance",
+      "rgbToOklch",
+      "oklchToRgb",
+    ];
+    for (const [label, src] of [
+      ["root", root],
+      ["theme", theme],
+    ] as const) {
+      const stmts = [...src.matchAll(/^export \{([^}]*)\}/gm)].map((m) => m[1]).join(" ");
+      for (const name of names) {
+        expect(stmts, `${label} exports ${name}`).toContain(name);
+      }
     }
   });
 
@@ -319,17 +336,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       expect(p.statusBarBackground).toEqual(fills.surface);
       // A COPY, not the caller's own object.
       expect(p.statusBarBackground).not.toBe(fills.surface);
-    }
-  });
-
-  it("opposite-polarity fills never leave an anchor below 2.1 (the floor family)", () => {
-    const p = deriveSemanticPalette(OPPOSITE_FILLS);
-    for (const slot of ["success", "error", "warning", "info", "secondary", "accent"] as const) {
-      const worst = Math.min(
-        contrastRatio(p[slot], OPPOSITE_FILLS.background),
-        contrastRatio(p[slot], OPPOSITE_FILLS.surface),
-      );
-      expect(worst, `${slot} worst anchor`).toBeGreaterThanOrEqual(2.1);
     }
   });
 

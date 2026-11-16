@@ -251,6 +251,10 @@ function readableHue(
   pick: "closest" | "high" | "low" = "closest",
   /** The no-win window width (best worst-anchor minus this). */
   window = 0.35,
+  /** The near-bar floor: when the best worst-anchor is at or above
+   *  this, the near-best pick replaces the chroma-rich window. Set to
+   *  0 to disable (the distinctness fallback re-derives with this). */
+  nearBarFloor = 4.4,
 ): ThemeTokenRGB {
   // ONE fine grid over the full [0,1] range INCLUDING the achromatic
   // endpoints (a whole class of fills has pure white/black as its only
@@ -315,7 +319,7 @@ function readableHue(
   // cost, where the chroma-rich window below would take 0.30-0.35
   // (the r14/r15 adversarial's S1: 4.4995 was returned at 4.15).
   const bestWorst = Math.max(...cands.map((cand) => cand.worst));
-  if (target >= 4.5 && bestWorst >= 4.4) {
+  if (target >= 4.5 && nearBarFloor > 0 && bestWorst >= nearBarFloor) {
     const nearBest = cands.filter((c) => c.worst >= bestWorst - 0.02);
     let bestPick: { rgb: ThemeTokenRGB; bias: number } | null = null;
     for (const cand of nearBest) {
@@ -496,5 +500,55 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     { key: "warning", fill: CANONICAL_SEMANTIC.warning },
     { key: "info", fill: CANONICAL_SEMANTIC.info },
   ]);
+  // NEAR-BAR DISTINCTNESS FALLBACK: the near-best band at the
+  // achromatic extremes can hold as few as 1-3 distinct bytes, so the
+  // near-bar pick (which optimises contrast) can collapse the four
+  // tones (78/78 neutral-grey near-bar shapes pre-fallback) or the
+  // secondary/accent split. When that happens, re-derive those slots
+  // with the near-bar DISABLED — the chroma-rich window keeps them
+  // distinct at a 0.30-0.35 contrast cost (the module's invariant
+  // "two indistinguishable states" outranks the 8% contrast gain).
+  {
+    const toneKeys = ["success", "error", "warning", "info"] as const;
+    const toneSet = new Set(
+      toneKeys.map((k) => `${result[k].r},${result[k].g},${result[k].b}`),
+    );
+    const secAccCoincide =
+      result.secondary.r === result.accent.r &&
+      result.secondary.g === result.accent.g &&
+      result.secondary.b === result.accent.b;
+    if (toneSet.size < 4 || secAccCoincide) {
+      for (const key of toneKeys) {
+        const canon = CANONICAL_SEMANTIC[key];
+        const hue = (primary.h + canon.h) % 360;
+        const chroma = Math.min(primary.c * 0.7 + canon.c, 0.4);
+        (result as Record<string, ThemeTokenRGB>)[key] = readableHue(
+          hue,
+          chroma,
+          both,
+          4.55,
+          0.7,
+          Number.POSITIVE_INFINITY,
+          "closest",
+          0.35,
+          0, // near-bar DISABLED — the window path keeps distinctness
+        );
+      }
+      if (secAccCoincide) {
+        const hue = (primary.h + 320) % 360;
+        (result as Record<string, ThemeTokenRGB>)["accent"] = readableHue(
+          hue,
+          brandChroma,
+          both,
+          4.55,
+          0.7,
+          Number.POSITIVE_INFINITY,
+          "closest",
+          0.35,
+          0,
+        );
+      }
+    }
+  }
   return result;
 }

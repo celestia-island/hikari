@@ -40,6 +40,21 @@ rsx! {
 <HInput type="number" modelValue={value} onUpdate:modelValue={(v: string) => (value = v)} min={60} max={240} step={10} placeholder="Hang" />
 ```
 
+## 窄容器自动降级
+
+居中默认会把最宽 affix 的宽度在行的两侧**对称预留**，图标永远不会把居中的文字推离盒子轴线。但盒宽一旦装不下约三倍最宽 affix 加两侧基础内边距，对称预留就会把可用行压得比 affix 本身还窄，没有 affix 的一侧沦为光标与 placeholder 都到不了的死区——近全宽的手机底部抽屉里，`#prefix` 槽挂一枚 `github.com ⌄` 平台芯片就是典型场景。
+
+输入框会量测自身盒宽并**自动降级**：预留切换为每侧只留实际落在该侧的 affix，行、placeholder 与滚动窗口随即拿回芯片旁的全部空间。文字的对齐语义保持居中——行会在已不对称的内容盒里重新居中，视觉上向被释放的一侧偏移；显式 `align="start"` / `align="end"` 的几何一字不动；判定随每次尺寸变化重跑——抽屉拉宽后，同一字段会自动回到对称几何。
+
+```hikari:tsx
+<!-- HInput 会丢弃调用方的 class/style：请给外层容器定宽——它才是输入框量到的那个盒。 -->
+<div style="width:330px">
+  <HInput placeholder="仓库 URL">
+    {{ prefix: () => <span>github.com ⌄</span> }}
+  </HInput>
+</div>
+```
+
 ## 自定义颜色
 
 通过 Custom 层属性可以动态覆盖输入框颜色。

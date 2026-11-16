@@ -5,6 +5,7 @@ import type { PasswordStrengthEvaluator } from "../utils/password";
 import { HkPlaceholderMarquee } from "./HkPlaceholderMarquee";
 import HkPasswordSurface from "./HkPasswordSurface";
 import HkNumberSteppers from "./HkNumberSteppers";
+import { isAffixLineCramped } from "./inputAffixGeometry";
 import "./HkInput.scss";
 
 export default defineComponent({
@@ -246,19 +247,41 @@ export default defineComponent({
     // about the box axis (a lone prefix icon must not push the
     // centered line off-center), while an explicit data-align="start"
     // / "end" pads each side only by its own affix.
+    //
+    // Narrow-box auto-degrade: the symmetric reservation is an
+    // optical-centering trade paid in dead line width on the
+    // affix-less side. When the box is too narrow to fit three
+    // widest-affix widths plus the base paddings, the trade stops
+    // paying — the usable line drops below one affix width and the
+    // affix-less side becomes permanently dead (2026-11-17 chest
+    // report: a near-full-width phone drawer with a ~120px platform
+    // chip left a third of the repository-URL line unreachable). The
+    // box is therefore measured TOO (same observer), the pure
+    // predicate in inputAffixGeometry.ts judges it, and a CENTERED
+    // box that fails stamps data-affix-cramped; the sheet then switches
+    // the element padding and the marquee window to the per-side
+    // reservation — the exact geometry of data-align — while
+    // text-align stays centered. Explicit alignments and textareas
+    // never carry the marker, so their geometry is untouched.
     const prefixEl = ref<HTMLElement | null>(null);
     const suffixEl = ref<HTMLElement | null>(null);
     /* The number steppers' column — measured INTO the end-side clearance
        (summed with the suffix span) so centered text and the marquee
        window always end short of the buttons. */
     const steppersEl = ref<HTMLElement | null>(null);
+    /* The box itself — its clientWidth is the third input of the
+       cramped judgment (the element spans the box's padding box, so
+       clientWidth IS the space the padded line lives in). */
+    const boxEl = ref<HTMLElement | null>(null);
     const affixStartW = ref(0);
     const affixEndW = ref(0);
+    const boxW = ref(0);
 
     function measureAffixes() {
       affixStartW.value = prefixEl.value?.offsetWidth ?? 0;
       affixEndW.value =
         (suffixEl.value?.offsetWidth ?? 0) + (steppersEl.value?.offsetWidth ?? 0);
+      boxW.value = boxEl.value?.clientWidth ?? 0;
     }
 
     const affixRO: ResizeObserver | null =
@@ -306,6 +329,15 @@ export default defineComponent({
     const prefixAffixRef = bindMeasured(() => prefixEl);
     const suffixAffixRef = bindMeasured(() => suffixEl);
     const steppersRootRef = bindMeasured(() => steppersEl);
+    /* The box rides the SAME observer as the affixes: resizing the host
+       (a bottom drawer dragging up, a window snap) re-runs the cramped
+       judgment with no consumer involvement — the marker follows the
+       geometry, not the mount. Same deferred-unbind safety net. */
+    const boxRootRef = bindMeasured(() => boxEl);
+
+    const affixCramped = computed(() =>
+      isAffixLineCramped(affixStartW.value, affixEndW.value, boxW.value),
+    );
 
     const boxVars = computed(
       () =>
@@ -487,6 +519,7 @@ export default defineComponent({
           </HkPasswordSurface>
         ) : (
         <div
+          ref={boxRootRef}
           class={boxClass.value}
           style={boxVars.value}
           data-autogrow={isAutoGrow.value || undefined}
@@ -499,6 +532,18 @@ export default defineComponent({
           // a textarea-scoped marquee from the per-side window insets.
           data-align={
             !isTextarea.value && props.align !== "center" ? props.align : undefined
+          }
+          // Narrow-box auto-degrade: only the CENTERED non-textarea box
+          // may degrade (same stamping rule as data-align) — explicit
+          // alignments keep their geometry verbatim, and the password
+          // surface never renders this box at all. Empty string = the
+          // boolean-marker convention the SCSS presence selectors key on.
+          data-affix-cramped={
+            !isTextarea.value &&
+            props.align === "center" &&
+            affixCramped.value
+              ? ""
+              : undefined
           }
         >
           {slots.prefix && (

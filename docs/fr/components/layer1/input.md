@@ -32,6 +32,21 @@ rsx! {
 }
 ```
 
+## Dégradation automatique des boîtes étroites
+
+Le défaut centré réserve la largeur de l'affix le plus large des DEUX côtés de la ligne, afin qu'aucune icône ne pousse le texte centré hors de l'axe de la boîte. Mais dès que la boîte ne peut plus contenir environ trois fois la largeur de l'affix le plus large plus les marges de base, la réservation symétrique laisse une ligne plus étroite que l'affix lui-même, et le côté sans affix devient un espace mort qu'aucun caret ni placeholder n'atteint — le cas canonique : un panneau inférieur mobile presque plein écran portant une puce de plateforme `github.com ⌄` dans le slot `#prefix`.
+
+Le champ mesure sa propre boîte et **dégénère automatiquement** : la réservation passe au mode par côté — chaque côté ne réserve que l'affix qui s'y trouve réellement — si bien que la ligne, son placeholder et la fenêtre défilante reprennent tout l'espace à côté de la puce. Le texte garde son alignement centré — la ligne se recentre dans la boîte de contenu devenue asymétrique, glissant optiquement vers le côté libéré —, les champs explicitement `align="start"` / `align="end"` gardent leur géométrie inchangée ; le jugement est réévalué à chaque redimensionnement — le même champ revient à la géométrie symétrique quand le panneau s'élargit.
+
+```hikari:tsx
+<!-- HInput ignore les class/style de l'appelant : dimensionnez le CONTENEUR — c'est lui la boîte que mesure le champ. -->
+<div style="width:330px">
+  <HInput placeholder="URL du dépôt">
+    {{ prefix: () => <span>github.com ⌄</span> }}
+  </HInput>
+</div>
+```
+
 ## Couleurs personnalisées
 
 Les couleurs du champ de saisie peuvent être remplacées dynamiquement via les propriétés de la couche Custom.

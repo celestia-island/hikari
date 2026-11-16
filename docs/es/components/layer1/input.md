@@ -32,6 +32,18 @@ rsx! {
 }
 ```
 
+## Degradación automática en cajas estrechas
+
+El valor centrado por defecto reserva la anchura del affix más ancho en AMBOS lados de la línea, para que ningún icono empuje el texto centrado fuera del eje de la caja. Pero cuando la caja ya no cabe unas tres veces la anchura del affix más ancho más los rellenos base, la reserva simétrica deja una línea más estrecha que el propio affix y el lado sin affix se convierte en espacio muerto que ni el cursor ni el placeholder pueden alcanzar — el caso canónico: un panel inferior móvil casi a pantalla completa con un chip de plataforma `github.com ⌄` en el slot `#prefix`.
+
+El campo mide su propia caja y se **degrada automáticamente**: la reserva pasa al modo por lado — cada lado reserva solo el affix que realmente está en él — y la línea, su placeholder y la ventana deslizante recuperan todo el espacio junto al chip. El texto sigue centrado, los campos con `align="start"` / `align="end"` explícitos conservan su geometría intacta, y el criterio se reevalúa en cada redimensionado: el mismo campo vuelve a centrarse cuando el panel se ensancha.
+
+```hikari:tsx
+<HInput placeholder="URL del repositorio" style="width:330px">
+  {{ prefix: () => <span>github.com ⌄</span> }}
+</HInput>
+```
+
 ## Colores personalizados
 
 Los colores del campo de entrada pueden sobrescribirse dinámicamente a través de propiedades de la capa Custom.

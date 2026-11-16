@@ -32,6 +32,18 @@ rsx! {
 }
 ```
 
+## 窄容器自動降級
+
+置中預設會把最寬 affix 的寬度在行的兩側**對稱預留**，圖示永遠不會把置中的文字推離盒子軸線。但盒寬一旦裝不下約三倍最寬 affix 加兩側基礎內距，對稱預留就會把可用行壓得比 affix 本身還窄，沒有 affix 的一側淪為游標與 placeholder 都到不了的死區——近全寬的手機底部抽屜裡，`#prefix` 槽掛一枚 `github.com ⌄` 平台晶片就是典型場景。
+
+輸入框會量測自身盒寬並**自動降級**：預留切換為每側只留實際落在該側的 affix，行、placeholder 與捲動視窗隨即拿回晶片旁的全部空間。文字保持置中，顯式 `align="start"` / `align="end"` 的幾何一字不動；判定隨每次尺寸變化重跑——抽屜拉寬後，同一欄位會自動回到置中幾何。
+
+```hikari:tsx
+<HInput placeholder="儲存庫 URL" style="width:330px">
+  {{ prefix: () => <span>github.com ⌄</span> }}
+</HInput>
+```
+
 ## 自訂顏色
 
 透過 Custom 層屬性可以動態覆蓋輸入框顏色。

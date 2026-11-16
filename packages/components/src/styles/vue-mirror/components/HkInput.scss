@@ -253,6 +253,40 @@
   inset-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
 }
 
+/* ── Narrow-box auto-degrade (centered default only) ──────────────────
+ * The symmetric reservation above is an optical-centering trade paid in
+ * dead line width on the affix-less side. When the box is too narrow to
+ * fit three widest-affix widths plus the base paddings, the trade stops
+ * paying: the usable line drops below ONE affix width and the whole
+ * affix-less side turns permanently dead — no caret, no placeholder
+ * (2026-11-17 chest report: a near-full-width phone bottom drawer with
+ * a ~120px platform chip in the #prefix slot left the right third of
+ * the repository-URL line unreachable; the caller had passed no
+ * `align`, so the centered default owned the geometry).
+ *
+ * HkInput measures the box itself alongside the affixes (one shared
+ * ResizeObserver) and stamps `data-affix-cramped` on the box when the
+ * pure predicate (inputAffixGeometry.ts) fires. The marker switches
+ * BOTH reservations to the per-side arithmetic — exactly the
+ * data-align rules' math, each side reserving only its own affix plus
+ * the base padding — so the line, the placeholder and the marquee
+ * window reclaim the dead side. The marker is stamped on CENTERED
+ * non-textarea boxes only, so these rules can never fight the
+ * explicit-alignment rules above; text-align stays centered (the line
+ * re-centers inside the now-asymmetric content box), and the marquee
+ * re-measures its wider window through its own ResizeObserver. Only
+ * logical properties — the per-side math is inset/padding-inline, so
+ * RTL keeps mirroring. */
+.hk-input-box[data-affix-cramped] .hk-input-element:not(.hk-input-textarea) {
+  padding-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  padding-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
+}
+
+.hk-input-box[data-affix-cramped] .hk-placeholder-marquee {
+  inset-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px));
+  inset-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px));
+}
+
 .hk-input-error-msg {
   margin-top: var(--space-4);
   font-size: var(--text-xs);

@@ -46,6 +46,18 @@ rsx! {
 <HInput type="number" modelValue={value} onUpdate:modelValue={(v: string) => (value = v)} min={60} max={240} step={10} placeholder="Hang" />
 ```
 
+## Narrow Boxes
+
+The centered default reserves the widest affix on BOTH sides of the line so icons never push the centered text off the box axis. On a narrow box that trade stops paying: once the box cannot fit roughly three widest-affix widths plus the base paddings, the symmetric reservation would leave a line narrower than the affix itself, and the affix-less side turns into dead space no caret or placeholder can reach (a full-width phone drawer carrying a `github.com ⌄` platform chip in the `#prefix` slot is the canonical case).
+
+The input measures its own box and degrades automatically: the reservation switches to per-side — each side reserves only the affix actually sitting on it — so the line, its placeholder and the scrolling window reclaim the space beside the chip. The text stays centered, explicit `align="start"` / `align="end"` fields keep their geometry untouched, and the judgment re-runs on every resize: the same field re-centers as the drawer widens.
+
+```hikari:tsx
+<HInput placeholder="Repository URL" style="width:330px">
+  {{ prefix: () => <span>github.com ⌄</span> }}
+</HInput>
+```
+
 ## Custom Colors
 
 Input colors can be dynamically overridden through Custom layer properties.

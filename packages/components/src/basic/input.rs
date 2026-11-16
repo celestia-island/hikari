@@ -40,7 +40,11 @@
 //     spans with a `ResizeObserver`, and tairitsu 0.5.22 has no
 //     per-instance ref + observer pairing. The sheet's `0px` fallbacks keep
 //     its symmetric-reservation math exact, so an affixed field reserves the
-//     base padding only.
+//     base padding only. The narrow-box auto-degrade (`data-affix-cramped`,
+//     2026-11-17) hangs off the SAME per-instance measurement plus the
+//     box's `clientWidth`, so the mirror never stamps the marker either —
+//     and with the `0px` fallbacks the sheet's cramped rules would degrade
+//     to the identical base padding anyway.
 //   * no `HkPlaceholderMarquee` overlay (that component has no Rust mirror in
 //     this wave); the NATIVE placeholder is always the showing one.
 //   * no password variant (`HkPasswordSurface`'s canvas dot matrix) and no

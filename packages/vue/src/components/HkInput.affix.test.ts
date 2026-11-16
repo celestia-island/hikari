@@ -21,6 +21,15 @@
  *     the centered line sits; only an explicit data-align="start"/
  *     "end" (HkInput's `align` prop) restores the per-side
  *     reservation.
+ *  4. Narrow-box auto-degrade (2026-11-17 chest report): when the box
+ *     is too narrow for the symmetric trade — the pure predicate in
+ *     inputAffixGeometry.ts: boxW < 3·max(startW,endW) + 2·base, i.e.
+ *     the line would come out narrower than the widest affix itself —
+ *     a CENTERED non-textarea box stamps data-affix-cramped and the
+ *     sheet switches element padding + marquee window to the per-side
+ *     geometry. Explicit alignments and textareas never carry the
+ *     marker; text-align stays centered; the reservation is the only
+ *     thing that degrades.
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
@@ -160,6 +169,44 @@ describe("HkInput affix reservation contract", () => {
     expect(textarea).toContain("padding: var(--space-8) var(--space-12)");
   });
 
+  it("switches to per-side reservations under data-affix-cramped", () => {
+    // The degrade rules must carry the per-side arithmetic verbatim —
+    // the exact geometry of the data-align rules above — and stay
+    // reservation-only (no text-align flip: the line re-centers inside
+    // the now-asymmetric content box).
+    const elementRule = scss.match(
+      /\.hk-input-box\[data-affix-cramped\] \.hk-input-element:not\(\.hk-input-textarea\)\s*{[^}]*}/,
+    )?.[0] ?? "";
+    expect(elementRule, "cramped element rule must exist").toBeTruthy();
+    expect(elementRule).toContain(
+      "padding-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px))",
+    );
+    expect(elementRule).toContain(
+      "padding-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px))",
+    );
+    expect(elementRule).not.toContain("text-align");
+
+    const marqueeRule = scss.match(
+      /\.hk-input-box\[data-affix-cramped\] \.hk-placeholder-marquee\s*{[^}]*}/,
+    )?.[0] ?? "";
+    expect(marqueeRule, "cramped marquee rule must exist").toBeTruthy();
+    expect(marqueeRule).toContain(
+      "inset-inline-start: calc(var(--space-12) + var(--hk-input-affix-start-w, 0px))",
+    );
+    expect(marqueeRule).toContain(
+      "inset-inline-end: calc(var(--space-12) + var(--hk-input-affix-end-w, 0px))",
+    );
+  });
+
+  it("keys the sheet on the same marker the component stamps", () => {
+    // Source pairing: a rename on either side must red here before it
+    // can ship a rule that never matches (the Sort-family failure mode).
+    const tsx = readFileSync(join(here, "HkInput.tsx"), "utf-8");
+    expect(tsx).toContain("data-affix-cramped={");
+    expect(tsx).toContain('isAffixLineCramped');
+    expect(scss).toContain(".hk-input-box[data-affix-cramped]");
+  });
+
   it("publishes the measured affix width on the box", async () => {
     // happy-dom lays out nothing — pin the affix width the ref callback
     // would measure in a real browser and read the published custom
@@ -249,5 +296,115 @@ describe("HkInput affix reservation contract", () => {
         Object.defineProperty(HTMLElement.prototype, "offsetWidth", receiver);
       }
     }
+  });
+
+  // ── narrow-box auto-degrade (guarantee 4) ─────────────────────────
+  // happy-dom lays out nothing: stub the measured accessors the same
+  // way the width tests above do, pairing the affix width with a box
+  // width to walk the predicate through its report geometry.
+  async function withMeasuredBox<T>(
+    boxW: number,
+    affixW: number,
+    run: () => Promise<T> | T,
+  ): Promise<T> {
+    const offset = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetWidth",
+    );
+    const client = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "clientWidth",
+    );
+    expect(offset, "offsetWidth accessor exists on HTMLElement").toBeTruthy();
+    expect(client, "clientWidth accessor exists on HTMLElement").toBeTruthy();
+    Object.defineProperty(HTMLElement.prototype, "offsetWidth", {
+      configurable: true,
+      get: () => affixW,
+    });
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get: () => boxW,
+    });
+    try {
+      return await run();
+    } finally {
+      if (offset) Object.defineProperty(HTMLElement.prototype, "offsetWidth", offset);
+      if (client) Object.defineProperty(HTMLElement.prototype, "clientWidth", client);
+    }
+  }
+
+  it("auto-degrades the centered reservation on a narrow box", async () => {
+    // The report geometry: 330px drawer box, 120px platform chip.
+    await withMeasuredBox(330, 120, async () => {
+      const { container } = mountInput({
+        slots: { prefix: () => h("span", "CHIP") },
+      });
+      await nextTick();
+      const box = container.querySelector<HTMLElement>(".hk-input-box")!;
+      expect(box.getAttribute("data-affix-cramped")).toBe("");
+      // The measured vars stay published — the sheet consumes them per
+      // side under the marker; zeroing them would strand the geometry.
+      expect(box.style.getPropertyValue("--hk-input-affix-start-w")).toBe("120px");
+      expect(box.style.getPropertyValue("--hk-input-affix-end-w")).toBe("0px");
+    });
+  });
+
+  it("keeps the centered reservation on a wide box", async () => {
+    await withMeasuredBox(528, 110, async () => {
+      const { container } = mountInput({
+        slots: { prefix: () => h("span", "CHIP") },
+      });
+      await nextTick();
+      const box = container.querySelector<HTMLElement>(".hk-input-box")!;
+      expect(box.getAttribute("data-affix-cramped")).toBeNull();
+      // The centered-default vars are the only geometry signal present.
+      expect(box.getAttribute("data-align")).toBeNull();
+    });
+  });
+
+  it("never degrades an explicit alignment, even on a narrow box", async () => {
+    await withMeasuredBox(330, 120, async () => {
+      const start = mountInput({
+        props: { align: "start" },
+        slots: { prefix: () => h("span", "CHIP") },
+      });
+      await nextTick();
+      const startBox = start.container.querySelector<HTMLElement>(".hk-input-box")!;
+      expect(startBox.getAttribute("data-align")).toBe("start");
+      expect(startBox.getAttribute("data-affix-cramped")).toBeNull();
+
+      const end = mountInput({
+        props: { align: "end" },
+        slots: { prefix: () => h("span", "CHIP") },
+      });
+      await nextTick();
+      const endBox = end.container.querySelector<HTMLElement>(".hk-input-box")!;
+      expect(endBox.getAttribute("data-align")).toBe("end");
+      expect(endBox.getAttribute("data-affix-cramped")).toBeNull();
+    });
+  });
+
+  it("never degrades textareas or affix-less boxes", async () => {
+    await withMeasuredBox(330, 120, async () => {
+      // A textarea's affixes flow BESIDE the element — the marker would
+      // only strand its marquee window with the per-side insets.
+      const ta = mountInput({
+        props: { type: "textarea" },
+        slots: { prefix: () => h("span", "CHIP") },
+      });
+      await nextTick();
+      expect(
+        ta.container.querySelector<HTMLElement>(".hk-input-box")!
+          .getAttribute("data-affix-cramped"),
+      ).toBeNull();
+
+      // No affixes → nothing to degrade, whatever the box width.
+      const bare = mountInput();
+      await nextTick();
+      expect(
+        bare.container.querySelector<HTMLElement>(".hk-input-box")!
+          .getAttribute("data-affix-cramped"),
+      ).toBeNull();
+    });
   });
 });

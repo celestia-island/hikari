@@ -70,7 +70,14 @@ function oklchToLinear(
   ];
 }
 
-export function oklchToRgb({ l, c, h }: OKLCH): ThemeTokenRGB {
+export function oklchToRgb(input: OKLCH): ThemeTokenRGB {
+  // A public primitive: sanitize rather than emit NaN into a cssvar.
+  // Non-finite members degrade to a neutral grey; c clamps to ≥0 (a
+  // negative chroma would mirror the hue); l clamps to [0,1]; h wraps.
+  const l = Math.min(1, Math.max(0, Number.isFinite(input.l) ? input.l : 0));
+  const c = Math.max(0, Number.isFinite(input.c) ? input.c : 0);
+  const rawH = Number.isFinite(input.h) ? input.h : 0;
+  const h = ((rawH % 360) + 360) % 360;
   // Gamut mapping by CHROMA REDUCTION at constant L and H: a per-channel
   // clamp drags the hue (a warning clamped toward its error neighbour is
   // exactly how two semantic tones collapse), while reducing chroma
@@ -125,7 +132,11 @@ export function rgbToOklch({ r, g, b }: ThemeTokenRGB): OKLCH {
 }
 
 
-// ── WCAG contrast (the same formula every other ink decision uses) ──────
+// ── WCAG contrast — deliberately NOT the package's other ink metric ────
+// contrastColor/solidInk use the raw weighted average (gamma-encoded
+// luminance/255); this module uses WCAG RELATIVE luminance. The
+// divergence is load-bearing: readability targets here are WCAG ratios,
+// while the solidInk seam keeps its own perception-first metric.
 
 function srgbLuminance({ r, g, b }: ThemeTokenRGB): number {
   const f = (v: number) => {
@@ -158,14 +169,14 @@ export function hueDistance(h1: number, h2: number): number {
 // (success 163,190,140 / error 191,97,106 / warning 208,135,112 / info
 // 136,192,208) and the tailwind-toned light family (16,185,129 /
 // 239,68,68 / 245,158,11 / 6,182,212) differ by up to ~32° per slot in
-// OKLCH hue; the constants below sit within 17° of BOTH per slot and
-// keep the four tones pairwise ≥30° apart (the shipped families
-// themselves already are, at their midpoints). The test suite pins
-// them to both families.
+// OKLCH hue; the constants below sit within the pinned 20° of BOTH
+// per slot and keep the four tones ≥38° apart (8-bit quantization eats
+// up to ~4° on the dark lightness band, so the raw separation needs
+// the headroom). The test suite pins them to both families.
 export const CANONICAL_SEMANTIC = {
   success: { h: 148, c: 0.11 },
-  error: { h: 22, c: 0.16 },
-  warning: { h: 56, c: 0.13 },
+  error: { h: 20, c: 0.16 },
+  warning: { h: 58, c: 0.13 },
   info: { h: 215, c: 0.09 },
 } as const;
 
@@ -204,6 +215,11 @@ function readableHue(
   fills: ThemeTokenRGB[],
   target: number,
   preferLight = 0.7,
+  /** An upper bound on the worst-anchor ratio (the rung CEILING): used
+   *  by the resting border so it can never land on — or above — the
+   *  focused border's rung (on the fallback path a lower-chroma colour
+   *  can win the worst-anchor contest and invert the two). */
+  ceiling = Number.POSITIVE_INFINITY,
 ): ThemeTokenRGB {
   // `preferLight` picks WHERE in the clearing band the result lands:
   // mid-light for text tones and the focused border (high emphasis), the
@@ -211,19 +227,38 @@ function readableHue(
   // sit just above the fill, not on the focused border's rung).
   const STEPS = 94;
   let hit: { rgb: ThemeTokenRGB; bias: number } | null = null;
-  let miss: { rgb: ThemeTokenRGB; worst: number } | null = null;
+  let bestWorst = 0;
+  let miss: { rgb: ThemeTokenRGB; worst: number; chroma: number } | null = null;
   for (let i = 0; i <= STEPS; i++) {
     const l = 0.04 + (0.97 - 0.04) * (i / STEPS);
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-    if (worst >= target) {
+    if (worst >= target && worst <= ceiling) {
       const bias = Math.abs(l - preferLight);
       if (hit === null || bias < hit.bias) hit = { rgb, bias };
-    } else if (miss === null || worst > miss.worst) {
-      miss = { rgb, worst };
+    } else {
+      if (worst > bestWorst) bestWorst = worst;
     }
   }
-  return (hit ?? miss)!.rgb;
+  if (hit !== null) return hit.rgb;
+  // NO lightness clears the target (a NO-WIN band). The raw max-min
+  // optimum sits at the achromatic extremes where the gamut search
+  // starves the chroma and the four tones collapse to byte-identical
+  // near-blacks — violating the hue-preservation this module exists
+  // for, and buying contrast that still misses the bar. Among the
+  // NEAR-optimal candidates (within 0.35 of the best worst-anchor) take
+  // the one whose SURVIVING chroma (round-tripped) is highest: the most
+  // hue signal at (almost) the best readability.
+  for (let i = 0; i <= STEPS; i++) {
+    const l = 0.04 + (0.97 - 0.04) * (i / STEPS);
+    const rgb = oklchToRgb({ l, c, h });
+    const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+    if (worst >= bestWorst - 0.35) {
+      const chroma = rgbToOklch(rgb).c;
+      if (miss === null || chroma > miss.chroma) miss = { rgb, worst, chroma };
+    }
+  }
+  return (miss ?? { rgb: oklchToRgb({ l: 0.04, c, h }), worst: 0, chroma: 0 }).rgb;
 }
 
 /**
@@ -244,11 +279,17 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   // one bias collapsed them onto the same rung and erased the focus
   // affordance (journeys S1).
   const fillLight = both.reduce((acc, f) => acc + rgbToOklch(f).l, 0) / both.length;
+  // The FOCUSED border first; the resting border is then capped under its
+  // worst-anchor rung, so the two can never invert (journeys S2).
+  const focused = readableHue(primary.h, primary.c * 0.9, both, 3);
+  const focusedWorst = Math.min(
+    ...both.map((f) => contrastRatio(focused, f)),
+  );
   return {
     secondary: readableHue((primary.h + 40) % 360, brandChroma, both, 4.55),
     accent: readableHue((primary.h + 320) % 360, brandChroma, both, 4.55),
-    border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight),
-    focusedBorder: readableHue(primary.h, primary.c * 0.9, both, 3),
+    border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
+    focusedBorder: focused,
     // 4.55, not 4.5: a hair of margin so a 1-LSB rounding change never
     // drops a derived tone under the AA bar the contract pins.
     success: readableHue(CANONICAL_SEMANTIC.success.h, CANONICAL_SEMANTIC.success.c, both, 4.55),

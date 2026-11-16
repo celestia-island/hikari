@@ -509,45 +509,30 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   // distinct at a 0.30-0.35 contrast cost (the module's invariant
   // "two indistinguishable states" outranks the 8% contrast gain).
   {
+    // NEAR-BAR DISTINCTNESS FALLBACK: when the near-best pick collapsed
+    // the tones (< 4 distinct bytes), re-derive ONLY the colliding
+    // slots with the near-bar DISABLED — the chroma-rich window keeps
+    // them distinct at a 0.30-0.35 contrast cost. The canonical HUE is
+    // absolute (CANONICAL_SEMANTIC.h, never rotated by the primary).
     const toneKeys = ["success", "error", "warning", "info"] as const;
-    const toneSet = new Set(
-      toneKeys.map((k) => `${result[k].r},${result[k].g},${result[k].b}`),
+    const bytes = (k: (typeof toneKeys)[number]) =>
+      `${result[k].r},${result[k].g},${result[k].b}`;
+    const colliding = new Set(
+      toneKeys.filter((k) => toneKeys.some((j) => j !== k && bytes(j) === bytes(k))),
     );
-    const secAccCoincide =
-      result.secondary.r === result.accent.r &&
-      result.secondary.g === result.accent.g &&
-      result.secondary.b === result.accent.b;
-    if (toneSet.size < 4 || secAccCoincide) {
-      for (const key of toneKeys) {
-        const canon = CANONICAL_SEMANTIC[key];
-        const hue = (primary.h + canon.h) % 360;
-        const chroma = Math.min(primary.c * 0.7 + canon.c, 0.4);
-        (result as Record<string, ThemeTokenRGB>)[key] = readableHue(
-          hue,
-          chroma,
-          both,
-          4.55,
-          0.7,
-          Number.POSITIVE_INFINITY,
-          "closest",
-          0.35,
-          0, // near-bar DISABLED — the window path keeps distinctness
-        );
-      }
-      if (secAccCoincide) {
-        const hue = (primary.h + 320) % 360;
-        (result as Record<string, ThemeTokenRGB>)["accent"] = readableHue(
-          hue,
-          brandChroma,
-          both,
-          4.55,
-          0.7,
-          Number.POSITIVE_INFINITY,
-          "closest",
-          0.35,
-          0,
-        );
-      }
+    for (const key of colliding) {
+      const canon = CANONICAL_SEMANTIC[key];
+      (result as Record<string, ThemeTokenRGB>)[key] = readableHue(
+        canon.h,
+        canon.c,
+        both,
+        4.55,
+        0.7,
+        Number.POSITIVE_INFINITY,
+        "closest",
+        0.35,
+        0, // near-bar DISABLED — the window path keeps distinctness
+      );
     }
   }
   return result;

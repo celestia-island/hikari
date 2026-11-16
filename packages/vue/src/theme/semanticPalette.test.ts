@@ -474,8 +474,8 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
 
   it("the achromatic RAZOR: coincidence is physics, kept and disclosed", () => {
     // bg #757575 / surface #787878: the 4.55 band is a single grey
-    // (black) — the retake's "low" re-lands the same byte. The pair
-    // coincides AT AA; a distinct sub-AA trade would be worse.
+    // (black) for secondary, but the AA band holds two — the retake
+    // flips the pick and splits the pair (0,0,0 vs 2,2,2).
     const p = deriveSemanticPalette({
       primary: rgb(120, 120, 120),
       background: rgb(117, 117, 117),
@@ -488,6 +488,36 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       );
     expect(worst(p.secondary)).toBeGreaterThanOrEqual(4.5);
     expect(worst(p.accent), "the accent keeps AA (coinciding where physics forces it)").toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("tone differentiation reaches a FIXED POINT (no visited-byte landing)", () => {
+    // The delta's S1 class: bg(143,71,255)/sf(218,137,128) — the
+    // partner-only retake landed warning on success's byte while a
+    // distinct AA candidate (1,0,0) sat unused. The fixed-point pass
+    // validates against ALL tone bytes.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 60, 180),
+      background: rgb(143, 71, 255),
+      surface: rgb(218, 137, 128),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "the four tones are pairwise distinct").toBe(4);
+  });
+
+  it("the differentiation itself is PINNED (deleting it reds here)", () => {
+    // The guard's effect on the razor fixture: without differentiation,
+    // error === warning on these fills.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(117, 117, 117),
+      surface: rgb(120, 120, 120),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "razor tones distinct").toBe(4);
   });
 
   it("an AA-REACHABLE achromatic accent keeps AA (the two-pass guard)", () => {

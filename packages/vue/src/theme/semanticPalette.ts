@@ -366,38 +366,46 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     slots: { key: "success" | "error" | "warning" | "info"; fill: { h: number; c: number } }[],
   ): void => {
     const byKey = new Map(slots.map((s) => [s.key, s]));
-    for (let i = 0; i < slots.length; i++) {
-      for (let j = i + 1; j < slots.length; j++) {
-        const a = result[slots[i].key];
-        const bHolder = byKey.get(slots[j].key)!;
-        const b = result[slots[j].key];
-        if (a.r !== b.r || a.g !== b.g || a.b !== b.b) continue;
-        for (const flip of ["high", "low"] as const) {
-          const alt = readableHue(
-            bHolder.fill.h,
-            bHolder.fill.c,
-            both,
-            4.5,
-            0.7,
-            Number.POSITIVE_INFINITY,
-            flip,
-            0.35,
-          );
-          const altWorst = Math.min(...both.map((f) => contrastRatio(alt, f)));
-          const differs = alt.r !== a.r || alt.g !== a.g || alt.b !== a.b;
-          if (altWorst >= 4.5 && differs) {
-            (result as Record<string, ThemeTokenRGB>)[slots[j].key] = alt;
-            break;
+    // The retake must differ from EVERY tone's CURRENT bytes (not just
+    // the pair partner — a partner-only check can land on an
+    // already-visited tone) and the pass iterates to a fixed point.
+    const allToneBytes = (): Set<string> =>
+      new Set(slots.map((s) => `${result[s.key].r},${result[s.key].g},${result[s.key].b}`));
+    let changed = true;
+    let iterations = 0;
+    while (changed && iterations < 4) {
+      changed = false;
+      iterations++;
+      for (let i = 0; i < slots.length; i++) {
+        for (let j = i + 1; j < slots.length; j++) {
+          const a = result[slots[i].key];
+          const bHolder = byKey.get(slots[j].key)!;
+          const b = result[slots[j].key];
+          if (a.r !== b.r || a.g !== b.g || a.b !== b.b) continue;
+          // Scan the ENTIRE AA band (not just the two extremes — both
+          // can be taken by other tones while interior candidates are
+          // free): take the highest-chroma candidate whose bytes no
+          // current tone holds.
+          const taken = allToneBytes();
+          let best: { rgb: ThemeTokenRGB; chroma: number } | null = null;
+          for (let step = 0; step <= 376; step++) {
+            const l = step / 376;
+            const rgb = oklchToRgb({ l, c: bHolder.fill.c, h: bHolder.fill.h });
+            const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
+            if (worst < 4.5) continue;
+            const key = `${rgb.r},${rgb.g},${rgb.b}`;
+            if (taken.has(key)) continue;
+            const chroma = rgbToOklch(rgb).c;
+            if (best === null || chroma > best.chroma) best = { rgb, chroma };
+          }
+          if (best !== null) {
+            (result as Record<string, ThemeTokenRGB>)[slots[j].key] = best.rgb;
+            changed = true;
           }
         }
       }
     }
   };
-  // TONE DIFFERENTIATION (the accent guard's rule, extended): when two
-  // semantic tones coincide AND a distinct AA candidate exists for the
-  // later one, retake it — two indistinguishable states are the failure
-  // this module exists to prevent. Coincidence with NO distinct AA
-  // candidate is physics and stands (disclosed).
   const result: SemanticPalette = {
     secondary: secondarySlot,
     // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first

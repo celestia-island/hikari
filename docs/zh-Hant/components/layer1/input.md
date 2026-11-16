@@ -36,12 +36,15 @@ rsx! {
 
 置中預設會把最寬 affix 的寬度在行的兩側**對稱預留**，圖示永遠不會把置中的文字推離盒子軸線。但盒寬一旦裝不下約三倍最寬 affix 加兩側基礎內距，對稱預留就會把可用行壓得比 affix 本身還窄，沒有 affix 的一側淪為游標與 placeholder 都到不了的死區——近全寬的手機底部抽屜裡，`#prefix` 槽掛一枚 `github.com ⌄` 平台晶片就是典型場景。
 
-輸入框會量測自身盒寬並**自動降級**：預留切換為每側只留實際落在該側的 affix，行、placeholder 與捲動視窗隨即拿回晶片旁的全部空間。文字保持置中，顯式 `align="start"` / `align="end"` 的幾何一字不動；判定隨每次尺寸變化重跑——抽屜拉寬後，同一欄位會自動回到置中幾何。
+輸入框會量測自身盒寬並**自動降級**：預留切換為每側只留實際落在該側的 affix，行、placeholder 與捲動視窗隨即拿回晶片旁的全部空間。文字的對齊語意保持置中——行會在已不對稱的內容盒裡重新置中，視覺上向被釋放的一側偏移；顯式 `align="start"` / `align="end"` 的幾何一字不動；判定隨每次尺寸變化重跑——抽屜拉寬後，同一欄位會自動回到對稱幾何。
 
 ```hikari:tsx
-<HInput placeholder="儲存庫 URL" style="width:330px">
-  {{ prefix: () => <span>github.com ⌄</span> }}
-</HInput>
+<!-- HInput 會丟棄呼叫方的 class/style：請給外層容器定寬——它才是輸入框量到的那個盒。 -->
+<div style="width:330px">
+  <HInput placeholder="儲存庫 URL">
+    {{ prefix: () => <span>github.com ⌄</span> }}
+  </HInput>
+</div>
 ```
 
 ## 自訂顏色

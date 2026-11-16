@@ -83,11 +83,23 @@ export function oklchToRgb(input: OKLCH): ThemeTokenRGB {
   // exactly how two semantic tones collapse), while reducing chroma
   // keeps the hue exact — the module's whole point. Binary search for
   // the largest in-gamut chroma.
+  // Linear prescan (the in-gamut set along c is NON-CONVEX — channels
+  // are cubic in c, so a bare binary search stops at the first
+  // boundary): find the highest in-gamut SAMPLE, then refine between it
+  // and the next sample above.
+  const CAP = Math.min(c, 0.4);
+  const SAMPLES = 48;
   let lo = 0;
-  // Cap the search upper bound: OKLCH's useful sRGB chroma tops out
-  // around 0.37, and an unbounded finite c degenerates the first probe
-  // (the largest in-gamut chroma is then never found).
-  let hi = Math.min(c, 0.4);
+  let hi = CAP;
+  for (let i = SAMPLES; i >= 1; i--) {
+    const probe = (CAP * i) / SAMPLES;
+    const lin = oklchToLinear(l, probe, h);
+    if (lin.every((v) => v >= -1e-4 && v <= 1 + 1e-4)) {
+      lo = probe;
+      hi = i === SAMPLES ? CAP : (CAP * (i + 1)) / SAMPLES;
+      break;
+    }
+  }
   let best: [number, number, number] | null = null;
   for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2;
@@ -232,14 +244,19 @@ function readableHue(
   target: number,
   preferLight = 0.7,
   /** An upper bound on the worst-anchor ratio (the rung CEILING): used
-   *  by the resting border so it can never land on — or above — the
-   *  focused border's rung (on the fallback path a lower-chroma colour
-   *  can win the worst-anchor contest and invert the two). */
+   *  by the resting border's HIT path so it never lands on — or above —
+   *  the focused border's rung (the fallback path does not read it; no
+   *  inversion has been observed there, but it is not guaranteed by
+   *  construction). */
   ceiling = Number.POSITIVE_INFINITY,
   /** WHERE in the clearing band: "closest" honours preferLight; "high"/
    *  "low" take the band's top/bottom — the achromatic split (two biases
    *  both collapse onto the band top when the band lies below them). */
   pick: "closest" | "high" | "low" = "closest",
+  /** The no-win window width (best worst-anchor minus this): wider for
+   *  the achromatic accent, whose only differentiator from secondary is
+   *  landing elsewhere in the window. */
+  window = 0.35,
 ): ThemeTokenRGB {
   // `preferLight` picks WHERE in the clearing band the result lands:
   // mid-light for text tones and the focused border (high emphasis), the
@@ -258,12 +275,11 @@ function readableHue(
     const l = i / STEPS;
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+    if (worst > bestWorst) bestWorst = worst;
     if (worst >= target && worst <= ceiling) {
       const bias =
         pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
       if (hit === null || bias < hit.bias) hit = { rgb, bias };
-    } else {
-      if (worst > bestWorst) bestWorst = worst;
     }
   }
   if (hit !== null) return hit.rgb;
@@ -279,15 +295,27 @@ function readableHue(
     const l = i / STEPS;
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-    if (worst >= bestWorst - 0.35) {
+    if (worst >= bestWorst - window) {
       const chroma = rgbToOklch(rgb).c;
-      // Chroma first (the hue signal), then preferLight as the TIE-BREAK
-      // within a hair of the best chroma — the achromatic split
-      // (secondary/accent at c=0, whose only differentiator IS
-      // lightness) lives here, as do the saturated-collision shapes.
+      // Chroma first (the hue signal), then the SECONDARY key as the
+      // TIE-BREAK within a hair of the best chroma: preferLight for the
+      // "closest" callers, the window's ENDS for the achromatic high/low
+      // picks (their only differentiator IS lightness — the same grey
+      // rounds many lightness values to one byte, so the ends maximize
+      // separation).
+      const secondary = (() => {
+        if (pick === "high") return -l;
+        if (pick === "low") return l;
+        return Math.abs(l - preferLight);
+      })();
+      const cur = (() => {
+        if (miss === null) return Number.POSITIVE_INFINITY;
+        if (pick === "high") return -missL;
+        if (pick === "low") return missL;
+        return Math.abs(missL - preferLight);
+      })();
       const tie = miss !== null && chroma > miss.chroma - 0.005;
-      const betterBias = Math.abs(l - preferLight) < Math.abs(missL - preferLight);
-      if (miss === null || chroma > miss.chroma + 0.005 || (tie && betterBias)) {
+      if (miss === null || chroma > miss.chroma + 0.005 || (tie && secondary < cur)) {
         miss = { rgb, worst, chroma };
         missL = l;
       }
@@ -333,18 +361,18 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       Number.POSITIVE_INFINITY,
       achromatic ? "high" : "closest",
     ),
-    accent: readableHue(
-      (primary.h + 320) % 360,
-      brandChroma,
-      both,
-      // A LOWER rung for the achromatic accent: at no-win the bias
-      // rounds both slots to the same grey — a different rung is the
-      // only guaranteed differentiator.
-      achromatic ? 3.5 : 4.55,
-      achromatic ? 0.52 : 0.7,
-      Number.POSITIVE_INFINITY,
-      achromatic ? "low" : "closest",
-    ),
+    // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first
+    // (an achromatic primary must not cost an AA-reachable accent its
+    // readability), the 3.5 rung only when 4.55 is unreachable (at
+    // no-win the bias rounds both slots to the same grey — a different
+    // rung is the only guaranteed differentiator).
+    accent: (() => {
+      const hue = (primary.h + 320) % 360;
+      const high = readableHue(hue, brandChroma, both, 4.55, 0.52, Number.POSITIVE_INFINITY, "low", 0.35);
+      const highWorst = Math.min(...both.map((f) => contrastRatio(high, f)));
+      if (!achromatic || highWorst >= 4.5) return high;
+      return readableHue(hue, brandChroma, both, 3.5, 0.52, Number.POSITIVE_INFINITY, "low", 0.6);
+    })(),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
     focusedBorder: focused,
     // 4.55, not 4.5: a hair of margin so a 1-LSB rounding change never
@@ -356,10 +384,6 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // A COPY (rounded, like every derived slot: float callers would
     // otherwise get mixed precision): mutating the derived palette must
     // not write through to the input theme.
-    statusBarBackground: {
-      r: Math.round(fills.surface.r),
-      g: Math.round(fills.surface.g),
-      b: Math.round(fills.surface.b),
-    },
+    statusBarBackground: sanitizeRgb(fills.surface),
   };
 }

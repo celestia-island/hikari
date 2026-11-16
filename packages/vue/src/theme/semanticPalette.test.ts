@@ -146,9 +146,9 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
 
   it("opposite-polarity fills sit at the chroma-rich NEAR-optimum (≥3.6, distinct)", () => {
     // No lightness clears AA on opposite anchors; the fallback keeps the
-    // most surviving chroma within 0.35 of the best worst-anchor — the
-    // measured band is 3.63-3.95 here (the raw optimum would trade the
-    // hue for +0.05-0.33 it does not need).
+    // most surviving chroma within the window — the measured band is
+    // 3.57-3.68 here (the raw optimum would trade the hue for a few
+    // hundredths it does not need).
     const p = deriveSemanticPalette(OPPOSITE_FILLS);
     const bytes = (["success", "error", "warning", "info"] as const).map(
       (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
@@ -239,10 +239,17 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   });
 
   it("the border rungs never invert (the ceiling holds the order everywhere)", () => {
-    // On MIXED-polarity fills the ordering necessarily inverts (to
-    // under-contrast a light fill the border must be lighter than
-    // focused; a dark fill darker — mutually exclusive), so the pin
-    // covers same-polarity fixtures and the thresholds hold everywhere.
+    // The CEILING holds the min-anchor order on mixed-polarity fills
+    // (567/864 invert without it in an independent grid, 0 with it —
+    // 5,184 more swept pairs agree). The focused 3 rung itself can be
+    // UNREACHABLE on some mixed fills (measured down to ~1.8 — no
+    // single colour clears 3 on opposite anchors; the same physics as
+    // the text tones' no-win band), so this pin asserts the ORDER
+    // everywhere and the thresholds where they are reachable.
+    //
+    // (Historical: an earlier revision claimed mixed polarity
+    // "necessarily inverts" — that proof held only for a construction
+    // without the ceiling.)
     for (const fills of [DARK_FILLS, LIGHT_FILLS, GRAPHITE_FILLS, OPPOSITE_FILLS]) {
       const p = deriveSemanticPalette(fills);
       const rest = Math.min(
@@ -362,6 +369,141 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // NaN reads as hue 0 — the distance to 10 is 10, and 0 to itself.
     expect(hueDistance(NaN, 10)).toBe(10);
     expect(hueDistance(NaN, NaN)).toBe(0);
+  });
+
+  it("the white-unique BOUNDARY: AA outranks distinctness when only white clears", () => {
+    // surface rgb(117,117,117) over a near-black bg: pure white is the
+    // ONLY colour clearing 4.55 on both anchors — every hue's chroma
+    // drops it under. The tones collapse to readable white here BY
+    // POLICY (the no-win path keeps distinctness exactly where AA is
+    // unreachable; this band is the mirror case — AA reachable only
+    // achromatically). One grey step down the tones are distinct again.
+    const boundary = {
+      primary: rgb(58, 58, 66),
+      background: rgb(8, 8, 10),
+      surface: rgb(117, 117, 117),
+    };
+    const p = deriveSemanticPalette(boundary);
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      expect(p[slot], `${slot} readable white`).toEqual({ r: 255, g: 255, b: 255 });
+      expect(contrastRatio(p[slot], boundary.surface)).toBeGreaterThanOrEqual(4.5);
+    }
+    const distinct = {
+      primary: rgb(58, 58, 66),
+      background: rgb(8, 8, 10),
+      surface: rgb(110, 110, 110),
+    };
+    const q = deriveSemanticPalette(distinct);
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${q[slot].r},${q[slot].g},${q[slot].b}`,
+    );
+    expect(new Set(bytes).size, "one step down the tones are distinct").toBe(4);
+  });
+
+  it("the WHITE-UNIQUE class: pure white is reachable (the endpoint grid)", () => {
+    // A near-black bg + a ~117-grey surface: pure white is the unique
+    // AA-clearing candidate — a grid capped short of the endpoints
+    // declared this class "no-win" inside a truncated domain.
+    const fills = {
+      primary: rgb(60, 60, 65),
+      background: rgb(0, 0, 0),
+      surface: rgb(117, 117, 120),
+    };
+    const p = deriveSemanticPalette(fills);
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      expect(p[slot], `${slot} is pure white`).toEqual({ r: 255, g: 255, b: 255 });
+      expect(contrastRatio(p[slot], fills.surface), `${slot} AA on the surface`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("BOTH rungs unreachable: the achromatic split still differentiates", () => {
+    // bg pure black + a 144-grey surface: NO grey clears 4.55 (secondary)
+    // or even 3.5 (accent) on both anchors — both slots take the
+    // fallback, whose window-end picks must still split them.
+    const fills = {
+      primary: rgb(120, 120, 120),
+      background: rgb(0, 0, 0),
+      surface: rgb(144, 144, 144),
+    };
+    const p = deriveSemanticPalette(fills);
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+  });
+
+  it("the gamut search survives a huge finite chroma (the 0.4 cap)", () => {
+    // c=1e6: without the cap the first probe is out of gamut and the
+    // search degenerates to the grey; with it the largest in-gamut
+    // chroma is found (a CHROMATIC result).
+    const out = oklchToRgb({ l: 0.6, c: 1e6, h: 100 });
+    expect(out.r).not.toBe(out.g);
+    expect(Math.max(out.r, out.g, out.b) - Math.min(out.r, out.g, out.b)).toBeGreaterThan(20);
+  });
+
+  it("a FLOAT surface still yields integer channels everywhere", () => {
+    const p = deriveSemanticPalette({
+      primary: rgb(30, 102, 245),
+      background: { r: 239.4, g: 241.2, b: 245.6 },
+      surface: { r: 254.5, g: 254.5, b: 254.5 },
+    });
+    for (const v of Object.values(p)) {
+      expect(Number.isInteger(v.r)).toBe(true);
+      expect(Number.isInteger(v.g)).toBe(true);
+      expect(Number.isInteger(v.b)).toBe(true);
+    }
+  });
+
+  it("the WHITE-UNIQUE class: pure white is reachable (the endpoint grid)", () => {
+    // A near-black bg + a ~117-grey surface: pure white is the unique
+    // AA-clearing candidate — a grid capped short of the endpoints
+    // declared this class "no-win" inside a truncated domain.
+    const fills = {
+      primary: rgb(60, 60, 65),
+      background: rgb(0, 0, 0),
+      surface: rgb(117, 117, 120),
+    };
+    const p = deriveSemanticPalette(fills);
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      expect(p[slot], `${slot} is pure white`).toEqual({ r: 255, g: 255, b: 255 });
+      expect(contrastRatio(p[slot], fills.surface), `${slot} AA on the surface`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it("BOTH rungs unreachable: the achromatic split still differentiates", () => {
+    // bg pure black + a 144-grey surface: NO grey clears 4.55 (secondary)
+    // or even 3.5 (accent) on both anchors — both slots take the
+    // fallback, whose window-end picks must still split them.
+    const fills = {
+      primary: rgb(120, 120, 120),
+      background: rgb(0, 0, 0),
+      surface: rgb(144, 144, 144),
+    };
+    const p = deriveSemanticPalette(fills);
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+  });
+
+  it("the gamut search survives a huge finite chroma (the 0.4 cap)", () => {
+    // c=1e6: without the cap the first probe is out of gamut and the
+    // search degenerates to the grey; with it the largest in-gamut
+    // chroma is found (a CHROMATIC result).
+    const out = oklchToRgb({ l: 0.6, c: 1e6, h: 100 });
+    expect(out.r).not.toBe(out.g);
+    expect(Math.max(out.r, out.g, out.b) - Math.min(out.r, out.g, out.b)).toBeGreaterThan(20);
+  });
+
+  it("a FLOAT surface still yields integer channels everywhere", () => {
+    const p = deriveSemanticPalette({
+      primary: rgb(30, 102, 245),
+      background: { r: 239.4, g: 241.2, b: 245.6 },
+      surface: { r: 254.5, g: 254.5, b: 254.5 },
+    });
+    for (const v of Object.values(p)) {
+      expect(Number.isInteger(v.r)).toBe(true);
+      expect(Number.isInteger(v.g)).toBe(true);
+      expect(Number.isInteger(v.b)).toBe(true);
+    }
   });
 
   it("the status bar is the surface (the definitional answer)", () => {

@@ -356,6 +356,19 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(rgbToOklch(wrapped).h).toBeCloseTo(100, 0);
   });
 
+  it("a grey primary on LIGHT/dark fills splits via the full AA band", () => {
+    // The r11 S1 class: the pick flip only probed the two extremes and
+    // missed the interior candidate.
+    const p = deriveSemanticPalette({
+      primary: rgb(128, 128, 128),
+      background: rgb(240, 240, 240),
+      surface: rgb(179, 64, 205),
+    });
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+  });
+
   it("a grey primary on WHITE/BLACK fills splits secondary/accent (the fine band)", () => {
     // The 4.55 target band holds ONE byte (117) but the AA band holds
     // two (117@4.5578, 118@4.5422): the retake flips the pick and takes

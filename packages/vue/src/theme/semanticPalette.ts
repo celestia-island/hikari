@@ -432,19 +432,27 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       // Distinct and (for the achromatic split, whose rungs sit lower)
       // AA-clearing: take it.
       if (!sameAsSecondary && (!achromatic || highWorst >= 4.5)) return high;
-      // Coincidence: retake in the
-      // AA band with the OPPOSITE pick — a DISTINCT AA candidate beats a
-      // coinciding one (the grey-on-white/black class has 117@4.5578
-      // and 118@4.5422; both readable, only the pair distinguishes the
-      // slots). If no distinct AA candidate exists, the coincidence is
-      // physics (the razor class) and stands, disclosed.
-      const flip = pickBase === "low" ? "high" : "low";
-      const alt = readableHue(hue, brandChroma, both, 4.5, 0.52, Number.POSITIVE_INFINITY, flip, 0.35);
-      const altWorst = Math.min(...both.map((f) => contrastRatio(alt, f)));
-      const altDiffers =
-        alt.r !== secondarySlot.r || alt.g !== secondarySlot.g || alt.b !== secondarySlot.b;
-      if (altWorst >= 4.5 && altDiffers) return alt;
-      return high;
+      // Coincidence: scan the FULL AA band (the same fix the tone
+      // differentiation received — the pick flip only probes the two
+      // extremes and misses interior candidates) for the highest-chroma
+      // byte that differs from secondary. If none exists, the
+      // coincidence is physics (the razor class) and stands, disclosed.
+      {
+        const secKey = `${secondarySlot.r},${secondarySlot.g},${secondarySlot.b}`;
+        let best: { rgb: ThemeTokenRGB; chroma: number } | null = null;
+        for (let step = 0; step <= 376; step++) {
+          const l = step / 376;
+          const rgb = oklchToRgb({ l, c: brandChroma, h: hue });
+          const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
+          if (worst < 4.5) continue;
+          const key = `${rgb.r},${rgb.g},${rgb.b}`;
+          if (key === secKey) continue;
+          const chroma = rgbToOklch(rgb).c;
+          if (best === null || chroma > best.chroma) best = { rgb, chroma };
+        }
+        if (best !== null) return best.rgb;
+        return high;
+      }
     })(),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
     focusedBorder: focused,

@@ -225,10 +225,10 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // The bias is a VALUE choice; any drift (0.55, 0.85, ...) moves
     // bytes inside the clearing band with no other pin the wiser.
     const p = deriveSemanticPalette(DARK_FILLS);
-    expect(`${p.success.r},${p.success.g},${p.success.b}`).toBe("109,178,120");
-    expect(`${p.error.r},${p.error.g},${p.error.b}`).toBe("246,116,120");
+    expect(`${p.success.r},${p.success.g},${p.success.b}`).toBe("108,177,119");
+    expect(`${p.error.r},${p.error.g},${p.error.b}`).toBe("245,115,119");
     expect(`${p.warning.r},${p.warning.g},${p.warning.b}`).toBe("219,137,69");
-    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("84,173,194");
+    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("83,173,193");
   });
 
   it("the search keeps the AA MARGIN (graphite tightest slot ≥4.55)", () => {
@@ -356,6 +356,24 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(rgbToOklch(wrapped).h).toBeCloseTo(100, 0);
   });
 
+  it("a grey primary on WHITE/BLACK fills splits secondary/accent (the fine band)", () => {
+    // The 4.55 target band holds ONE byte (117) but the AA band holds
+    // two (117@4.5578, 118@4.5422): the retake flips the pick and takes
+    // 118 — distinct AND readable (the coarse grid + unguarded path
+    // returned 117 for BOTH slots on every grey primary).
+    const p = deriveSemanticPalette({
+      primary: rgb(128, 128, 128),
+      background: rgb(255, 255, 255),
+      surface: rgb(0, 0, 0),
+    });
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+    for (const slot of [p.secondary, p.accent]) {
+      expect(Math.min(contrastRatio(slot, { r: 255, g: 255, b: 255 }), contrastRatio(slot, { r: 0, g: 0, b: 0 }))).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("an ACHROMATIC primary keeps secondary !== accent (incl. no-win fills)", () => {
     // The ±40° rotations are vacuous at c=0 — the split is by
     // LIGHTNESS (the fallback tie-break), and it must hold on the
@@ -402,23 +420,24 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     }
   });
 
-  it("the white-unique BOUNDARY: AA outranks distinctness when only white clears", () => {
-    // surface rgb(117,117,117) over a near-black bg: pure white is the
-    // only GRID colour clearing 4.55 on both anchors (in 8-bit space
-    // (254,254,254) also clears — the grid excludes it); every hue's
-    // chroma drops it under. The tones collapse to readable white here BY
-    // POLICY (the no-win path keeps distinctness exactly where AA is
-    // unreachable; this band is the mirror case — AA reachable only
-    // achromatically). One grey step down the tones are distinct again.
+  it("the white-unique BOUNDARY: near-white AA AND distinctness", () => {
+    // surface rgb(117,117,117) over a near-black bg: only near-white
+    // candidates clear 4.55 — and the fine grid lands each hue's own,
+    // so the boundary holds BOTH readability and distinctness (measured
+    // 250,255,250 / 255,254,254 / 255,254,253 / 253,255,255). A few
+    // steps down the tones gain full chroma.
     const boundary = {
       primary: rgb(58, 58, 66),
       background: rgb(8, 8, 10),
       surface: rgb(117, 117, 117),
     };
     const p = deriveSemanticPalette(boundary);
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "the boundary tones are distinct").toBe(4);
     for (const slot of ["success", "error", "warning", "info"] as const) {
-      expect(p[slot], `${slot} readable white`).toEqual({ r: 255, g: 255, b: 255 });
-      expect(contrastRatio(p[slot], boundary.surface)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(p[slot], boundary.surface), `${slot} AA`).toBeGreaterThanOrEqual(4.5);
     }
     const distinct = {
       primary: rgb(58, 58, 66),
@@ -426,44 +445,31 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       surface: rgb(110, 110, 110),
     };
     const q = deriveSemanticPalette(distinct);
-    const bytes = (["success", "error", "warning", "info"] as const).map(
+    const bytes2 = (["success", "error", "warning", "info"] as const).map(
       (slot) => `${q[slot].r},${q[slot].g},${q[slot].b}`,
     );
-    expect(new Set(bytes).size, "one step down the tones are distinct").toBe(4);
+    expect(new Set(bytes2).size, "a few steps down: still distinct").toBe(4);
   });
 
-  it("the WHITE-UNIQUE class: pure white is reachable (the endpoint grid)", () => {
-    // A near-black bg + a ~117-grey surface: pure white is the unique
-    // AA-clearing candidate — a grid capped short of the endpoints
-    // declared this class "no-win" inside a truncated domain.
+  it("the WHITE-UNIQUE class: AA reachable only at the near-white extreme", () => {
+    // A near-black bg + a ~117-grey surface: only near-white candidates
+    // clear AA — and the FINE grid finds each hue's OWN near-white, so
+    // the four tones stay DISTINCT at the boundary (the coarse grid
+    // collapsed them all to pure white). A grid capped short of the
+    // endpoints declared this class "no-win" inside a truncated domain.
     const fills = {
       primary: rgb(60, 60, 65),
       background: rgb(0, 0, 0),
       surface: rgb(117, 117, 120),
     };
     const p = deriveSemanticPalette(fills);
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "the four near-whites are distinct").toBe(4);
     for (const slot of ["success", "error", "warning", "info"] as const) {
-      expect(p[slot], `${slot} is pure white`).toEqual({ r: 255, g: 255, b: 255 });
       expect(contrastRatio(p[slot], fills.surface), `${slot} AA on the surface`).toBeGreaterThanOrEqual(4.5);
     }
-  });
-
-  it("the achromatic RAZOR: coincidence is physics, kept and disclosed", () => {
-    // bg #757575 / surface #787878: the 4.55 band is a single grey
-    // (black) — the retake's "low" re-lands the same byte. The pair
-    // coincides AT AA; a distinct sub-AA trade would be worse.
-    const p = deriveSemanticPalette({
-      primary: rgb(120, 120, 120),
-      background: rgb(117, 117, 117),
-      surface: rgb(120, 120, 120),
-    });
-    const worst = (c: { r: number; g: number; b: number }) =>
-      Math.min(
-        contrastRatio(c, { r: 117, g: 117, b: 117 }),
-        contrastRatio(c, { r: 120, g: 120, b: 120 }),
-      );
-    expect(worst(p.secondary)).toBeGreaterThanOrEqual(4.5);
-    expect(worst(p.accent), "the accent keeps AA (coinciding where physics forces it)").toBeGreaterThanOrEqual(4.5);
   });
 
   it("the achromatic RAZOR: coincidence is physics, kept and disclosed", () => {

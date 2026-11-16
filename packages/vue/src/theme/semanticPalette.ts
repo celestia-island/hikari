@@ -201,12 +201,12 @@ function sanitizeRgb({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
 // shifts a rendered hue by well under a degree on the shipped
 // fixtures; the headroom covers the darkest lightness band). The test
 // suite pins them to both families.
-export const CANONICAL_SEMANTIC = {
+export const CANONICAL_SEMANTIC = Object.freeze({
   success: { h: 148, c: 0.11 },
   error: { h: 20, c: 0.16 },
   warning: { h: 58, c: 0.13 },
   info: { h: 215, c: 0.09 },
-} as const;
+} as const);
 
 export type SemanticPalette = Pick<
   ThemeSchemeTokens,
@@ -245,135 +245,100 @@ function readableHue(
   preferLight = 0.7,
   /** An upper bound on the worst-anchor ratio (the rung CEILING): used
    *  by the resting border's HIT path so it never lands on — or above —
-   *  the focused border's rung (the fallback path does not read it; no
-   *  inversion has been observed there, but it is not guaranteed by
-   *  construction). */
+   *  the focused border's rung. */
   ceiling = Number.POSITIVE_INFINITY,
   /** WHERE in the clearing band: "closest" honours preferLight; "high"/
-   *  "low" take the band's top/bottom — the achromatic split (two biases
-   *  both collapse onto the band top when the band lies below them). */
+   *  "low" take the band's top/bottom — the achromatic split. */
   pick: "closest" | "high" | "low" = "closest",
-  /** The no-win window width (best worst-anchor minus this): wider for
-   *  the achromatic accent, whose only differentiator from secondary is
-   *  landing elsewhere in the window. */
+  /** The no-win window width (best worst-anchor minus this). */
   window = 0.35,
 ): ThemeTokenRGB {
-  // `preferLight` picks WHERE in the clearing band the result lands:
-  // mid-light for text tones and the focused border (high emphasis), the
-  // fills' own lightness for the resting border (low emphasis — it must
-  // sit just above the fill, not on the focused border's rung).
-  const STEPS = 94;
-  let hit: { rgb: ThemeTokenRGB; bias: number } | null = null;
-  let bestWorst = 0;
-  let missL = 0;
-  let miss: { rgb: ThemeTokenRGB; worst: number; chroma: number } | null = null;
-  for (let i = 0; i <= STEPS; i++) {
-    // The full [0,1] range INCLUDING the achromatic endpoints: a whole
-    // class of fill pairs (a near-black bg + a grey surface) has pure
-    // white as its UNIQUE best candidate — capping the grid short of it
-    // declared "no-win" inside a truncated domain.
-    const l = i / STEPS;
+  // ONE fine grid over the full [0,1] range INCLUDING the achromatic
+  // endpoints (a whole class of fills has pure white/black as its only
+  // candidate): Δl ≈ 0.0027 catches every AA window 8-bit colour space
+  // can express at this chroma, where the historical 94-step grid
+  // declared "no-win" inside a truncated domain.
+  const FINE = 376;
+  const cands: { rgb: ThemeTokenRGB; worst: number; chroma: number; l: number }[] = [];
+  for (let i = 0; i <= FINE; i++) {
+    const l = i / FINE;
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-    if (worst > bestWorst) bestWorst = worst;
-    if (worst >= target && worst <= ceiling) {
-      const bias =
-        pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
-      if (hit === null || bias < hit.bias) hit = { rgb, bias };
-    }
+    cands.push({ rgb, worst, chroma: rgbToOklch(rgb).c, l });
   }
-  if (hit === null) {
-    // A FINE pass at 4x resolution: the coarse grid (Δl ≈0.0106) misses
-    // AA windows narrower than its step (measured 4.30 on a fine-max
-    // 4.58 shape) — and may miss the 4.55 target the same way.
-    for (let i = 1; i <= STEPS * 4; i++) {
-      const l = i / (STEPS * 4);
-      const rgb = oklchToRgb({ l, c, h });
-      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-      if (worst >= target && worst <= ceiling) {
-        const bias =
-          pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
-        if (hit === null || bias < hit.bias) hit = { rgb, bias };
-      }
-    }
-  }
-  if (hit === null) {
-    // A FINE pass at 4x resolution: the coarse grid (Δl ≈0.0106) misses
-    // AA windows narrower than its step (measured 4.30 on a fine-max
-    // 4.58 shape) — and may miss the 4.55 target the same way.
-    for (let i = 1; i <= STEPS * 4; i++) {
-      const l = i / (STEPS * 4);
-      const rgb = oklchToRgb({ l, c, h });
-      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-      if (worst >= target && worst <= ceiling) {
-        const bias =
-          pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
-        if (hit === null || bias < hit.bias) hit = { rgb, bias };
-      }
+  const pickBias = (l: number): number =>
+    pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
+
+  // (a) HIT: clears the target within the ceiling — closest to the pick
+  // bias.
+  let hit: { rgb: ThemeTokenRGB; bias: number } | null = null;
+  for (const cand of cands) {
+    if (cand.worst >= target && cand.worst <= ceiling) {
+      const bias = pickBias(cand.l);
+      if (hit === null || bias < hit.bias) hit = { rgb: cand.rgb, bias };
     }
   }
   if (hit !== null) return hit.rgb;
-  // The 4.55/AA SEAM: no candidate clears the 4.55 margin, but some may
-  // still clear AA itself (e.g. pure white at 4.54) — those shapes are
-  // WINNABLE and must not fall to the sub-AA near-optimal window.
+
+  // (b) The AA SEAM: nothing clears the target margin, but something may
+  // still clear AA itself (white at 4.54 vs the 4.55 margin) — the shape
+  // is WINNABLE and must not fall to the sub-AA window. Pick by the most
+  // surviving chroma (the hue signal), tie-broken by the pick bias.
   if (target >= 4.5) {
-    let aaHit: { rgb: ThemeTokenRGB; key: number; l: number } | null = null;
-    for (let i = 0; i <= STEPS; i++) {
-      const l = i / STEPS;
-      const rgb = oklchToRgb({ l, c, h });
-      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-      if (worst >= 4.5) {
-        const chroma = rgbToOklch(rgb).c;
-        const key = -chroma; // most chroma first
+    let aaHit: { rgb: ThemeTokenRGB; key: number; bias: number } | null = null;
+    for (const cand of cands) {
+      if (cand.worst >= 4.5) {
+        const key = -cand.chroma;
         const tie = aaHit !== null && key < aaHit.key + 0.005;
-        const biasKey = Math.abs(l - preferLight);
-        const curBias = aaHit === null ? Number.POSITIVE_INFINITY : Math.abs(aaHit.l - preferLight);
-        if (aaHit === null || key < aaHit.key || (tie && biasKey < curBias)) {
-          aaHit = { rgb, key, l };
+        const bias = pickBias(cand.l);
+        if (aaHit === null || key < aaHit.key || (tie && bias < aaHit.bias)) {
+          aaHit = { rgb: cand.rgb, key, bias };
         }
       }
     }
     if (aaHit !== null) return aaHit.rgb;
+    // Some AA windows are narrower than ANY fixed grid (measured 4.25 on
+    // a 4.50 shape at this very resolution): a local ternary refinement
+    // around the best-worst candidates, re-checked against AA.
+    const byWorst = [...cands].sort((a, b) => b.worst - a.worst).slice(0, 3);
+    for (const center of byWorst) {
+      let lo = Math.max(0, center.l - 0.012);
+      let hiL = Math.min(1, center.l + 0.012);
+      for (let k = 0; k < 12; k++) {
+        const m1 = lo + (hiL - lo) / 3;
+        const m2 = hiL - (hiL - lo) / 3;
+        const w1 = Math.min(
+          ...fills.map((f) => contrastRatio(oklchToRgb({ l: m1, c, h }), f)),
+        );
+        const w2 = Math.min(
+          ...fills.map((f) => contrastRatio(oklchToRgb({ l: m2, c, h }), f)),
+        );
+        if (w1 >= w2) hiL = m2;
+        else lo = m1;
+      }
+      const lMid = (lo + hiL) / 2;
+      const rgb = oklchToRgb({ l: lMid, c, h });
+      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+      if (worst >= 4.5) return rgb;
+    }
   }
-  // NO lightness clears the target (a NO-WIN band). The raw max-min
-  // optimum sits at the achromatic extremes where the gamut search
-  // starves the chroma and the four tones collapse to byte-identical
-  // near-blacks — violating the hue-preservation this module exists
-  // for, and buying contrast that still misses the bar. Among the
-  // NEAR-optimal candidates (within `window` of the best worst-anchor) take
-  // the one whose SURVIVING chroma (round-tripped) is highest: the most
-  // hue signal at (almost) the best readability.
-  for (let i = 0; i <= STEPS; i++) {
-    const l = i / STEPS;
-    const rgb = oklchToRgb({ l, c, h });
-    const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-    if (worst >= bestWorst - window) {
-      const chroma = rgbToOklch(rgb).c;
-      // Chroma first (the hue signal), then the SECONDARY key as the
-      // TIE-BREAK within a hair of the best chroma: preferLight for the
-      // "closest" callers, the window's ENDS for the achromatic high/low
-      // picks (their only differentiator IS lightness — the same grey
-      // rounds many lightness values to one byte, so the ends maximize
-      // separation).
-      const secondary = (() => {
-        if (pick === "high") return -l;
-        if (pick === "low") return l;
-        return Math.abs(l - preferLight);
-      })();
-      const cur = (() => {
-        if (miss === null) return Number.POSITIVE_INFINITY;
-        if (pick === "high") return -missL;
-        if (pick === "low") return missL;
-        return Math.abs(missL - preferLight);
-      })();
-      const tie = miss !== null && chroma > miss.chroma - 0.005;
-      if (miss === null || chroma > miss.chroma + 0.005 || (tie && secondary < cur)) {
-        miss = { rgb, worst, chroma };
-        missL = l;
+
+  // (c) NO-WIN: nothing clears AA at this hue/chroma. Among the
+  // near-optimal candidates (within `window` of the best worst-anchor)
+  // take the most SURVIVING chroma — the hue signal — tie-broken by the
+  // pick bias (which differentiates the achromatic split's window ends).
+  const bestWorst = Math.max(...cands.map((cand) => cand.worst));
+  let miss: { rgb: ThemeTokenRGB; chroma: number; bias: number } | null = null;
+  for (const cand of cands) {
+    if (cand.worst >= bestWorst - window) {
+      const tie = miss !== null && cand.chroma > miss.chroma - 0.005;
+      const bias = pickBias(cand.l);
+      if (miss === null || cand.chroma > miss.chroma + 0.005 || (tie && bias < miss.bias)) {
+        miss = { rgb: cand.rgb, chroma: cand.chroma, bias };
       }
     }
   }
-  return (miss ?? { rgb: oklchToRgb({ l: 0.04, c, h }), worst: 0, chroma: 0 }).rgb;
+  return (miss ?? { rgb: oklchToRgb({ l: 0.5, c, h }), chroma: 0, bias: 0 }).rgb;
 }
 
 /**
@@ -421,6 +386,7 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // rung is the only guaranteed differentiator).
     accent: (() => {
       const hue = (primary.h + 320) % 360;
+      const pickBase = achromatic ? "low" : "closest";
       const high = readableHue(
         hue,
         brandChroma,
@@ -428,30 +394,27 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
         4.55,
         achromatic ? 0.52 : 0.7,
         Number.POSITIVE_INFINITY,
-        achromatic ? "low" : "closest",
+        pickBase,
         0.35,
       );
       const highWorst = Math.min(...both.map((f) => contrastRatio(high, f)));
-      if (!achromatic) return high;
-      // The ACHROMATIC split's invariant: never coincide with secondary
-      // WHEN both can stay AA (the boundary policy keeps a coinciding
-      // readable pair over a distinct sub-AA one).
       const sameAsSecondary =
         high.r === secondarySlot.r && high.g === secondarySlot.g && high.b === secondarySlot.b;
-      if (highWorst >= 4.5 && !sameAsSecondary) return high;
-      // The retake must ALSO clear AA — the boundary policy (AA outranks
-      // distinctness) applies to secondary/accent exactly as to the
-      // tones: a sub-AA distinct accent is a worse trade than a
-      // coinciding readable one.
-      const retake = readableHue(hue, brandChroma, both, 3.5, 0.52, Number.POSITIVE_INFINITY, "low", 0.6);
-      const retakeWorst = Math.min(...both.map((f) => contrastRatio(retake, f)));
-      const retakeDiffers =
-        retake.r !== secondarySlot.r || retake.g !== secondarySlot.g || retake.b !== secondarySlot.b;
-      // Retake only when it BOTH stays AA and actually differs — at the
-      // achromatic razor the 4.55 band is a single grey (the retake's
-      // "low" re-lands the same byte): coincidence is physics there and
-      // is disclosed, not fought.
-      if (retakeWorst >= 4.5 && retakeDiffers) return retake;
+      // Distinct and (for the achromatic split, whose rungs sit lower)
+      // AA-clearing: take it.
+      if (!sameAsSecondary && (!achromatic || highWorst >= 4.5)) return high;
+      // Coincidence, or an achromatic sub-AA first pass: retake in the
+      // AA band with the OPPOSITE pick — a DISTINCT AA candidate beats a
+      // coinciding one (the grey-on-white/black class has 117@4.5578
+      // and 118@4.5422; both readable, only the pair distinguishes the
+      // slots). If no distinct AA candidate exists, the coincidence is
+      // physics (the razor class) and stands, disclosed.
+      const flip = pickBase === "low" ? "high" : "low";
+      const alt = readableHue(hue, brandChroma, both, 4.5, 0.52, Number.POSITIVE_INFINITY, flip, 0.35);
+      const altWorst = Math.min(...both.map((f) => contrastRatio(alt, f)));
+      const altDiffers =
+        alt.r !== secondarySlot.r || alt.g !== secondarySlot.g || alt.b !== secondarySlot.b;
+      if (altWorst >= 4.5 && altDiffers) return alt;
       return high;
     })(),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),

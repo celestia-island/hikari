@@ -139,7 +139,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const h = rgbToOklch(DARK_FILLS.primary).h;
     // Post-chroma-reduction the rotations hold tightly (measured dark
-    // +40.4/-39.8, light +40.2/-40.0); the tolerance absorbs the grid.
+    // +41.8/-39.8, light +39.7/-39.5); the tolerance absorbs the grid.
     expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
     expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(2);
     // LIGHT too: the accent's pick must not drive it to the band bottom

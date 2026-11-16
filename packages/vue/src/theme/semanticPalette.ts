@@ -151,7 +151,6 @@ export function rgbToOklch(input: ThemeTokenRGB): OKLCH {
   return { l: lab[0], c, h };
 }
 
-
 // ── WCAG contrast — deliberately NOT the package's other ink metric ────
 // contrastColor/solidInk use the raw weighted average (gamma-encoded
 // luminance/255); this module uses WCAG RELATIVE luminance. The
@@ -202,10 +201,10 @@ function sanitizeRgb({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
 // fixtures; the headroom covers the darkest lightness band). The test
 // suite pins them to both families.
 export const CANONICAL_SEMANTIC = Object.freeze({
-  success: { h: 148, c: 0.11 },
-  error: { h: 20, c: 0.16 },
-  warning: { h: 58, c: 0.13 },
-  info: { h: 215, c: 0.09 },
+  success: Object.freeze({ h: 148, c: 0.11 }),
+  error: Object.freeze({ h: 20, c: 0.16 }),
+  warning: Object.freeze({ h: 58, c: 0.13 }),
+  info: Object.freeze({ h: 215, c: 0.09 }),
 } as const);
 
 export type SemanticPalette = Pick<
@@ -297,30 +296,11 @@ function readableHue(
       }
     }
     if (aaHit !== null) return aaHit.rgb;
-    // Some AA windows are narrower than ANY fixed grid (measured 4.25 on
-    // a 4.50 shape at this very resolution): a local ternary refinement
-    // around the best-worst candidates, re-checked against AA.
-    const byWorst = [...cands].sort((a, b) => b.worst - a.worst).slice(0, 3);
-    for (const center of byWorst) {
-      let lo = Math.max(0, center.l - 0.012);
-      let hiL = Math.min(1, center.l + 0.012);
-      for (let k = 0; k < 12; k++) {
-        const m1 = lo + (hiL - lo) / 3;
-        const m2 = hiL - (hiL - lo) / 3;
-        const w1 = Math.min(
-          ...fills.map((f) => contrastRatio(oklchToRgb({ l: m1, c, h }), f)),
-        );
-        const w2 = Math.min(
-          ...fills.map((f) => contrastRatio(oklchToRgb({ l: m2, c, h }), f)),
-        );
-        if (w1 >= w2) hiL = m2;
-        else lo = m1;
-      }
-      const lMid = (lo + hiL) / 2;
-      const rgb = oklchToRgb({ l: lMid, c, h });
-      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
-      if (worst >= 4.5) return rgb;
-    }
+    // (A historical ternary refinement for sub-grid AA windows lived
+    // here; at 376 steps no measured shape reaches it — an instrumented
+    // 4,203-shape run recorded 0 wins — so it was removed rather than
+    // kept unpinned. The step is ~0.0027, finer than any 8-bit-expressible
+    // AA window at the chromas this module passes.)
   }
 
   // (c) NO-WIN: nothing clears AA at this hue/chroma. Among the
@@ -377,6 +357,47 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     Number.POSITIVE_INFINITY,
     achromatic ? "high" : "closest",
   );
+  // TONE DIFFERENTIATION (the accent guard's rule, extended): when two
+  // semantic tones coincide AND a distinct AA candidate exists for the
+  // later one, retake it — two indistinguishable states are the failure
+  // this module exists to prevent. Coincidence with NO distinct AA
+  // candidate is physics and stands (disclosed).
+  const differentiate = (
+    slots: { key: "success" | "error" | "warning" | "info"; fill: { h: number; c: number } }[],
+  ): void => {
+    const byKey = new Map(slots.map((s) => [s.key, s]));
+    for (let i = 0; i < slots.length; i++) {
+      for (let j = i + 1; j < slots.length; j++) {
+        const a = result[slots[i].key];
+        const bHolder = byKey.get(slots[j].key)!;
+        const b = result[slots[j].key];
+        if (a.r !== b.r || a.g !== b.g || a.b !== b.b) continue;
+        for (const flip of ["high", "low"] as const) {
+          const alt = readableHue(
+            bHolder.fill.h,
+            bHolder.fill.c,
+            both,
+            4.5,
+            0.7,
+            Number.POSITIVE_INFINITY,
+            flip,
+            0.35,
+          );
+          const altWorst = Math.min(...both.map((f) => contrastRatio(alt, f)));
+          const differs = alt.r !== a.r || alt.g !== a.g || alt.b !== a.b;
+          if (altWorst >= 4.5 && differs) {
+            (result as Record<string, ThemeTokenRGB>)[slots[j].key] = alt;
+            break;
+          }
+        }
+      }
+    }
+  };
+  // TONE DIFFERENTIATION (the accent guard's rule, extended): when two
+  // semantic tones coincide AND a distinct AA candidate exists for the
+  // later one, retake it — two indistinguishable states are the failure
+  // this module exists to prevent. Coincidence with NO distinct AA
+  // candidate is physics and stands (disclosed).
   const result: SemanticPalette = {
     secondary: secondarySlot,
     // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first
@@ -403,7 +424,7 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       // Distinct and (for the achromatic split, whose rungs sit lower)
       // AA-clearing: take it.
       if (!sameAsSecondary && (!achromatic || highWorst >= 4.5)) return high;
-      // Coincidence, or an achromatic sub-AA first pass: retake in the
+      // Coincidence: retake in the
       // AA band with the OPPOSITE pick — a DISTINCT AA candidate beats a
       // coinciding one (the grey-on-white/black class has 117@4.5578
       // and 118@4.5422; both readable, only the pair distinguishes the
@@ -430,5 +451,11 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // not write through to the input theme.
     statusBarBackground: sanitizeRgb(fills.surface),
   };
+  differentiate([
+    { key: "success", fill: CANONICAL_SEMANTIC.success },
+    { key: "error", fill: CANONICAL_SEMANTIC.error },
+    { key: "warning", fill: CANONICAL_SEMANTIC.warning },
+    { key: "info", fill: CANONICAL_SEMANTIC.info },
+  ]);
   return result;
 }

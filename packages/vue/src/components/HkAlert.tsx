@@ -45,6 +45,18 @@ export default defineComponent({
       !props.title ? "hk-alert-no-title" : "",
     ]);
 
+    // ARIA live-region semantics by variant: error/warning announce
+    // assertively (`role="alert"` — implicit aria-live="assertive"),
+    // info/success politely (`role="status"` — implicit aria-live=
+    // "polite"). Same split the chest notification wave uses; the role
+    // rides the ROOT so screen readers announce the whole alert body
+    // as one region.
+    const rootRole = computed(() =>
+      props.variant === "error" || props.variant === "warning"
+        ? "alert"
+        : "status",
+    );
+
     function onClose() {
       isDismissed.value = true;
       emit("close");
@@ -56,7 +68,11 @@ export default defineComponent({
       const IconComp = VARIANT_ICONS[props.variant];
 
       return (
-        <div class={rootCls.value} style={hkPadStyle(props.padding)}>
+        <div
+          class={rootCls.value}
+          style={hkPadStyle(props.padding)}
+          role={rootRole.value}
+        >
           <span class="hk-alert-icon">
             {slots.icon ? (
               slots.icon()

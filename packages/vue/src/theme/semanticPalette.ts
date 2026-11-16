@@ -4,21 +4,22 @@ import type { ThemeTokenRGB, ThemeSchemeTokens } from "./presets";
  * Semantic palette derivation — hue-preserving, readability-adjusted.
  *
  * A theme that declares only the three anchors (primary / background /
- * surface) has, until now, inherited `text ?? primary` into its eight
- * semantic ink slots: success === error === warning === info === the
- * brand primary. When the primary lacks contrast against its own
- * background the semantic copy paints at ~1.07:1, and even when it
- * reads, the four states are indistinguishable — the semantic meaning
- * is destroyed by the fallback, not by any derivation.
+ * surface) leaves its eight semantic ink slots to the CONSUMER's
+ * fallback — chest's applier inherits the brand primary into all of
+ * them: success === error === warning === info === primary. When the
+ * primary lacks contrast against its own background the semantic copy
+ * paints at ~1.07:1, and even when it reads, the four states are
+ * indistinguishable — the semantic meaning is destroyed by the
+ * fallback, not by any derivation.
  *
  * These hues cannot be luminance-derived (a grey "success" is not a
  * success), so the derivation works in OKLCH: keep the HUE, search the
  * LIGHTNESS for the value that reads on BOTH fills (background AND
- * surface — the same worst-anchor rule the body ink uses), keep a
- * canonical CHROMA. The canonical hues are the intersection of the two
- * shipped stock families (the Nord-toned dark table and the
- * tailwind-toned light table), so a derived palette lands where the
- * designed ones live.
+ * surface — the worst anchor decides), keep a canonical CHROMA. The
+ * canonical hues sit between the two shipped stock families (the
+ * Nord-toned dark table and the tailwind-toned light table — within
+ * 17° of both per slot), so a derived palette lands where the designed
+ * ones live.
  *
  * Pure function of the fills: no mode, no globals, no mutation.
  */
@@ -47,21 +48,55 @@ const LAB_FROM_LMS = [
   [0.0259040371, 0.7827717662, -0.8086757660],
 ];
 
-export function oklchToRgb({ l, c, h }: OKLCH): ThemeTokenRGB {
+function oklchToLinear(
+  l: number,
+  c: number,
+  h: number,
+): [number, number, number] {
   const rad = (h * Math.PI) / 180;
   const a = c * Math.cos(rad);
   const b = c * Math.sin(rad);
-  // Lab → LMS′ (cube roots) → linear LMS → sRGB.
+  // Lab → LMS′ (cube roots) → linear LMS.
   const l_ = l + 0.3963377774 * a + 0.2158037573 * b;
   const m_ = l - 0.1055613458 * a - 0.0638541728 * b;
   const s_ = l - 0.0894841775 * a - 1.291485548 * b;
   const l3 = l_ * l_ * l_;
   const m3 = m_ * m_ * m_;
   const s3 = s_ * s_ * s_;
+  return [
+    4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3,
+    -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3,
+    -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3,
+  ];
+}
+
+export function oklchToRgb({ l, c, h }: OKLCH): ThemeTokenRGB {
+  // Gamut mapping by CHROMA REDUCTION at constant L and H: a per-channel
+  // clamp drags the hue (a warning clamped toward its error neighbour is
+  // exactly how two semantic tones collapse), while reducing chroma
+  // keeps the hue exact — the module's whole point. Binary search for
+  // the largest in-gamut chroma.
+  let lo = 0;
+  let hi = c;
+  let best: [number, number, number] | null = null;
+  for (let i = 0; i < 24; i++) {
+    const mid = (lo + hi) / 2;
+    const lin = oklchToLinear(l, mid, h);
+    const inGamut = lin.every((v) => v >= -1e-4 && v <= 1 + 1e-4);
+    if (inGamut) {
+      best = lin;
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  // c=0 is always in gamut (a grey at lightness l); the fallback covers
+  // extreme l values even the grey cannot reach.
+  const lin = best ?? oklchToLinear(l, 0, h);
   return {
-    r: linearToChannel(4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3),
-    g: linearToChannel(-1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3),
-    b: linearToChannel(-0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3),
+    r: linearToChannel(lin[0]),
+    g: linearToChannel(lin[1]),
+    b: linearToChannel(lin[2]),
   };
 }
 
@@ -119,16 +154,18 @@ export function hueDistance(h1: number, h2: number): number {
 
 // ── The canonical semantic family ───────────────────────────────────────
 //
-// The intersection of the two shipped stock tables: the Nord-toned dark
-// family (success 163,190,140 / error 191,97,106 / warning 208,135,112 /
-// info 136,192,208) and the tailwind-toned light family (16,185,129 /
-// 239,68,68 / 245,158,11 / 6,182,212) agree, in OKLCH hue, to within a
-// few degrees per slot. The constants below are that agreement; the
-// test suite pins them to both families.
+// Between the two shipped stock families: the Nord-toned dark family
+// (success 163,190,140 / error 191,97,106 / warning 208,135,112 / info
+// 136,192,208) and the tailwind-toned light family (16,185,129 /
+// 239,68,68 / 245,158,11 / 6,182,212) differ by up to ~32° per slot in
+// OKLCH hue; the constants below sit within 17° of BOTH per slot and
+// keep the four tones pairwise ≥30° apart (the shipped families
+// themselves already are, at their midpoints). The test suite pins
+// them to both families.
 export const CANONICAL_SEMANTIC = {
-  success: { h: 150, c: 0.11 },
-  error: { h: 25, c: 0.16 },
-  warning: { h: 58, c: 0.13 },
+  success: { h: 148, c: 0.11 },
+  error: { h: 22, c: 0.16 },
+  warning: { h: 56, c: 0.13 },
   info: { h: 215, c: 0.09 },
 } as const;
 
@@ -158,16 +195,20 @@ export interface SemanticFills {
  * band is all pastels, on light fills all mid-tones, so the bias keeps
  * the derived colour where designed semantic colours live). When no
  * lightness clears the target (opposite-polarity fills), fall back to
- * the max-min optimum — the same philosophy as the body ink's midpoint:
- * the best any colour of this hue can do on both anchors.
+ * the max-min optimum — the best any colour of this hue can do on
+ * both anchors.
  */
 function readableHue(
   h: number,
   c: number,
   fills: ThemeTokenRGB[],
   target: number,
-  preferLight = 0.62,
+  preferLight = 0.7,
 ): ThemeTokenRGB {
+  // `preferLight` picks WHERE in the clearing band the result lands:
+  // mid-light for text tones and the focused border (high emphasis), the
+  // fills' own lightness for the resting border (low emphasis — it must
+  // sit just above the fill, not on the focused border's rung).
   const STEPS = 94;
   let hit: { rgb: ThemeTokenRGB; bias: number } | null = null;
   let miss: { rgb: ThemeTokenRGB; worst: number } | null = null;
@@ -190,22 +231,32 @@ function readableHue(
  * accent are the primary's own hue rotated either side (the stock
  * tables do the same — cyan → teal/blue, pink → purple/amber), borders
  * follow the primary's hue at reduced chroma, the four semantic tones
- * use the canonical family, and the status bar is the surface (the
- * fill every designed table paints it with).
+ * use the canonical family, and the status bar is the surface (the dark
+ * table paints it exactly so; the light table a near-surface tint —
+ * surface is the neutral default).
  */
 export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   const primary = rgbToOklch(fills.primary);
   const both = [fills.background, fills.surface];
   const brandChroma = Math.min(primary.c, 0.12);
+  // The resting border prefers the FILLS' lightness (low emphasis); the
+  // focused border the mid-light sweet spot (high emphasis) — sharing
+  // one bias collapsed them onto the same rung and erased the focus
+  // affordance (journeys S1).
+  const fillLight = both.reduce((acc, f) => acc + rgbToOklch(f).l, 0) / both.length;
   return {
-    secondary: readableHue((primary.h + 40) % 360, brandChroma, both, 4.5),
-    accent: readableHue((primary.h + 320) % 360, brandChroma, both, 4.5),
-    border: readableHue(primary.h, primary.c * 0.25, both, 1.5),
+    secondary: readableHue((primary.h + 40) % 360, brandChroma, both, 4.55),
+    accent: readableHue((primary.h + 320) % 360, brandChroma, both, 4.55),
+    border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight),
     focusedBorder: readableHue(primary.h, primary.c * 0.9, both, 3),
-    success: readableHue(CANONICAL_SEMANTIC.success.h, CANONICAL_SEMANTIC.success.c, both, 4.5),
-    error: readableHue(CANONICAL_SEMANTIC.error.h, CANONICAL_SEMANTIC.error.c, both, 4.5),
-    warning: readableHue(CANONICAL_SEMANTIC.warning.h, CANONICAL_SEMANTIC.warning.c, both, 4.5),
-    info: readableHue(CANONICAL_SEMANTIC.info.h, CANONICAL_SEMANTIC.info.c, both, 4.5),
-    statusBarBackground: fills.surface,
+    // 4.55, not 4.5: a hair of margin so a 1-LSB rounding change never
+    // drops a derived tone under the AA bar the contract pins.
+    success: readableHue(CANONICAL_SEMANTIC.success.h, CANONICAL_SEMANTIC.success.c, both, 4.55),
+    error: readableHue(CANONICAL_SEMANTIC.error.h, CANONICAL_SEMANTIC.error.c, both, 4.55),
+    warning: readableHue(CANONICAL_SEMANTIC.warning.h, CANONICAL_SEMANTIC.warning.c, both, 4.55),
+    info: readableHue(CANONICAL_SEMANTIC.info.h, CANONICAL_SEMANTIC.info.c, both, 4.55),
+    // A COPY, not the reference: mutating the derived palette must not
+    // write through to the input theme.
+    statusBarBackground: { ...fills.surface },
   };
 }

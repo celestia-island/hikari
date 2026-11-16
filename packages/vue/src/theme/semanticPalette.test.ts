@@ -12,8 +12,10 @@ import {
 
 const rgb = (r: number, g: number, b: number): ThemeTokenRGB => ({ r, g, b });
 
+// Guide-shaped three-anchor fixtures (Catppuccin Mocha / Latte anchors)
+// — the shape chest's plugin guide documents and its applier fills.
 const DARK_FILLS = {
-  primary: rgb(24, 24, 37), // the documented 3-anchor guide fixture
+  primary: rgb(24, 24, 37),
   background: rgb(17, 17, 27),
   surface: rgb(49, 50, 68),
 };
@@ -29,18 +31,21 @@ const OPPOSITE_FILLS = {
 };
 
 describe("OKLCH conversion", () => {
-  it("round-trips 8-bit colours within a rounding step", () => {
+  it("round-trips 8-bit colours EXACTLY (any matrix typo reddens)", () => {
     for (let i = 0; i < 64; i++) {
       const c = rgb(
         (i * 37) % 256,
         (i * 91) % 256,
         (i * 151) % 256,
       );
-      const back = oklchToRgb(rgbToOklch(c));
-      expect(Math.abs(back.r - c.r)).toBeLessThanOrEqual(1);
-      expect(Math.abs(back.g - c.g)).toBeLessThanOrEqual(1);
-      expect(Math.abs(back.b - c.b)).toBeLessThanOrEqual(1);
+      expect(oklchToRgb(rgbToOklch(c))).toEqual(c);
     }
+  });
+
+  it("matches Ottosson's reference values (the toe and the matrices)", () => {
+    expect(rgbToOklch(rgb(255, 0, 0)).h).toBeCloseTo(29.23, 1);
+    expect(rgbToOklch(rgb(0, 0, 255)).h).toBeCloseTo(264.05, 1);
+    expect(rgbToOklch(rgb(255, 255, 255)).l).toBeCloseTo(1.0, 3);
   });
 
   it("keeps a constant hue when only lightness changes", () => {
@@ -67,6 +72,15 @@ describe("the canonical family", () => {
     }
   });
 });
+
+// The mid-tone regime (the readable band sits at the DARK end): the
+// gamut mapping must keep the four hues distinct here, where a
+// per-channel clamp collapsed error and warning to the same bytes.
+const GRAPHITE_FILLS = {
+  primary: rgb(120, 120, 125),
+  background: rgb(126, 126, 131),
+  surface: rgb(144, 144, 149),
+};
 
 describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   it("every TEXT-bearing semantic slot clears AA on BOTH fills (dark)", () => {
@@ -109,6 +123,41 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     }
   });
 
+  it("the derived tones couple to CANONICAL_SEMANTIC (the constant IS the hue)", () => {
+    for (const fills of [DARK_FILLS, LIGHT_FILLS, OPPOSITE_FILLS]) {
+      const p = deriveSemanticPalette(fills);
+      for (const key of ["success", "error", "warning", "info"] as const) {
+        expect(
+          hueDistance(rgbToOklch(p[key]).h, CANONICAL_SEMANTIC[key].h),
+          `${key} derives from the canonical constant`,
+        ).toBeLessThan(15);
+      }
+    }
+  });
+
+  it("secondary/accent are the primary's hue rotated ±40° (before clamping)", () => {
+    const p = deriveSemanticPalette(DARK_FILLS);
+    const h = rgbToOklch(DARK_FILLS.primary).h;
+    // The dark fixture does not clamp (measured offsets 39.6/39.8); the
+    // light fixture's accent clamps to -34.5, hence "before clamping".
+    expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(6);
+    expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(6);
+  });
+
+  it("opposite-polarity fills take the MAX-MIN optimum, not a fixed lightness", () => {
+    // The fixture's max-min optimum measures 3.90-3.96 worst-anchor; a
+    // fixed-lightness (preferLight) fallback lands at 3.16-3.61 — the
+    // 3.8 bar separates them.
+    const p = deriveSemanticPalette(OPPOSITE_FILLS);
+    for (const slot of ["success", "error", "warning", "info", "secondary", "accent"] as const) {
+      const worst = Math.min(
+        contrastRatio(p[slot], OPPOSITE_FILLS.background),
+        contrastRatio(p[slot], OPPOSITE_FILLS.surface),
+      );
+      expect(worst, `${slot} worst anchor at the optimum`).toBeGreaterThanOrEqual(3.8);
+    }
+  });
+
   it("the semantic hues are the CANONICAL hues, not the primary's", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     // The guide fixture's primary is a desaturated indigo (~295°): every
@@ -116,6 +165,14 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const primaryHue = rgbToOklch(DARK_FILLS.primary).h;
     for (const key of ["success", "error", "warning", "info"] as const) {
       expect(hueDistance(rgbToOklch(p[key]).h, primaryHue), key).toBeGreaterThanOrEqual(30);
+    }
+  });
+
+  it("the brand chroma cap holds (secondary/accent never exceed 0.12)", () => {
+    for (const fills of [DARK_FILLS, LIGHT_FILLS, GRAPHITE_FILLS]) {
+      const p = deriveSemanticPalette(fills);
+      expect(rgbToOklch(p.secondary).c).toBeLessThanOrEqual(0.125);
+      expect(rgbToOklch(p.accent).c).toBeLessThanOrEqual(0.125);
     }
   });
 
@@ -130,13 +187,36 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(contrastRatio(p.focusedBorder, DARK_FILLS.background)).toBeGreaterThanOrEqual(3);
   });
 
+  it("a mid-tone (graphite) theme keeps the four hues distinct", () => {
+    const p = deriveSemanticPalette(GRAPHITE_FILLS);
+    const hues = {
+      success: rgbToOklch(p.success).h,
+      error: rgbToOklch(p.error).h,
+      warning: rgbToOklch(p.warning).h,
+      info: rgbToOklch(p.info).h,
+    };
+    const entries = Object.entries(hues);
+    for (let i = 0; i < entries.length; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        expect(
+          hueDistance(entries[i][1], entries[j][1]),
+          `${entries[i][0]} vs ${entries[j][0]}`,
+        ).toBeGreaterThanOrEqual(30);
+      }
+    }
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      expect(contrastRatio(p[slot], GRAPHITE_FILLS.background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(p[slot], GRAPHITE_FILLS.surface)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it("the status bar is the surface (the definitional answer)", () => {
     for (const fills of [DARK_FILLS, LIGHT_FILLS]) {
       expect(deriveSemanticPalette(fills).statusBarBackground).toEqual(fills.surface);
     }
   });
 
-  it("opposite-polarity fills take the max-min optimum (no side below 2.1)", () => {
+  it("opposite-polarity fills never leave an anchor below 2.1 (the floor family)", () => {
     const p = deriveSemanticPalette(OPPOSITE_FILLS);
     for (const slot of ["success", "error", "warning", "info", "secondary", "accent"] as const) {
       const worst = Math.min(

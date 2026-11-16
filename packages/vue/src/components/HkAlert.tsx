@@ -45,16 +45,21 @@ export default defineComponent({
       !props.title ? "hk-alert-no-title" : "",
     ]);
 
-    // ARIA live-region semantics by variant: error/warning announce
-    // assertively (`role="alert"` — implicit aria-live="assertive"),
-    // info/success politely (`role="status"` — implicit aria-live=
-    // "polite"). Same split the chest notification wave uses; the role
-    // rides the ROOT so screen readers announce the whole alert body
-    // as one region.
-    const rootRole = computed(() =>
+    // Live-region semantics by variant — the HkToast family split
+    // (HkToast.tsx): errors/warnings interrupt (`role="alert"` +
+    // assertive), everything else announces politely (`role="status"` +
+    // polite). The aria-live attribute rides along explicitly, same as
+    // HkToast / HkLoadingVeil / HkPersistentToast, though ARIA already
+    // implies it from the role. A live region only announces content
+    // inserted or changed AFTER it registers — an alert present at
+    // mount is read in document order like static content; both real
+    // in-repo consumers mount the alert conditionally (HkSectionCard
+    // error state, HkMfaVerifyCard retry hint). The role rides the
+    // ROOT so the whole alert body is one announced region.
+    const a11y = computed(() =>
       props.variant === "error" || props.variant === "warning"
-        ? "alert"
-        : "status",
+        ? ({ role: "alert", "aria-live": "assertive" } as const)
+        : ({ role: "status", "aria-live": "polite" } as const),
     );
 
     function onClose() {
@@ -71,7 +76,8 @@ export default defineComponent({
         <div
           class={rootCls.value}
           style={hkPadStyle(props.padding)}
-          role={rootRole.value}
+          role={a11y.value.role}
+          aria-live={a11y.value["aria-live"]}
         >
           <span class="hk-alert-icon">
             {slots.icon ? (

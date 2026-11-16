@@ -9,6 +9,9 @@
 //
 //   div.hk-alert .hk-alert-{variant} .hk-alert-{size} [.hk-alert-banner]
 //                [.hk-alert-no-title]      (style: --hk-pad override)
+//                (role + aria-live: "alert"/"assertive" for error/
+//                warning, "status"/"polite" for info/success — ARIA
+//                live-region semantics, mirroring the Vue a11y pair)
 //     span.hk-alert-icon        → slot `icon` or the variant default icon
 //     div.hk-alert-body
 //       p.hk-alert-title        → optional
@@ -183,11 +186,27 @@ pub fn Alert(props: AlertProps) -> Element {
     let root_style = hk_pad_style(props.padding);
     let on_close_handler = props.on_close.clone();
 
+    // ARIA live-region semantics by variant — mirror of the Vue
+    // `HkAlert` a11y pair (the HkToast family split): error/warning
+    // announce assertively (`role="alert"` + assertive), info/success
+    // politely (`role="status"` + polite); the attributes ride
+    // explicitly, as loading_veil / persistent_toast do.
+    let root_role = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "alert",
+        AlertVariant::Info | AlertVariant::Success => "status",
+    };
+    let root_live = match props.variant {
+        AlertVariant::Error | AlertVariant::Warning => "assertive",
+        AlertVariant::Info | AlertVariant::Success => "polite",
+    };
+
     rsx! {
         if !dismissed {
             div {
                 class: root_classes,
                 style: root_style,
+                "role": root_role,
+                "aria-live": root_live,
                 span { class: "hk-alert-icon",
                     {icon}
                 }

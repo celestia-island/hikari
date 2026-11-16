@@ -18,8 +18,8 @@ import type { ThemeTokenRGB, ThemeSchemeTokens } from "./presets";
  * surface — the worst anchor decides), keep a canonical CHROMA. The
  * canonical hues sit between the two shipped stock families (the
  * Nord-toned dark table and the tailwind-toned light table — within
- * 17° of both per slot), so a derived palette lands where the designed
- * ones live.
+ * the pinned 20° of both per slot), so a derived palette lands where
+ * the designed ones live.
  *
  * Pure function of the fills: no mode, no globals, no mutation.
  */
@@ -84,7 +84,10 @@ export function oklchToRgb(input: OKLCH): ThemeTokenRGB {
   // keeps the hue exact — the module's whole point. Binary search for
   // the largest in-gamut chroma.
   let lo = 0;
-  let hi = c;
+  // Cap the search upper bound: OKLCH's useful sRGB chroma tops out
+  // around 0.37, and an unbounded finite c degenerates the first probe
+  // (the largest in-gamut chroma is then never found).
+  let hi = Math.min(c, 0.4);
   let best: [number, number, number] | null = null;
   for (let i = 0; i < 24; i++) {
     const mid = (lo + hi) / 2;
@@ -151,21 +154,28 @@ function srgbLuminance({ r, g, b }: ThemeTokenRGB): number {
   return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 }
 
-export function contrastRatio(
-  a: ThemeTokenRGB,
-  b: ThemeTokenRGB,
-): number {
-  const la = srgbLuminance(a);
-  const lb = srgbLuminance(b);
+export function contrastRatio(a: ThemeTokenRGB, b: ThemeTokenRGB): number {
+  const la = srgbLuminance(sanitizeRgb(a));
+  const lb = srgbLuminance(sanitizeRgb(b));
   const hi = Math.max(la, lb);
   const lo = Math.min(la, lb);
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Shortest distance between two hues on the 360° wheel, in degrees. */
+/** Shortest distance between two hues on the 360° wheel, in degrees.
+ *  Non-finite inputs read as 0 (never NaN out of a public primitive). */
 export function hueDistance(h1: number, h2: number): number {
-  const d = Math.abs(h1 - h2) % 360;
+  const a = Number.isFinite(h1) ? h1 : 0;
+  const b = Number.isFinite(h2) ? h2 : 0;
+  const d = Math.abs(a - b) % 360;
   return Math.min(d, 360 - d);
+}
+
+/** Channel sanitisation shared by the public colour maths. */
+function sanitizeRgb({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
+  const clamp = (v: number) =>
+    Math.min(255, Math.max(0, Math.round(Number.isFinite(v) ? v : 128)));
+  return { r: clamp(r), g: clamp(g), b: clamp(b) };
 }
 
 // ── The canonical semantic family ───────────────────────────────────────
@@ -175,9 +185,10 @@ export function hueDistance(h1: number, h2: number): number {
 // 136,192,208) and the tailwind-toned light family (16,185,129 /
 // 239,68,68 / 245,158,11 / 6,182,212) differ by up to ~32° per slot in
 // OKLCH hue; the constants below sit within the pinned 20° of BOTH
-// per slot and keep the four tones ≥38° apart (8-bit quantization eats
-// up to ~4° on the dark lightness band, so the raw separation needs
-// the headroom). The test suite pins them to both families.
+// per slot and keep the four tones ≥38° apart (8-bit quantization
+// shifts a rendered hue by well under a degree on the shipped
+// fixtures; the headroom covers the darkest lightness band). The test
+// suite pins them to both families.
 export const CANONICAL_SEMANTIC = {
   success: { h: 148, c: 0.11 },
   error: { h: 20, c: 0.16 },
@@ -225,6 +236,10 @@ function readableHue(
    *  focused border's rung (on the fallback path a lower-chroma colour
    *  can win the worst-anchor contest and invert the two). */
   ceiling = Number.POSITIVE_INFINITY,
+  /** WHERE in the clearing band: "closest" honours preferLight; "high"/
+   *  "low" take the band's top/bottom — the achromatic split (two biases
+   *  both collapse onto the band top when the band lies below them). */
+  pick: "closest" | "high" | "low" = "closest",
 ): ThemeTokenRGB {
   // `preferLight` picks WHERE in the clearing band the result lands:
   // mid-light for text tones and the focused border (high emphasis), the
@@ -233,13 +248,19 @@ function readableHue(
   const STEPS = 94;
   let hit: { rgb: ThemeTokenRGB; bias: number } | null = null;
   let bestWorst = 0;
+  let missL = 0;
   let miss: { rgb: ThemeTokenRGB; worst: number; chroma: number } | null = null;
   for (let i = 0; i <= STEPS; i++) {
-    const l = 0.04 + (0.97 - 0.04) * (i / STEPS);
+    // The full [0,1] range INCLUDING the achromatic endpoints: a whole
+    // class of fill pairs (a near-black bg + a grey surface) has pure
+    // white as its UNIQUE best candidate — capping the grid short of it
+    // declared "no-win" inside a truncated domain.
+    const l = i / STEPS;
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
     if (worst >= target && worst <= ceiling) {
-      const bias = Math.abs(l - preferLight);
+      const bias =
+        pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
       if (hit === null || bias < hit.bias) hit = { rgb, bias };
     } else {
       if (worst > bestWorst) bestWorst = worst;
@@ -255,12 +276,21 @@ function readableHue(
   // the one whose SURVIVING chroma (round-tripped) is highest: the most
   // hue signal at (almost) the best readability.
   for (let i = 0; i <= STEPS; i++) {
-    const l = 0.04 + (0.97 - 0.04) * (i / STEPS);
+    const l = i / STEPS;
     const rgb = oklchToRgb({ l, c, h });
     const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
     if (worst >= bestWorst - 0.35) {
       const chroma = rgbToOklch(rgb).c;
-      if (miss === null || chroma > miss.chroma) miss = { rgb, worst, chroma };
+      // Chroma first (the hue signal), then preferLight as the TIE-BREAK
+      // within a hair of the best chroma — the achromatic split
+      // (secondary/accent at c=0, whose only differentiator IS
+      // lightness) lives here, as do the saturated-collision shapes.
+      const tie = miss !== null && chroma > miss.chroma - 0.005;
+      const betterBias = Math.abs(l - preferLight) < Math.abs(missL - preferLight);
+      if (miss === null || chroma > miss.chroma + 0.005 || (tie && betterBias)) {
+        miss = { rgb, worst, chroma };
+        missL = l;
+      }
     }
   }
   return (miss ?? { rgb: oklchToRgb({ l: 0.04, c, h }), worst: 0, chroma: 0 }).rgb;
@@ -300,13 +330,20 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       both,
       4.55,
       achromatic ? 0.82 : 0.7,
+      Number.POSITIVE_INFINITY,
+      achromatic ? "high" : "closest",
     ),
     accent: readableHue(
       (primary.h + 320) % 360,
       brandChroma,
       both,
-      4.55,
+      // A LOWER rung for the achromatic accent: at no-win the bias
+      // rounds both slots to the same grey — a different rung is the
+      // only guaranteed differentiator.
+      achromatic ? 3.5 : 4.55,
       achromatic ? 0.52 : 0.7,
+      Number.POSITIVE_INFINITY,
+      achromatic ? "low" : "closest",
     ),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
     focusedBorder: focused,
@@ -316,8 +353,13 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     error: readableHue(CANONICAL_SEMANTIC.error.h, CANONICAL_SEMANTIC.error.c, both, 4.55),
     warning: readableHue(CANONICAL_SEMANTIC.warning.h, CANONICAL_SEMANTIC.warning.c, both, 4.55),
     info: readableHue(CANONICAL_SEMANTIC.info.h, CANONICAL_SEMANTIC.info.c, both, 4.55),
-    // A COPY, not the reference: mutating the derived palette must not
-    // write through to the input theme.
-    statusBarBackground: { ...fills.surface },
+    // A COPY (rounded, like every derived slot: float callers would
+    // otherwise get mixed precision): mutating the derived palette must
+    // not write through to the input theme.
+    statusBarBackground: {
+      r: Math.round(fills.surface.r),
+      g: Math.round(fills.surface.g),
+      b: Math.round(fills.surface.b),
+    },
   };
 }

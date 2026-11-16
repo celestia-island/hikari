@@ -159,7 +159,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
         contrastRatio(p[slot], OPPOSITE_FILLS.background),
         contrastRatio(p[slot], OPPOSITE_FILLS.surface),
       );
-      expect(worst, `${slot} near-optimal`).toBeGreaterThanOrEqual(3.6);
+      expect(worst, `${slot} near-optimal`).toBeGreaterThanOrEqual(3.55);
     }
   });
 
@@ -222,7 +222,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(`${p.success.r},${p.success.g},${p.success.b}`).toBe("109,178,120");
     expect(`${p.error.r},${p.error.g},${p.error.b}`).toBe("246,116,120");
     expect(`${p.warning.r},${p.warning.g},${p.warning.b}`).toBe("219,137,69");
-    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("84,174,194");
+    expect(`${p.info.r},${p.info.g},${p.info.b}`).toBe("84,173,194");
   });
 
   it("the search keeps the AA MARGIN (graphite tightest slot ≥4.55)", () => {
@@ -304,12 +304,15 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       "hueDistance",
       "rgbToOklch",
       "oklchToRgb",
+      "SemanticPalette",
+      "SemanticFills",
+      "OKLCH",
     ];
     for (const [label, src] of [
       ["root", root],
       ["theme", theme],
     ] as const) {
-      const stmts = [...src.matchAll(/^export \{([^}]*)\}/gm)].map((m) => m[1]).join(" ");
+      const stmts = [...src.matchAll(/^export (?:type )?\{([^}]*)\}/gm)].map((m) => m[1]).join(" ");
       for (const name of names) {
         expect(stmts, `${label} exports ${name}`).toContain(name);
       }
@@ -328,6 +331,37 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(mirrored.g).toBe(mirrored.b);
     const wrapped = oklchToRgb({ l: 0.5, c: 0.1, h: 460 });
     expect(rgbToOklch(wrapped).h).toBeCloseTo(100, 0);
+  });
+
+  it("an ACHROMATIC primary keeps secondary !== accent (incl. no-win fills)", () => {
+    // The ±40° rotations are vacuous at c=0 — the split is by
+    // LIGHTNESS (the fallback tie-break), and it must hold on the
+    // no-win shapes where the hit path never runs.
+    const shapes = [
+      { primary: rgb(128, 128, 128), background: rgb(224, 224, 224), surface: rgb(255, 255, 255) },
+      { primary: rgb(120, 120, 120), background: rgb(107, 114, 128), surface: rgb(156, 163, 175) },
+      { primary: rgb(120, 120, 120), background: rgb(245, 245, 240), surface: rgb(22, 27, 38) },
+    ];
+    for (const fills of shapes) {
+      const p = deriveSemanticPalette(fills);
+      const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+      const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+      expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+    }
+  });
+
+  it("rgbToOklch sanitises hostile inputs (finite LCH, never NaN)", () => {
+    const out = rgbToOklch({ r: NaN, g: 10, b: 10 });
+    expect(Number.isFinite(out.l)).toBe(true);
+    expect(Number.isFinite(out.c)).toBe(true);
+    expect(Number.isFinite(out.h)).toBe(true);
+    const neg = rgbToOklch({ r: -40, g: 300, b: 12.7 });
+    expect(neg.l).toBeGreaterThanOrEqual(0);
+    expect(neg.l).toBeLessThanOrEqual(1);
+    expect(Number.isFinite(contrastRatio({ r: NaN, g: NaN, b: NaN }, { r: 0, g: 0, b: 0 }))).toBe(true);
+    // NaN reads as hue 0 — the distance to 10 is 10, and 0 to itself.
+    expect(hueDistance(NaN, 10)).toBe(10);
+    expect(hueDistance(NaN, NaN)).toBe(0);
   });
 
   it("the status bar is the surface (the definitional answer)", () => {

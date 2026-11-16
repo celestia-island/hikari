@@ -388,8 +388,8 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
           // current tone holds.
           const taken = allToneBytes();
           let best: { rgb: ThemeTokenRGB; chroma: number } | null = null;
-          for (let step = 0; step <= 376; step++) {
-            const l = step / 376;
+          for (let step = 0; step <= 1504; step++) {
+            const l = step / 1504;
             const rgb = oklchToRgb({ l, c: bHolder.fill.c, h: bHolder.fill.h });
             const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
             if (worst < 4.5) continue;
@@ -440,8 +440,10 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       {
         const secKey = `${secondarySlot.r},${secondarySlot.g},${secondarySlot.b}`;
         let best: { rgb: ThemeTokenRGB; chroma: number } | null = null;
-        for (let step = 0; step <= 376; step++) {
-          const l = step / 376;
+        // 1504 steps (4× the main grid): the near-white AA windows are
+        // ≈0.0007 wide — the main 376 grid (Δl≈0.0027) straddles them.
+        for (let step = 0; step <= 1504; step++) {
+          const l = step / 1504;
           const rgb = oklchToRgb({ l, c: brandChroma, h: hue });
           const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
           if (worst < 4.5) continue;

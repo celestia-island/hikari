@@ -283,12 +283,34 @@ function readableHue(
     }
   }
   if (hit !== null) return hit.rgb;
+  // The 4.55/AA SEAM: no candidate clears the 4.55 margin, but some may
+  // still clear AA itself (e.g. pure white at 4.54) — those shapes are
+  // WINNABLE and must not fall to the sub-AA near-optimal window.
+  if (target >= 4.5) {
+    let aaHit: { rgb: ThemeTokenRGB; key: number; l: number } | null = null;
+    for (let i = 0; i <= STEPS; i++) {
+      const l = i / STEPS;
+      const rgb = oklchToRgb({ l, c, h });
+      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+      if (worst >= 4.5) {
+        const chroma = rgbToOklch(rgb).c;
+        const key = -chroma; // most chroma first
+        const tie = aaHit !== null && key < aaHit.key + 0.005;
+        const biasKey = Math.abs(l - preferLight);
+        const curBias = aaHit === null ? Number.POSITIVE_INFINITY : Math.abs(aaHit.l - preferLight);
+        if (aaHit === null || key < aaHit.key || (tie && biasKey < curBias)) {
+          aaHit = { rgb, key, l };
+        }
+      }
+    }
+    if (aaHit !== null) return aaHit.rgb;
+  }
   // NO lightness clears the target (a NO-WIN band). The raw max-min
   // optimum sits at the achromatic extremes where the gamut search
   // starves the chroma and the four tones collapse to byte-identical
   // near-blacks — violating the hue-preservation this module exists
   // for, and buying contrast that still misses the bar. Among the
-  // NEAR-optimal candidates (within 0.35 of the best worst-anchor) take
+  // NEAR-optimal candidates (within `window` of the best worst-anchor) take
   // the one whose SURVIVING chroma (round-tripped) is highest: the most
   // hue signal at (almost) the best readability.
   for (let i = 0; i <= STEPS; i++) {
@@ -351,8 +373,7 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   const focusedWorst = Math.min(
     ...both.map((f) => contrastRatio(focused, f)),
   );
-  return {
-    secondary: readableHue(
+  const secondarySlot = readableHue(
       (primary.h + 40) % 360,
       brandChroma,
       both,
@@ -360,7 +381,9 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       achromatic ? 0.82 : 0.7,
       Number.POSITIVE_INFINITY,
       achromatic ? "high" : "closest",
-    ),
+    );
+    const result: SemanticPalette = {
+    secondary: secondarySlot,
     // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first
     // (an achromatic primary must not cost an AA-reachable accent its
     // readability), the 3.5 rung only when 4.55 is unreachable (at
@@ -368,9 +391,24 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // rung is the only guaranteed differentiator).
     accent: (() => {
       const hue = (primary.h + 320) % 360;
-      const high = readableHue(hue, brandChroma, both, 4.55, 0.52, Number.POSITIVE_INFINITY, "low", 0.35);
+      const high = readableHue(
+        hue,
+        brandChroma,
+        both,
+        4.55,
+        achromatic ? 0.52 : 0.7,
+        Number.POSITIVE_INFINITY,
+        achromatic ? "low" : "closest",
+        0.35,
+      );
       const highWorst = Math.min(...both.map((f) => contrastRatio(high, f)));
-      if (!achromatic || highWorst >= 4.5) return high;
+      if (!achromatic) return high;
+      // The split's invariant: NEVER coincide with secondary. When the
+      // 4.55 pass lands on the same bytes (the extreme-surface class
+      // where the clearing band is one mid-grey), take the lower rung.
+      const sameAsSecondary =
+        high.r === secondarySlot.r && high.g === secondarySlot.g && high.b === secondarySlot.b;
+      if (highWorst >= 4.5 && !sameAsSecondary) return high;
       return readableHue(hue, brandChroma, both, 3.5, 0.52, Number.POSITIVE_INFINITY, "low", 0.6);
     })(),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
@@ -386,4 +424,5 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // not write through to the input theme.
     statusBarBackground: sanitizeRgb(fills.surface),
   };
+  return result;
 }

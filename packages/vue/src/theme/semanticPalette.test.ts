@@ -142,6 +142,12 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // +41.8/-39.8, light +39.6/-40.1); the tolerance absorbs the grid.
     expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
     expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(2);
+    // LIGHT too: the accent's pick must not drive it to the band bottom
+    // (near-black, hue destroyed) on light fills.
+    const lightP = deriveSemanticPalette(LIGHT_FILLS);
+    const lh = rgbToOklch(LIGHT_FILLS.primary).h;
+    expect(hueDistance(rgbToOklch(lightP.secondary).h, (lh + 40) % 360)).toBeLessThanOrEqual(2);
+    expect(hueDistance(rgbToOklch(lightP.accent).h, (lh + 320) % 360)).toBeLessThanOrEqual(2);
   });
 
   it("opposite-polarity fills sit at the chroma-rich NEAR-optimum (≥3.6, distinct)", () => {
@@ -326,6 +332,16 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     }
   });
 
+  it("the NON-CONVEX gamut spots round-trip exactly (the prescan)", () => {
+    // The in-gamut set along chroma is non-convex (channels are cubic in
+    // c): a bare binary search stops at the first boundary. These are
+    // the measured misses (h≈264°, the blue boundary) — deleting the
+    // linear prescan reddens here.
+    for (const c of [rgb(0, 0, 110), rgb(0, 0, 231), rgb(0, 0, 119)]) {
+      expect(oklchToRgb(rgbToOklch(c)), `${c.r},${c.g},${c.b}`).toEqual(c);
+    }
+  });
+
   it("oklchToRgb sanitizes hostile inputs (never NaN into a cssvar)", () => {
     const out = oklchToRgb({ l: NaN, c: 0.1, h: 100 });
     expect(Number.isFinite(out.r)).toBe(true);
@@ -369,6 +385,21 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // NaN reads as hue 0 — the distance to 10 is 10, and 0 to itself.
     expect(hueDistance(NaN, 10)).toBe(10);
     expect(hueDistance(NaN, NaN)).toBe(0);
+  });
+
+  it("the 4.55/AA SEAM: winnable shapes never fall to the sub-AA window", () => {
+    // surface 118 over a near-black bg: pure white clears AA (4.5422)
+    // but not the 4.55 margin — the shape is WINNABLE and must not land
+    // on the fallback's 4.22 near-white.
+    const fills = {
+      primary: rgb(58, 58, 66),
+      background: rgb(8, 8, 10),
+      surface: rgb(118, 118, 118),
+    };
+    const p = deriveSemanticPalette(fills);
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      expect(contrastRatio(p[slot], fills.surface), `${slot} AA`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   it("the white-unique BOUNDARY: AA outranks distinctness when only white clears", () => {
@@ -416,57 +447,22 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     }
   });
 
-  it("BOTH rungs unreachable: the achromatic split still differentiates", () => {
-    // bg pure black + a 144-grey surface: NO grey clears 4.55 (secondary)
-    // or even 3.5 (accent) on both anchors — both slots take the
-    // fallback, whose window-end picks must still split them.
-    const fills = {
-      primary: rgb(120, 120, 120),
-      background: rgb(0, 0, 0),
-      surface: rgb(144, 144, 144),
-    };
-    const p = deriveSemanticPalette(fills);
-    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
-    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
-    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
-  });
-
-  it("the gamut search survives a huge finite chroma (the 0.4 cap)", () => {
-    // c=1e6: without the cap the first probe is out of gamut and the
-    // search degenerates to the grey; with it the largest in-gamut
-    // chroma is found (a CHROMATIC result).
-    const out = oklchToRgb({ l: 0.6, c: 1e6, h: 100 });
-    expect(out.r).not.toBe(out.g);
-    expect(Math.max(out.r, out.g, out.b) - Math.min(out.r, out.g, out.b)).toBeGreaterThan(20);
-  });
-
-  it("a FLOAT surface still yields integer channels everywhere", () => {
+  it("an AA-REACHABLE achromatic accent keeps AA (the two-pass guard)", () => {
+    // bg=0/surface=0: every grey clears 4.55 — the accent must NOT drop
+    // to the 3.5 rung just because the primary is grey (readability
+    // never flips on the primary's chroma). Reverting the reachability
+    // guard lands 102,102,102 at 3.66 here.
     const p = deriveSemanticPalette({
-      primary: rgb(30, 102, 245),
-      background: { r: 239.4, g: 241.2, b: 245.6 },
-      surface: { r: 254.5, g: 254.5, b: 254.5 },
-    });
-    for (const v of Object.values(p)) {
-      expect(Number.isInteger(v.r)).toBe(true);
-      expect(Number.isInteger(v.g)).toBe(true);
-      expect(Number.isInteger(v.b)).toBe(true);
-    }
-  });
-
-  it("the WHITE-UNIQUE class: pure white is reachable (the endpoint grid)", () => {
-    // A near-black bg + a ~117-grey surface: pure white is the unique
-    // AA-clearing candidate — a grid capped short of the endpoints
-    // declared this class "no-win" inside a truncated domain.
-    const fills = {
-      primary: rgb(60, 60, 65),
+      primary: rgb(120, 120, 120),
       background: rgb(0, 0, 0),
-      surface: rgb(117, 117, 120),
-    };
-    const p = deriveSemanticPalette(fills);
-    for (const slot of ["success", "error", "warning", "info"] as const) {
-      expect(p[slot], `${slot} is pure white`).toEqual({ r: 255, g: 255, b: 255 });
-      expect(contrastRatio(p[slot], fills.surface), `${slot} AA on the surface`).toBeGreaterThanOrEqual(4.5);
-    }
+      surface: rgb(0, 0, 0),
+    });
+    expect(
+      Math.min(
+        contrastRatio(p.accent, { r: 0, g: 0, b: 0 }),
+      ),
+      "the accent keeps AA on the reachable shape",
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it("BOTH rungs unreachable: the achromatic split still differentiates", () => {
@@ -485,12 +481,14 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   });
 
   it("the gamut search survives a huge finite chroma (the 0.4 cap)", () => {
-    // c=1e6: without the cap the first probe is out of gamut and the
-    // search degenerates to the grey; with it the largest in-gamut
-    // chroma is found (a CHROMATIC result).
-    const out = oklchToRgb({ l: 0.6, c: 1e6, h: 100 });
-    expect(out.r).not.toBe(out.g);
-    expect(Math.max(out.r, out.g, out.b) - Math.min(out.r, out.g, out.b)).toBeGreaterThan(20);
+    // c=1e6 must land byte-exactly where c=0.4 (the cap) does — a
+    // spread threshold let the uncapped search pass.
+    const capped = oklchToRgb({ l: 0.6, c: 0.4, h: 100 });
+    const huge = oklchToRgb({ l: 0.6, c: 1e6, h: 100 });
+    expect(huge).toEqual(capped);
+    // And the capped result is CHROMATIC (the largest in-gamut chroma,
+    // not the grey an unbounded first probe degenerates to).
+    expect(Math.max(huge.r, huge.g, huge.b) - Math.min(huge.r, huge.g, huge.b)).toBeGreaterThan(20);
   });
 
   it("a FLOAT surface still yields integer channels everywhere", () => {

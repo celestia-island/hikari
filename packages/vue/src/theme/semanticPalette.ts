@@ -291,7 +291,7 @@ function readableHue(
   // still clear AA itself (white at 4.54 vs the 4.55 margin) — the shape
   // is WINNABLE and must not fall to the sub-AA window. Pick by the most
   // surviving chroma (the hue signal), tie-broken by the pick bias.
-  if (target >= 4.5) {
+  if (target >= 4.5 && nearBarFloor > 0) {
     let aaHit: { rgb: ThemeTokenRGB; key: number; bias: number } | null = null;
     for (const cand of cands) {
       if (cand.worst >= 4.5) {
@@ -532,6 +532,34 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
         "closest",
         0.35,
         0, // near-bar DISABLED — the window path keeps distinctness
+      );
+    }
+    // Re-differentiate: the window re-derivation may still leave
+    // collisions (measured 9/48 fires at 8fc24e32).
+    differentiate([
+      { key: "success", fill: CANONICAL_SEMANTIC.success },
+      { key: "error", fill: CANONICAL_SEMANTIC.error },
+      { key: "warning", fill: CANONICAL_SEMANTIC.warning },
+      { key: "info", fill: CANONICAL_SEMANTIC.info },
+    ]);
+    // The secondary/accent split: the near-bar band can hold a single
+    // byte for both slots (68/1024 family shapes without this branch).
+    // Re-derive the accent with the near-bar disabled when they
+    // coincide (r18 journeys S1).
+    const secKey2 = `${result.secondary.r},${result.secondary.g},${result.secondary.b}`;
+    const accKey = `${result.accent.r},${result.accent.g},${result.accent.b}`;
+    if (secKey2 === accKey) {
+      const hue = (primary.h + 320) % 360;
+      (result as Record<string, ThemeTokenRGB>)["accent"] = readableHue(
+        hue,
+        brandChroma,
+        both,
+        4.55,
+        0.7,
+        Number.POSITIVE_INFINITY,
+        "closest",
+        0.35,
+        0,
       );
     }
   }

@@ -437,6 +437,21 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(hueDistance(NaN, NaN)).toBe(0);
   });
 
+  it("the distinctness fallback is PINNED (dropping it reds here)", () => {
+    // The neutral-grey collapse class: the near-best pick collapses
+    // the tones; the fallback re-derives the colliding slots via the
+    // window path.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(115, 115, 115),
+      surface: rgb(120, 120, 120),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "neutral-grey tones stay distinct").toBe(4);
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

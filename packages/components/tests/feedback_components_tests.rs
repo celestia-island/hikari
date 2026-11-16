@@ -267,4 +267,35 @@ mod tests {
             "left:120px;top:74px;transform:translate(-50%, 0)"
         );
     }
+
+    #[test]
+    fn test_alert_renders_the_vue_live_region_pair() {
+        use hikari_components::feedback::{Alert, AlertVariant};
+        // Mirror of the Vue HkAlert a11y pair (2026-11-16): the root div
+        // carries the ARIA live-region attributes — error/warning
+        // assertive, info/success polite — exactly as the Vue renderer
+        // emits them, so a structural regression (attribute dropped,
+        // side flipped) reds here instead of shipping a diverged mirror.
+        for (variant, role, live) in [
+            (AlertVariant::Error, "alert", "assertive"),
+            (AlertVariant::Warning, "alert", "assertive"),
+            (AlertVariant::Info, "status", "polite"),
+            (AlertVariant::Success, "status", "polite"),
+        ] {
+            let html = Alert(AlertProps {
+                variant,
+                message: "mind the gap".to_string(),
+                ..Default::default()
+            })
+            .render_to_html();
+            assert!(
+                html.contains(&format!("role=\"{role}\"")),
+                "{variant:?} must render role=\"{role}\": {html}"
+            );
+            assert!(
+                html.contains(&format!("aria-live=\"{live}\"")),
+                "{variant:?} must render aria-live=\"{live}\": {html}"
+            );
+        }
+    }
 }

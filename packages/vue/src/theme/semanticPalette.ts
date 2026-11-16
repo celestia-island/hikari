@@ -233,9 +233,9 @@ export interface SemanticFills {
  * `preferLight` (a mid-light sweet spot — on dark fills the readable
  * band is all pastels, on light fills all mid-tones, so the bias keeps
  * the derived colour where designed semantic colours live). When no
- * lightness clears the target (opposite-polarity fills), fall back to
- * the max-min optimum — the best any colour of this hue can do on
- * both anchors.
+ * lightness clears the target even at the fine resolution, fall back
+ * to the chroma-richest near-optimal candidate — the most hue signal
+ * at almost the best readability.
  */
 function readableHue(
   h: number,
@@ -280,6 +280,36 @@ function readableHue(
       const bias =
         pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
       if (hit === null || bias < hit.bias) hit = { rgb, bias };
+    }
+  }
+  if (hit === null) {
+    // A FINE pass at 4x resolution: the coarse grid (Δl ≈0.0106) misses
+    // AA windows narrower than its step (measured 4.30 on a fine-max
+    // 4.58 shape) — and may miss the 4.55 target the same way.
+    for (let i = 1; i <= STEPS * 4; i++) {
+      const l = i / (STEPS * 4);
+      const rgb = oklchToRgb({ l, c, h });
+      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+      if (worst >= target && worst <= ceiling) {
+        const bias =
+          pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
+        if (hit === null || bias < hit.bias) hit = { rgb, bias };
+      }
+    }
+  }
+  if (hit === null) {
+    // A FINE pass at 4x resolution: the coarse grid (Δl ≈0.0106) misses
+    // AA windows narrower than its step (measured 4.30 on a fine-max
+    // 4.58 shape) — and may miss the 4.55 target the same way.
+    for (let i = 1; i <= STEPS * 4; i++) {
+      const l = i / (STEPS * 4);
+      const rgb = oklchToRgb({ l, c, h });
+      const worst = Math.min(...fills.map((f) => contrastRatio(rgb, f)));
+      if (worst >= target && worst <= ceiling) {
+        const bias =
+          pick === "high" ? -l : pick === "low" ? l : Math.abs(l - preferLight);
+        if (hit === null || bias < hit.bias) hit = { rgb, bias };
+      }
     }
   }
   if (hit !== null) return hit.rgb;
@@ -374,15 +404,15 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     ...both.map((f) => contrastRatio(focused, f)),
   );
   const secondarySlot = readableHue(
-      (primary.h + 40) % 360,
-      brandChroma,
-      both,
-      4.55,
-      achromatic ? 0.82 : 0.7,
-      Number.POSITIVE_INFINITY,
-      achromatic ? "high" : "closest",
-    );
-    const result: SemanticPalette = {
+    (primary.h + 40) % 360,
+    brandChroma,
+    both,
+    4.55,
+    achromatic ? 0.82 : 0.7,
+    Number.POSITIVE_INFINITY,
+    achromatic ? "high" : "closest",
+  );
+  const result: SemanticPalette = {
     secondary: secondarySlot,
     // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first
     // (an achromatic primary must not cost an AA-reachable accent its
@@ -403,13 +433,26 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       );
       const highWorst = Math.min(...both.map((f) => contrastRatio(high, f)));
       if (!achromatic) return high;
-      // The split's invariant: NEVER coincide with secondary. When the
-      // 4.55 pass lands on the same bytes (the extreme-surface class
-      // where the clearing band is one mid-grey), take the lower rung.
+      // The ACHROMATIC split's invariant: never coincide with secondary
+      // WHEN both can stay AA (the boundary policy keeps a coinciding
+      // readable pair over a distinct sub-AA one).
       const sameAsSecondary =
         high.r === secondarySlot.r && high.g === secondarySlot.g && high.b === secondarySlot.b;
       if (highWorst >= 4.5 && !sameAsSecondary) return high;
-      return readableHue(hue, brandChroma, both, 3.5, 0.52, Number.POSITIVE_INFINITY, "low", 0.6);
+      // The retake must ALSO clear AA — the boundary policy (AA outranks
+      // distinctness) applies to secondary/accent exactly as to the
+      // tones: a sub-AA distinct accent is a worse trade than a
+      // coinciding readable one.
+      const retake = readableHue(hue, brandChroma, both, 3.5, 0.52, Number.POSITIVE_INFINITY, "low", 0.6);
+      const retakeWorst = Math.min(...both.map((f) => contrastRatio(retake, f)));
+      const retakeDiffers =
+        retake.r !== secondarySlot.r || retake.g !== secondarySlot.g || retake.b !== secondarySlot.b;
+      // Retake only when it BOTH stays AA and actually differs — at the
+      // achromatic razor the 4.55 band is a single grey (the retake's
+      // "low" re-lands the same byte): coincidence is physics there and
+      // is disclosed, not fought.
+      if (retakeWorst >= 4.5 && retakeDiffers) return retake;
+      return high;
     })(),
     border: readableHue(primary.h, primary.c * 0.25, both, 1.5, fillLight, focusedWorst - 0.1),
     focusedBorder: focused,

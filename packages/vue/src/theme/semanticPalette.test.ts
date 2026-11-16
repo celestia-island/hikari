@@ -139,7 +139,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const h = rgbToOklch(DARK_FILLS.primary).h;
     // Post-chroma-reduction the rotations hold tightly (measured dark
-    // +41.8/-39.8, light +39.6/-40.1); the tolerance absorbs the grid.
+    // +40.4/-39.8, light +40.2/-40.0); the tolerance absorbs the grid.
     expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
     expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(2);
     // LIGHT too: the accent's pick must not drive it to the band bottom
@@ -404,8 +404,9 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
 
   it("the white-unique BOUNDARY: AA outranks distinctness when only white clears", () => {
     // surface rgb(117,117,117) over a near-black bg: pure white is the
-    // ONLY colour clearing 4.55 on both anchors — every hue's chroma
-    // drops it under. The tones collapse to readable white here BY
+    // only GRID colour clearing 4.55 on both anchors (in 8-bit space
+    // (254,254,254) also clears — the grid excludes it); every hue's
+    // chroma drops it under. The tones collapse to readable white here BY
     // POLICY (the no-win path keeps distinctness exactly where AA is
     // unreachable; this band is the mirror case — AA reachable only
     // achromatically). One grey step down the tones are distinct again.
@@ -445,6 +446,42 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       expect(p[slot], `${slot} is pure white`).toEqual({ r: 255, g: 255, b: 255 });
       expect(contrastRatio(p[slot], fills.surface), `${slot} AA on the surface`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("the achromatic RAZOR: coincidence is physics, kept and disclosed", () => {
+    // bg #757575 / surface #787878: the 4.55 band is a single grey
+    // (black) — the retake's "low" re-lands the same byte. The pair
+    // coincides AT AA; a distinct sub-AA trade would be worse.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(117, 117, 117),
+      surface: rgb(120, 120, 120),
+    });
+    const worst = (c: { r: number; g: number; b: number }) =>
+      Math.min(
+        contrastRatio(c, { r: 117, g: 117, b: 117 }),
+        contrastRatio(c, { r: 120, g: 120, b: 120 }),
+      );
+    expect(worst(p.secondary)).toBeGreaterThanOrEqual(4.5);
+    expect(worst(p.accent), "the accent keeps AA (coinciding where physics forces it)").toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("the achromatic RAZOR: coincidence is physics, kept and disclosed", () => {
+    // bg #757575 / surface #787878: the 4.55 band is a single grey
+    // (black) — the retake's "low" re-lands the same byte. The pair
+    // coincides AT AA; a distinct sub-AA trade would be worse.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(117, 117, 117),
+      surface: rgb(120, 120, 120),
+    });
+    const worst = (c: { r: number; g: number; b: number }) =>
+      Math.min(
+        contrastRatio(c, { r: 117, g: 117, b: 117 }),
+        contrastRatio(c, { r: 120, g: 120, b: 120 }),
+      );
+    expect(worst(p.secondary)).toBeGreaterThanOrEqual(4.5);
+    expect(worst(p.accent), "the accent keeps AA (coinciding where physics forces it)").toBeGreaterThanOrEqual(4.5);
   });
 
   it("an AA-REACHABLE achromatic accent keeps AA (the two-pass guard)", () => {

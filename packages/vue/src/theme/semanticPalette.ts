@@ -542,6 +542,38 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       { key: "warning", fill: CANONICAL_SEMANTIC.warning },
       { key: "info", fill: CANONICAL_SEMANTIC.info },
     ]);
+    // AA-PREFERENCE RETAKE: the window re-derivation demoted BOTH slots
+    // of a colliding pair below AA; if one of them can keep a FREE AA
+    // byte (no other tone holds it), restore it (r19 delta S1: 71/20,000
+    // shapes lost one AA tone unnecessarily).
+    for (const key of colliding) {
+      const currentWorst = Math.min(
+        ...both.map((f) => contrastRatio(result[key], f)),
+      );
+      if (currentWorst >= 4.5) continue; // already AA — nothing to do
+      const canon = CANONICAL_SEMANTIC[key];
+      const taken = new Set(
+        toneKeys
+          .filter((k) => k !== key)
+          .map((k) => `${result[k].r},${result[k].g},${result[k].b}`),
+      );
+      let aaBest: { rgb: ThemeTokenRGB; chroma: number } | null = null;
+      for (let step = 0; step <= 1504; step++) {
+        const l = step / 1504;
+        const rgb = oklchToRgb({ l, c: canon.c, h: canon.h });
+        const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
+        if (worst < 4.5) continue;
+        const byteKey = `${rgb.r},${rgb.g},${rgb.b}`;
+        if (taken.has(byteKey)) continue;
+        const chroma = rgbToOklch(rgb).c;
+        if (aaBest === null || chroma > aaBest.chroma) {
+          aaBest = { rgb, chroma };
+        }
+      }
+      if (aaBest) {
+        (result as Record<string, ThemeTokenRGB>)[key] = aaBest.rgb;
+      }
+    }
     // The secondary/accent split: the near-bar band can hold a single
     // byte for both slots (68/1024 family shapes without this branch).
     // Re-derive the accent with the near-bar disabled when they

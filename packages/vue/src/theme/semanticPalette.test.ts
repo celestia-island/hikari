@@ -452,6 +452,50 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(new Set(bytes).size, "neutral-grey tones stay distinct").toBe(4);
   });
 
+  it("the accent split is PINNED (dropping it reds here)", () => {
+    // The r19 S2: deleting the accent re-derivation leaves sec≡acc
+    // on 224/4,096 grey shapes.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(0, 0, 0),
+      surface: rgb(120, 120, 120),
+    });
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+  });
+
+  it("the AA-seam gate is PINNED (reverting it reds here)", () => {
+    // The r19 S2: ungating the AA-seam makes the fallback fire
+    // without changing anything on the AA-seam collapse class.
+    const p = deriveSemanticPalette({
+      primary: rgb(174, 69, 34),
+      background: rgb(196, 7, 33),
+      surface: rgb(126, 118, 93),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "AA-seam class stays distinct").toBeGreaterThanOrEqual(3);
+  });
+
+  it("the AA-preference retake keeps the maximum AA tones (r19 S1 pin)", () => {
+    // The r19 delta S1 shape: both members of the colliding pair were
+    // demoted below AA; one could keep its AA byte.
+    const p = deriveSemanticPalette({
+      primary: rgb(207, 9, 119),
+      background: rgb(6, 38, 233),
+      surface: rgb(88, 125, 126),
+    });
+    let aaCount = 0;
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      const w1 = contrastRatio(p[slot], { r: 6, g: 38, b: 233 });
+      const w2 = contrastRatio(p[slot], { r: 88, g: 125, b: 126 });
+      if (Math.min(w1, w2) >= 4.5) aaCount++;
+    }
+    expect(aaCount, "at least 2 of 4 tones keep AA").toBeGreaterThanOrEqual(2);
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

@@ -301,17 +301,24 @@ function readableHue(
     }
     if (aaHit !== null) return aaHit.rgb;
     // (A historical ternary refinement for sub-grid AA windows lived
-    // here; at 376 steps no measured shape reaches it — an instrumented
-    // 4,203-shape run recorded 0 wins — so it was removed rather than
-    // kept unpinned. The step is ~0.0027, finer than any 8-bit-expressible
-    // AA window at the chromas this module passes.)
+    // here; the grid itself was widened to 1504 steps instead — the
+    // step is now ~0.0007, finer than any 8-bit-expressible AA window
+    // at the chromas this module passes.)
   }
 
-  // (c) NO-WIN: nothing clears AA at this hue/chroma. Among the
-  // near-optimal candidates (within `window` of the best worst-anchor)
-  // take the most SURVIVING chroma — the hue signal — tie-broken by the
-  // pick bias (which differentiates the achromatic split's window ends).
+  // (c) NO-WIN: nothing clears AA at this hue/chroma. NEAR-MISS
+  // FIRST: when the best worst-anchor is within 0.01 of the target,
+  // return it (4.42-4.50 beats the 0.30-0.35 contrast drop the
+  // chroma-rich window would take — the r14 adversarial's S1: a shape
+  // one rounding step short of AA was returned 7.7% under).
   const bestWorst = Math.max(...cands.map((cand) => cand.worst));
+  if (Math.abs(bestWorst - target) < 0.01 && bestWorst < target) {
+    const nearMiss = cands.find((c) => c.worst === bestWorst);
+    if (nearMiss) return nearMiss.rgb;
+  }
+  // Among the near-optimal candidates (within `window` of the best
+  // worst-anchor) take the most SURVIVING chroma — the hue signal —
+  // tie-broken by the pick bias.
   let miss: { rgb: ThemeTokenRGB; chroma: number; bias: number } | null = null;
   for (const cand of cands) {
     if (cand.worst >= bestWorst - window) {
@@ -444,8 +451,8 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       {
         const secKey = `${secondarySlot.r},${secondarySlot.g},${secondarySlot.b}`;
         let best: { rgb: ThemeTokenRGB; chroma: number } | null = null;
-        // 1504 steps (4× the main grid): the near-white AA windows are
-        // ≈0.0007 wide — the main 376 grid (Δl≈0.0027) straddles them.
+        // The scan runs at the SAME 1504-step resolution as the main
+        // grid (near-white AA windows can be as narrow as 0.0007).
         for (let step = 0; step <= 1504; step++) {
           const l = step / 1504;
           const rgb = oklchToRgb({ l, c: brandChroma, h: hue });

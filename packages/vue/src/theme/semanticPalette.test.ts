@@ -139,7 +139,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const h = rgbToOklch(DARK_FILLS.primary).h;
     // Post-chroma-reduction the rotations hold tightly (measured dark
-    // +41.8/-39.8, light +39.7/-39.5); the tolerance absorbs the grid
+    // +40.2/-38.0, light +39.7/-39.5); the tolerance absorbs the grid
     // and the 1504-step resolution's slight pick shifts.
     expect(hueDistance(rgbToOklch(p.secondary).h, (h + 40) % 360)).toBeLessThanOrEqual(2);
     expect(hueDistance(rgbToOklch(p.accent).h, (h + 320) % 360)).toBeLessThanOrEqual(3);
@@ -191,6 +191,16 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   it("borders follow the primary's hue at reduced chroma", () => {
     const p = deriveSemanticPalette(DARK_FILLS);
     const primaryHue = rgbToOklch(DARK_FILLS.primary).h;
+    // The 15° tolerance: the border chroma is ~0.005 (25% of the
+    // primary's), where 8-bit quantisation makes hue noisy — the
+    // measured DARK border sits at 12.77° with a DIFFERENT byte
+    // (77,78,81 vs the 376-grid's 78,78,82). The focused border (at
+    // higher chroma) holds <1.5°.
+    // The 15° tolerance: the border chroma is ~0.005 (25% of the
+    // primary's), where 8-bit quantisation makes hue noisy — the
+    // measured DARK border sits at 12.77° with a DIFFERENT byte
+    // (77,78,81 vs the 376-grid's 78,78,82). The focused border (at
+    // higher chroma) holds <1.5°.
     expect(hueDistance(rgbToOklch(p.border).h, primaryHue)).toBeLessThan(15);
     expect(hueDistance(rgbToOklch(p.focusedBorder).h, primaryHue)).toBeLessThan(15);
     expect(rgbToOklch(p.border).c).toBeLessThan(rgbToOklch(p.focusedBorder).c);
@@ -469,8 +479,8 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // surface rgb(117,117,117) over a near-black bg: only near-white
     // candidates clear 4.55 — and the fine grid lands each hue's own,
     // so the boundary holds BOTH readability and distinctness (measured
-    // 250,255,250 / 255,254,254 / 255,254,253 / 253,255,255). A few
-    // steps down the tones gain full chroma.
+    // at 1504: 250,255,250 / 255,254,253 / 255,252,249 / 252,254,255).
+    // A few steps down the tones gain full chroma.
     const boundary = {
       primary: rgb(58, 58, 66),
       background: rgb(8, 8, 10),

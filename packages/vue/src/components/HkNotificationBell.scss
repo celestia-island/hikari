@@ -82,6 +82,16 @@
 
 .hk-notification-row {
   display: flex;
+  /* All three columns (glyph / body / actions) center against the ROW
+     height, never against their own content. The default stretch
+     stretched a ONE-LINE body to the 24px dismiss button's height while
+     the block body hugged the top — the title floated ~4px above the
+     shared center line, clearly visible exactly when the row has a
+     single line (user report 2026-11-17; both the desktop flyout and
+     the mobile sheet share this renderer). Whole-row centering is the
+     same grammar the actions column already speaks (2026-11-15 ruling
+     below). */
+  align-items: center;
   gap: var(--space-12, 0.75rem);
   padding: var(--space-8, 0.5rem) var(--space-8, 0.5rem);
   border-bottom: 1px solid rgb(var(--color-border) / 6%);
@@ -95,7 +105,6 @@
   flex: none;
   display: inline-flex;
   align-items: center;
-  padding-top: 2px;
   /* Tone ink follows the row's tone class (rules below). */
   color: rgb(var(--color-text) / 65%);
 }

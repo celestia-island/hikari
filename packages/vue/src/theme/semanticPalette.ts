@@ -423,6 +423,25 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
             const chroma = rgbToOklch(rgb).c;
             if (best === null || chroma > best.chroma) best = { rgb, chroma };
           }
+          // When the AA band is EMPTY (no-win shapes): fall into the
+          // WINDOW band — within 0.35 of the pair's current worst
+          // (r20 S1-3: 2/8,000 shapes stayed byte-identical with free
+          // in-window bytes at better contrast).
+          if (best === null) {
+            const pairWorst = Math.min(
+              ...both.map((f) => contrastRatio(b, f)),
+            );
+            for (let step = 0; step <= 1504; step++) {
+              const l = step / 1504;
+              const rgb = oklchToRgb({ l, c: bHolder.fill.c, h: bHolder.fill.h });
+              const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
+              if (worst < pairWorst - 0.35) continue;
+              const key = `${rgb.r},${rgb.g},${rgb.b}`;
+              if (taken.has(key)) continue;
+              const chroma = rgbToOklch(rgb).c;
+              if (best === null || chroma > best.chroma) best = { rgb, chroma };
+            }
+          }
           if (best !== null) {
             (result as Record<string, ThemeTokenRGB>)[slots[j].key] = best.rgb;
             changed = true;

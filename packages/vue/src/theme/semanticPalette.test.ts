@@ -476,7 +476,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const bytes = (["success", "error", "warning", "info"] as const).map(
       (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
     );
-    expect(new Set(bytes).size, "AA-seam class stays distinct").toBeGreaterThanOrEqual(3);
+    expect(new Set(bytes).size, "AA-seam class stays distinct").toBe(4);
   });
 
   it("the AA-preference retake keeps the maximum AA tones (r19 S1 pin)", () => {
@@ -493,7 +493,7 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       const w2 = contrastRatio(p[slot], { r: 88, g: 125, b: 126 });
       if (Math.min(w1, w2) >= 4.5) aaCount++;
     }
-    expect(aaCount, "at least 2 of 4 tones keep AA").toBeGreaterThanOrEqual(2);
+    expect(aaCount, "at least 3 of 4 tones keep AA (the retake's gain)").toBeGreaterThanOrEqual(3);
   });
 
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {

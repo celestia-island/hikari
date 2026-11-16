@@ -196,11 +196,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // measured DARK border sits at 12.77° with a DIFFERENT byte
     // (77,78,81 vs the 376-grid's 78,78,82). The focused border (at
     // higher chroma) holds <1.5°.
-    // The 15° tolerance: the border chroma is ~0.005 (25% of the
-    // primary's), where 8-bit quantisation makes hue noisy — the
-    // measured DARK border sits at 12.77° with a DIFFERENT byte
-    // (77,78,81 vs the 376-grid's 78,78,82). The focused border (at
-    // higher chroma) holds <1.5°.
     expect(hueDistance(rgbToOklch(p.border).h, primaryHue)).toBeLessThan(15);
     expect(hueDistance(rgbToOklch(p.focusedBorder).h, primaryHue)).toBeLessThan(15);
     expect(rgbToOklch(p.border).c).toBeLessThan(rgbToOklch(p.focusedBorder).c);
@@ -440,6 +435,26 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     // NaN reads as hue 0 — the distance to 10 is 10, and 0 to itself.
     expect(hueDistance(NaN, 10)).toBe(10);
     expect(hueDistance(NaN, NaN)).toBe(0);
+  });
+
+  it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
+    // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
+    // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the
+    // near-bar bound returns the pick-biased near-best (~4.48-4.50).
+    const p = deriveSemanticPalette({
+      primary: rgb(60, 60, 65),
+      background: rgb(0, 0, 0),
+      surface: rgb(252, 252, 234),
+    });
+    for (const slot of ["success", "error", "warning", "info"] as const) {
+      const worst = Math.min(
+        contrastRatio(p[slot], { r: 0, g: 0, b: 0 }),
+        contrastRatio(p[slot], { r: 252, g: 252, b: 234 }),
+      );
+      // The near-best keeps within 0.1 of the best worst-anchor (4.4995
+      // for the S1 shape), not the window's 0.35 drop.
+      expect(worst, `${slot} near-bar`).toBeGreaterThan(4.4);
+    }
   });
 
   it("the seam at 1504 catches the near-white sub-grid window", () => {

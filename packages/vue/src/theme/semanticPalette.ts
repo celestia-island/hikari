@@ -306,15 +306,25 @@ function readableHue(
     // at the chromas this module passes.)
   }
 
-  // (c) NO-WIN: nothing clears AA at this hue/chroma. NEAR-MISS
-  // FIRST: when the best worst-anchor is within 0.01 of the target,
-  // return it (4.42-4.50 beats the 0.30-0.35 contrast drop the
-  // chroma-rich window would take — the r14 adversarial's S1: a shape
-  // one rounding step short of AA was returned 7.7% under).
+  // (c) NO-WIN: nothing clears AA at this hue/chroma. NEAR-BAR FIRST:
+  // when the best worst-anchor is within 0.1 of the AA bar itself
+  // (i.e. in [4.4, 4.5) for the 4.55 target — the AA-seam branch above
+  // already returned for >= 4.5), the shape is one rounding step short.
+  // Take the PICK-BIASED candidate among the near-best (within 0.02 of
+  // bestWorst): it preserves the hue design intent at a 1-2% contrast
+  // cost, where the chroma-rich window below would take 0.30-0.35
+  // (the r14/r15 adversarial's S1: 4.4995 was returned at 4.15).
   const bestWorst = Math.max(...cands.map((cand) => cand.worst));
-  if (Math.abs(bestWorst - target) < 0.01 && bestWorst < target) {
-    const nearMiss = cands.find((c) => c.worst === bestWorst);
-    if (nearMiss) return nearMiss.rgb;
+  if (target >= 4.5 && bestWorst >= 4.4) {
+    const nearBest = cands.filter((c) => c.worst >= bestWorst - 0.02);
+    let bestPick: { rgb: ThemeTokenRGB; bias: number } | null = null;
+    for (const cand of nearBest) {
+      const bias = pickBias(cand.l);
+      if (bestPick === null || bias < bestPick.bias) {
+        bestPick = { rgb: cand.rgb, bias };
+      }
+    }
+    if (bestPick) return bestPick.rgb;
   }
   // Among the near-optimal candidates (within `window` of the best
   // worst-anchor) take the most SURVIVING chroma — the hue signal —

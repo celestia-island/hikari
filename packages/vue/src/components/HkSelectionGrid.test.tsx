@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
+import { readFileSync } from "node:fs";
 import { compile } from "sass";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -452,11 +453,24 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
   const ITEM = ".hk-selection-grid-item";
   const SELECTED = ".hk-selection-grid-item[data-selected]";
 
-  /** Rules whose selector list names this class, in document order. A
-   *  source-level pin has to look at EVERY rule that can match the element,
+  /** Rules whose selector list can match an element carrying `token`
+   *  (`data-selected` here), in document order.
+   *
+   *  A source-level pin has to look at EVERY rule that can match the element,
    *  not just the one canonical spelling — otherwise a higher-specificity
-   *  descendant selector or a `::after` clone overrides the canonical rule
-   *  in the browser while this file stays green. */
+   *  descendant selector or a `::after` clone overrides the canonical rule in
+   *  the browser while this file stays green. Matching is therefore on the
+   *  ATTRIBUTE TOKEN, not the whole compound: `:is([data-selected])`,
+   *  `[data-selected="true"]`, `[data-selected] .child` and the plain form
+   *  all carry it, and all of them can restyle a selected item. */
+  function rulesTouching(token: string): CssRule[] {
+    const needle = new RegExp(`\\[${token}(?![a-z-])`);
+    return rules.filter((r) =>
+      r.selector.split(",").some((one) => needle.test(one)),
+    );
+  }
+
+  /** Rules that name the component's item at all (any state). */
   function rulesNaming(needle: string): CssRule[] {
     return rules.filter((r) =>
       r.selector.split(",").some((one) => one.includes(needle)),
@@ -496,7 +510,7 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     // Exactly ONE pseudo-element draws on a selected item. A second tab
     // (a `::after` clone, or the single-colon spelling, or a `:hover`
     // variant) would paint a competing bar the geometry pins never see.
-    const tabs = rulesNaming(".hk-selection-grid-item[data-selected]")
+    const tabs = rulesTouching("data-selected")
       .filter((r) => /::?(before|after)\b/.test(r.selector))
       .map((r) => normalized(r.selector));
     expect(tabs).toEqual([normalized(TAB)]);
@@ -549,6 +563,42 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     expect(computedFor(SELECTED).get("border-color")).toBe(
       "var(--hi-color-primary, #7aa2f7)",
     );
+  });
+
+  it("paints the selected state with no stripe outside the ring", () => {
+    // The frame's paint is the border, the inset ring and the detached tab.
+    // A stripe drawn through another channel — `background-image:
+    // linear-gradient(… 0 3px …)` on the selected item is the obvious one —
+    // rebuilds the leading slab the ring and tab pins cannot see, because it
+    // is neither a `border*` property nor a `box-shadow`.
+    const stripy: string[] = [];
+    for (const rule of rulesNaming(".hk-selection-grid-item")) {
+      for (const [prop, value] of rule.declarations) {
+        if (prop === "background-image") stripy.push(`${rule.selector} → ${value}`);
+      }
+    }
+    for (const rule of rulesTouching("data-selected")) {
+      for (const [prop, value] of rule.declarations) {
+        if (prop === "background-image") stripy.push(`${rule.selector} → ${value}`);
+      }
+    }
+    expect(stripy).toEqual([]);
+  });
+
+  it("keeps the spacing token wide enough to stay detached", () => {
+    // The pins above compare the inset against the TOKEN (`--space-4`), not
+    // against a length — so a token edit to 0–2px collapses the gap between
+    // the tab and the ring and every one of them still passes. The sheet is
+    // rem-based, so resolve the token here and require a gap the eye can see
+    // (2px at the 16px default root).
+    const scale = readFileSync(resolve(here, "../scale.scss"), "utf8");
+    const space4 = scale.match(/--space-4:\s*([^;]+);/)?.[1].trim() ?? "";
+    expect(space4, "the sheet's inset token must be defined").not.toBe("");
+    const px = space4.endsWith("rem") ? Number.parseFloat(space4) * 16 : Number.parseFloat(space4);
+    expect(Number.isFinite(px)).toBe(true);
+    expect(px, `--space-4 resolves to ${px}px`).toBeGreaterThanOrEqual(2);
+    // …and the pill's own radius token has to exist too.
+    expect(scale).toMatch(/--radius-full:\s*[^;]+;/);
   });
 
   it("keeps the selected emphasis a single inset ring, and only there", () => {

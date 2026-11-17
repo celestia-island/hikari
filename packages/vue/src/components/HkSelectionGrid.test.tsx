@@ -453,13 +453,15 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
   // allowlists, so a legitimate edit can trip one — tinting a border
   // (`border-inline-color`), adding a corner radius longhand, a gradient
   // icon inside the item, moving the inset to a wider token, a second
-  // pseudo-element; removing the selected ring outright
-  // (`box-shadow: none`). Each fails LOUDLY and names the property/rule; the
-  // fix is to update this contract in the same commit as the design change,
-  // not to loosen the pin. A silent green is the failure this file exists to
-  // prevent. The one deliberate ACCEPT: a shadow layer whose blur could come
-  // from a `var()` is not judged — static analysis cannot prove it a hard
-  // edge, and a false green there is cheaper than policing every elevation.
+  // pseudo-element — INCLUDING one declared on the base or edge class,
+  // which paints on selected items too; removing the selected ring outright
+  // (`box-shadow: none`, at any specificity); and vendor-prefixed
+  // `box-shadow` aliases. Each fails LOUDLY and names the property/rule;
+  // the fix is to update this contract in the same commit as the design
+  // change, not to loosen the pin. A silent green is the failure this file
+  // exists to prevent. The shadow set is value-level and rule-agnostic: a
+  // scoped rule reusing one of the four canonical values exactly is allowed
+  // (it paints the same thing); any other text is red.
   const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
   const ITEM = ".hk-selection-grid-item";
   const SELECTED = ".hk-selection-grid-item[data-selected]";
@@ -523,7 +525,11 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     // Exactly ONE pseudo-element draws on a selected item. A second tab
     // (a `::after` clone, or the single-colon spelling, or a `:hover`
     // variant) would paint a competing bar the geometry pins never see.
-    const tabs = rulesTouching("data-selected")
+    // ANY pseudo-element rule that can touch an item counts — including one
+    // declared on the base or edge CLASS, without `data-selected`: it still
+    // paints on selected items. (This is why the scan uses rulesNaming, not
+    // rulesTouching.)
+    const tabs = rulesNaming(".hk-selection-grid-item")
       .filter((r) => /::?(before|after)\b/.test(r.selector))
       .map((r) => normalized(r.selector));
     expect(tabs).toEqual([normalized(TAB)]);
@@ -625,7 +631,9 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/(^|\s)\/\/[^\n]*/g, "$1")
       .toLowerCase();
-    const declared = [...source.matchAll(/--space-4:\s*([^;]+);/g)].map((m) => m[1].trim());
+    const declared = [...source.matchAll(/--space-4\s*:\s*([^;]+);/g)].map((m) =>
+      m[1].trim(),
+    );
     expect(declared.length, "--space-4 must be declared upstream").toBeGreaterThan(0);
     for (const raw of declared) {
       const rem = raw.match(/^(-?[\d.]+)rem$/);
@@ -681,9 +689,12 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     const foreign: string[] = [];
     for (const rule of rules) {
       for (const [prop, value] of rule.declarations) {
-        if (prop !== "box-shadow") continue;
+        // `-webkit-box-shadow` is the same property to the engine (and the
+        // repo has precedent for the spelling) — alias and bare form are
+        // both policed.
+        if (!/(^|-)box-shadow$/.test(prop)) continue;
         const norm = value.replace(/\s+/g, " ").trim().toLowerCase();
-        if (!canonical.has(norm)) foreign.push(`${rule.selector} → ${value}`);
+        if (!canonical.has(norm)) foreign.push(`${rule.selector} → ${prop}: ${value}`);
       }
     }
     expect(foreign).toEqual([]);

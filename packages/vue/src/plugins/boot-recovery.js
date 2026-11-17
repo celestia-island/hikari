@@ -1491,26 +1491,51 @@ const DETAILS_RUNTIME = String.raw`
   var CREDENTIAL_QUERY = /(?:token|api_key)=([^&)\]}"' \n\t]*)/gi;
   var CREDENTIAL_KEY = /("(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)"\s*:\s*")([^"]*)(")/gi;
   /* The DOUBLE-SERIALIZED form: console output that already printed a JSON
-     body reaches the payload as a STRING, so the quotes around keys and
-     values arrive backslash-escaped (\"password\":\"...\"") and the plain
-     key pattern above cannot see them. The error-context capture makes this
-     the DOMINANT shape (console lines are strings), so the family mask runs
-     over it too. Measured on the SERIALIZED paste: every JSON.stringify
-     round turns N backslashes into 2N+1, so a BARE structural quote of the
-     console line arrives as one backslash + quote, while a quote INSIDE a
-     secret value arrives with 3, 7, 15... -- which is exactly what makes
-     the two distinguishable:
-       - the CLOSING quote of a masked value is bs{1} + quote (exactly one)
-       - the VALUE tolerates backslash-runs of 2+ plus any character (the
-         embedded-quote sequences) and stays lazy, so it stops at the own
-         structural close of that value -- no swallowing of neighbouring
-         pairs, and the redacted JSON keeps re-parsing for the tree.
-     The one ambiguity that remains: a secret ENDING in a backslash
-     arrives with its trailing run merged into the closing quote and can
-     evade the mask -- inherent to quoting, and the safe direction is the
-         operator re-reading the raw console, not a redaction that eats the
-         neighbourhood of the value. */
-  var CREDENTIAL_KEY_ESCAPED = /(\\+"(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)\\+":\s*\\+")((?:\\{2,}.|\\[^"]|[^\\])*?)(\\{1}")/gi;
+  /* ---- escaped-credential scanner: linear, no backtracking ----
+     Double-serialized console bodies cannot be masked by a single regex:
+     on the SERIALIZED paste a BARE structural quote of the console line
+     arrives as one backslash + quote, while a quote INSIDE a secret value
+     arrives with 3, 7, 15 backslashes (every JSON.stringify round turns N
+     backslashes into 2N+1) -- and from depth 2 on BOTH are multi-backslash
+     runs, so a regex value-group either stops early (leaks the tail beside
+     the mask), over-runs into sibling pairs, or backtracks exponentially on
+     backslash-heavy lines (measured 43.9s on a 198-char payload through the
+     paint path -- a hang the last-resort recovery page cannot catch). This
+     scanner is LINEAR: one regex pass for the credential-key heads, then a
+     character walk to the value's structural close -- a backslash-run of
+     EXACTLY one followed by a quote (runs of 2+ are embedded quotes or
+     escaped punctuation and stay inside the value, at any nesting depth; a
+     head whose value has no structural close leaves the rest of the text
+     untouched). The three regex patterns above keep handling the bare-quote
+     shapes, where they are exact. */
+  var ESCAPED_KEY_HEAD = /(\\+"(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)\\+":\s*\\+")/gi;
+  function maskEscapedCredentialValues(text) {
+    var out = "";
+    var cursor = 0;
+    var m;
+    ESCAPED_KEY_HEAD.lastIndex = 0;
+    while ((m = ESCAPED_KEY_HEAD.exec(text)) !== null) {
+      var valueStart = m.index + m[0].length;
+      var i = valueStart;
+      var closeAt = -1;
+      while (i < text.length) {
+        if (text.charAt(i) !== "\\") { i += 1; continue; }
+        var run = 0;
+        while (i < text.length && text.charAt(i) === "\\") { run += 1; i += 1; }
+        if (run === 1 && text.charAt(i) === '"') { closeAt = i; break; }
+      }
+      if (closeAt < 0) {
+        /* The value never closes structurally: leave everything from the
+           cursor on, unmasked, instead of duplicating or truncating it. */
+        break;
+      }
+      out += text.slice(cursor, valueStart) + "\u25cf\u25cf\u25cf";
+      cursor = closeAt + 1;
+      ESCAPED_KEY_HEAD.lastIndex = closeAt + 1;
+    }
+    out += text.slice(cursor);
+    return out;
+  }
   var CREDENTIAL_HEADER = /\b(Authorization|Cookie|Proxy-Authorization)\s*:\s*([^\n"']+)/gi;
   var detailsRefresh = null;
   function safeCall(fn, fallback) {
@@ -1539,7 +1564,11 @@ const DETAILS_RUNTIME = String.raw`
      SERIALIZED text (not field by field) because that is what catches the
      "key": "value" and header shapes as well as a query string. */
   function redact(text) {
-    return String(text)
+    /* The escaped-credential scanner runs LAST (on the whole serialized
+       text): the three regex patterns are exact for bare-quote shapes, and
+       the scanner then handles the backslash-escaped shapes a regex value
+       group cannot bound. */
+    return maskEscapedCredentialValues(String(text)
       .replace(CREDENTIAL_QUERY, function (match, value) {
         return value
           ? match.slice(0, match.length - value.length) + maskSecret(value)
@@ -1548,12 +1577,9 @@ const DETAILS_RUNTIME = String.raw`
       .replace(CREDENTIAL_KEY, function (_match, head, value, tail) {
         return head + maskSecret(value) + tail;
       })
-      .replace(CREDENTIAL_KEY_ESCAPED, function (_match, head, value, tail) {
-        return head + maskSecret(value) + tail;
-      })
       .replace(CREDENTIAL_HEADER, function (_match, header, value) {
         return header + ": " + maskSecret(value);
-      });
+      }));
   }
   function errorDetail(error) {
     if (error === null || error === undefined) return null;

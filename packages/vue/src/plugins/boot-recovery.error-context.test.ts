@@ -735,28 +735,28 @@ describe("the classification upgrade (watchdog + capture)", () => {
     // closes at the structural quote (exactly one backslash + quote), so the
     // embedded quote is INSIDE the mask.
     const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
-    run.console.error(JSON.stringify({ password: 'p"ssword' }));
+        run.console.error(JSON.stringify({ password: 'p"ssword', user: "bob" }));
     paintedCard(run);
     await clickCopy(run);
     const text = run.written[0];
     // NOTHING of the secret's tail survives. (The secret's head `p` is not
     // a usable needle: the logged JSON's own key `password` legitimately
-    // contains quote-then-p after masking.)
-    // The secret's DISTINCTIVE paste form: the value `p"ssword` arrives as
-    // p + 3 backslashes + quote + ssword (2N+1 with N=1). Neither the head
-    // nor the tail may survive; the logged JSON's own KEY `password`
-    // legitimately keeps `ssword` as a substring, so the needle is the
-    // value-with-embedded-quote, not the bare tail.
-    expect(text).not.toMatch(/p\\{3,}"/);
+    // contains quote-then-p after masking.) The DISTINCTIVE paste form of
+    // the value: p + a 3-backslash run + quote + ssword (2N+1 with N=1) --
+    // the needle is that value-with-embedded-quote, not the bare tail.
+    expect(text).not.toMatch(/p\\\\{3,}\"/);
     expect(text).not.toContain("hunter2");
-    // ...and the embedded quote is INSIDE the masked region: the serialized
-    // masked form carries the three-disc mask between the structural
-    // backslash-quote pairs. (BS is built via fromCharCode -- string-escape
-    // layers have burned this file twice.)
+    // The SIBLING pair after the secret survives (the R8 over-mask
+    // regression: a wide backslash run must not swallow the value's own
+    // structural close plus the following pair), and the embedded quote is
+    // INSIDE the masked region: the serialized masked form carries the
+    // three-disc mask between the structural backslash-quote pairs. (BS is
+    // built via fromCharCode -- string-escape layers have burned this file
+    // twice; never hand-write backslash needles.)
     const BS = String.fromCharCode(92);
-    expect(text).toContain(
-      "password" + BS + '":' + BS + '"' + "●●●",
-    );
+    const DQ = String.fromCharCode(34);
+    expect(text).toContain(BS + '"user' + BS + '":' + BS + '"bob' + BS + DQ);
+    expect(text).toContain("password" + BS + '":' + BS + '"' + "●●●");
   });
 
   it("masks credentials through three stringify levels (7-backslash runs)", async () => {

@@ -429,9 +429,14 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
           // (r20 S1-3: 2/8,000 shapes stayed byte-identical with free
           // in-window bytes at better contrast).
           if (best === null) {
+            // WINDOW BAND: maximise the WORST ANCHOR (not chroma —
+            // the r27 journeys S2: chroma-first landed the tone ~0.33
+            // below the best free in-window byte on 38/2,000 shapes;
+            // worst-first is the same fix the accent received in r22).
             const pairWorst = Math.min(
               ...both.map((f) => contrastRatio(b, f)),
             );
+            let windowBest: { rgb: ThemeTokenRGB; worst: number } | null = null;
             for (let step = 0; step <= 1504; step++) {
               const l = step / 1504;
               const rgb = oklchToRgb({ l, c: bHolder.fill.c, h: bHolder.fill.h });
@@ -439,9 +444,11 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
               if (worst < pairWorst - 0.35) continue;
               const key = `${rgb.r},${rgb.g},${rgb.b}`;
               if (taken.has(key)) continue;
-              const chroma = rgbToOklch(rgb).c;
-              if (best === null || chroma > best.chroma) best = { rgb, chroma };
+              if (windowBest === null || worst > windowBest.worst) {
+                windowBest = { rgb, worst };
+              }
             }
+            if (windowBest !== null) best = { rgb: windowBest.rgb, chroma: 0 };
           }
           if (best !== null) {
             (result as Record<string, ThemeTokenRGB>)[slots[j].key] = best.rgb;

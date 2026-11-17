@@ -152,7 +152,14 @@
    * sheet that widened every family around it. */
   .hk-affix-row,
   .hk-tag-input-row,
-  .hk-tpl-row {
+  .hk-tpl-row,
+  /* The user picker moved off the modal onto the anchored panel surface
+   * (2026-11 user direction: one tooltip-style picker for the whole
+   * project) — its rows are popover-hosted now, so the phone sheet's row
+   * geometry has to reach them through THIS list. It stays in the modal
+   * list below as well: the mirrored Rust component still draws the
+   * modal form, and that form must keep its sheet geometry. */
+  .hk-user-picker-row {
     @include item-sheet-tokens;
   }
 
@@ -184,9 +191,13 @@
     .hk-menu-divider,
     .hk-tag-dot-row,
     .hk-tag-dot,
-    /* Catalog chooser rows (see the panel list above) — the user picker's
-     * rows are modal-hosted, so they ride THIS list; the popover-hosted
-     * choosers ride the panel list. */
+    /* Catalog chooser rows (see the panel list above) — every adopting
+     * row family that can be drawn inside a modal rides THIS list too,
+     * because the modal's docked sheet is the .hk-modal-content element
+     * itself. The user picker's rows are popover-hosted in the Vue form
+     * and modal-hosted in the mirrored Rust form, so they are registered
+     * in BOTH lists (the completeness guard below requires the panel list
+     * to be a subset of this one). */
     .hk-affix-row,
     .hk-tag-input-row,
     .hk-tpl-row,

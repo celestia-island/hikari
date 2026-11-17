@@ -2009,7 +2009,9 @@ const CONTEXT_RUNTIME = String.raw`
      and a chained console is hostile territory -- but the console wrapper
      checks this flag BEFORE formatting, so a healthy page's post-mount call
      costs the pass-through plus one boolean check. The event listeners
-     carry their own checks inside captureEntry / captureFatal. */
+     carry their own checks inside captureEntry / captureFatal, and the
+     rejection path's chunk-upgrade write is gated at its site too -- every
+     write into the ring and the fatal record honors the freeze. */
   var bootDone = false;
   function formatLogValue(value) {
     if (typeof value === "string") return clipText(value, CONSOLE_CLIP);
@@ -2158,8 +2160,13 @@ const CONTEXT_RUNTIME = String.raw`
           var text = "Unhandled rejection: " + formatLogValue(reason);
           captureEntry("rejection", text);
           /* Already ringed as a rejection above; the fatal record rides the
-             same entry rather than a second, mislabelled one. */
-          if (CHUNK_MISS_RE.test(text)) bootFatal = captureFatalRecord(text);
+             same entry rather than a second, mislabelled one. The freeze
+             gates THIS write too: a chunk-shaped lazy-route rejection after
+             a healthy mount must not hand a later panel a lastError with no
+             ring entry to back it. */
+          if (!bootDone && CHUNK_MISS_RE.test(text)) {
+            bootFatal = captureFatalRecord(text);
+          }
         }, null);
       }, true);
     }, null);

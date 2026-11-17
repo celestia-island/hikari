@@ -331,10 +331,12 @@ describe("byte-compat", () => {
 
   it("keeps every off spelling on the bytes it already had", () => {
     // The first two shapes are the golden default; the third is the pane-only
-    // shape, which is NOT the golden default (it embeds the details sheet) --
-    // it is its own 922e… bytes, and those are what `false` must keep. The
-    // runtime also honours a bare null as "off" (the typings, like
-    // browserBlock's, expose only the boolean spelling).
+    // shape, which is NOT the golden default (it embeds the details sheet,
+    // since this build also carrying the escaped-JSON credential mask --
+    // master's pane-only shape was 922e8c74…, this one is 76c1d8ad…), and
+    // those are the bytes `false` must keep. The runtime also honours a bare
+    // null as "off" (the typings, like browserBlock's, expose only the
+    // boolean spelling).
     expect(
       sha256(bootRecoveryScript({ copy: { errorContext: false } })),
     ).toBe(GOLDEN_DEFAULT_SHA256);
@@ -549,7 +551,13 @@ describe("the capture (real listeners, real console wrap)", () => {
     // Each guard's removal is caught by exactly this one assertion -- they
     // are not interchangeable defence in depth.
     run.console.error("after mount");
-    run.window.dispatch("unhandledrejection", { reason: "late rejection" });
+    // The rejection is CHUNK-SHAPED on purpose: it is the one post-mount
+    // signal that would clear the rejection path's chunk-upgrade write into
+    // lastError -- a lazy-route rejection after a healthy mount must not
+    // hand the panel a lastError with no ring entry to back it.
+    run.window.dispatch("unhandledrejection", {
+      reason: new Error("Failed to fetch dynamically imported module: /assets/LazyRoute-abc.js"),
+    });
     run.window.dispatch("error", { message: "Uncaught TypeError: late" });
     const fatal = run.window[BOOT_RECOVERY_FATAL_GLOBAL] as (
       message?: string,

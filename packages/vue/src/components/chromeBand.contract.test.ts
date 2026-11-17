@@ -152,10 +152,17 @@ describe("chrome-band layer contract (the host caption stayed under the veil)", 
     expect(popoverTsx).toMatch(/aboveChrome:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/);
     expect(popoverTsx).toContain("ensureTopRoot()");
     expect(popoverTsx).toMatch(
-      /popupViewportRect\(window,\s*\{\s*rawWindow:\s*props\.aboveChrome\s*\}\)/,
+      /popupViewportRect\(window,\s*\{\s*rawWindow:\s*aboveChrome\.value\s*\}\)/,
     );
     expect(selectPanelTsx).toMatch(/aboveChrome:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/);
-    expect(selectPanelTsx).toContain("props.aboveChrome ? ensureTopRoot() : ensureOverlayRoot()");
+    expect(selectPanelTsx).toContain("aboveChrome.value ? ensureTopRoot() : ensureOverlayRoot()");
+    // Nested surfaces inherit the layer from their anchor (round-1
+    // verification finding): a popover/panel opened from INSIDE a caption
+    // attachment joins that root instead of being painted under its own
+    // parent.
+    expect(popoverTsx).toContain("closest?.(TOP_ROOT_SELECTOR) != null");
+    expect(selectPanelTsx).toContain("anchor.closest(TOP_ROOT_SELECTOR) != null");
+    expect(tooltipBridge).toContain("el.closest(TOP_ROOT_SELECTOR) != null");
     expect(bellTsx).toContain("aboveChrome={props.aboveChrome}");
     // The page action bar (search / filter / settings row) sits on the
     // band too: its filter trigger is a caption attachment and forwards
@@ -178,7 +185,12 @@ describe("chrome-band layer contract (the host caption stayed under the veil)", 
     // but only while it shows: the component teleports by its prop, and
     // the document bridge relocates the shared popup per show (the
     // per-trigger marker is checked dynamically).
-    expect(tooltipTsx).toContain("props.allowBandOverlap ? ensureTopRoot() : ensureOverlayRoot()");
+    expect(tooltipTsx).toContain("aboveTitlebar.value ? ensureTopRoot() : ensureOverlayRoot()");
+    // The component speaks the same band-marker language as the bridge
+    // (the nearest marked ancestor grants the exemption), and it joins
+    // the above-titlebar root when its trigger already lives there.
+    expect(tooltipTsx).toContain('closest?.("[data-hk-tooltip-band-overlap]")');
+    expect(tooltipTsx).toContain("host?.closest?.(TOP_ROOT_SELECTOR) != null");
     expect(tooltipBridge).toContain("ensureTopRoot");
     expect(tooltipBridge).toMatch(
       /const home = allowBandOverlap \? ensureTopRoot\(\) \?\? ensureOverlayRoot\(\) : ensureOverlayRoot\(\);/,

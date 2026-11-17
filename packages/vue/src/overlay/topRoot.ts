@@ -39,9 +39,12 @@
  * close-all/breadcrumb/outside-click logic is unchanged. The root is
  * pointer-transparent; each surface restores its own hit area.
  *
- * The root is created lazily on first use (`ensureTopRoot()`), so a host
- * with no caption band pays nothing until a band-attached surface opts
- * in.
+ * The root is an idempotent singleton behind `ensureTopRoot()`; the
+ * module appends it once on import (the same eager pattern as the overlay
+ * and HUD roots) because a Teleport target must exist before the first
+ * opt-in surface mounts. It is a zero-size, empty, pointer-transparent
+ * node until something teleports into it — importing the library costs
+ * one empty `<div>`, nothing more.
  */
 
 /** The CSS selector for Teleport `to` attributes. */

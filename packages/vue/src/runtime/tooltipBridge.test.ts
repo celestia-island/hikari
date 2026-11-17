@@ -6,6 +6,7 @@ vi.mock("./tooltipPosition", () => ({
   applyTooltipPosition: positionSpy,
 }));
 
+import { TOP_ROOT_SELECTOR, ensureTopRoot } from "../overlay/topRoot";
 import { installHkTooltipBridge, type HkTooltipBridgeOptions } from "./tooltipBridge";
 import { usePopupManager } from "./usePopupManager";
 import { CHROME_OWNER_ATTR } from "./windowChrome";
@@ -421,6 +422,26 @@ describe("tooltipBridge caption-band avoidance", () => {
     hover(el);
     vi.advanceTimersByTime(0);
     expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: false });
+  });
+
+  it("joins the above-titlebar root for a trigger INSIDE that layer", () => {
+    // Round-1 verification finding (2026-11-17): a title on a row of the
+    // notification panel (or any caption-menu entry) must share its
+    // parent surface's root — a bubble parked in the overlay root would
+    // be painted under the panel it annotates.
+    vi.useFakeTimers();
+    claimBand();
+    install({ delay: 0 });
+    const root = ensureTopRoot();
+    expect(root).not.toBeNull();
+    const el = trigger("Row title");
+    root!.appendChild(el);
+    hover(el);
+    vi.advanceTimersByTime(0);
+    expect(positionSpy.mock.calls[0]?.[4]).toEqual({ allowBandOverlap: true });
+    const popup = bridgePopup();
+    expect(popup).not.toBeNull();
+    expect(popup!.closest(TOP_ROOT_SELECTOR)).toBe(root);
   });
 
   it("relocates an exempted bubble above the titlebar only while it shows", () => {

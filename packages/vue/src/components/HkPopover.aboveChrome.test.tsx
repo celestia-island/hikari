@@ -67,6 +67,59 @@ describe("HkPopover aboveChrome layer", () => {
     if (backdrop) expect(backdrop.closest(TOP_ROOT_SELECTOR)).toBe(topRoot);
   });
 
+  it("joins the layer when its anchor lives inside an above-titlebar surface", async () => {
+    // Round-1 verification finding (2026-11-17): a popover opened FROM an
+    // above-titlebar surface (the filter panel's "add condition" chooser)
+    // used to stay in the overlay root — painted under its own parent and
+    // dismissed by the parent's cross-root shield. The nested surface must
+    // inherit the root from its anchor.
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const innerAnchor = ref<HTMLElement | null>(null);
+    const outerOpen = ref(true);
+    const innerOpen = ref(true);
+    const app = createApp({
+      render: () =>
+        h(
+          HkPopover as never,
+          {
+            modelValue: outerOpen.value,
+            aboveChrome: true,
+            title: "outer",
+            "onUpdate:modelValue": (v: boolean) => { outerOpen.value = v; },
+          },
+          () =>
+            h("div", null, [
+              h("button", {
+                class: "inner-anchor",
+                ref: (el: unknown) => { innerAnchor.value = (el as HTMLElement) ?? null; },
+              }, "inner"),
+              h(
+                HkPopover as never,
+                {
+                  modelValue: innerOpen.value,
+                  anchorRef: innerAnchor.value,
+                  title: "inner",
+                  "onUpdate:modelValue": (v: boolean) => { innerOpen.value = v; },
+                },
+                () => h("div", { class: "inner-body" }, "inner content"),
+              ),
+            ]),
+        ),
+    });
+    app.mount(container);
+    apps.push({ app, container });
+    await nextTick();
+    await nextTick();
+    await nextTick();
+
+    const panels = Array.from(document.body.querySelectorAll(".hk-popover-panel"));
+    expect(panels.length, "both the outer and the nested panel must mount").toBe(2);
+    for (const panel of panels) {
+      expect(panel.closest(TOP_ROOT_SELECTOR), "every nested level joins the top root").not.toBeNull();
+    }
+  });
+
   it("keeps the default popover in the overlay root (never above the titlebar)", async () => {
     const { open } = mountPopover(false);
     open.value = true;

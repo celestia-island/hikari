@@ -130,6 +130,19 @@ export default defineComponent({
   setup(props, { emit, slots }) {
     const attrs = useAttrs();
     const manager = usePopupManager();
+    /** Nested caption attachment (round-1 verification finding,
+     *  2026-11-17): when this popover's ANCHOR lives inside an
+     *  above-titlebar layer (a filter panel's "add condition" chooser, a
+     *  select opened from a caption menu row), it must join that root
+     *  too. A child left in the overlay root would be painted UNDER its
+     *  own parent — invisible and unclickable — and the parent's
+     *  cross-root dismissal rule would close the parent underneath it.
+     *  Inheritance is read from the DOM at open time, so hosts need no
+     *  extra plumbing for nested surfaces. */
+    const nestedInTopRoot = computed(
+      () => (props.anchorRef as Element | null)?.closest?.(TOP_ROOT_SELECTOR) != null,
+    );
+    const aboveChrome = computed(() => props.aboveChrome || nestedInTopRoot.value);
     const { t } = useI18n();
     const handle = ref<PopupHandle | null>(null);
     const panelRef = ref<HTMLElement>();
@@ -391,7 +404,7 @@ export default defineComponent({
       // the band floor (popupBounds) exists to keep ordinary popups OFF
       // the caption row, but this surface hangs FROM that row — it may
       // hug/overlap it, and it paints above it in #hk-top-root.
-      const frame = popupViewportRect(window, { rawWindow: props.aboveChrome });
+      const frame = popupViewportRect(window, { rawWindow: aboveChrome.value });
       // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
       // desktop) — read per reposition so a viewport crossing the
       // breakpoint re-clamps with the right value on the next pass.
@@ -729,7 +742,7 @@ export default defineComponent({
       const sheetBranch = activeBranch.value === "sheet";
       const panelPrefix = sheetBranch ? "hk-popover-sheet" : "hk-popover";
       return (
-      <Teleport to={props.aboveChrome ? ensureTopRoot() : ensureOverlayRoot()}>
+      <Teleport to={aboveChrome.value ? ensureTopRoot() : ensureOverlayRoot()}>
         {/* Window-layer contract (./_scrim-fade.scss): the sheet scrim
             fades in place under its own transition name (machine output)
             — it never mounts bare, so the dim curtain never snaps on or
@@ -759,7 +772,7 @@ export default defineComponent({
           ref={panelHostRef}
           data-hk-popout-layer=""
           data-hk-popout-id={handle.value?.id}
-          data-hk-top-layer={props.aboveChrome ? "" : undefined}
+          data-hk-top-layer={aboveChrome.value ? "" : undefined}
           style={panelStyle.value}
         >
               <div

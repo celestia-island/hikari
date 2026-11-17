@@ -1490,48 +1490,84 @@ const DETAILS_RUNTIME = String.raw`
   var JT_MAX_DEPTH = 8;
   var CREDENTIAL_QUERY = /(?:token|api_key)=([^&)\]}"' \n\t]*)/gi;
   var CREDENTIAL_KEY = /("(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)"\s*:\s*")([^"]*)(")/gi;
-  /* The DOUBLE-SERIALIZED form: console output that already printed a JSON
-  /* ---- escaped-credential scanner: linear, no backtracking ----
+  /* ---- escaped-credential scanner: linear, browser-universal ----
      Double-serialized console bodies cannot be masked by a single regex:
      on the SERIALIZED paste a BARE structural quote of the console line
      arrives as one backslash + quote, while a quote INSIDE a secret value
      arrives with 3, 7, 15 backslashes (every JSON.stringify round turns N
-     backslashes into 2N+1) -- and from depth 2 on BOTH are multi-backslash
-     runs, so a regex value-group either stops early (leaks the tail beside
-     the mask), over-runs into sibling pairs, or backtracks exponentially on
-     backslash-heavy lines (measured 43.9s on a 198-char payload through the
-     paint path -- a hang the last-resort recovery page cannot catch). This
-     scanner is LINEAR: one regex pass for the credential-key heads, then a
-     character walk to the value's structural close -- a backslash-run of
-     EXACTLY one followed by a quote (runs of 2+ are embedded quotes or
-     escaped punctuation and stay inside the value, at any nesting depth; a
-     head whose value has no structural close leaves the rest of the text
-     untouched). The three regex patterns above keep handling the bare-quote
-     shapes, where they are exact. */
-  var ESCAPED_KEY_HEAD = /(\\+"(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)\\+":\s*\\+")/gi;
+     backslashes into 2N+1) -- and the widths are what makes the two
+     separable, but a regex value-group cannot bound itself by the width of
+     ITS OWN opening run: the lazy forms stop at the first multi-backslash
+     escape (leaking the tail beside the mask), the greedy forms run past
+     the value's close into sibling pairs, and either shape backtracks
+     exponentially on backslash-heavy lines (measured 43.9s on a 198-char
+     payload through the pane paint path -- a hang the last-resort recovery
+     page cannot catch). This scanner is LINEAR and ES5-safe (charAt walks,
+     no lookbehind -- Safari < 16.4 would throw at script PARSE and kill
+     the whole recovery): one pass over the text; at every backslash run,
+     a quote directly after it opens a candidate credential key (the
+     ESCAPED_CREDENTIAL_KEYS list, compared literally); a full head
+     (run + quote + key + run + quote + colon + optional whitespace + run +
+     quote) masks its value with the family's three-disc maskSecret -- an
+     EMPTY value stays empty (the family rule). The value's structural
+     close is a backslash-run of EXACTLY the opening run's width: runs of
+     any other width inside the value are embedded quotes or escaped
+     punctuation and are consumed by the walk. Runs of 2+ backslashes are
+     visited once per character -- no nested quantifiers, no backtracking.
+     A head whose value has no structural close leaves the rest of the
+     text untouched, matching the bare-quote patterns' own unterminated
+     behavior. The scanner runs FIRST, on the pristine serialized text:
+     HEADER/QUERY's value classes accept backslashes and would otherwise
+     eat the escaping backslash of a following escaped head, leaving the
+     credential in cleartext. */
+  var ESCAPED_CREDENTIAL_KEYS = ["token", "api_key", "apikey", "api-key", "access_token", "refresh_token", "password", "secret", "authorization", "cookie"];
   function maskEscapedCredentialValues(text) {
+    var MASK = "\u25cf\u25cf\u25cf";
     var out = "";
     var cursor = 0;
-    var m;
-    ESCAPED_KEY_HEAD.lastIndex = 0;
-    while ((m = ESCAPED_KEY_HEAD.exec(text)) !== null) {
-      var valueStart = m.index + m[0].length;
-      var i = valueStart;
+    var i = 0;
+    while (i < text.length) {
+      if (text.charAt(i) !== "\\") { i += 1; continue; }
+      var run = 0;
+      while (i < text.length && text.charAt(i) === "\\") { run += 1; i += 1; }
+      if (i >= text.length || text.charAt(i) !== '"') { continue; }
+      var keyAt = i + 1;
+      var key = "";
+      for (var k = 0; k < ESCAPED_CREDENTIAL_KEYS.length; k++) {
+        var candidate = ESCAPED_CREDENTIAL_KEYS[k];
+        if (text.substr(keyAt, candidate.length) === candidate) { key = candidate; break; }
+      }
+      if (!key) { continue; }
+      var w = run;
+      var j = keyAt + key.length;
+      var run2 = 0;
+      while (j < text.length && text.charAt(j) === "\\") { run2 += 1; j += 1; }
+      if (run2 !== w || text.charAt(j) !== '"') { i = j; continue; }
+      var colon = j + 1;
+      if (text.charAt(colon) !== ":") { i = j; continue; }
+      var ws = colon + 1;
+      while (ws < text.length && (text.charAt(ws) === " " || text.charAt(ws) === "\t")) { ws += 1; }
+      var run3 = 0;
+      while (ws < text.length && text.charAt(ws) === "\\") { run3 += 1; ws += 1; }
+      var valueStart = ws;
+      if (run3 !== w || text.charAt(valueStart) !== '"') { i = j; continue; }
+      var v = valueStart + 1;
       var closeAt = -1;
-      while (i < text.length) {
-        if (text.charAt(i) !== "\\") { i += 1; continue; }
-        var run = 0;
-        while (i < text.length && text.charAt(i) === "\\") { run += 1; i += 1; }
-        if (run === 1 && text.charAt(i) === '"') { closeAt = i; break; }
+      while (v < text.length) {
+        if (text.charAt(v) !== "\\") { v += 1; continue; }
+        var vrun = 0;
+        while (v < text.length && text.charAt(v) === "\\") { vrun += 1; v += 1; }
+        if (vrun === w && text.charAt(v) === '"') { closeAt = v; break; }
       }
       if (closeAt < 0) {
-        /* The value never closes structurally: leave everything from the
-           cursor on, unmasked, instead of duplicating or truncating it. */
         break;
       }
-      out += text.slice(cursor, valueStart) + "\u25cf\u25cf\u25cf";
+      /* The mask covers the value BETWEEN the escaped quotes; the value's
+         own structural close (w backslashes + quote) stays in the text, so
+         the redacted JSON keeps re-parsing and a second pass is a no-op. */
+      out += text.slice(cursor, valueStart + 1) + maskSecret(text.slice(valueStart + 1, closeAt - w)) + text.slice(closeAt - w, closeAt + 1);
       cursor = closeAt + 1;
-      ESCAPED_KEY_HEAD.lastIndex = closeAt + 1;
+      i = cursor;
     }
     out += text.slice(cursor);
     return out;
@@ -1564,11 +1600,11 @@ const DETAILS_RUNTIME = String.raw`
      SERIALIZED text (not field by field) because that is what catches the
      "key": "value" and header shapes as well as a query string. */
   function redact(text) {
-    /* The escaped-credential scanner runs LAST (on the whole serialized
-       text): the three regex patterns are exact for bare-quote shapes, and
-       the scanner then handles the backslash-escaped shapes a regex value
-       group cannot bound. */
-    return maskEscapedCredentialValues(String(text)
+    /* The escaped-credential scanner runs FIRST, on the pristine serialized
+       text: HEADER/QUERY's value classes accept backslashes and would
+       otherwise eat the escaping backslash of a following escaped head,
+       leaving the credential in cleartext (measured regression). */
+    return String(maskEscapedCredentialValues(text)
       .replace(CREDENTIAL_QUERY, function (match, value) {
         return value
           ? match.slice(0, match.length - value.length) + maskSecret(value)

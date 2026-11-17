@@ -228,6 +228,7 @@ describe("theme token inventory", () => {
       "--hi-color-muted": hexFromSeed("--color-muted"),
       "--hi-color-success": hexFromSeed("--color-success"),
       "--hi-color-error": hexFromSeed("--color-error"),
+      "--hi-color-danger": hexFromSeed("--color-error"),
       "--hi-color-warning": hexFromSeed("--color-warning"),
       "--hi-color-info": hexFromSeed("--color-info"),
       "--hi-color-focused-border": hexFromSeed("--color-focused-border"),

@@ -228,10 +228,12 @@ describe("static seed matches the solidInk rule", () => {
         hkTag.includes(`--hi-color-${tone}-fg`),
         `HkTag.scss .hk-tag-${tone} paints --hi-color-${tone}-fg`,
       ).toBe(true);
-      expect(
-        /\.hk-tag-` + tone + `\s*\{[^}]*color:\s*var\(--hi-color-` + tone + `[,)]/.test(hkTag),
-        `HkTag.scss .hk-tag-${tone} must not paint the raw fill`,
-      ).toBe(false);
+      // The negative pin needs a runtime RegExp: a template literal inside
+      // regex delimiters compiles the un-interpolated "+ tone +" text.
+      const rawFill = new RegExp(
+        `\\.hk-tag-${tone}\\s*\\{[^}]*color:\\s*var\\(--hi-color-${tone}[,)]`,
+      );
+      expect(rawFill.test(hkTag), `.hk-tag-${tone} must not paint the raw fill`).toBe(false);
     }
   });
 

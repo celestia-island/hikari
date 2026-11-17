@@ -100,7 +100,7 @@
  * exactly how the copy/close glyphs once rendered near-black on the red error
  * toast (2026-11-12 report). The fallbacks keep themeless hosts readable. */
 .hk-toast-error {
-  background: var(--hi-color-danger, #f85149);
+  background: var(--hi-color-danger, #a62937);
   color: var(--hi-color-text-on-danger, #ffffff);
 }
 

@@ -51,9 +51,9 @@
 /* ── Variants ──────────────────────────────────── */
 
 .hk-alert-error {
-  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 8%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 15%, transparent);
-  border-inline-start-color: var(--hi-color-danger, #f85149);
+  background: color-mix(in srgb, var(--hi-color-danger, #a62937) 8%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #a62937) 15%, transparent);
+  border-inline-start-color: var(--hi-color-danger, #a62937);
 
   .hk-alert-icon { color: var(--hi-color-danger-fg, #a62937); }
 }

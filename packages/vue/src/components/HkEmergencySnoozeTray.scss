@@ -21,7 +21,7 @@
   }
 
   &.is-danger &__icon {
-    color: var(--hi-color-error, rgb(var(--color-error, 226 84 84)));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 
   &__title {

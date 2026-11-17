@@ -125,7 +125,18 @@ function formatRowTime(ts: number, locale: string): string {
 
 export default defineComponent({
   name: "HkNotificationBell",
-  setup() {
+  props: {
+    /**
+     * Caption-band attachment opt-in (2026-11-17 user direction): the
+     * bell is mounted ON the host's window caption band (chest's
+     * HeaderEndCluster sits in the chrome-band header), so its panel
+     * must paint ABOVE that band — the row the bell hangs from must not
+     * bury the notification center. Hosts pass `isNative()`; a browser
+     * face has no caption band and keeps the overlay-root panel.
+     */
+    aboveChrome: { type: Boolean, default: false },
+  },
+  setup(props) {
     const { t } = useI18n();
     const { entries, forget, markAllRead, reset } = useNotificationCenter();
     const chromeSize = useChromeActionSize();
@@ -545,6 +556,7 @@ export default defineComponent({
             offset={6}
             sheetOnMobile
             title={label}
+            aboveChrome={props.aboveChrome}
           >
             <div class="hk-notification-center">
               {/* The list wrap stays MOUNTED while the panel is open — the

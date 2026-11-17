@@ -79,6 +79,17 @@ describe("HkNotificationBell scss contract", () => {
     expect(scss).toMatch(/^\.hk-notification-row \{[^}]*align-items:\s*center;/m);
   });
 
+  it("the text block carries the measured optical lift against the row center", () => {
+    // The line box centers geometrically, but the CJK stack's
+    // ascent/descent asymmetry parks the ink ~1px low (user report
+    // 2026-11-17). The body must keep the measured -1px lift, or the
+    // title/desc/actions lose their shared center line again.
+    const bodyBlock = scss.match(/^\.hk-notification-row__body \{([^}]*)\}/m);
+    expect(bodyBlock).toBeTruthy();
+    expect(bodyBlock![1]).toMatch(/position:\s*relative;/);
+    expect(bodyBlock![1]).toMatch(/top:\s*-1px;/);
+  });
+
   it("the tone glyph carries no stretch-era first-line padding hack", () => {
     // `padding-top: 2px` was an optical nudge for the first line under
     // stretch; under row centering it parks the glyph below the shared

@@ -36,6 +36,12 @@ HeaderEndCluster），带额外窗口控制钮的桌面壳不受影响（它们�
 触发钮是尺寸阶梯上的 `HkIconButton`；面板是 `sheetOnMobile` 的
 `HkPopover`——宽屏为锚定弹层，手机为底部 sheet，跨断点实时切换安全。
 
+**层级**（2026-11-17 用户裁决）：页眉即窗口标题条（chrome band）的宿主，用
+`<HkNotificationBell aboveChrome={isNative()} />` 挂载——面板落在标题条之上
+层（`#hk-top-root` / `--hk-z-top-layer`，见 design/layer1 §8.2）。标题条仍是
+**页面**的最高主（modal 遮罩不得压暗它），但它自己的铃铛打开的井必须画在它
+之上，而不是被挂靠的那一行埋住。
+
 ## 动效
 
 行的增删由 `HkListTransition`（库自身的列表原语——模态面包屑、标签输入、

@@ -1227,6 +1227,11 @@ export {
   HUD_ROOT_DOCUMENT_Z,
   ensureHudRoot,
 } from "./overlay/hudRoot";
+export {
+  TOP_ROOT_SELECTOR,
+  TOP_ROOT_DOCUMENT_Z,
+  ensureTopRoot,
+} from "./overlay/topRoot";
 export { HK_PAD_VAR, hkPadStyle, type HkPad } from "./runtime/containerPad";
 
 // Window-chrome handoff (2026-10-28): the boot bar hikari's Vite plugin draws

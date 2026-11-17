@@ -4,6 +4,7 @@ import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipP
 import { armTouchHint } from "../runtime/touchHint";
 import "./HkTooltip.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { ensureTopRoot } from "../overlay/topRoot";
 
 /**
  * The default-slot payload, handed to every render of the trigger. An
@@ -554,7 +555,13 @@ export default defineComponent({
         <span class="hk-tooltip-trigger">
           {slots.default?.({ popupId, visible: visible.value })}
         </span>
-        <Teleport to={ensureOverlayRoot()}>
+        {/* The explicit band-overlap exemption (allowBandOverlap) is the
+            one tooltip mode allowed to pin OVER the caption strip; it must
+            also PAINT over it, so that bubble teleports to the
+            above-titlebar root (overlay/topRoot.ts). Default tooltips keep
+            the overlay root — every non-exempt bubble is floored below the
+            band by popupBounds and never needs the elevation. */}
+        <Teleport to={props.allowBandOverlap ? ensureTopRoot() : ensureOverlayRoot()}>
           {everShown.value && (
             <div
               ref={popupRef}

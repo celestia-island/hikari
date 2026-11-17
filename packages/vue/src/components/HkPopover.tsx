@@ -27,7 +27,8 @@ import HIconButton from "./HkIconButton";
 import HIcon from "./HkIcon";
 import "./window-close.scss";
 import "./HkPopover.scss";
-import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { OVERLAY_ROOT_SELECTOR, ensureOverlayRoot } from "../overlay/overlayRoot";
+import { TOP_ROOT_SELECTOR, ensureTopRoot } from "../overlay/topRoot";
 
 export type PopupPlacement =
   | "top" | "top-start" | "top-end"
@@ -82,6 +83,22 @@ export default defineComponent({
      * localized label there (dev builds warn).
      */
     title: { type: String, default: "" },
+    /**
+     * The caption-band attachment opt-in (2026-11-17 user direction): the
+     * trigger of this popover lives ON the host's window caption band (the
+     * chrome-band row — chest's notification bell, top-bar menus, the
+     * console face's avatar), so the panel must paint ABOVE that band
+     * instead of being buried under the row it hangs from.
+     *
+     * The window titlebar stays the PAGE's top owner (modal veils keep
+     * yielding to it — the chrome-band contract in styles/admin-tokens);
+     * this opt-in teleports the surface into #hk-top-root, the band above
+     * the titlebar (overlay/topRoot.ts), and positions it against the RAW
+     * window so it may hug/overlap the band instead of being floored 4px
+     * below it. Hosts pass `isNative()` — a browser face has no caption
+     * band and keeps the plain overlay-root behavior.
+     */
+    aboveChrome: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_v: boolean) => true,
@@ -370,7 +387,11 @@ export default defineComponent({
       // every space check and clamp below is the raw-window math. vw/vh
       // stay for the CSS-coordinate writes (`bottom`/`right` are measured
       // from the VIEWPORT edges regardless of the band).
-      const frame = popupViewportRect();
+      // A caption-band attachment positions against the RAW window:
+      // the band floor (popupBounds) exists to keep ordinary popups OFF
+      // the caption row, but this surface hangs FROM that row — it may
+      // hug/overlap it, and it paints above it in #hk-top-root.
+      const frame = popupViewportRect(window, { rawWindow: props.aboveChrome });
       // The shared viewport gutter (--viewport-gutter: 8px mobile / 16px
       // desktop) — read per reposition so a viewport crossing the
       // breakpoint re-clamps with the right value on the next pass.
@@ -607,6 +628,20 @@ export default defineComponent({
       if (target instanceof Element) {
         const layerEl = target.closest("[data-hk-popout-layer]");
         if (layerEl) {
+          // Root boundary: a surface in ANOTHER root (the above-titlebar
+          // root vs the overlay root) never governs this one — its z
+          // ordinal lives in a different stacking context and the
+          // numeric compare below would read it as a sibling. Treat it
+          // as the page and dismiss (the clicked layer keeps its own
+          // dismissal logic).
+          const myRoot = panelHostRef.value?.closest(
+            `${OVERLAY_ROOT_SELECTOR}, ${TOP_ROOT_SELECTOR}`,
+          );
+          const itsRoot = layerEl.closest(`${OVERLAY_ROOT_SELECTOR}, ${TOP_ROOT_SELECTOR}`);
+          if (myRoot !== itsRoot) {
+            close();
+            return;
+          }
           const layerId = layerEl.getAttribute("data-hk-popout-id");
           const mine = handle.value;
           if (mine && layerId === mine.id) return;
@@ -694,7 +729,7 @@ export default defineComponent({
       const sheetBranch = activeBranch.value === "sheet";
       const panelPrefix = sheetBranch ? "hk-popover-sheet" : "hk-popover";
       return (
-      <Teleport to={ensureOverlayRoot()}>
+      <Teleport to={props.aboveChrome ? ensureTopRoot() : ensureOverlayRoot()}>
         {/* Window-layer contract (./_scrim-fade.scss): the sheet scrim
             fades in place under its own transition name (machine output)
             — it never mounts bare, so the dim curtain never snaps on or
@@ -724,6 +759,7 @@ export default defineComponent({
           ref={panelHostRef}
           data-hk-popout-layer=""
           data-hk-popout-id={handle.value?.id}
+          data-hk-top-layer={props.aboveChrome ? "" : undefined}
           style={panelStyle.value}
         >
               <div

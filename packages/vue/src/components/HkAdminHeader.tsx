@@ -368,6 +368,7 @@ export const HkAdminHeader = defineComponent({
           props.chrome ? "hk-chrome-band" : "",
         ]}
         data-tauri-drag-region={props.chrome ? CHROME_BAND_DRAG_REGION : undefined}
+        data-hk-tooltip-band-overlap={props.chrome ? "true" : undefined}
       >
         <div ref={userTriggerRef} class="s-admin-header-user s-header-wing-start">
           {/* The hamburger rides INSIDE the left wing: the balanced grid
@@ -465,7 +466,12 @@ export const HkAdminHeader = defineComponent({
 
         {/* The account dropdown: NOT mounted on the branded desktop face
          * (zero account surface — identity / user-menu-extra have no
-         * carrier there); every other face mounts it exactly as before. */}
+         * carrier there); every other face mounts it exactly as before.
+         * In chrome mode it is a caption-band attachment — the header IS
+         * the window titlebar there, so the panel must paint ABOVE it
+         * (aboveChrome): the same exception the chat face's HeaderLeft
+         * passes for its menus (2026-11-17 user direction;
+         * overlay/topRoot.ts). */}
         {!brandedMenuFace.value && (
           <HkMenu
             open={userMenuOpen.value}
@@ -474,6 +480,7 @@ export const HkAdminHeader = defineComponent({
             placement="bottom-start"
             title={props.avatarTriggerLabel ?? t("hikari::adminHeader.avatarTrigger", "Account menu")}
             items={userMenuItems.value}
+            aboveChrome={props.chrome}
             onSelect={(key: string) => onUserMenuSelect(key)}
           >
             {{

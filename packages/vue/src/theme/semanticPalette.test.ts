@@ -481,6 +481,61 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(new Set(bytes).size, "no-win tones stay distinct").toBe(4);
   });
 
+  it("the resting border uses the FILLS' lightness (the low-emphasis bias)", () => {
+    // fillLight = mean(l): replacing it with 0.7 moved the border on
+    // 884/5,063 shapes (r22 adversarial M40).
+    const p = deriveSemanticPalette({
+      primary: rgb(0, 0, 0),
+      background: rgb(0, 0, 0),
+      surface: rgb(117, 117, 117),
+    });
+    // With fillLight the border sits near the fills (dark); with 0.7 it
+    // would sit at the mid-light. Pin the DARK position.
+    expect(p.border.r, "resting border follows the fills' lightness").toBeLessThan(100);
+  });
+
+  it("oklchToRgb sanitises a NaN HUE (never NaN into a cssvar)", () => {
+    // r22 adversarial M49: the hue guard had no pin.
+    const rgb = oklchToRgb({ l: -1, c: 0.11, h: NaN });
+    expect(Number.isFinite(rgb.r)).toBe(true);
+    expect(Number.isFinite(rgb.g)).toBe(true);
+    expect(Number.isFinite(rgb.b)).toBe(true);
+  });
+
+  it("the retake differs from EVERY tone's bytes (the all-tone guard)", () => {
+    // r22 adversarial M33: bg(0,0,0)/sf(118,118,118) — the partner-only
+    // check lands warning on error's byte.
+    const p = deriveSemanticPalette({
+      primary: rgb(0, 0, 0),
+      background: rgb(0, 0, 0),
+      surface: rgb(118, 118, 118),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "all four tones pairwise distinct").toBe(4);
+  });
+
+  it("the no-win WINDOW width is a load-bearing value (0.35)", () => {
+    // r22 adversarial M27: window 0.35 → 0.05 moved 407/5,063 shapes.
+    // On this fixture the wider window keeps the tone readable.
+    const p = deriveSemanticPalette({
+      primary: rgb(0, 0, 0),
+      background: rgb(0, 0, 0),
+      surface: rgb(128, 128, 128),
+    });
+    // The success tone should stay in the near-green band (the wider
+    // window allows more chroma): pin a mid-range byte.
+    expect(p.success.g, "the window admits chroma (green channel mid-range)").toBeGreaterThan(200);
+  });
+
+  it("hueDistance wraps at 360° (the public helper)", () => {
+    // r22 adversarial M17: the wrap had no pin.
+    expect(hueDistance(350, 10), "wraps to the short arc").toBe(20);
+    expect(hueDistance(10, 350), "symmetric").toBe(20);
+    expect(hueDistance(-720, -400), "wraps past zero").toBe(40);
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

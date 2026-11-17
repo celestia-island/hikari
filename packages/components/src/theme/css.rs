@@ -154,6 +154,10 @@ pub struct ThemePalette {
     pub info_fg: String,
     pub background: String,
     pub surface: String,
+    /// The 70 %-alpha paint for `--hi-surface` (the chrome backdrops). Kept
+    /// separate from `surface` (the hex used by `--color-surface` and the
+    /// `readable_on` target) because the two need different formats.
+    pub surface_rgba: String,
     pub border: String,
 
     pub text_primary: String,
@@ -253,6 +257,19 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
+    /// `#RRGGBB` → `R G B` (the channel-triplet form `rgb(var(--color-X))`
+    /// needs; the static seeds use the same shape).
+    fn hex_triplet(hex: &str) -> String {
+        let s = hex.trim().trim_start_matches('#');
+        if s.len() != 6 {
+            return hex.to_string();
+        }
+        let r = u8::from_str_radix(&s[0..2], 16).unwrap_or(0);
+        let g = u8::from_str_radix(&s[2..4], 16).unwrap_or(0);
+        let b = u8::from_str_radix(&s[4..6], 16).unwrap_or(0);
+        format!("{r} {g} {b}")
+    }
+
     pub fn from_palette(palette: &Palette) -> Self {
         ThemePalette {
             primary: palette.primary.hex(),
@@ -267,7 +284,8 @@ impl ThemePalette {
             info: palette.info.hex(),
             info_fg: palette.info.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
             background: palette.background.hex(),
-            surface: palette.surface.rgba(0.7),
+            surface: palette.surface.hex(),
+            surface_rgba: palette.surface.rgba(0.7),
             border: palette.border.hex(),
             text_primary: palette.text_primary.hex(),
             text_secondary: palette.text_secondary.hex(),
@@ -471,7 +489,10 @@ impl ThemePalette {
             self.background = color;
         }
         if let Some(color) = overrides.surface {
-            self.surface = color;
+            self.surface = color.clone();
+            if let Some(c) = Color::from_hex(&color) {
+                self.surface_rgba = c.rgba(0.7);
+            }
         }
         if let Some(color) = overrides.border {
             self.border = color;
@@ -518,8 +539,29 @@ impl ThemePalette {
             format!("--hi-danger-fg: {};", self.danger_fg),
             format!("--hi-info: {};", self.info),
             format!("--hi-info-fg: {};", self.info_fg),
+            // Vue-namespace fg aliases so mirrored sheets (which read
+            // --hi-color-*-fg) resolve against the runtime, not the light seed.
+            format!("--hi-color-success-fg: {};", self.success_fg),
+            format!("--hi-color-danger-fg: {};", self.danger_fg),
+            format!("--hi-color-warning-fg: {};", self.warning_fg),
+            format!("--hi-color-info-fg: {};", self.info_fg),
+            // Core --color-* channels: the components sheets paint backdrops
+            // with --color-surface / --color-background (admin-tokens.scss:110,
+            // HkPopover.scss:82); without these a pure-Rust host leaves the
+            // static light seed in place and the fg variant misses its target.
+            format!("--color-background: {};", Self::hex_triplet(&self.background)),
+            format!("--color-surface: {};", Self::hex_triplet(&self.surface)),
+            format!("--color-success: {};", Self::hex_triplet(&self.success)),
+            format!("--color-error: {};", Self::hex_triplet(&self.danger)),
+            format!("--color-warning: {};", Self::hex_triplet(&self.warning)),
+            format!("--color-info: {};", Self::hex_triplet(&self.info)),
+            format!("--color-text: {};", Self::hex_triplet(&self.text_primary)),
+            format!("--color-muted: {};", Self::hex_triplet(&self.text_secondary)),
+            format!("--color-text-secondary: {};", Self::hex_triplet(&self.text_secondary)),
+            format!("--color-border: {};", Self::hex_triplet(&self.border)),
+            format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
             format!("--hi-background: {};", self.background),
-            format!("--hi-surface: {};", self.surface),
+            format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
             format!("--hi-text-primary: {};", self.text_primary),
             format!("--hi-text-secondary: {};", self.text_secondary),
@@ -712,12 +754,108 @@ mod interaction_alias_tests {
             "--hi-dropdown-border:",
             "--hi-panel-header-bg:",
             "--hi-input-border-hover:",
+            "--hi-success-fg:",
+            "--hi-warning-fg:",
+            "--hi-danger-fg:",
+            "--hi-info-fg:",
+            "--hi-color-success-fg:",
+            "--hi-color-danger-fg:",
+            "--hi-color-warning-fg:",
+            "--hi-color-info-fg:",
+            "--color-surface:",
+            "--color-background:",
+            "--color-text:",
+            "--color-muted:",
+            "--color-text-secondary:",
+            "--color-border:",
+            "--color-primary:",
         ] {
             assert!(
                 css.contains(name),
                 "css_variables() stopped emitting {name} — its scss/rs consumers resolve to nothing again"
             );
         }
+    }
+
+    /// Value/format pin for the `--color-*` channel tier: every channel must
+    /// carry the `R G B` triplet form (the `rgb(var(--color-X))` pattern needs
+    /// it), and the surface glass must stay semi-transparent. The name-only
+    /// alias test above cannot catch a format regression (e.g. `rgba(...)` in
+    /// a channel slot) because it only checks `css.contains(name)`.
+    #[test]
+    fn color_channels_are_triplets_and_the_surface_stays_translucent() {
+        let palette = ThemePalette::from_palette(&default_theme());
+        let css = palette.css_variables();
+        for name in [
+            "--color-background:",
+            "--color-surface:",
+            "--color-success:",
+            "--color-error:",
+            "--color-warning:",
+            "--color-info:",
+            "--color-text:",
+            "--color-muted:",
+            "--color-text-secondary:",
+            "--color-border:",
+            "--color-primary:",
+        ] {
+            // css_variables() joins with SPACE, not newline — split on `;`.
+            let value = css
+                .split("; ")
+                .find(|seg| seg.trim_start().starts_with(name))
+                .map(|seg| {
+                    seg.trim()
+                        .trim_start_matches(name)
+                        .trim()
+                        .trim_end_matches(';')
+                        .trim()
+                        .to_string()
+                })
+                .unwrap_or_default();
+            assert!(
+                !value.is_empty(),
+                "{name} not found in css_variables()"
+            );
+            // The triplet regex: three 1-3 digit numbers separated by spaces.
+            let parts: Vec<&str> = value.split(' ').collect();
+            assert_eq!(
+                parts.len(),
+                3,
+                "{name}: expected `R G B` triplet, got `{value}`"
+            );
+            for part in &parts {
+                let n: u16 = part.parse().unwrap_or_else(|_| panic!("{name}: `{value}` is not a triplet"));
+                assert!(n <= 255, "{name}: channel {n} > 255");
+            }
+        }
+        // The glass must stay translucent (not the opaque hex).
+        let glass = css
+            .split("; ")
+            .find(|seg| seg.trim_start().starts_with("--hi-surface:"))
+            .map(|seg| seg.trim().to_string())
+            .unwrap_or_default();
+        assert!(
+            glass.starts_with("--hi-surface: rgba("),
+            "--hi-surface must paint the translucent glass (rgba), got `{glass}`"
+        );
+    }
+
+    /// The surface override must resync `surface_rgba` (the glass paint)
+    /// alongside the hex channel — removing the resync leaves the stale
+    /// palette alpha after a host overrides the surface.
+    #[test]
+    fn surface_override_resyncs_the_glass_paint() {
+        let palette = ThemePalette::from_palette(&default_theme())
+            .with_overrides(PaletteOverrides {
+                surface: Some("#888888".to_string()),
+                ..Default::default()
+            });
+        assert_eq!(palette.surface, "#888888", "surface hex not overridden");
+        assert!(
+            palette.surface_rgba.starts_with("rgba(136, 136, 136"),
+            "surface_rgba not resynced: {}",
+            palette.surface_rgba
+        );
     }
 
     /// Value pin (R2 adversarial round): the name-only contract above stays

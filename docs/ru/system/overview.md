@@ -355,13 +355,13 @@ impl StyledComponent for MyComponent {
 ### Добавление пользовательских тем
 
 ```rust
-use hikari_palette::ThemePalette;
+use hikari_palette::Palette;
 
 struct CustomTheme;
 
 impl CustomTheme {
-    pub fn palette() -> ThemePalette {
-        ThemePalette {
+    pub fn palette() -> Palette {
+        Palette {
             primary: "#FF0000",
             secondary: "#00FF00",
             // ...

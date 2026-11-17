@@ -302,18 +302,22 @@ let classes = ClassesBuilder::new()
 
 ```rust
 pub struct Palette {
+    /// 主题模式（亮色 / 暗色）
+    pub mode: ThemeMode,
     /// 主色
     pub primary: Color,
     /// 次色
     pub secondary: Color,
     /// 强调色
     pub accent: Color,
-    /// 成功色
+    /// 成功色（canonical 感知族）
     pub success: Color,
     /// 警告色
     pub warning: Color,
     /// 危险色
     pub danger: Color,
+    /// 信息色
+    pub info: Color,
     /// 背景色
     pub background: Color,
     /// 表面色
@@ -370,20 +374,22 @@ println!("强调色: {}", theme.accent.hex());
 创建自定义主题配置：
 
 ```rust
-use hikari_palette::{Color, Palette};
+use hikari_palette::{Color, Palette, ThemeMode};
 
 let custom_theme = Palette {
-    primary: Color::粉红,
-    secondary: Color::苍翠,
-    accent: Color::姜黄,
-    success: Color::葱倩,
-    warning: Color::杏黄,
-    danger: Color::苍翠,
-    background: Color::精白,
-    surface: Color::缟色,
-    border: Color::银色,
-    text_primary: Color::墨色,
-    text_secondary: Color::苍色,
+    mode: ThemeMode::Light,
+    primary: Color::from_rgb_hex(0xEE, 0xA2, 0xA4),   // 牡丹粉红
+    secondary: Color::from_rgb_hex(0x51, 0x9A, 0x73), // 苍翠
+    accent: Color::from_rgb_hex(0xF5, 0x9E, 0x0B),    // 姜黄
+    success: Color::from_rgb_hex(0x1f, 0x65, 0x30),
+    warning: Color::from_rgb_hex(0x89, 0x48, 0x00),
+    danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),
+    info: Color::from_rgb_hex(0x00, 0x62, 0x74),
+    background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
+    surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),    // 素
+    border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
+    text_primary: Color::from_rgb_hex(0x2d, 0x2d, 0x2d),
+    text_secondary: Color::from_rgb_hex(0x6b, 0x72, 0x80),
 };
 ```
 
@@ -499,12 +505,14 @@ pub struct Color {
 
 ```rust
 pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
     pub background: Color,
     pub surface: Color,
     pub border: Color,

@@ -261,6 +261,17 @@ pub fn status_bar_status_text(mode: StatusBarConnection) -> String {
     }
 }
 
+/// The inline `style` for the probe value row. When connecting, the value
+/// still owns the warning tint — painted through the readable fg variant, not
+/// the raw fill. Returns `""` when settled (the row inherits the card ink).
+fn status_bar_probe_style(connecting: bool) -> String {
+    if connecting {
+        "color:var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
+    } else {
+        String::new()
+    }
+}
+
 /// Vue's `latencyColor`: `< 30ms` good, `< 100ms` fair, else poor; `None` is
 /// the muted ink.
 pub fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
@@ -672,7 +683,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
     let retry_row = if show_retry_row {
         Some(rsx! {
             div {
-                style: "display:flex;align-items:center;gap:4px;color:rgb(var(--color-warning));font-size:0.6875rem;margin-bottom:4px",
+                style: "display:flex;align-items:center;gap:4px;color:var(--hi-warning-fg, rgb(var(--color-warning)));font-size:0.6875rem;margin-bottom:4px",
                 span { {status_bar_retry_text(attempt, props.max_retries)} }
                 if countdown > 0.0 {
                     span {
@@ -742,11 +753,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
         let protocol_text = status_bar_protocol_text(mode, &tier);
         // The probing row owns the warning tint; the settled row inherits the
         // card's ink (Vue writes no colour at all in that arm).
-        let probe_style = if connecting {
-            "color:rgb(var(--color-warning))".to_string()
-        } else {
-            String::new()
-        };
+        let probe_style = status_bar_probe_style(connecting);
         let network_text = status_bar_network_text(
             props.region.as_deref().unwrap_or_default(),
             props.asn,
@@ -1129,6 +1136,18 @@ mod tests {
     }
 
     #[test]
+    fn probe_row_paints_the_readable_fg_variant_when_connecting() {
+        // The probe_style must carry the `color:` property prefix (a bare
+        // value is not a declaration list — Dioxus drops the whole style).
+        let style = status_bar_probe_style(true);
+        assert!(style.starts_with("color:"), "{style} is not a declaration");
+        // And the value must be the fg variant, not the raw fill.
+        assert!(style.contains("--hi-warning-fg"), "{style}");
+        // Settled: the row inherits the card ink (no colour at all).
+        assert_eq!(status_bar_probe_style(false), "");
+    }
+
+    #[test]
     fn status_bar_recovery_flash_ignores_the_first_connect() {
         // The FIRST connect of the component's life stays quiet.
         assert_eq!(
@@ -1262,7 +1281,7 @@ mod tests {
             "role=\"button\"",
             "tabindex=\"0\"",
             "class=\"s-status-bar-dot\"",
-            "background:rgb(var(--color-error))",
+            "background:var(--hi-danger-fg, rgb(var(--color-error)))",
             "class=\"s-status-bar-tag-value\"",
             "Panel",
             "s-status-bar-version",

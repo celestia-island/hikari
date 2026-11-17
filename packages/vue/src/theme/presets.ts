@@ -225,11 +225,6 @@ export function getThemeTokens(
   return null;
 }
 
-function contrastColor({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
-  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-  return luminance > 0.55 ? { r: 0, g: 0, b: 0 } : { r: 255, g: 255, b: 255 };
-}
-
 /**
  * The white-or-black ink for ONE solid fill. Deliberately NOT "whichever
  * side wins the WCAG ratio": on saturated fills the ratio winner is the
@@ -314,7 +309,7 @@ export function tokensToCSSVars(
   tokens: ThemeSchemeTokens,
   groupVars?: Record<string, string>,
 ): Record<string, string> {
-  const onPrimary = contrastColor(tokens.primary);
+  const onPrimary = solidInk(tokens.primary);
   const textSecondary = mixToken(tokens.text, tokens.muted, 0.25);
   const textTertiary = mixToken(tokens.text, tokens.muted, 0.5);
   // Content colors for solid brand fills default to white (the historical

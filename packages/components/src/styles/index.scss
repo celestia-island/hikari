@@ -509,6 +509,11 @@
   --hi-warning-fg: #EEA56C;  // 4.52:1
   --hi-danger-fg: #FF9899;   // 4.51:1
   --hi-info-fg: #7FC9E0;     // readable_on(#006274 family, on 黛)
+  /* Vue-namespace fg aliases — mirrored sheets read --hi-color-*-fg. */
+  --hi-color-success-fg: #80C58A;
+  --hi-color-warning-fg: #EEA56C;
+  --hi-color-danger-fg: #FF9899;
+  --hi-color-info-fg: #7FC9E0;
   --hi-info: #065279;        // 靛蓝 (brand info slot, pre-PR)
 
   // Surface & Background Colors

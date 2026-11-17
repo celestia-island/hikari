@@ -362,7 +362,7 @@
 // Status channels win over the tone channel: an errored row is an error
 // regardless of what tone it also carries.
 .hk-range-ribbon-segment[data-status="error"] {
-  border-color: rgb(var(--color-error));
+  border-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   background: rgb(var(--color-error) / 32%);
 }
 

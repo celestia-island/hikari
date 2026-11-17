@@ -156,11 +156,11 @@
   }
 
   &[data-kind="added"] {
-    background: var(--hi-color-success, #0eb840);
+    background: var(--hi-color-success, #1f6530);
   }
 
   &[data-kind="deleted"] {
-    background: var(--hi-color-danger, #ff4c00);
+    background: var(--hi-color-danger, #a62937);
   }
 
   &[data-kind="modified"] {

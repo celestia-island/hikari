@@ -1053,10 +1053,10 @@ aside .hk-menu {
   &:hover {
     background: rgba(255, 76, 0, 0.1);
     border-color: rgba(255, 76, 0, 0.3);
-    color: var(--hi-color-danger);
+    color: var(--hi-color-danger-fg);
 
     .hk-menu-item-icon {
-      color: var(--hi-color-danger);
+      color: var(--hi-color-danger-fg);
       filter: drop-shadow(0 0 4px rgba(255, 76, 0, 0.5));
     }
   }

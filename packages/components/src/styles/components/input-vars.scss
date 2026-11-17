@@ -133,12 +133,12 @@
 // ------
 
 .hk-input-error {
-  --hi-input-border-color: var(--hi-color-danger);
+  --hi-input-border-color: var(--hi-color-danger-fg);
   --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-danger), 0 0 12px var(--hi-glow-color);
 }
 
 .hk-input-success {
-  --hi-input-border-color: var(--hi-color-success);
+  --hi-input-border-color: var(--hi-color-success-fg);
   --hi-input-shadow-focus: 0 0 0 1px var(--hi-color-success), 0 0 12px var(--hi-glow-color);
 }
 

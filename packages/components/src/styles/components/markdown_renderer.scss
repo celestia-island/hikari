@@ -157,10 +157,10 @@
             border: 1px solid var(--hi-color-danger);
             border-radius: var(--radius-md, 8px);
             padding: 1rem;
-            color: var(--hi-color-danger);
+            color: var(--hi-color-danger-fg);
 
             h3 {
-                color: var(--hi-color-danger);
+                color: var(--hi-color-danger-fg);
                 margin: 0 0 0.5rem 0;
             }
         }
@@ -172,10 +172,10 @@
         border: 1px solid var(--hi-color-danger);
         border-radius: var(--radius-md, 8px);
         padding: 1rem;
-        color: var(--hi-color-danger);
+        color: var(--hi-color-danger-fg);
 
         h3 {
-            color: var(--hi-color-danger);
+            color: var(--hi-color-danger-fg);
             margin: 0 0 0.5rem 0;
         }
 

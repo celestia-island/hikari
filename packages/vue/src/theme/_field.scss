@@ -15,7 +15,7 @@
 
 @mixin field-required {
   margin-left: var(--space-2);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 @mixin field-box {
@@ -50,7 +50,7 @@
 }
 
 @mixin field-box-error-focused {
-  border-color: rgb(var(--color-error));
+  border-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   box-shadow: var(--shadow-focus-error);
 }
 
@@ -75,7 +75,7 @@
 @mixin field-error-msg {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 @mixin field-hint {

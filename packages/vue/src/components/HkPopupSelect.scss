@@ -76,7 +76,7 @@
 
 .hk-popup-select-trigger[data-error]:focus,
 .hk-popup-select-trigger[data-error][data-state="open"] {
-  border-color: rgb(var(--color-error));
+  border-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   box-shadow: var(--shadow-focus-error);
 }
 

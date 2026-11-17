@@ -138,7 +138,7 @@ impl StyledComponent for FormFieldComponent {
 }
 
 .hk-form-field-required {
-    color: var(--hi-color-error);
+    color: var(--hi-color-danger-fg);
     font-weight: 700;
 }
 
@@ -149,29 +149,29 @@ impl StyledComponent for FormFieldComponent {
 
 .hk-form-field-error-msg {
     font-size: 0.75rem;
-    color: var(--hi-color-error);
+    color: var(--hi-color-danger-fg);
 }
 
 .hk-form-field-warning-msg {
     font-size: 0.75rem;
-    color: var(--hi-color-warning);
+    color: var(--hi-color-warning-fg);
 }
 
 .hk-form-field-success-msg {
     font-size: 0.75rem;
-    color: var(--hi-color-success);
+    color: var(--hi-color-success-fg);
 }
 
 .hk-form-field-error .hk-form-field-label {
-    color: var(--hi-color-error);
+    color: var(--hi-color-danger-fg);
 }
 
 .hk-form-field-warning .hk-form-field-label {
-    color: var(--hi-color-warning);
+    color: var(--hi-color-warning-fg);
 }
 
 .hk-form-field-success .hk-form-field-label {
-    color: var(--hi-color-success);
+    color: var(--hi-color-success-fg);
 }
 "#
     }

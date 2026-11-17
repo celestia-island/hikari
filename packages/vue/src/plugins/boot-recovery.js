@@ -1506,23 +1506,31 @@ const DETAILS_RUNTIME = String.raw`
      no lookbehind -- Safari < 16.4 would throw at script PARSE and kill
      the whole recovery): one pass over the text; at every backslash run,
      a quote directly after it opens a candidate credential key (the
-     ESCAPED_CREDENTIAL_KEYS list, compared literally); a full head
-     (run + quote + key + run + quote + colon + optional whitespace + run +
-     quote) masks its value with the family's three-disc maskSecret -- an
-     EMPTY value stays empty (the family rule). The value's structural
-     close is a backslash-run of EXACTLY the opening run's width: runs of
-     any other width inside the value are embedded quotes or escaped
-     punctuation and are consumed by the walk. Runs of 2+ backslashes are
-     visited once per character -- no nested quantifiers, no backtracking.
-     A head whose value has no structural close leaves the rest of the
-     text untouched, matching the bare-quote patterns' own unterminated
-     behavior. The scanner runs FIRST, on the pristine serialized text:
-     HEADER/QUERY's value classes accept backslashes and would otherwise
-     eat the escaping backslash of a following escaped head, leaving the
-     credential in cleartext. */
+     ESCAPED_CREDENTIAL_KEYS list, compared literally; the key's own
+     closing quote must arrive with the SAME run width, as must the value's
+     opening quote after the colon -- widths are the head's identity); a
+     full head (run + quote + key + run + quote + colon + optional
+     whitespace + run + quote) masks its value with the family's
+     three-disc maskSecret -- an EMPTY value stays empty (the family rule).
+     The value's structural close is a backslash-run of EXACTLY the
+     opening run's width: runs of any other width inside the value are
+     embedded quotes or escaped punctuation and are consumed by the walk.
+     Runs of 2+ backslashes are visited once per character -- no nested
+     quantifiers, no backtracking (the escaped-shape masking is LINEAR;
+     a regex value group for the same job backtracks exponentially on
+     backslash-heavy lines, measured 43.9s on a 198-char payload through
+     the pane paint path). Two documented ambiguities: a head whose value
+     has no structural close (a truncated CONSOLE_CLIP tail) leaves the
+     rest of the text untouched, matching the bare-quote patterns' own
+     unterminated behavior; and a secret ENDING in a raw backslash merges
+     its trailing run with the structural close, so the walk over-runs the
+     close and the mask swallows the following pair's opening (masked, no
+     cleartext -- the safe direction). The scanner runs FIRST, on the
+     pristine serialized text: HEADER/QUERY's value classes accept
+     backslashes and would otherwise eat the escaping backslash of a
+     following escaped head, leaving the credential in cleartext. */
   var ESCAPED_CREDENTIAL_KEYS = ["token", "api_key", "apikey", "api-key", "access_token", "refresh_token", "password", "secret", "authorization", "cookie"];
   function maskEscapedCredentialValues(text) {
-    var MASK = "\u25cf\u25cf\u25cf";
     var out = "";
     var cursor = 0;
     var i = 0;

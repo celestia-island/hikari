@@ -745,17 +745,29 @@ describe("the classification upgrade (watchdog + capture)", () => {
     // the value: p + a 3-backslash run + quote + ssword (2N+1 with N=1) --
     // the needle is that value-with-embedded-quote, not the bare tail.
     expect(text).not.toMatch(/p\\\\{3,}\"/);
-    expect(text).not.toContain("hunter2");
-    // The SIBLING pair after the secret survives (the R8 over-mask
-    // regression: a wide backslash run must not swallow the value's own
-    // structural close plus the following pair), and the embedded quote is
-    // INSIDE the masked region: the serialized masked form carries the
-    // three-disc mask between the structural backslash-quote pairs. (BS is
-    // built via fromCharCode -- string-escape layers have burned this file
-    // twice; never hand-write backslash needles.)
+        expect(text).not.toContain("hunter2");
+    // The width-matched close (R10 pin): the mask covers the WHOLE value
+    // and the value's own structural close (1 backslash + quote at this
+    // depth) survives, then the sibling -- the older close-width mutants
+    // left `●●● + close + ssword` beside the mask instead. (BS/DQ are built
+    // via fromCharCode -- string-escape layers have burned this file twice;
+    // never hand-write backslash needles.)
     const BS = String.fromCharCode(92);
     const DQ = String.fromCharCode(34);
-    expect(text).toContain(BS + '"user' + BS + '":' + BS + '"bob' + BS + DQ);
+    // The WRITTEN text is the payload's SERIALIZED form: the paste's own
+    // backslash-quote pair arrives doubled (N backslashes -> N in the paste,
+    // N+1 in the payload serialization).
+    const fullNeedle =
+      "password" + BS + '":' + BS + '"' + "●●●" + BS + DQ + "," + BS + '"user"';
+        // The width-matched close (R10 pin): the mask covers the WHOLE value.
+    // The close-width mutants (R8/R10) put the secret's tail DIRECTLY after
+    // the mask (`●●●ssword` compact, `●●●<bs>"ssword` escaped) -- that
+    // mask-adjacent-tail signature is the kill needle. The logged JSON's
+    // own key `password` legitimately contains `ssword`, so the needle is
+    // the mask-adjacency, not the bare substring. The SIBLING pair must
+    // survive at the paste's escaped form.
+    expect(text).not.toMatch(/●●●.{0,4}?ssword/);
+    expect(text).toContain(BS + '"user' + BS + '":' + BS + '"bob' + BS);
     expect(text).toContain("password" + BS + '":' + BS + '"' + "●●●");
   });
 

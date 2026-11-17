@@ -245,27 +245,34 @@ describe("HkSelectionGrid list layout, actions and edge", () => {
 describe("HkSelectionGrid selected-edge stylesheet contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const css = compile(resolve(here, "HkSelectionGrid.scss"), { style: "expanded" }).css;
-  const tab = /\.hk-selection-grid\[data-edge\] \.hk-selection-grid-item\[data-selected\]::before\s*\{/;
+  const TAB = /\.hk-selection-grid\[data-edge\] \.hk-selection-grid-item\[data-selected\]::before/;
+  /** The tab's own declaration block — looked up by its SELECTOR, so both
+   *  halves of the contract are graded against the same subject (grading the
+   *  sheet's first `::before` would silently follow a foreign rule in). */
+  function tabRule(): string {
+    const at = css.search(TAB);
+    if (at < 0) throw new Error("the selected-edge sheet declares no accent tab");
+    return css.slice(at, css.indexOf("}", at) + 1);
+  }
 
   it("detaches the accent tab from the selected frame", () => {
     // The tab must NOT sit flush at the leading edge: flush, it merged with
     // the border + inset ring into one ~5px slab (the fattened frame).
-    expect(css.match(tab)?.[0]).toBeTruthy();
-    expect(css.match(/::before\s*\{[^}]*\}/)?.[0]).toMatch(
-      /inset-inline-start:\s*var\(--space-4/,
-    );
+    expect(tabRule()).toMatch(/inset-inline-start:\s*var\(--space-4/);
   });
 
   it("insets the tab vertically so it reads as a tab, not a frame side", () => {
-    const rule = css.match(/::before\s*\{[^}]*\}/)?.[0] ?? "";
+    const rule = tabRule();
     expect(rule).toMatch(/top:\s*var\(--space-4/);
     expect(rule).toMatch(/bottom:\s*var\(--space-4/);
     expect(rule).toMatch(/border-radius:\s*var\(--radius-full/);
   });
 
   it("keeps the selected emphasis a uniform inset ring on every side", () => {
-    // The ring is the frame; the tab is the accent. Neither may thicken a
-    // single side of the frame (that asymmetry was the reported defect).
+    // This pins an invariant the tab must NOT disturb rather than the fix
+    // itself (it is green on the pre-fix sheet too): the frame's emphasis is
+    // one even inset ring, so the lopsidedness cannot be "fixed" later by
+    // thickening a single side — the shape has to come from the detached tab.
     expect(css).toMatch(
       /\.hk-selection-grid-item\[data-selected\]\s*\{[^}]*box-shadow:\s*inset 0 0 0 1px/,
     );

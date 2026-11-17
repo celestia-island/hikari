@@ -580,6 +580,22 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(bc, "resting chroma < focused").toBeLessThan(fc * 0.6);
   });
 
+  it("the window-band tone retake maximises the worst anchor (byte snapshot)", () => {
+    // r27 journeys S2 repro: chroma-first landed warning at 4.17;
+    // worst-first at 4.48 (the max free distinct in-window byte).
+    const p = deriveSemanticPalette({
+      primary: rgb(12, 113, 254),
+      background: rgb(220, 51, 87),
+      surface: rgb(27, 56, 82),
+    });
+    // The warning tone's worst anchor (the best free distinct byte).
+    const worst = Math.min(
+      contrastRatio(p.warning, { r: 220, g: 51, b: 87 }),
+      contrastRatio(p.warning, { r: 27, g: 56, b: 82 }),
+    );
+    expect(worst, "warning's worst anchor is maximised").toBeGreaterThanOrEqual(4.4);
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

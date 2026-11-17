@@ -371,7 +371,8 @@
   --hi-success-fg: #1F6530;  // the trio as TEXT on 月白 (reads as-is)
   --hi-warning-fg: #894800;
   --hi-danger-fg: #A62937;
-  --hi-info: #FFC0CB;        // 粉红
+  --hi-info: #FFC0CB;        // 粉红 (brand info slot, pre-PR)
+  --hi-info-fg: #006274;     // canonical 215° — reads on the light page
 
   // Surface & Background Colors
   --hi-background: #E0F0E9;  // 素
@@ -507,7 +508,8 @@
   --hi-success-fg: #80C58A;  // readable_on(#4A4266) = 4.54:1
   --hi-warning-fg: #EEA56C;  // 4.52:1
   --hi-danger-fg: #FF9899;   // 4.51:1
-  --hi-info: #065279;        // 靛蓝
+  --hi-info-fg: #7FC9E0;     // readable_on(#006274 family, on 黛)
+  --hi-info: #065279;        // 靛蓝 (brand info slot, pre-PR)
 
   // Surface & Background Colors
   --hi-background: #4A4266;  // 黛

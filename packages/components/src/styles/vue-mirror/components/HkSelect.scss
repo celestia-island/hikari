@@ -33,7 +33,7 @@
 
 .hk-select-required {
   margin-inline-start: var(--space-2);
-  color: var(--hi-color-error-fg, rgb(var(--color-error)));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-select-trigger {
@@ -290,7 +290,7 @@
 .hk-select-error {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
-  color: var(--hi-color-error-fg, rgb(var(--color-error)));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 // ------

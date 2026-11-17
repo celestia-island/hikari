@@ -155,8 +155,8 @@ impl StyledComponent for TagComponent {
 }
 
 .hk-tag-info:hover {
-    background-color: color-mix(in srgb, var(--hi-accent, #006274) 20%, transparent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-accent, #006274) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-info, #006274) 20%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-info, #006274) 30%, transparent);
 }
 
 .hk-tag-close {

@@ -58,7 +58,7 @@
     background: rgb(var(--color-error) / 12%);
 
     .hk-diff-viewer__sign {
-      color: var(--hi-color-error-fg, rgb(var(--color-error)));
+      color: var(--hi-color-danger-fg, rgb(var(--color-error)));
     }
   }
 }
@@ -145,7 +145,7 @@
   }
 
   em[data-kind="del"] {
-    color: var(--hi-color-error-fg, rgb(var(--color-error)));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 }
 
@@ -181,7 +181,7 @@
 
   &[data-state="failed"] {
     background: rgb(var(--color-error) / 8%);
-    color: var(--hi-color-error-fg, rgb(var(--color-error)));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 
   // Without a loadContext fetcher the row is a passive divider.

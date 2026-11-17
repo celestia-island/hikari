@@ -68,7 +68,7 @@ button.hk-persistent-toast {
 }
 
 .hk-persistent-toast--error .hk-persistent-toast__icon {
-  color: var(--hi-color-error-fg, rgb(var(--color-error)));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-persistent-toast--info .hk-persistent-toast__icon {

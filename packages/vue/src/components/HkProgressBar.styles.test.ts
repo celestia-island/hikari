@@ -74,6 +74,6 @@ describe("HkProgressBar overspend sheet contract", () => {
   it("co-locates the caption with the value label row", () => {
     const rule = ruleBlock(".hk-progress-bar-overspend-label");
     expect(rule).toMatch(/margin-inline-start:\s*var\(--space-6\)/);
-    expect(rule).toMatch(/&-danger\s*\{[^}]*color:\s*var\(--hi-color-error-fg,/);
+    expect(rule).toMatch(/&-danger\s*\{[^}]*color:\s*var\(--hi-color-danger-fg,/);
   });
 });

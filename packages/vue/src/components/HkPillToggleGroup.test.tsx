@@ -221,12 +221,13 @@ describe("HkPillToggleGroup tone channel", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const css = compile(join(here, "HkPillToggleGroup.scss"), { style: "expanded" }).css;
     const tones = ["success", "secondary", "warning", "error", "muted"] as const;
-    // Same triplets styles/theme/channels.scss defines (light base).
+    // Same triplets styles/theme/channels.scss defines (light base) — the
+    // semantic trio is the shared canonical family now.
     const FALLBACKS: Record<(typeof tones)[number], string> = {
-      success: "14 184 64",
+      success: "31 101 48",
       secondary: "81 154 115",
-      warning: "238 214 119",
-      error: "247 118 142",
+      warning: "137 72 0",
+      error: "166 41 55",
       muted: "108 108 108",
     };
     const plainActive = css.indexOf(".hk-pill-group-pill[data-active]");
@@ -255,9 +256,13 @@ describe("HkPillToggleGroup tone channel", () => {
       // so swapping one for another hue kept this green (R3 M9/M9b). Pin the
       // ink and the fill to their own channels — muted is the documented
       // exception (text ink, muted wash).
-      expect(body, `${tone} INK uses its own channel`).toContain(
-        `color: rgb(var(--color-${tone === "muted" ? "text" : tone}`,
-      );
+      // The ink may be the raw fill channel or the fg variant (both valid).
+      // Muted and secondary are brand/muted slots — no fg variant exists.
+      // The error tone maps to the danger-fg token (danger→error channel).
+      const inkPat = ["muted", "secondary"].includes(tone)
+        ? `color: rgb(var(--color-${tone === "muted" ? "text" : tone}`
+        : `color: var(--hi-color-${tone === "error" ? "danger" : tone}-fg`;
+      expect(body, `${tone} INK uses its own channel`).toContain(inkPat);
       expect(body, `${tone} FILL uses its own channel`).toContain(
         `background: rgb(var(--color-${tone}`,
       );

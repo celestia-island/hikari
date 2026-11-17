@@ -158,7 +158,7 @@
   }
 
   &-danger {
-    color: rgb(var(--color-error));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 }
 

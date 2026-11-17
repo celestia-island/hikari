@@ -399,7 +399,7 @@
 .hk-breadcrumb-success {
   .hk-breadcrumb-link {
     &[href]:hover {
-      color: var(--hi-color-success);
+      color: var(--hi-color-success-fg);
       text-shadow: 0 0 8px var(--hi-color-success);
     }
   }
@@ -408,7 +408,7 @@
 .hk-breadcrumb-warning {
   .hk-breadcrumb-link {
     &[href]:hover {
-      color: var(--hi-color-warning);
+      color: var(--hi-color-warning-fg);
       text-shadow: 0 0 8px var(--hi-color-warning);
     }
   }
@@ -417,7 +417,7 @@
 .hk-breadcrumb-danger {
   .hk-breadcrumb-link {
     &[href]:hover {
-      color: var(--hi-color-danger);
+      color: var(--hi-color-danger-fg);
       text-shadow: 0 0 8px var(--hi-color-danger);
     }
   }

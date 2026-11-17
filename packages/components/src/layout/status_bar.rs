@@ -146,11 +146,11 @@ impl StatusBarConnection {
     /// ink — red means FAULT, and "not yet logged in" is not one).
     pub fn dot_color(self) -> &'static str {
         match self {
-            StatusBarConnection::Connected => "rgb(var(--color-success))",
+            StatusBarConnection::Connected => "var(--hi-success-fg, rgb(var(--color-success)))",
             StatusBarConnection::Connecting | StatusBarConnection::Reconnecting => {
-                "rgb(var(--color-warning))"
+                "var(--hi-warning-fg, rgb(var(--color-warning)))"
             }
-            StatusBarConnection::Disconnected => "rgb(var(--color-error))",
+            StatusBarConnection::Disconnected => "var(--hi-danger-fg, rgb(var(--color-error)))",
             StatusBarConnection::Idle => {
                 "rgb(var(--color-text-tertiary, var(--color-text-secondary, 128 128 128)))"
             }
@@ -266,9 +266,9 @@ pub fn status_bar_status_text(mode: StatusBarConnection) -> String {
 pub fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
     match ms {
         None => "var(--color-muted)",
-        Some(ms) if ms < 30.0 => "rgb(var(--color-success))",
-        Some(ms) if ms < 100.0 => "rgb(var(--color-warning))",
-        Some(_) => "rgb(var(--color-error))",
+        Some(ms) if ms < 30.0 => "var(--hi-success-fg, rgb(var(--color-success)))",
+        Some(ms) if ms < 100.0 => "var(--hi-warning-fg, rgb(var(--color-warning)))",
+        Some(_) => "var(--hi-danger-fg, rgb(var(--color-error)))",
     }
 }
 
@@ -1021,19 +1021,19 @@ mod tests {
     fn status_bar_tones_follow_the_traffic_light_map() {
         assert_eq!(
             StatusBarConnection::Connected.dot_color(),
-            "rgb(var(--color-success))"
+            "var(--hi-success-fg, rgb(var(--color-success)))"
         );
         assert_eq!(
             StatusBarConnection::Connecting.dot_color(),
-            "rgb(var(--color-warning))"
+            "var(--hi-warning-fg, rgb(var(--color-warning)))"
         );
         assert_eq!(
             StatusBarConnection::Reconnecting.dot_color(),
-            "rgb(var(--color-warning))"
+            "var(--hi-warning-fg, rgb(var(--color-warning)))"
         );
         assert_eq!(
             StatusBarConnection::Disconnected.dot_color(),
-            "rgb(var(--color-error))"
+            "var(--hi-danger-fg, rgb(var(--color-error)))"
         );
         assert!(
             StatusBarConnection::Idle
@@ -1044,23 +1044,23 @@ mod tests {
         assert_eq!(status_bar_latency_color(None), "var(--color-muted)");
         assert_eq!(
             status_bar_latency_color(Some(0.0)),
-            "rgb(var(--color-success))"
+            "var(--hi-success-fg, rgb(var(--color-success)))"
         );
         assert_eq!(
             status_bar_latency_color(Some(29.9)),
-            "rgb(var(--color-success))"
+            "var(--hi-success-fg, rgb(var(--color-success)))"
         );
         assert_eq!(
             status_bar_latency_color(Some(30.0)),
-            "rgb(var(--color-warning))"
+            "var(--hi-warning-fg, rgb(var(--color-warning)))"
         );
         assert_eq!(
             status_bar_latency_color(Some(99.0)),
-            "rgb(var(--color-warning))"
+            "var(--hi-warning-fg, rgb(var(--color-warning)))"
         );
         assert_eq!(
             status_bar_latency_color(Some(100.0)),
-            "rgb(var(--color-error))"
+            "var(--hi-danger-fg, rgb(var(--color-error)))"
         );
     }
 

@@ -26,7 +26,7 @@
 
 .hk-currency-select-required {
   margin-inline-start: var(--space-2);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-currency-select-trigger {
@@ -134,7 +134,7 @@
 .hk-currency-select-error {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 /* ── opened surface content ──────────────────────────────────────── */

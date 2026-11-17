@@ -28,19 +28,22 @@ const scss = readFileSync(join(here, "..", "components", "HkToast.scss"), "utf-8
 /**
  * The shipped fills and the ink the rule picks for each, asserted explicitly:
  * a rule that silently flipped its judgement is exactly what this guards.
- * The dark scheme is the Nord pair — its pale success/info fills are the
- * "designed for dark foreground" case (Radix's Mint/Lime/Sky, same idea),
- * so black there is correct, not a regression.
+ * Since the canonical-family move the shipped fills are identical in both
+ * schemes and dark enough to take white everywhere — the table asserts that
+ * uniformity.
  */
+// The shipped semantic quartet is the SHARED canonical family (solid fills
+// ignore the mode, user direction) — dark enough (gamma-lum 0.27-0.32) that
+// every slot takes the house WHITE ink in BOTH schemes.
 const EXPECTED_INK: Array<{ mode: "light" | "dark"; tone: "danger" | "success" | "warning" | "info"; ink: string }> = [
   { mode: "light", tone: "danger", ink: WHITE },
   { mode: "light", tone: "success", ink: WHITE },
-  { mode: "light", tone: "warning", ink: BLACK },
+  { mode: "light", tone: "warning", ink: WHITE },
   { mode: "light", tone: "info", ink: WHITE },
   { mode: "dark", tone: "danger", ink: WHITE },
-  { mode: "dark", tone: "success", ink: BLACK },
+  { mode: "dark", tone: "success", ink: WHITE },
   { mode: "dark", tone: "warning", ink: WHITE },
-  { mode: "dark", tone: "info", ink: BLACK },
+  { mode: "dark", tone: "info", ink: WHITE },
 ];
 
 /**
@@ -53,8 +56,11 @@ const MUST_STAY_WHITE: Array<["light" | "dark", "danger" | "success" | "warning"
   ["light", "danger"],
   ["light", "success"],
   ["light", "info"],
+  ["light", "warning"],
   ["dark", "danger"],
+  ["dark", "success"],
   ["dark", "warning"],
+  ["dark", "info"],
 ];
 
 describe("solid-fill ink rule", () => {
@@ -177,6 +183,59 @@ describe("static seed matches the solidInk rule", () => {
     expect(m, `--color-${name} seed`).not.toBeNull();
     return [Number(m![1]), Number(m![2]), Number(m![3])];
   };
+
+  // The tag/link components paint the semantic slots as TEXT on a 10% tint
+  // of the fill over the page — NOT on the solid fill. The runtime must
+  // therefore expose a page/tint-readable fg variant per tone, and the tag
+  // sheet must use it (never the raw fill: a fill used as text on a dark
+  // page measures ~1.1:1). Computed here against the actual composite so the
+  // pin is a readability guarantee, not an existence check.
+  it("tag text reads on its 10% tint (the fg variant is real)", () => {
+    // The canonical family is now the shipped default (light mode; the dark
+    // preset carries the same solid fills per the mode-independence rule).
+    const tokens = tokensToCSSVars(themePresets.default.light);
+    const parse = (name: string): [number, number, number] => {
+      const m = tokens[name]?.match(/(\d+) (\d+) (\d+)/);
+      expect(m, `${name} emitted`).not.toBeNull();
+      return [Number(m![1]), Number(m![2]), Number(m![3])];
+    };
+    const ratio = (a: [number, number, number], b: [number, number, number]) => {
+      const lum = (c: [number, number, number]) => {
+        const f = (v: number) => {
+          const x = v / 255;
+          return x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+      };
+      const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    const bg = parse("--color-background");
+    for (const tone of ["success", "danger", "warning", "info"] as const) {
+      const fill = parse(`--color-${TONE_FILL[tone]}`);
+      const fg = parse(`--hi-color-${tone}-fg`);
+      // The chip background is a 10% tint of the fill over the page.
+      const tint = fill.map((v, i) => Math.round(v * 0.1 + bg[i] * 0.9)) as [number, number, number];
+      expect(
+        ratio(fg, tint),
+        `--hi-color-${tone}-fg must read on the ${tone} tint`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+    // And the sheet must use the fg var, not the raw fill as text.
+    const hkTag = readFileSync(join(here, "..", "components", "HkTag.scss"), "utf-8");
+    for (const tone of ["success", "danger", "warning"] as const) {
+      expect(
+        hkTag.includes(`--hi-color-${tone}-fg`),
+        `HkTag.scss .hk-tag-${tone} paints --hi-color-${tone}-fg`,
+      ).toBe(true);
+      // The negative pin needs a runtime RegExp: a template literal inside
+      // regex delimiters compiles the un-interpolated "+ tone +" text.
+      const rawFill = new RegExp(
+        `\\.hk-tag-${tone}\\s*\\{[^}]*color:\\s*var\\(--hi-color-${tone}[,)]`,
+      );
+      expect(rawFill.test(hkTag), `.hk-tag-${tone} must not paint the raw fill`).toBe(false);
+    }
+  });
 
   for (const path of ["tokens.scss", join("styles", "theme", "channels.scss")]) {
     it(`seeds each on-tone ink to what solidInk derives from the ${path} fills`, () => {

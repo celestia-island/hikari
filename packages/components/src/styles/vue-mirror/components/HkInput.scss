@@ -29,7 +29,7 @@
 
 .hk-input-required {
   margin-inline-start: var(--space-2);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-input-box {
@@ -68,7 +68,7 @@
 }
 
 .hk-input-box-error:focus-within {
-  border-color: rgb(var(--color-error));
+  border-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   box-shadow: var(--shadow-focus-error);
 }
 
@@ -290,7 +290,7 @@
 .hk-input-error-msg {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-input-hint {

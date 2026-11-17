@@ -34,7 +34,11 @@ fn test_palette_default() {
     assert_eq!(palette.mode, ThemeMode::Light);
     assert_eq!(palette.primary.hex(), 牡丹粉红.hex());
     assert_eq!(palette.secondary.hex(), 苍翠.hex());
-    assert_eq!(palette.success.hex(), 葱倩.hex());
+    // The semantic trio follows the canonical perceptual family (see
+    // `themes.rs::semantic_tests`), not the old brand constant: 葱倩 #0eb840
+    // only reached 2.64:1 against white, so white ink was unreadable on it.
+    assert_ne!(palette.success.hex(), 葱倩.hex());
+    assert!(palette.success.contrast_ratio(&Color::from_rgb_hex(0xff, 0xff, 0xff)) >= 7.0);
 }
 
 #[test]

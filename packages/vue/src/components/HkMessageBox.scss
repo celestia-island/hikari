@@ -17,12 +17,12 @@
   color: rgb(var(--color-primary));
 
   [data-tone="success"] & {
-    color: rgb(var(--color-success, 90 180 110));
+    color: var(--hi-color-success-fg, rgb(var(--color-success)));
   }
 
   [data-tone="warning"] &,
   [data-tone="danger"] & {
-    color: rgb(var(--color-error, 247 118 142));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 }
 

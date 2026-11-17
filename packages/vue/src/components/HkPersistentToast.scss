@@ -54,11 +54,11 @@ button.hk-persistent-toast {
 }
 
 .hk-persistent-toast--warning .hk-persistent-toast__icon {
-  color: rgb(var(--color-warning));
+  color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
 }
 
 .hk-persistent-toast--error .hk-persistent-toast__icon {
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-persistent-toast--info .hk-persistent-toast__icon {
@@ -66,7 +66,7 @@ button.hk-persistent-toast {
 }
 
 .hk-persistent-toast--success .hk-persistent-toast__icon {
-  color: rgb(var(--color-success));
+  color: var(--hi-color-success-fg, rgb(var(--color-success)));
 }
 
 .hk-persistent-toast__label {

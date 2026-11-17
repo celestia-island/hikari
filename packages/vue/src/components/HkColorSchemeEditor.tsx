@@ -28,7 +28,10 @@ import {
 // the preset table through "@celestia-island/hikari" would close a loop whose
 // module-init order decides whether the table exists yet. Theme-internal
 // modules never import components, so this edge cannot loop.
-import { stockDefaultPreset, themePresets } from "../theme";
+import { solidInk, stockDefaultPreset, themePresets } from "../theme";
+// The ONE contrast implementation lives in the derivation module; the editor
+// must not grow a second copy of it.
+import { contrastRatio } from "../theme/semanticPalette";
 
 import "./HkColorSchemeDialog.scss";
 
@@ -80,6 +83,28 @@ const toneInkTokens: Array<"onDanger" | "onSuccess" | "onWarning" | "onInfo"> = 
   "onInfo",
 ];
 const WHITE: ThemeTokenRGB = { r: 255, g: 255, b: 255 };
+
+/** Each per-tone ink follows the tone fill it reads on. */
+const toneFillOf: Record<(typeof toneInkTokens)[number], RequiredTokenKey> = {
+  onDanger: "error",
+  onSuccess: "success",
+  onWarning: "warning",
+  onInfo: "info",
+};
+
+
+/**
+ * The ink for a tone fill — the HOUSE rule (`solidInk`, user direction
+ * 2026-11-12): white by default, black only when the fill is light enough to
+ * need it. Deliberately NOT "whichever side wins the WCAG ratio"; the
+ * contract test in presets owns that decision, and this editor must not
+ * grow a second ink rule.
+ */
+function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
+  return solidInk(fill);
+}
+
+
 
 function clamp(v: number): number {
   return Math.max(0, Math.min(255, v));
@@ -202,12 +227,37 @@ export const HkColorSchemeEditor = defineComponent({
       }
     }
 
+    function rederiveToneInks(mode: "dark" | "light"): void {
+      const target = mode === "dark" ? dark : light;
+      for (const inkKey of toneInkTokens) {
+        const fillKey = toneFillOf[inkKey];
+        const fill = target[fillKey];
+        if (!fill) continue;
+        const stored = target[inkKey];
+        // ABSENT stays absent: `tokensToCSSVars` already derives it through
+        // solidInk, and materialising one here would freeze the house rule's
+        // output into the draft (the MUST_STAY_WHITE set).
+        if (stored == null) continue;
+        // A stored ink survives as long as it still READS on its fill. Once it
+        // does not (a retune moved the fill, or the theme was saved while the
+        // stale-ink bug was live), it is not a design choice — it is an
+        // unreadable label — so the house-rule ink takes over.
+        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = toneInkOn(fill);
+      }
+    }
+
     function rederiveSurface() {
       const target = modeTab.value === "dark" ? dark : light;
       const derived = deriveSurface(target, modeTab.value === "dark");
       derivedTokens.forEach((k) => {
         target[k] = { ...derived[k] };
       });
+    }
+
+    function rederiveAllDerived(): void {
+      rederiveToneInks("dark");
+      rederiveToneInks("light");
+      rederiveSurface();
     }
 
     function reset(): void {
@@ -230,6 +280,11 @@ export const HkColorSchemeEditor = defineComponent({
       }
       seedGroups(groupDark, "dark", props.initialGroups?.dark);
       seedGroups(groupLight, "light", props.initialGroups?.light);
+      // Heal any stored ink that no longer reads on its fill (the bug's saved
+      // state). Readable inks — including a consumer's own derivation — are
+      // left exactly as they are.
+      rederiveToneInks("dark");
+      rederiveToneInks("light");
       rederiveSurface();
     }
 
@@ -246,7 +301,7 @@ export const HkColorSchemeEditor = defineComponent({
         dark.primary, dark.secondary, dark.accent, dark.success, dark.error, dark.warning, dark.info,
         light.primary, light.secondary, light.accent, light.success, light.error, light.warning, light.info,
       ],
-      () => rederiveSurface(),
+      () => rederiveAllDerived(),
       { deep: true },
     );
 

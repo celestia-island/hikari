@@ -97,14 +97,21 @@
 }
 
 .hk-link-danger {
-    color: var(--hi-danger, #FF4C00);
+    color: var(--hi-danger-fg, #a62937);
 
     &:hover {
-        color: var(--hi-button-danger-hover, rgba(255, 76, 0, 0.8));
+        // The hover state is TEXT too: keep the readable variant and only
+        // decal it slightly (the old literal was rgba(255,76,0,.8), which
+        // composites to ~1.6:1 on a dark page).
+        color: var(--hi-danger-fg, #a62937);
+        filter: brightness(1.12);
     }
 
     &:active {
-        color: var(--hi-button-danger-dark, #CC3D00);
+        // Active is text as well: the old `--hi-button-danger-dark` literal
+        // (rgba over the fill) composited to ~1.15:1 on a dark page.
+        color: var(--hi-danger-fg, #a62937);
+        filter: brightness(0.92);
     }
 }
 

@@ -220,12 +220,12 @@ impl StyledComponent for FileUploadComponent {
 }
 
 .hk-file-upload-success {
-    border-color: var(--hi-color-success);
+    border-color: var(--hi-color-success-fg);
     background-color: rgba(var(--hi-color-success-rgb, 14, 184, 64), 0.05);
 }
 
 .hk-file-upload-error {
-    border-color: var(--hi-color-error);
+    border-color: var(--hi-color-danger-fg);
     background-color: rgba(var(--hi-color-error-rgb, 255, 76, 0), 0.05);
 }
 
@@ -276,7 +276,7 @@ impl StyledComponent for FileUploadComponent {
 }
 
 .hk-file-upload-success .hk-file-upload-file {
-    color: var(--hi-color-success);
+    color: var(--hi-color-success-fg);
 }
 "#
     }

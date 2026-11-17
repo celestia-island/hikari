@@ -581,15 +581,15 @@ hr {
 }
 
 .hk-text-success {
-    color: var(--hi-color-success);
+    color: var(--hi-color-success-fg);
 }
 
 .hk-text-warning {
-    color: var(--hi-color-warning);
+    color: var(--hi-color-warning-fg);
 }
 
 .hk-text-danger {
-    color: var(--hi-color-danger);
+    color: var(--hi-danger-fg);
 }
 
 // SVG 图标默认颜色继承

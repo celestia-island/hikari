@@ -21,7 +21,7 @@
 
 .hk-popup-select-required {
   margin-inline-start: var(--space-2);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-popup-select-trigger {
@@ -76,7 +76,7 @@
 
 .hk-popup-select-trigger[data-error]:focus,
 .hk-popup-select-trigger[data-error][data-state="open"] {
-  border-color: rgb(var(--color-error));
+  border-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   box-shadow: var(--shadow-focus-error);
 }
 
@@ -192,7 +192,7 @@
 .hk-popup-select-error {
   margin-top: var(--space-4);
   font-size: var(--text-xs);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 // Mobile sheet form (HPopover sheetOnMobile): full-width option list with

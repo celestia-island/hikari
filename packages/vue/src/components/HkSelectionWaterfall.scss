@@ -85,13 +85,13 @@
   color: var(--hi-color-text-tertiary, #8b949e);
 
   &[data-variant="success"] {
-    background: color-mix(in srgb, var(--hi-color-success, #0eb840) 12%, transparent);
-    color: var(--hi-color-success, #0eb840);
+    background: color-mix(in srgb, var(--hi-color-success, #1f6530) 12%, transparent);
+    color: var(--hi-color-success-fg, #1f6530);
   }
 
   &[data-variant="info"] {
-    background: color-mix(in srgb, var(--hi-color-info, #6abed6) 12%, transparent);
-    color: var(--hi-color-info, #6abed6);
+    background: color-mix(in srgb, var(--hi-color-info, #006274) 12%, transparent);
+    color: var(--hi-color-info-fg, #006274);
   }
 
   &[data-variant="primary"] {

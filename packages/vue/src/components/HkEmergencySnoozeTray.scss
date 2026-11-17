@@ -17,11 +17,11 @@
   padding: var(--space-12, 0.75rem);
 
   &__icon {
-    color: var(--hi-color-warning, rgb(var(--color-warning, 222 168 62)));
+    color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
   }
 
   &.is-danger &__icon {
-    color: var(--hi-color-error, rgb(var(--color-error, 226 84 84)));
+    color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 
   &__title {

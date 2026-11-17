@@ -1,4 +1,5 @@
 import { readStorageItem, writeStorageItem } from "./safeStorage";
+import { rgbToOklch, oklchToRgb, contrastRatio } from "../theme/semanticPalette";
 
 export interface ThemeTokenRGB {
   r: number;
@@ -165,10 +166,11 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       selectedBackground: rgb(70, 70, 85),
       selectedText: rgb(248, 248, 250),
       statusBarBackground: rgb(34, 40, 54),
-      success: rgb(163, 190, 140),
-      error: rgb(191, 97, 106),
-      warning: rgb(208, 135, 112),
-      info: rgb(136, 192, 208),
+      // Same canonical family as light — solid fills ignore the mode.
+      success: rgb(31, 101, 48),
+      error: rgb(166, 41, 55),
+      warning: rgb(137, 72, 0),
+      info: rgb(0, 98, 116),
       // The pale primary puts dark ink on solid fills (white is ~1.9:1).
       onSolidText: rgb(46, 52, 64),
       onSolidIcon: rgb(46, 52, 64),
@@ -186,10 +188,14 @@ export const themePresets: Record<ThemeId, ThemePreset> = {
       selectedBackground: rgb(200, 200, 205),
       selectedText: rgb(40, 40, 45),
       statusBarBackground: rgb(230, 230, 225),
-      success: rgb(16, 185, 129),
-      error: rgb(239, 68, 68),
-      warning: rgb(245, 158, 11),
-      info: rgb(6, 182, 212),
+      // Semantic quartet — the SHARED canonical family (solid fills ignore
+      // the light/dark config, user direction), lightness derived so the
+      // house white ink clears 7:1. See hikari-palette themes.rs for the
+      // same trio on the components side.
+      success: rgb(31, 101, 48),
+      error: rgb(166, 41, 55),
+      warning: rgb(137, 72, 0),
+      info: rgb(0, 98, 116),
       onSolidText: rgb(255, 255, 255),
       onSolidIcon: rgb(255, 255, 255),
     },
@@ -243,6 +249,42 @@ function contrastColor({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
  * dark red AND a pale amber at once, which is exactly how the toast
  * copy/close glyphs went near-black on themed bands (2026-11-12 report).
  */
+/**
+ * This colour as TEXT on `bg`: itself when it already clears `target`,
+ * otherwise the nearest OKLCH-lightness step that does. Hue is preserved;
+ * chroma is only given up where the sRGB gamut forces it (the same trade the
+ * fill derivation makes). This is what lets a semantic FILL stay
+ * mode-independent while whatever paints it as text stays readable.
+ */
+function readableOn(
+  fg: ThemeTokenRGB,
+  backgrounds: ThemeTokenRGB[],
+  target = 4.5,
+): ThemeTokenRGB {
+  // Already readable everywhere it can land: keep the fill's own chroma.
+  if (backgrounds.every((bg) => contrastRatio(fg, bg) >= target)) return fg;
+  const { l, c, h } = rgbToOklch(fg);
+  let best: ThemeTokenRGB | null = null;
+  let bestDist = Infinity;
+  for (let step = 0; step <= 400; step++) {
+    const li = step / 400;
+    // oklchToRgb reduces chroma into the sRGB gamut internally.
+    const candidate = oklchToRgb({ l: li, c, h });
+    if (backgrounds.every((bg) => contrastRatio(candidate, bg) >= target)) {
+      const dist = Math.abs(li - l);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = candidate;
+      }
+    }
+  }
+  const white = { r: 255, g: 255, b: 255 };
+  const black = { r: 0, g: 0, b: 0 };
+  const fallback =
+    contrastRatio(white, backgrounds[0]) >= contrastRatio(black, backgrounds[0]) ? white : black;
+  return best ?? fallback;
+}
+
 export function solidInk({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
   // 0.65, not the legacy 0.55: the green channel dominates this metric
   // (0.7152), so ordinary greens/cyans like #10B981 / #06B6D4 sat just over
@@ -287,6 +329,22 @@ export function tokensToCSSVars(
   const onSuccess = tokens.onSuccess ?? solidInk(tokens.success);
   const onWarning = tokens.onWarning ?? solidInk(tokens.warning);
   const onInfo = tokens.onInfo ?? solidInk(tokens.info);
+  // Per-tone PAGE-READABLE fills: a semantic slot is a solid fill and ignores
+  // the mode (user direction), but components that paint it as TEXT (tags,
+  // links) sit on the page or on a tint of the fill — the fill itself can be
+  // unreadable there. This is the lightness-move that fixes it, per mode.
+  // The chip backdrop is color-mix(fill 10%, transparent) over the page:
+  // 10% fill + 90% background.
+  // The chip can land on the page background or on a card surface — the fg
+  // must clear its tint against BOTH.
+  const tint = (fill: ThemeTokenRGB): ThemeTokenRGB =>
+    mixToken(tokens.background, fill, 0.1);
+  const tintS = (fill: ThemeTokenRGB): ThemeTokenRGB =>
+    mixToken(tokens.surface, fill, 0.1);
+  const successFg = readableOn(tokens.success, [tint(tokens.success), tintS(tokens.success)]);
+  const errorFg = readableOn(tokens.error, [tint(tokens.error), tintS(tokens.error)]);
+  const warningFg = readableOn(tokens.warning, [tint(tokens.warning), tintS(tokens.warning)]);
+  const infoFg = readableOn(tokens.info, [tint(tokens.info), tintS(tokens.info)]);
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
@@ -342,6 +400,12 @@ export function tokensToCSSVars(
     "--hi-color-text-on-success": "rgb(var(--color-on-success))",
     "--hi-color-text-on-warning": "rgb(var(--color-on-warning))",
     "--hi-color-text-on-info": "rgb(var(--color-on-info))",
+    // The semantic fills as TEXT on this palette's page/tint — distinct from
+    // the on-solid inks above (those assume the background IS the fill).
+    "--hi-color-success-fg": `rgb(${successFg.r} ${successFg.g} ${successFg.b})`,
+    "--hi-color-danger-fg": `rgb(${errorFg.r} ${errorFg.g} ${errorFg.b})`,
+    "--hi-color-warning-fg": `rgb(${warningFg.r} ${warningFg.g} ${warningFg.b})`,
+    "--hi-color-info-fg": `rgb(${infoFg.r} ${infoFg.g} ${infoFg.b})`,
     "--hi-color-bg-subtle": "rgb(var(--color-surface) / 0.5)",
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",

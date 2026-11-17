@@ -25,7 +25,7 @@
 }
 
 .s-cookie-consent-icon {
-  color: rgb(var(--color-success));
+  color: var(--hi-color-success-fg, rgb(var(--color-success)));
   opacity: 0.5;
   cursor: default;
 }

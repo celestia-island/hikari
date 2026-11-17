@@ -50,7 +50,7 @@
   gap: var(--space-4);
   font-size: var(--text-xs);
   line-height: 1.5;
-  color: rgb(var(--color-error));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 /* ── add-row affordance ──────────────────────────────────────────── */

@@ -52,25 +52,25 @@
 }
 
 .hk-tag-success {
-  background: color-mix(in srgb, var(--hi-color-success, #0eb840) 10%, transparent);
-  color: var(--hi-color-success, #0eb840);
-  border-color: color-mix(in srgb, var(--hi-color-success, #0eb840) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-success, #1f6530) 10%, transparent);
+  color: var(--hi-color-success-fg, #1f6530);
+  border-color: color-mix(in srgb, var(--hi-color-success, #1f6530) 20%, transparent);
 }
 
 .hk-tag-warning {
-  background: color-mix(in srgb, var(--hi-color-warning, #eed677) 10%, transparent);
-  color: var(--hi-color-warning, #eed677);
-  border-color: color-mix(in srgb, var(--hi-color-warning, #eed677) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-warning, #894800) 10%, transparent);
+  color: var(--hi-color-warning-fg, #894800);
+  border-color: color-mix(in srgb, var(--hi-color-warning, #894800) 20%, transparent);
 }
 
 .hk-tag-danger {
-  background: color-mix(in srgb, var(--hi-color-danger, #f85149) 10%, transparent);
-  color: var(--hi-color-danger, #f85149);
-  border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-danger, #a62937) 10%, transparent);
+  color: var(--hi-color-danger-fg, #a62937);
+  border-color: color-mix(in srgb, var(--hi-color-danger, #a62937) 20%, transparent);
 }
 
 .hk-tag-info {
-  background: color-mix(in srgb, var(--hi-color-info, #6abed6) 10%, transparent);
-  color: var(--hi-color-info, #6abed6);
-  border-color: color-mix(in srgb, var(--hi-color-info, #6abed6) 20%, transparent);
+  background: color-mix(in srgb, var(--hi-color-info, #006274) 10%, transparent);
+  color: var(--hi-color-info-fg, #006274);
+  border-color: color-mix(in srgb, var(--hi-color-info, #006274) 20%, transparent);
 }

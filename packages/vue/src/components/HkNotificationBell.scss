@@ -113,15 +113,15 @@
    channels, theme-following; fallbacks are the tokenInventory-canonical
    literals, NOT the toast family's sheet-local ones). */
 .hk-notification-row.is-error .hk-notification-row__icon {
-  color: var(--hi-color-danger, #f7768e);
+  color: var(--hi-color-danger-fg, #a62937);
 }
 
 .hk-notification-row.is-warning .hk-notification-row__icon {
-  color: var(--hi-color-warning, #eed677);
+  color: var(--hi-color-warning-fg, #894800);
 }
 
 .hk-notification-row.is-success .hk-notification-row__icon {
-  color: var(--hi-color-success, #0eb840);
+  color: var(--hi-color-success-fg, #1f6530);
 }
 
 .hk-notification-row.is-info .hk-notification-row__icon,

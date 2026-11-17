@@ -217,11 +217,11 @@
   &:focus-visible {
     color: var(
       --hi-icon-button-icon-color-active,
-      rgb(var(--color-error, 247 118 142))
+      rgb(var(--color-error, 166 41 55))
     );
     background: var(
       --hi-icon-button-bg-hover,
-      rgb(var(--color-error, 247 118 142) / 12%)
+      rgb(var(--color-error, 166 41 55) / 12%)
     );
   }
 }

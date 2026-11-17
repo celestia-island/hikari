@@ -53,10 +53,10 @@
   --hi-color-bg-elevated: rgb(var(--color-surface, 255 255 255));
   --hi-color-bg-subtle: rgb(var(--color-surface, 255 255 255) / 0.5);
   --hi-secondary-bg: rgb(var(--color-surface, 255 255 255) / 0.5);
-  --hi-color-danger: rgb(var(--color-error, 247 118 142));
-  --hi-color-success: rgb(var(--color-success, 14 184 64));
-  --hi-color-warning: rgb(var(--color-warning, 238 214 119));
-  --hi-color-info: rgb(var(--color-info, 106 190 214));
+  --hi-color-danger: rgb(var(--color-error, 166 41 55));
+  --hi-color-success: rgb(var(--color-success, 31 101 48));
+  --hi-color-warning: rgb(var(--color-warning, 137 72 0));
+  --hi-color-info: rgb(var(--color-info, 0 98 116));
   --hi-color-black-10: rgb(0 0 0 / 0.1);
   --hi-color-white-5: rgb(255 255 255 / 0.05);
   --hi-color-white-10: rgb(255 255 255 / 0.1);
@@ -345,7 +345,7 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: rgb(var(--color-warning));
+  color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -1235,9 +1235,9 @@
   align-items: flex-start;
   gap: var(--space-8, 0.5rem);
   font-size: var(--text-xs, 0.75rem);
-  color: var(--hi-color-danger, #f85149);
-  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+  color: var(--hi-color-danger-fg, #a62937);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(166 41 55)) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(166 41 55)) 20%, transparent);
   border-radius: var(--radius-md, 8px);
   padding: var(--space-8, 0.5rem) var(--space-12, 0.75rem);
 }
@@ -1314,7 +1314,7 @@
 
 .s-auth-invite-banner {
   font-size: var(--text-xs, 0.75rem);
-  color: var(--hi-color-warning, #ffa500);
+  color: var(--hi-color-warning-fg, #894800);
   background: color-mix(in srgb, var(--hi-color-warning, #ffa500) 10%, transparent);
   border: 1px solid color-mix(in srgb, var(--hi-color-warning, #ffa500) 20%, transparent);
   border-radius: var(--radius-md, 8px);
@@ -1323,9 +1323,9 @@
 }
 
 .s-auth-invite-banner.expired {
-  color: var(--hi-color-danger, #f85149);
-  background: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 10%, transparent);
-  border-color: color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+  color: var(--hi-color-danger-fg, #a62937);
+  background: color-mix(in srgb, var(--hi-color-danger, rgb(166 41 55)) 10%, transparent);
+  border-color: color-mix(in srgb, var(--hi-color-danger, rgb(166 41 55)) 20%, transparent);
 }
 
 @media (max-width: 480px) {
@@ -1349,7 +1349,7 @@
 }
 
 .a-text-danger {
-  color: var(--hi-color-danger, rgb(247 118 142));
+  color: var(--hi-color-danger-fg, #a62937);
 }
 
 .a-icon-inline {
@@ -1357,11 +1357,11 @@
 }
 
 .a-icon-success {
-  color: var(--color-success, rgb(14 184 64));
+  color: var(--color-success, rgb(31 101 48));
 }
 
 .a-icon-warning {
-  color: var(--color-warning, rgb(238 214 119));
+  color: var(--color-warning, rgb(137 72 0));
 }
 
 .a-bg-secondary {
@@ -1379,7 +1379,7 @@
 
 .a-error-banner {
   background: var(--hi-color-danger, rgba(239, 68, 68, 0.1));
-  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(247 118 142)) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hi-color-danger, rgb(166 41 55)) 20%, transparent);
 }
 
 .a-tabular-nums {

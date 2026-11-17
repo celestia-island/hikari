@@ -144,7 +144,7 @@
   --hi-icon-button-bg-hover: rgb(var(--color-error) / 12%);
 
   &:hover {
-    --hi-icon-button-icon-color: rgb(var(--color-error));
+    --hi-icon-button-icon-color: var(--hi-color-danger-fg, rgb(var(--color-error)));
   }
 }
 

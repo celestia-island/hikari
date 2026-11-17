@@ -529,3 +529,182 @@ describe("HkColorSchemeEditor slot kinds", () => {
     expect(draft.groups!.light!["editor-kinds"].density).toBe("cozy");
   });
 });
+
+describe("HkColorSchemeEditor tone inks follow their fill", () => {
+  // editableTokens order: 0 primary, 1 secondary, 2 accent, 3 success,
+  // 4 error, 5 warning, 6 info.
+  const ERROR_SWATCH = 4;
+
+  it("re-derives a stale on-tone ink when its fill is retuned", async () => {
+    // The prefill carries the DERIVED ink for the old fill (this is what the
+    // consumer's seam emits), so it must follow the fill rather than be
+    // mistaken for a hand-picked override.
+    const { ref } = mountEditor({
+      initialDark: {
+        primary: { r: 24, g: 24, b: 37 },
+        secondary: { r: 167, g: 153, b: 167 },
+        accent: { r: 190, g: 149, b: 190 },
+        success: { r: 108, g: 177, b: 119 },
+        error: { r: 245, g: 115, b: 119 },
+        warning: { r: 219, g: 137, b: 69 },
+        info: { r: 83, g: 173, b: 193 },
+        background: { r: 17, g: 17, b: 27 },
+        surface: { r: 49, g: 50, b: 68 },
+        text: { r: 205, g: 214, b: 244 },
+        muted: { r: 127, g: 132, b: 156 },
+        border: { r: 88, g: 91, b: 112 },
+        focusedBorder: { r: 137, g: 180, b: 250 },
+        selectedBackground: { r: 88, g: 91, b: 112 },
+        selectedText: { r: 205, g: 214, b: 244 },
+        statusBarBackground: { r: 49, g: 50, b: 68 },
+        onDanger: { r: 0, g: 0, b: 0 },
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    // Retune error to a deep red: white becomes the readable ink.
+    await setSwatchHex(ERROR_SWATCH, "8b0000");
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.error).toEqual({ r: 0x8b, g: 0, b: 0 });
+    expect(draft.dark.onDanger).toEqual({ r: 255, g: 255, b: 255 });
+  });
+
+  it("keeps a hand-picked ink that still READS across a fill retune", async () => {
+    // A mid-grey fill is the one case where both inks clear AA, so a pick can
+    // differ from the house answer and still be a legitimate design choice.
+    const { ref } = mountEditor({
+      initialDark: {
+        primary: { r: 24, g: 24, b: 37 },
+        secondary: { r: 167, g: 153, b: 167 },
+        accent: { r: 190, g: 149, b: 190 },
+        success: { r: 108, g: 177, b: 119 },
+        error: { r: 128, g: 128, b: 128 },
+        warning: { r: 219, g: 137, b: 69 },
+        info: { r: 83, g: 173, b: 193 },
+        background: { r: 17, g: 17, b: 27 },
+        surface: { r: 49, g: 50, b: 68 },
+        text: { r: 205, g: 214, b: 244 },
+        muted: { r: 127, g: 132, b: 156 },
+        border: { r: 88, g: 91, b: 112 },
+        focusedBorder: { r: 137, g: 180, b: 250 },
+        selectedBackground: { r: 88, g: 91, b: 112 },
+        selectedText: { r: 205, g: 214, b: 244 },
+        statusBarBackground: { r: 49, g: 50, b: 68 },
+        onDanger: { r: 0, g: 0, b: 0 }, // house answer is white; black reads too
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    await setSwatchHex(ERROR_SWATCH, "8a8a8a");
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.onDanger).toEqual({ r: 0, g: 0, b: 0 });
+  });
+});
+
+describe("HkColorSchemeEditor keeps the ONE ink rule (2026-11-12)", () => {
+  // editableTokens: 0 primary, 1 secondary, 2 accent, 3 success, 4 error,
+  // 5 warning, 6 info.
+  const SUCCESS_SWATCH = 3;
+  const WARNING_SWATCH = 5;
+
+  const basePrefill = {
+    primary: { r: 24, g: 24, b: 37 },
+    secondary: { r: 167, g: 153, b: 167 },
+    accent: { r: 190, g: 149, b: 190 },
+    error: { r: 245, g: 115, b: 119 },
+    info: { r: 83, g: 173, b: 193 },
+    background: { r: 17, g: 17, b: 27 },
+    surface: { r: 49, g: 50, b: 68 },
+    text: { r: 205, g: 214, b: 244 },
+    muted: { r: 127, g: 132, b: 156 },
+    border: { r: 88, g: 91, b: 112 },
+    focusedBorder: { r: 137, g: 180, b: 250 },
+    selectedBackground: { r: 88, g: 91, b: 112 },
+    selectedText: { r: 205, g: 214, b: 244 },
+    statusBarBackground: { r: 49, g: 50, b: 68 },
+  };
+
+  it("re-derives the ink when a retune makes it unreadable", async () => {
+    // The stored ink reads on the old fill; only the NEW fill makes it
+    // unreadable (white on a pale amber ≈1.1:1), so the house rule takes over.
+    const { ref } = mountEditor({
+      initialDark: {
+        ...basePrefill,
+        success: { r: 16, g: 185, b: 129 },
+        warning: { r: 245, g: 158, b: 11 },
+        onSuccess: { r: 255, g: 255, b: 255 }, // solidInk(#10B981)
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    // A LIGHT fill: the house rule flips to black here.
+    await setSwatchHex(SUCCESS_SWATCH, "ffe08a");
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.success).toEqual({ r: 0xff, g: 0xe0, b: 0x8a });
+    expect(draft.dark.onSuccess).toEqual({ r: 0, g: 0, b: 0 });
+  });
+
+  it("heals to the HOUSE answer even where it is under AA", async () => {
+    // Mid greys are the known gap: solidInk says white (3.95:1 on #808080)
+    // while black measures 5.32:1. The editor does NOT override the house
+    // rule here — `tokensToCSSVars` derives the same fill through solidInk, so
+    // a second rule would make the stored and derived paths disagree. Fixing
+    // this band means fixing the FILL, not the ink rule.
+    const { ref } = mountEditor({
+      initialDark: {
+        ...basePrefill,
+        success: { r: 16, g: 185, b: 129 },
+        warning: { r: 245, g: 158, b: 11 },
+        error: { r: 128, g: 128, b: 128 },
+        onDanger: { r: 255, g: 255, b: 255 },
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.onDanger).toEqual({ r: 255, g: 255, b: 255 });
+  });
+
+  it("leaves an ABSENT ink absent (never materialises the house rule)", async () => {
+    // Stock presets omit the inks; tokensToCSSVars derives them downstream.
+    // Writing one here would freeze the MUST_STAY_WHITE set into the draft.
+    const { ref } = mountEditor({
+      initialDark: {
+        ...basePrefill,
+        success: { r: 16, g: 185, b: 129 },
+        warning: { r: 245, g: 158, b: 11 },
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    await setSwatchHex(WARNING_SWATCH, "8a4b00");
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.warning).toEqual({ r: 0x8a, g: 0x4b, b: 0 });
+    expect(draft.dark.onWarning).toBeUndefined();
+  });
+
+  it("heals an ink saved in the BROKEN state (unreadable on its fill)", async () => {
+    // A theme written while the stale-ink bug was live carries black on a deep
+    // red (2.10:1). The editor renders no picker for these slots, so without a
+    // heal it would stay unreadable forever. Any re-derivation pass fixes it.
+    const { ref } = mountEditor({
+      initialDark: {
+        ...basePrefill,
+        success: { r: 16, g: 185, b: 129 },
+        warning: { r: 245, g: 158, b: 11 },
+        error: { r: 0x8b, g: 0, b: 0 },
+        onDanger: { r: 0, g: 0, b: 0 },
+      } as never,
+    });
+    await nextTick();
+    await settle();
+
+    const draft = ref.value!.getDraft();
+    expect(draft.dark.onDanger).toEqual({ r: 255, g: 255, b: 255 });
+  });
+});

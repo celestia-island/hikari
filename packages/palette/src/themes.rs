@@ -5,8 +5,11 @@
 //! keeps the theming layer decoupled from the (opt-in) color catalogs — you can
 //! use any theme without enabling a single collection feature.
 //!
-//! The hex values below mirror the colors that the old chinese-constant-based
-//! themes referenced, so the visual output is unchanged.
+//! The BRAND role colors (primary / secondary / accent / background / surface /
+//! border / text) keep the chinese-constant hexes, so those surfaces look
+//! unchanged. The SEMANTIC trio (success / warning / danger) does not: it follows
+//! the canonical perceptual family so the house white ink reads on it — see the
+//! note above `Hikari::palette`.
 
 use std::collections::HashMap;
 use std::sync::RwLock;
@@ -31,6 +34,9 @@ pub struct Palette {
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    /// The informational accent (canonical 215°). Fills the fourth semantic
+    /// chip and pairs with its own readable text variant.
+    pub info: Color,
     pub background: Color,
     pub surface: Color,
     pub border: Color,
@@ -42,7 +48,18 @@ impl Palette {
     /// Contrast color (black or white) for a button variant color, used for
     /// glow effects. Dynamic opacity is derived from the button's brightness.
     pub fn button_glow_color(&self, color: &Color) -> String {
-        color.glow_contrast_dynamic_rgba()
+        let (r, g, b, alpha) = color.glow_contrast_dynamic();
+        // A glow is drawn ON the page, so it must separate from the palette's
+        // own background — not merely from the button. The fill-derived ink
+        // stops working when the fills go dark on a light page (a white halo
+        // on 月白 sits at ~1.1:1, i.e. invisible), so flip it when it cannot
+        // separate.
+        let glow = Color::from_rgb_hex(r, g, b);
+        if glow.contrast_ratio(&self.background) >= 3.0 {
+            return format!("rgba({r}, {g}, {b}, {alpha})");
+        }
+        let (fr, fg, fb) = if r == 255 { (0, 0, 0) } else { (255, 255, 255) };
+        format!("rgba({fr}, {fg}, {fb}, {alpha})")
     }
 
     /// Ghost-button text color: black for light themes, white for dark.
@@ -81,7 +98,9 @@ impl Palette {
 
 // === Hikari — Light theme (default) ==========================================
 // primary 牡丹粉红 #eea2a4, secondary 苍翠 #519a73, accent 姜黄 #ffc773,
-// success 葱倩 #0eb840, warning 鹅黄 #fff143, danger 朱红 #ff4c00,
+// Semantic trio (success / warning / danger) is DERIVED, not brand: canonical
+// OKLCH hues + lightness chosen so the house white ink clears 7:1 (see the
+// `semantic_tests` module at the bottom of this file).
 // background 月白 #d6ecf0, surface/border 素 #e0f0e9.
 
 /// Hikari — the default light theme.
@@ -95,9 +114,13 @@ impl Hikari {
             primary: Color::from_rgb_hex(0xee, 0xa2, 0xa4), // 牡丹粉红
             secondary: Color::from_rgb_hex(0x51, 0x9a, 0x73), // 苍翠
             accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
-            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
-            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
+            // Semantic trio — canonical OKLCH hues (success 148°, warning 58°,
+            // danger 20°), lightness derived so the house WHITE ink clears 7:1
+            // (at that level the perceptual algorithm picks white unambiguously).
+            success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
+            warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
+            danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
+            info: Color::from_rgb_hex(0x00, 0x62, 0x74),    // canonical 215°, white 7.10:1
             background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
             surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
             border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),  // 素
@@ -128,9 +151,12 @@ impl Tairitsu {
             primary: Color::from_rgb_hex(0x14, 0x4a, 0x74), // 鷃蓝
             secondary: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
             accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
-            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
-            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
+            // Same canonical semantic trio as the light theme: the ink rule is
+            // a property of the fill, not of the mode.
+            success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
+            warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
+            danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
+            info: Color::from_rgb_hex(0x00, 0x62, 0x74),    // canonical 215°, white 7.10:1
             background: Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
             surface: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
             border: Color::from_rgb_hex(0x4a, 0x42, 0x66),  // 黛
@@ -297,6 +323,7 @@ mod tests {
             success: Color::from_rgb_hex(0x0e, 0xb8, 0x40),
             warning: Color::from_rgb_hex(0xff, 0xa6, 0x31),
             danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),
+            info: Color::from_rgb_hex(0x00, 0x98, 0x74),
             background: Color::from_rgb_hex(0xff, 0xff, 0xff),
             surface: Color::from_rgb_hex(0xff, 0xff, 0xff),
             border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
@@ -351,5 +378,203 @@ mod tests {
         assert_eq!(tairitsu.ghost_text_color(0.9), "rgba(255, 255, 255, 0.9)");
         assert_eq!(hikari.ghost_glow_color(0.2), "rgba(0, 0, 0, 0.2)");
         assert_eq!(tairitsu.ghost_glow_color(0.8), "rgba(255, 255, 255, 0.8)");
+    }
+}
+
+#[cfg(test)]
+mod semantic_tests {
+    use super::*;
+
+    /// Canonical semantic hues (OKLCH degrees) — the family the derivation
+    /// targets. Chroma is deliberately absent: gamut mapping trims it in 8-bit,
+    /// so the assertion that matters is `C > 0.02` (a slot must carry hue).
+    const CANONICAL_HUES: [f64; 3] = [148.0, 58.0, 20.0];
+
+    fn semantic_trio(p: &Palette) -> [Color; 3] {
+        [p.success.clone(), p.warning.clone(), p.danger.clone()]
+    }
+
+    /// Every semantic fill sits on its canonical hue — the derivation must not
+    /// drift, and a brand-value edit that ignores the family fails here.
+    #[test]
+    fn semantic_colors_keep_canonical_hues() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for (color, canon_hue) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
+                let (_, chroma, hue) = color.oklch();
+                assert!(
+                    chroma > 0.02,
+                    "{name}: {} is achromatic (C={chroma:.4}) — a semantic slot must carry hue",
+                    color.hex()
+                );
+                let delta = (hue - canon_hue).abs().min(360.0 - (hue - canon_hue).abs());
+                assert!(
+                    delta <= 5.0,
+                    "{name}: {} hue {hue:.1}° is {delta:.1}° off canonical {canon_hue}°",
+                    color.hex()
+                );
+            }
+        }
+    }
+
+    /// The house WHITE ink must clear 7:1 on every semantic fill — that is the
+    /// level at which the perceptual rule picks white unambiguously.
+    #[test]
+    fn semantic_fills_carry_readable_white_ink() {
+        let white = Color::from_rgb_hex(0xff, 0xff, 0xff);
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for color in semantic_trio(&palette) {
+                let ratio = white.contrast_ratio(&color);
+                assert!(
+                    ratio >= 7.0,
+                    "{name}: white on {} is only {ratio:.2}:1 (need >= 7.0)",
+                    color.hex()
+                );
+                assert_eq!(
+                    color.solid_ink().hex(),
+                    "#FFFFFF",
+                    "{name}: {} must take the house white ink",
+                    color.hex()
+                );
+            }
+        }
+    }
+
+    /// A semantic fill's glow must stay visible ON THE PAGE: the fill-derived
+    /// ink flips to white once the fills go dark, and a white halo on 月白 is
+    /// invisible, so `button_glow_color` flips it back when it cannot separate
+    /// from the palette background.
+    #[test]
+    fn semantic_glow_separates_from_the_page() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for fill in semantic_trio(&palette) {
+                let rgba = palette.button_glow_color(&fill);
+                let parts: Vec<&str> = rgba
+                    .trim_start_matches("rgba(")
+                    .trim_end_matches(')')
+                    .split(", ")
+                    .collect();
+                let glow = Color::from_rgb_hex(
+                    parts[0].parse().unwrap(),
+                    parts[1].parse().unwrap(),
+                    parts[2].parse().unwrap(),
+                );
+                let ratio = glow.contrast_ratio(&palette.background);
+                assert!(
+                    ratio >= 3.0,
+                    "{name}: glow {rgba} on background {} is only {ratio:.2}:1",
+                    palette.background.hex()
+                );
+            }
+        }
+    }
+
+    /// A semantic slot is a solid FILL and ignores the light/dark mode (user
+    /// direction). Anything that paints it as TEXT needs the readable variant:
+    /// on a dark page the fill itself is invisible (~1.1:1).
+    #[test]
+    fn semantic_foreground_variant_reads_on_the_page() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for fill in semantic_trio(&palette) {
+                let fg = fill.readable_on(&[&palette.background, &palette.surface], 4.5);
+                let ratio = fg.contrast_ratio(&palette.background);
+                assert!(
+                    ratio >= 4.5,
+                    "{name}: {} as text on {} is only {ratio:.2}:1",
+                    fg.hex(),
+                    palette.background.hex()
+                );
+                // Hue is preserved: the variant is a lightness move, not a hue
+                // change.
+                let (_, _, want) = fill.oklch();
+                let (_, _, got) = fg.oklch();
+                let delta = (got - want).abs().min(360.0 - (got - want).abs());
+                assert!(
+                    delta <= 12.0,
+                    "{name}: {} moved {delta:.1}° off {}'s hue",
+                    fg.hex(),
+                    fill.hex()
+                );
+            }
+        }
+    }
+
+    /// The emitted foreground vars must keep the hue family (a tag/link that
+    /// changes hue stops reading as "success"/"danger").
+    #[test]
+    fn semantic_foreground_keeps_the_family_hue() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for (fill, canon) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
+                let fg = fill.readable_on(&[&palette.background, &palette.surface], 4.5);
+                let (fg_l, chroma, hue) = fg.oklch();
+                let delta = (hue - canon).abs().min(360.0 - (hue - canon).abs());
+                // Δh ≤ 8°: a lightness move keeps the family hue (the HSL-based
+                // search this replaced drifted 11.2°).
+                assert!(
+                    delta <= 8.0,
+                    "{name}: text variant {} is {delta:.1}° off {canon}°",
+                    fg.hex()
+                );
+                // Chroma: the variant must carry as much as the sRGB gamut
+                // allows at its own lightness/hue (the perceptual rule keeps
+                // the hue signal; only the gamut may clip it).
+                // Expected chroma = min(what the fill had, what the gamut
+                // allows at the fg's lightness) — the move must not clip
+                // beyond the gamut's own forcing.
+                let (_, fill_chroma, _) = fill.oklch();
+                let max_c = Color::gamut_chroma(fg_l, hue);
+                let expected = fill_chroma.min(max_c);
+                assert!(
+                    chroma >= expected * 0.95,
+                    "{name}: text variant {} carries C={chroma:.4} but the gamut allows {max_c:.4} at its lightness",
+                    fg.hex()
+                );
+            }
+        }
+    }
+
+    /// The house ink rule must NOT be the WCAG winner: on mid greys the two
+    /// disagree (white 3.95 / black 5.32 on #808080), and the contract is that
+    /// the FILL is fixed, not the ink rule swapped. `solid_ink` (the ported
+    /// house rule) says white there; `readable_ink` (the rejected utility)
+    /// says black. This test pins the house answer against that discriminator.
+    #[test]
+    fn solid_ink_is_the_house_rule_not_the_ratio_winner() {
+        let grey = Color::from_rgb_hex(0x80, 0x80, 0x80);
+        assert_eq!(
+            grey.solid_ink().hex(),
+            "#FFFFFF",
+            "solid_ink on mid-grey must stay white (the house rule)"
+        );
+        assert_ne!(
+            grey.readable_ink().hex(),
+            grey.solid_ink().hex(),
+            "the discriminator fill must actually separate the two rules"
+        );
+    }
+
+    /// The two bundled themes share one semantic family (the ink rule belongs
+    /// to the fill, not to the mode).
+    #[test]
+    fn both_themes_share_the_semantic_family() {
+        let light = semantic_trio(&Hikari::palette());
+        let dark = semantic_trio(&Tairitsu::palette());
+        for (l, d) in light.iter().zip(dark.iter()) {
+            assert_eq!(l.hex(), d.hex(), "light/dark semantic fills diverged");
+        }
     }
 }

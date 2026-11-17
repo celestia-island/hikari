@@ -140,6 +140,8 @@
  *   - `copy.browserBlock` — the unsupported-browser notice, painted in the
  *     landing's `info` tone (a compatibility notice is not a crash) with the
  *     `{browser}` / `{current}` / `{min}` placeholders filled from the call.
+ *   - `copy.errorContext` — the captured boot log and the copy action (see
+ *     ERROR CONTEXT below).
  *   - `globals` — the three page globals a host's own boot code drives. They
  *     are the family's LONG-STANDING contract, and all three are defaults of
  *     the hand-rolled `res/fatal-fallback.js` this plugin replaces:
@@ -151,6 +153,49 @@
  *     `__appReady` removes only the nodes this script added — never the host's
  *     loader element, its contents or its dismissal class, which belong to the
  *     host's own loader logic.
+ *
+ * ERROR CONTEXT (`copy.errorContext`, opt-in like every layer above): the
+ * TIMEOUT panel's blind spot. A boot that hangs paints the watchdog's card
+ * with reason/elapsed/boot-script state — but the browser's own account of
+ * the failure (what the console printed, which script threw, which promise
+ * rejected) never reached the pane, because nothing was LISTENING. The
+ * classic timeout is exactly the case with no captured error: the app's boot
+ * code logs the failing step and hangs, and the operator sees an empty
+ * payload. This half installs the listeners the moment the recovery script
+ * executes — before the app bundle can fail:
+ *
+ *   1. CAPTURE — a bounded ring (`CONSOLE_CAP` newest entries, each clipped)
+ *      fed by four sources, all guarded and all pass-through: wrapped
+ *      `console.error` / `warn` / `log` / `info` (the original still runs
+ *      first — the page's own console behaviour must not change),
+ *      capture-phase `error` events (an `ErrorEvent` is an uncaught script
+ *      exception → also recorded as the fatal; any other error event is a
+ *      failed resource → logged), `unhandledrejection` events (logged; one
+ *      matching the chunk-miss family is ALSO the fatal, because dynamic
+ *      import failures surface as rejections on several browsers), and the
+ *      host's own `__appFatal` report keeps its existing payload.error path.
+ *   2. PAYLOAD — the pane gains `console` (the ring, oldest first, every
+ *      entry `{ t, level, text }` with `t` = ms since boot start) and
+ *      `lastError` (the first captured fatal's message/source/line/column/
+ *      stack) whenever capture saw anything — rendered by the SAME HkJsonTree
+ *      contract, so no second surface exists.
+ *   3. CLASSIFICATION — the watchdog's silent-expiry default upgrades: with a
+ *      captured fatal, `staleReason()` classifies it exactly like an
+ *      `__appFatal` message (chunk-miss family → `chunk`, otherwise
+ *      `error`), so a boot that threw no longer reports a bare timeout.
+ *   4. COPY — a secondary action beside reload that hands the operator the
+ *      REDACTED payload text (the exact bytes the pane renders, through the
+ *      family's credential mask): async Clipboard API first, a guarded
+ *      `execCommand("copy")` textarea fallback second (the API exists only
+ *      in secure contexts, and a dead boot is often served over plain HTTP),
+ *      and the button flips to the copied/failed label for a moment. Labels
+ *      are host copy (`copy` / `copied` / `copyFailed` + per-locale
+ *      overrides), because "Copy error" is product wording in the host's
+ *      language — the retired family script shipped the same three labels.
+ *
+ * The capture lives ONLY in scripts that configure `copy.errorContext`, which
+ * requires `copy.rawDetailsLabel` (the ring is reported through the pane) —
+ * a host that configures none of it keeps the byte-identical inert script.
  *
  * Every diagnostics read (`performance`, `document.readyState`, `location.href`,
  * the resource table) sits behind those options: the default script stays
@@ -190,6 +235,22 @@ export const BOOT_RECOVERY_TITLE = "Application failed to load";
 export const BOOT_RECOVERY_MESSAGE =
   "The app did not finish loading. Reloading usually fixes it.";
 export const BOOT_RECOVERY_RETRY = "Reload";
+
+/**
+ * Default copy-action label for the error-context half (English; overridable
+ * through `copy.errorContext.copy`).
+ *
+ * The family's retired hand-rolled fallback shipped a copy button with exactly
+ * these three labels, and hosts carried their translations for them — so the
+ * defaults are the family's own English wording, not a new coinage.
+ */
+export const BOOT_RECOVERY_COPY_ACTION = "Copy details";
+
+/** Default success feedback for the copy action (`copy.errorContext.copied`). */
+export const BOOT_RECOVERY_COPIED = "Copied";
+
+/** Default failure feedback for the copy action (`copy.errorContext.copyFailed`). */
+export const BOOT_RECOVERY_COPY_FAILED = "Copy failed";
 
 /**
  * The injected tag's marker attribute. A host that hashes the inline script
@@ -597,6 +658,127 @@ function normaliseBrowserBlock(input, blockGlobal) {
 }
 
 /**
+ * Normalise the error-context copy action's per-locale override map:
+ * `{ "zh-CN": { copy, copied, copyFailed } }`.
+ *
+ * Unlike the reason/block maps, all three members are OPTIONAL feedback for
+ * one button, so an entry may carry any subset — a host that only translated
+ * the button label keeps the English defaults for the transient feedback
+ * states. Present members must be non-empty strings; keys go through the SAME
+ * normalisation as `copy.locales` (trim, lowercase, `_` → `-`), and two keys
+ * collapsing onto one tag fail the build.
+ *
+ * @param {unknown} input — the `locales` member of an errorContext entry
+ * @param {string} label — config path for the error message
+ * @returns {Record<string, {copy: string, copied: string, copyFailed: string}> | null}
+ */
+function normaliseErrorContextLocales(input, label) {
+  if (input === undefined || input === null) return null;
+  if (typeof input !== "object") {
+    throw new Error(
+      "[hikari boot-recovery] " + label + ".locales must be an object keyed by " +
+        "locale tag (e.g. { \"zh-CN\": { copy, copied, copyFailed } })",
+    );
+  }
+  const out = {};
+  const seen = new Map();
+  for (const rawKey in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, rawKey)) continue;
+    const tag = String(rawKey).trim().replace(/_/g, "-").toLowerCase();
+    if (!tag) {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales key " +
+          JSON.stringify(rawKey) + " normalises to an empty locale tag",
+      );
+    }
+    const previous = seen.get(tag);
+    if (previous !== undefined) {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales keys " +
+          JSON.stringify(previous) + " and " + JSON.stringify(rawKey) +
+          " normalise to the same locale tag " + JSON.stringify(tag),
+      );
+    }
+    const entry = input[rawKey];
+    if (!entry || typeof entry !== "object") {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales[" + JSON.stringify(tag) +
+          "]: entries must be objects carrying copy / copied / copyFailed strings",
+      );
+    }
+    /** @param {unknown} value @param {string} field */
+    function member(value, field) {
+      if (value === undefined || value === null) return "";
+      if (typeof value !== "string" || !value.trim()) {
+        throw new Error(
+          "[hikari boot-recovery] " + label + ".locales[" + JSON.stringify(tag) +
+            "]." + field + ": when present it must be a non-empty string",
+        );
+      }
+      return value;
+    }
+    out[tag] = {
+      copy: member(entry.copy, "copy"),
+      copied: member(entry.copied, "copied"),
+      copyFailed: member(entry.copyFailed, "copyFailed"),
+    };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Normalise the opt-in ERROR-CONTEXT half: the captured boot log (see the
+ * module doc) plus the copy action. Its presence is the ON switch — the same
+ * "the option is the label is the switch" shape as `rawDetailsLabel`, because
+ * everything it adds rides inside the pane's shell and the action row.
+ *
+ * An explicit `true` turns it on with the English default labels (a host that
+ * only wants the capture, not the copy button, gets the button too — one
+ * switch, one story, and the pane without a way to take the text away is the
+ * exact gap this half exists to close). `false`, `undefined` and `null` are
+ * all "not configured".
+ *
+ * @param {unknown} input
+ * @returns {{ copy: string, copied: string, copyFailed: string,
+ *   locales: Record<string, {copy: string, copied: string, copyFailed: string}> | null } | null}
+ */
+function normaliseErrorContext(input) {
+  if (input === undefined || input === null || input === false) return null;
+  if (input === true) {
+    return {
+      copy: BOOT_RECOVERY_COPY_ACTION,
+      copied: BOOT_RECOVERY_COPIED,
+      copyFailed: BOOT_RECOVERY_COPY_FAILED,
+      locales: null,
+    };
+  }
+  if (typeof input !== "object") {
+    throw new Error(
+      "[hikari boot-recovery] copy.errorContext must be an object, true, or " +
+        "false to disable the entry",
+    );
+  }
+  const raw = input;
+  /** @param {unknown} value @param {string} field @param {string} fallback */
+  function label(value, field, fallback) {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value !== "string" || !value.trim()) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext." + field +
+          ": when present it must be a non-empty string",
+      );
+    }
+    return value;
+  }
+  return {
+    copy: label(raw.copy, "copy", BOOT_RECOVERY_COPY_ACTION),
+    copied: label(raw.copied, "copied", BOOT_RECOVERY_COPIED),
+    copyFailed: label(raw.copyFailed, "copyFailed", BOOT_RECOVERY_COPY_FAILED),
+    locales: normaliseErrorContextLocales(raw.locales, "copy.errorContext"),
+  };
+}
+
+/**
  * Normalise a per-locale override map: `{ "zh-CN": { title, message } }`.
  *
  * Keys go through the SAME normalisation as `copy.locales` (trim, lowercase,
@@ -941,6 +1123,8 @@ function normaliseLoadingScreen(input) {
  *   storageKey: string | null,
  *   osPrefsGlobal: string | null,
  *   rawDetailsLabel: string | null,
+ *   errorContext: { copy: string, copied: string, copyFailed: string,
+ *     locales: Record<string, {copy: string, copied: string, copyFailed: string}> | null } | null,
  *   browserBlock: { title: string, message: string, global: string } | null,
  *   reasons: Record<string, { title: string, message: string }> | null,
  *   globals: { block: string | null, fatal: string | null, ready: string | null },
@@ -957,6 +1141,7 @@ function resolveOptions(options) {
     input.copy && typeof input.copy === "object" ? input.copy : {};
   const copyTable = normaliseLocales(copyRaw.locales);
   const rawDetailsLabel = normaliseRawDetailsLabel(copyRaw.rawDetailsLabel);
+  const errorContext = normaliseErrorContext(copyRaw.errorContext);
   const loadingScreen = normaliseLoadingScreen(input.loadingScreen);
   const reasons = normaliseReasons(copyRaw.reasons);
   const globals = normaliseGlobals(input.globals, reasons !== null);
@@ -1006,6 +1191,25 @@ function resolveOptions(options) {
         "loadingScreen: false (the heal-only mode never shows a panel)",
     );
   }
+  if (errorContext !== null) {
+    // The captured log is reported through the pane's tree and the copy action
+    // hands out the pane's payload text: without the pane there is nothing the
+    // capture could surface into, so configuring it alone is a config error,
+    // not a silent no-op.
+    if (rawDetailsLabel === null) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext requires copy.rawDetailsLabel: " +
+          "the captured boot log is rendered inside the raw-details pane",
+      );
+    }
+    if (errorContext.locales && !copyTable) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext.locales requires copy.locales: " +
+          "the per-locale button copy is selected by the locale table, so without " +
+          "one there is no language to resolve",
+      );
+    }
+  }
   return {
     canonicalOrigin: canonicalOrigin,
     canonicalHostname: canonicalHostname(canonicalOrigin),
@@ -1020,6 +1224,7 @@ function resolveOptions(options) {
     storageKey: normaliseStorageKey(copyRaw.storageKey, copyTable !== null),
     osPrefsGlobal: normaliseOsPrefsGlobal(input.osPrefsGlobal),
     rawDetailsLabel: rawDetailsLabel,
+    errorContext: errorContext,
     browserBlock: browserBlock,
     reasons: reasons,
     globals: globals,
@@ -1731,6 +1936,260 @@ const DETAILS_RUNTIME = String.raw`
 `;
 
 /**
+ * The ERROR-CONTEXT capture runtime, emitted VERBATIM into the generated
+ * script only when the host configures `copy.errorContext` (which requires
+ * the raw-details pane — the ring is reported through its tree).
+ *
+ * Like DETAILS_RUNTIME it is one raw block of page JavaScript with no
+ * interpolation, so the output stays byte-deterministic. It exists to answer
+ * the question a timeout payload cannot: what did the BROWSER see while the
+ * app failed to mount? Four capture sources, all guarded, all pass-through:
+ *
+ *   - wrapped console.error/warn/log/info — the original runs FIRST (the
+ *     page's own console behaviour must not change), then the formatted line
+ *     joins the ring;
+ *   - capture-phase `error` events: an ErrorEvent (a `message`) is an
+ *     uncaught script exception — logged AND recorded as the fatal; any other
+ *     error event is a failed resource — logged only;
+ *   - `unhandledrejection` events — logged; one whose text matches the
+ *     chunk-miss family is ALSO the fatal, because dynamic import failures
+ *     surface as rejections on several browsers;
+ *   - the host's own `__appFatal` report is untouched (its error already has
+ *     the payload's `error` field).
+ *
+ * The ring holds the CONSOLE_CAP newest entries (a hung boot floods the
+ * early lines; the ones nearest the hang are the diagnosis), each text
+ * clipped. `bootFatal` keeps the FIRST fatal — the earliest uncaught error is
+ * the root cause, everything after it is likely cascade. Both ride the
+ * payload as `console` / `lastError` (assembled in showFailure, next to
+ * buildPayload's own fields), and `staleReason()` classifies a captured
+ * fatal exactly like an `__appFatal` message when the reason table exists.
+ *
+ * The copy action completes the shell: the button sits BEFORE reload in the
+ * action row (a reload navigates away — the copy must come first), hands the
+ * operator payloadText's REDACTED JSON (the exact bytes the pane renders),
+ * prefers the async Clipboard API and falls back to a guarded
+ * execCommand("copy") textarea, because the API exists only in secure
+ * contexts and a dead boot is frequently served over plain HTTP. Feedback is
+ * the copied/failed label for a moment, then the action label returns.
+ */
+const CONTEXT_RUNTIME = String.raw`
+  var CONSOLE_CAP = 60;
+  var CONSOLE_CLIP = 500;
+  var bootLog = [];
+  var bootFatal = null;
+  /* Set by __appReady: the app mounted, so the capture stops RECORDING (the
+     wrappers stay installed -- unwinding them could clobber a later wrapper
+     and a chained console is hostile territory -- but the format/append cost
+     per call drops to one boolean check on a healthy page). */
+  var bootDone = false;
+  function formatLogValue(value) {
+    if (typeof value === "string") return clipText(value, CONSOLE_CLIP);
+    /* An Error formats as devtools do ("Name: message"): JSON.stringify sees
+       no enumerable own props on an Error, so without this branch a thrown
+       reason would reach the ring as "{}" and lose the one fact it carries. */
+    var text = safeCall(function () {
+      if (value !== null && typeof value === "object" && typeof value.message === "string") {
+        var name = "";
+        safeCall(function () {
+          if (typeof value.name === "string") name = value.name;
+        }, null);
+        return name ? name + ": " + value.message : value.message;
+      }
+      return "";
+    }, "");
+    if (!text) {
+      text = safeCall(function () {
+        return JSON.stringify(value);
+      }, "");
+    }
+    if (!text) {
+      text = safeCall(function () {
+        return String(value);
+      }, "");
+    }
+    return clipText(text, CONSOLE_CLIP);
+  }
+  function captureEntry(level, text) {
+    if (bootDone) return;
+    safeCall(function () {
+      bootLog.push({
+        t: safeCall(function () {
+          return Date.now() - bootStartedAt;
+        }, 0),
+        level: level,
+        text: clipText(text, CONSOLE_CLIP)
+      });
+      if (bootLog.length > CONSOLE_CAP) bootLog.splice(0, bootLog.length - CONSOLE_CAP);
+    }, null);
+  }
+  /* The FIRST fatal wins: the earliest uncaught error is the root cause, and
+     the payload already reports __appFatal's error separately. */
+  function captureFatal(message, extra) {
+    if (bootDone) return;
+    captureEntry("uncaught", message);
+    if (bootFatal) return;
+    var fatal = { message: clipText(message, TEXT_LIMIT) };
+    safeCall(function () {
+      for (var key in extra) {
+        if (!Object.prototype.hasOwnProperty.call(extra, key)) continue;
+        var value = extra[key];
+        if (value === null || value === undefined || value === "") continue;
+        fatal[key] = typeof value === "number" ? value : clipText(String(value), TEXT_LIMIT);
+      }
+    }, null);
+    bootFatal = fatal;
+  }
+  function wrapConsoleMethod(level) {
+    var owner = console;
+    var original = owner[level];
+    if (typeof original !== "function") return;
+    var wrapped = function () {
+      /* The call's arguments are captured ONCE here: the safeCall callbacks
+         below are plain function expressions, and their own "arguments"
+         object would shadow the wrapper's -- both the pass-through and the
+         captured line would run on empty arguments. */
+      var args = arguments;
+      safeCall(function () {
+        original.apply(owner, args);
+      }, null);
+      safeCall(function () {
+        var parts = [];
+        for (var i = 0; i < args.length && parts.length < 8; i++) {
+          parts.push(formatLogValue(args[i]));
+        }
+        captureEntry(level, parts.join(" "));
+      }, null);
+    };
+    try {
+      owner[level] = wrapped;
+    } catch (e) {}
+  }
+  function installContextCapture() {
+    safeCall(function () {
+      var levels = ["error", "warn", "log", "info"];
+      for (var i = 0; i < levels.length; i++) wrapConsoleMethod(levels[i]);
+    }, null);
+    /* Capture phase, so a failing <script>/<link> resource (an event without
+       a message) and a throwing script (an ErrorEvent, with one) are both
+       seen; window.onerror is never touched, so a host handler keeps working. */
+    safeCall(function () {
+      window.addEventListener("error", function (event) {
+        safeCall(function () {
+          if (event && typeof event.message === "string") {
+            var detail = {
+              source: event.filename,
+              line: typeof event.lineno === "number" ? event.lineno : null,
+              column: typeof event.colno === "number" ? event.colno : null
+            };
+            safeCall(function () {
+              if (event.error && typeof event.error.stack === "string") {
+                detail.stack = event.error.stack;
+              }
+            }, null);
+            captureFatal(event.message, detail);
+            return;
+          }
+          var target = event && event.target;
+          var url = target && (target.src || target.href);
+          if (url) captureEntry("error", "Failed to load " + String(url));
+        }, null);
+      }, true);
+    }, null);
+    safeCall(function () {
+      window.addEventListener("unhandledrejection", function (event) {
+        safeCall(function () {
+          var reason = event && event.reason;
+          var text = "Unhandled rejection: " + formatLogValue(reason);
+          captureEntry("rejection", text);
+          if (CHUNK_MISS_RE.test(text)) captureFatal(text, null);
+        }, null);
+      }, true);
+    }, null);
+  }
+  /* The copy action's labels, resolved for the locale the panel painted.
+     Without a translation map the host defaults are the whole answer; with
+     one, the current locale's partial entry merges over them, resolving
+     through the same subtag-stripping order as the reason/block matrix.
+     Both the locale pointer and the table exist only in the shapes that
+     configured them, hence the typeof guards -- one verbatim block serves
+     every errorContext shape. */
+  function contextCopy() {
+    var labels = [CTX_COPY_LABEL, CTX_COPIED_LABEL, CTX_FAILED_LABEL];
+    var table = typeof CONTEXT_TRANSLATIONS !== "undefined" ? CONTEXT_TRANSLATIONS : null;
+    if (typeof GENERIC_LOCALE !== "undefined" && GENERIC_LOCALE && table) {
+      var keys = [GENERIC_LOCALE];
+      var parts = GENERIC_LOCALE.split("-");
+      for (var d = 1; d < parts.length; d++) keys.push(parts.slice(0, parts.length - d).join("-"));
+      keys.push(parts[0]);
+      for (var k = 0; k < keys.length; k++) {
+        var hit = table[keys[k]];
+        if (hit) {
+          if (hit[0]) labels[0] = hit[0];
+          if (hit[1]) labels[1] = hit[1];
+          if (hit[2]) labels[2] = hit[2];
+          return labels;
+        }
+      }
+    }
+    return labels;
+  }
+  function copyViaCommand(text) {
+    return safeCall(function () {
+      var box = document.createElement("textarea");
+      box.value = text;
+      box.setAttribute("readonly", "");
+      box.style.position = "fixed";
+      box.style.left = "-9999px";
+      var parent = document.body;
+      if (!parent) return false;
+      parent.appendChild(box);
+      var ok = false;
+      try {
+        box.select();
+        ok = document.execCommand("copy") === true;
+      } catch (e) {
+        ok = false;
+      }
+      if (box.parentNode) box.parentNode.removeChild(box);
+      return ok;
+    }, false);
+  }
+  /* The copied text IS payloadText(payload): what the operator reads in the
+     pane and what they paste can never disagree, and the credential mask has
+     already run over it. */
+  function copyPayload(payload, button, labels) {
+    var text = payloadText(payload);
+    if (!text) return;
+    var finish = function (ok) {
+      safeCall(function () {
+        button.textContent = ok ? labels[1] : labels[2];
+        setTimeout(function () {
+          safeCall(function () {
+            button.textContent = labels[0];
+          }, null);
+        }, 1600);
+      }, null);
+    };
+    var handed = safeCall(function () {
+      if (typeof navigator === "undefined" || !navigator.clipboard ||
+          typeof navigator.clipboard.writeText !== "function") return null;
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          finish(true);
+        }, function () {
+          finish(copyViaCommand(text));
+        });
+        return true;
+      } catch (e) {
+        return null;
+      }
+    }, null);
+    if (handed !== true) finish(copyViaCommand(text));
+  }
+`;
+
+/**
  * The whole recovery as one compact, dependency-free inline IIFE — the exact
  * text the plugin injects (and the string a non-Tauri host can hash into its
  * own CSP).
@@ -1772,7 +2231,10 @@ export function bootRecoveryScript(options = {}) {
     ? Object.keys(resolved.reasons).some((key) => resolved.reasons[key].locales)
     : false;
   const blockLocales = Boolean(resolved.browserBlock && resolved.browserBlock.locales);
-  const needsLocaleLayers = Boolean(resolved.copyTable && (reasonLocales || blockLocales));
+  const contextLocales = Boolean(resolved.errorContext && resolved.errorContext.locales);
+  const needsLocaleLayers = Boolean(
+    resolved.copyTable && (reasonLocales || blockLocales || contextLocales),
+  );
   const lines = [];
 
   lines.push("(function () {");
@@ -1867,10 +2329,18 @@ export function bootRecoveryScript(options = {}) {
         rows.push(row + "]");
       }
       lines.push("  var REASON_TABLE = [" + rows.join(",") + "];");
+    }
+    if (resolved.reasons || resolved.errorContext) {
+      // The chunk-miss family pattern, shared by TWO consumers that may want
+      // it independently: the reason table's classification (__appFatal and
+      // the watchdog's stale-reason upgrade) and the error-context capture
+      // (a dynamic import failure surfaces as an unhandled REJECTION on
+      // several browsers, and only a pattern match can tell it from an
+      // innocuous one). Emitted exactly once even when both are configured.
       // Source and flags ride as two plain strings and are rebuilt with the
       // RegExp constructor: a serialised regex literal would arrive with its
-      // slashes on (String(/x/i) is "/x/i"), and the rebuilt pattern would then
-      // never match. The trailing "i" is the family's own flag set.
+      // slashes on (String(/x/i) is "/x/i"), and the rebuilt pattern would
+      // then never match. The trailing "i" is the family's own flag set.
       lines.push(
         "  var CHUNK_MISS_RE = new RegExp(" +
           jsonAscii(BOOT_RECOVERY_CHUNK_MISS.source) +
@@ -1937,8 +2407,56 @@ export function bootRecoveryScript(options = {}) {
       lines.push("  var PAYLOAD_TIMEOUT_MS = DEADLINE_MS;");
       lines.push("  var bootStartedAt = Date.now();");
       lines.push(CURRENT_LOCALE_LINE);
-      lines.push(RESOURCE_RUNTIME);
-      lines.push(DETAILS_RUNTIME);
+      if (resolved.errorContext) {
+        // The copy action's labels (host copy, English defaults) and, for a
+        // multilingual host, the partial per-locale triples the current
+        // locale's entry merges over.
+        lines.push(
+          "  var CTX_COPY_LABEL = " + jsonAscii(resolved.errorContext.copy) + ";",
+        );
+        lines.push(
+          "  var CTX_COPIED_LABEL = " + jsonAscii(resolved.errorContext.copied) + ";",
+        );
+        lines.push(
+          "  var CTX_FAILED_LABEL = " + jsonAscii(resolved.errorContext.copyFailed) + ";",
+        );
+        if (contextLocales) {
+          const pairs = [];
+          const map = resolved.errorContext.locales;
+          for (const tag of Object.keys(map)) {
+            const row = map[tag];
+            // A partial triple: "" keeps that slot at the host default, so a
+            // host translating only the button label still localises nothing
+            // else by accident.
+            pairs.push(
+              jsonAscii(tag) +
+                ":[" +
+                jsonAscii(row.copy || "") +
+                "," +
+                jsonAscii(row.copied || "") +
+                "," +
+                jsonAscii(row.copyFailed || "") +
+                "]",
+            );
+          }
+          lines.push("  var CONTEXT_TRANSLATIONS = {" + pairs.join(",") + "};");
+        }
+        // The capture installs at SCRIPT EXECUTION time — before the app
+        // bundle can fail — but AFTER every definition it calls has been
+        // assigned (clipText's TEXT_LIMIT and friends are var-assigned when
+        // DETAILS_RUNTIME lands, so the install call goes last).
+        lines.push(CONTEXT_RUNTIME);
+        lines.push(RESOURCE_RUNTIME);
+        lines.push(DETAILS_RUNTIME);
+        lines.push("  try {");
+        lines.push("    installContextCapture();");
+        lines.push("  } catch (e) {");
+        lines.push("    /* A page that refuses listeners still gets its panel. */");
+        lines.push("  }");
+      } else {
+        lines.push(RESOURCE_RUNTIME);
+        lines.push(DETAILS_RUNTIME);
+      }
     } else if (resolved.reasons) {
       // The reason table's watchdog needs the same diagnosis to tell a chunk
       // miss from a plain timeout, without the pane's renderer.
@@ -2072,25 +2590,56 @@ export function bootRecoveryScript(options = {}) {
       lines.push('    return CHUNK_MISS_RE.test(text) ? "chunk" : "error";');
       lines.push("  }");
       lines.push("");
-      lines.push(
-        "  /* Which class the WATCHDOG reports when nothing was captured: a boot",
-      );
-      lines.push(
-        "     script that fetched and was REFUSED is a chunk miss; otherwise the",
-      );
-      lines.push("     app simply never showed up, which is a timeout. */");
-      lines.push("  function staleReason() {");
-      lines.push("    var stale = 0;");
-      lines.push("    try {");
-      lines.push("      var scripts = bootScripts(resourceIndex());");
-      lines.push("      for (var i = 0; i < scripts.length; i++) {");
-      lines.push('        if (scripts[i].state === "failed") stale++;');
-      lines.push("      }");
-      lines.push("    } catch (e) {");
-      lines.push("      stale = 0;");
-      lines.push("    }");
-      lines.push('    return stale ? "chunk" : "timeout";');
-      lines.push("  }");
+      if (resolved.errorContext) {
+        lines.push(
+          "  /* Which class the WATCHDOG reports when no __appFatal arrived: a boot",
+        );
+        lines.push(
+          "     script that fetched and was REFUSED is a chunk miss; a fatal the",
+        );
+        lines.push(
+          "     capture recorded is classified exactly like an __appFatal message;",
+        );
+        lines.push(
+          "     otherwise the app simply never showed up, which is a timeout. */",
+        );
+        lines.push("  function staleReason() {");
+        lines.push("    var stale = 0;");
+        lines.push("    try {");
+        lines.push("      var scripts = bootScripts(resourceIndex());");
+        lines.push("      for (var i = 0; i < scripts.length; i++) {");
+        lines.push('        if (scripts[i].state === "failed") stale++;');
+        lines.push("      }");
+        lines.push("    } catch (e) {");
+        lines.push("      stale = 0;");
+        lines.push("    }");
+        lines.push('    if (stale) return "chunk";');
+        lines.push("    if (bootFatal) return reasonOf(bootFatal.message);");
+        lines.push('    return "timeout";');
+        lines.push("  }");
+      } else {
+        // The capture-less body is the family's original, byte for byte: a
+        // reasons-only host keeps the script bytes it already knows.
+        lines.push(
+          "  /* Which class the WATCHDOG reports when nothing was captured: a boot",
+        );
+        lines.push(
+          "     script that fetched and was REFUSED is a chunk miss; otherwise the",
+        );
+        lines.push("     app simply never showed up, which is a timeout. */");
+        lines.push("  function staleReason() {");
+        lines.push("    var stale = 0;");
+        lines.push("    try {");
+        lines.push("      var scripts = bootScripts(resourceIndex());");
+        lines.push("      for (var i = 0; i < scripts.length; i++) {");
+        lines.push('        if (scripts[i].state === "failed") stale++;');
+        lines.push("      }");
+        lines.push("    } catch (e) {");
+        lines.push("      stale = 0;");
+        lines.push("    }");
+        lines.push('    return stale ? "chunk" : "timeout";');
+        lines.push("  }");
+      }
       lines.push("");
       lines.push(
         "  /* __appFatal: the host captured a pre-mount error. The panel paints",
@@ -2117,19 +2666,46 @@ export function bootRecoveryScript(options = {}) {
         "     contents and its dismissal class belong to the host's loader logic,",
       );
       lines.push("     and a boot-failure surface must never fight it. */");
-      lines.push("  function standDown() {");
-      lines.push("    try {");
-      lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
-      lines.push("      if (!loading) return;");
-      lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
-      lines.push("      if (!panel) return;");
-      lines.push("      var style = panel.previousElementSibling;");
-      lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
-      lines.push('      if (style && style.tagName === "STYLE" && style.parentNode) {');
-      lines.push("        style.parentNode.removeChild(style);");
-      lines.push("      }");
-      lines.push("    } catch (e) {}");
-      lines.push("  }");
+      if (resolved.reasons && resolved.rawDetailsLabel) {
+        // Pane shapes: remove BOTH sheets by marker (the details sheet is
+        // NOT the panel's previous sibling, so the adjacency body below
+        // would leave it behind on a recovered mount).
+        lines.push("  function standDown() {");
+        if (resolved.errorContext) {
+          // The capture's recording flag: the wrappers stay, the ring freezes.
+          lines.push("    bootDone = true;");
+        }
+        lines.push("    try {");
+        lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
+        lines.push("      if (!loading) return;");
+        lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
+        lines.push("      if (!panel) return;");
+        lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
+        lines.push('      var styles = loading.querySelectorAll("style[data-hk-boot-recovery-style]");');
+        lines.push("      for (var s = 0; s < styles.length; s++) {");
+        lines.push("        if (styles[s].parentNode) styles[s].parentNode.removeChild(styles[s]);");
+        lines.push("      }");
+        lines.push("    } catch (e) {}");
+        lines.push("  }");
+      } else {
+        lines.push("  function standDown() {");
+        if (resolved.errorContext) {
+          // See the pane-shape body: the capture's recording flag.
+          lines.push("    bootDone = true;");
+        }
+        lines.push("    try {");
+        lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
+        lines.push("      if (!loading) return;");
+        lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
+        lines.push("      if (!panel) return;");
+        lines.push("      var style = panel.previousElementSibling;");
+        lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
+        lines.push('      if (style && style.tagName === "STYLE" && style.parentNode) {');
+        lines.push("        style.parentNode.removeChild(style);");
+        lines.push("      }");
+        lines.push("    } catch (e) {}");
+        lines.push("  }");
+      }
       // Each entry publishes only when it was actually configured: an absent
       // global is "off", and referencing the name unconditionally would throw
       // on the shapes that disabled it.
@@ -2490,6 +3066,11 @@ export function bootRecoveryScript(options = {}) {
       // absent from a default host's script entirely (BYTE-COMPAT).
       lines.push('    var detailsStyle = document.createElement("style");');
       lines.push("    detailsStyle.textContent = DETAILS_CSS;");
+      if (resolved.reasons && resolved.rawDetailsLabel) {
+        // See the landing sheet's marker above: standDown's pane-shape body
+        // removes the script's own sheets by this marker.
+        lines.push('    detailsStyle.setAttribute("data-hk-boot-recovery-style", "");');
+      }
       if (resolved.copyTable) {
         lines.push(
           "    RAW_DETAILS_LABEL = copy.length > 3 && copy[3] ? copy[3] : RAW_DETAILS_LABEL;",
@@ -2498,6 +3079,18 @@ export function bootRecoveryScript(options = {}) {
     }
     lines.push('    var style = document.createElement("style");');
     lines.push("    style.textContent = PANEL_CSS;");
+    if (resolved.reasons && resolved.rawDetailsLabel) {
+      // Marker-based teardown: the pane shapes add TWO sheets (the details
+      // sheet and the landing sheet), and the old previous-sibling removal
+      // only ever took the second one -- __appReady left the details sheet
+      // behind on a recovered mount. Marking the script's own styles makes
+      // "removes ONLY the nodes this script added" an attribute contract
+      // instead of an adjacency guess. Gated on reasons AND the pane because
+      // its only consumer is standDown's pane-shape body there -- the
+      // pane-only and reasons-only shapes keep the byte-exact bodies they
+      // always emitted.
+      lines.push('    style.setAttribute("data-hk-boot-recovery-style", "");');
+    }
     lines.push('    var landing = document.createElement("div");');
     if (resolved.browserBlock) {
       // An unsupported browser is a compatibility notice, not a crash: the
@@ -2553,10 +3146,42 @@ export function bootRecoveryScript(options = {}) {
       lines.push("    } catch (e) {");
       lines.push("      payload = null;");
       lines.push("    }");
+      if (resolved.errorContext) {
+        // The captured boot trail rides the payload as two MORE contract
+        // fields, rendered by the same tree: `console` (the ring, oldest
+        // first) and `lastError` (the first captured fatal). Both are
+        // conditional — a quiet boot reports neither, which is itself the
+        // signal that nothing was captured.
+        lines.push("    if (payload) {");
+        lines.push("      try {");
+        lines.push("        if (bootLog.length) payload.console = bootLog.slice();");
+        lines.push("        if (bootFatal) payload.lastError = errorDetail(bootFatal);");
+        lines.push("      } catch (e) {}");
+        lines.push("    }");
+      }
       lines.push("    if (payload) {");
       lines.push("      try {");
       lines.push("        card.appendChild(detailsSection(payload));");
       lines.push("      } catch (e) {}");
+      if (resolved.errorContext) {
+        // The copy action sits BEFORE reload in the row: a reload navigates
+        // away, so the copy must come first. The label resolves for the
+        // locale the panel painted (pickCopy ran earlier in this function);
+        // every failure degrades the button's own label, never the card.
+        lines.push("      try {");
+        lines.push('        var copyButton = document.createElement("button");');
+        lines.push('        copyButton.type = "button";');
+        lines.push('        copyButton.className = "hk-btn hk-btn-secondary hk-btn-sm";');
+        lines.push("        var contextLabels = contextCopy();");
+        lines.push("        copyButton.textContent = contextLabels[0];");
+        lines.push('        copyButton.addEventListener("click", function () {');
+        lines.push("          safeCall(function () {");
+        lines.push("            copyPayload(payload, copyButton, contextLabels);");
+        lines.push("          }, null);");
+        lines.push("        });");
+        lines.push("        actions.insertBefore(copyButton, button);");
+        lines.push("      } catch (e) {}");
+      }
       lines.push("    }");
       if (resolved.browserBlock) {
         lines.push("    }");

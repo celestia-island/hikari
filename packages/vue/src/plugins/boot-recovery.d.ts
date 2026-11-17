@@ -36,6 +36,16 @@ export declare const BOOT_RECOVERY_MESSAGE: string;
 /** Default failure-panel retry label (English; override through `copy.retry`). */
 export declare const BOOT_RECOVERY_RETRY: string;
 
+/** Default copy-action label of the error-context half (English; override
+ *  through `copy.errorContext.copy`). */
+export declare const BOOT_RECOVERY_COPY_ACTION: string;
+
+/** Default success feedback of the copy action (`copy.errorContext.copied`). */
+export declare const BOOT_RECOVERY_COPIED: string;
+
+/** Default failure feedback of the copy action (`copy.errorContext.copyFailed`). */
+export declare const BOOT_RECOVERY_COPY_FAILED: string;
+
 /** Marker attribute on the injected `<script>` tag (inline or, with
  *  `external: true`, the `src` tag). */
 export declare const BOOT_RECOVERY_ATTR: "data-hk-boot-recovery";
@@ -162,6 +172,62 @@ export interface BootRecoveryCopyOptions {
    * translate the heading; a row without one falls back to this value.
    */
   rawDetailsLabel?: string;
+  /**
+   * The ERROR CONTEXT: the captured boot log and the copy action.
+   *
+   * A timeout panel's blind spot is that nothing was LISTENING while the app
+   * failed to mount. Configuring this installs, the moment the recovery
+   * script executes (before the app bundle), four guarded capture sources —
+   * wrapped `console.error`/`warn`/`log`/`info` (originals still run first),
+   * capture-phase `error` events (an ErrorEvent is an uncaught script
+   * exception; any other error event is a failed resource),
+   * `unhandledrejection` events (one matching the chunk-miss family is
+   * recorded as the fatal, because dynamic import failures surface as
+   * rejections on several browsers) — feeding a bounded ring of the newest
+   * entries. The raw-details pane's payload then gains, when anything was
+   * captured: `console` (the ring, oldest first, each entry
+   * `{ t, level, text }` with `t` = ms since boot start) and `lastError`
+   * (the first captured fatal's message/source/line/column/stack), rendered
+   * by the SAME HkJsonTree contract. The watchdog also upgrades its
+   * classification: with a captured fatal, a silent expiry is classified
+   * exactly like an `__appFatal` message (chunk-miss family → `chunk`,
+   * otherwise `error`) instead of a bare timeout.
+   *
+   * It also adds a SECOND action to the landing — a copy button placed
+   * before the reload button that hands the operator the pane's REDACTED
+   * payload text (async Clipboard API, then a guarded `execCommand("copy")`
+   * fallback, because the API exists only in secure contexts and a dead boot
+   * is often served over plain HTTP), flipping to the copied/failed label
+   * for a moment. `copy` / `copied` / `copyFailed` are that button's labels
+   * in the host's base language (the defaults are the retired family
+   * script's own English wording); `locales` translates them per tag,
+   * normalised like `copy.locales` keys — every member optional, present
+   * ones non-empty, the current locale's partial entry merging over the
+   * defaults. `locales` requires `copy.locales`.
+   *
+   * REQUIRES `rawDetailsLabel`: the ring is reported through the pane's tree
+   * and the copy action hands out the pane's payload text, so configuring
+   * this without the pane fails at config time (it is then also excluded by
+   * the heal-only mode, which never paints a panel). Omit it (or pass
+   * `false`) and the script is byte-identical to the panel without the
+   * capture; an explicit `true` turns it on with the English default labels.
+   */
+  errorContext?:
+    | {
+        /** Copy-button label (default "Copy details"). */
+        copy?: string;
+        /** Transient success feedback (default "Copied"). */
+        copied?: string;
+        /** Transient failure feedback (default "Copy failed"). */
+        copyFailed?: string;
+        /** Per-locale overrides of the three labels; every member optional,
+         *  present ones non-empty. Requires `copy.locales`. */
+        locales?: Record<
+          string,
+          { copy?: string; copied?: string; copyFailed?: string }
+        >;
+      }
+    | boolean;
   /**
    * The BROWSER-BLOCK notice — the panel's info-tone mode for a shell that
    * refuses to run on an unsupported browser.
@@ -347,7 +413,8 @@ export interface BootRecoveryPluginOptions {
   isMangledOrigin?: (protocol: string, hostname: string) => boolean;
   /** Failure-panel copy overrides. */
   /** Failure-panel copy overrides and the opt-in diagnostics halves
-   *  (`copy.rawDetailsLabel`, `copy.browserBlock`, `copy.reasons`). */
+   *  (`copy.rawDetailsLabel`, `copy.browserBlock`, `copy.reasons`,
+   *  `copy.errorContext`). */
   copy?: BootRecoveryCopyOptions;
   /**
    * Rename or disable the page globals the panel publishes for the host's own

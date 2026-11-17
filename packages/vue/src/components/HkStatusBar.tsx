@@ -65,9 +65,9 @@ function regionDisplayName(
 
 function latencyColor(ms: number | null): string {
   if (ms === null) return "var(--color-muted)";
-  if (ms < 30) return "rgb(var(--color-success))";
-  if (ms < 100) return "rgb(var(--color-warning))";
-  return "rgb(var(--color-error))";
+  if (ms < 30) return "var(--hi-color-success-fg, rgb(var(--color-success)))";
+  if (ms < 100) return "var(--hi-color-warning-fg, rgb(var(--color-warning)))";
+  return "var(--hi-color-danger-fg, rgb(var(--color-error)))";
 }
 
 function qualityIcon(quality: string, tier: string, isLocalhost: boolean, size: number) {
@@ -239,10 +239,10 @@ export const HkStatusBar = defineComponent({
     const touchOpenedPopover = ref(false);
 
     const dotColorMap: Record<string, string> = {
-      connected: "rgb(var(--color-success))",
-      connecting: "rgb(var(--color-warning))",
-      reconnecting: "rgb(var(--color-warning))",
-      disconnected: "rgb(var(--color-error))",
+      connected: "var(--hi-color-success-fg, rgb(var(--color-success)))",
+      connecting: "var(--hi-color-warning-fg, rgb(var(--color-warning)))",
+      reconnecting: "var(--hi-color-warning-fg, rgb(var(--color-warning)))",
+      disconnected: "var(--hi-color-danger-fg, rgb(var(--color-error)))",
       // Idle (2026-10-17 user direction): the shell is alive but has no
       // session — the login page's resting light. Neutral gray, not red:
       // red means FAULT, and "not yet logged in" is not a fault.
@@ -537,7 +537,7 @@ export const HkStatusBar = defineComponent({
                 )}
               </div>
               {connecting && attempt > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "rgb(var(--color-warning))", fontSize: "0.6875rem", marginBottom: "4px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "var(--hi-color-warning-fg, rgb(var(--color-warning)))", fontSize: "0.6875rem", marginBottom: "4px" }}>
                   <span>
                     {t("hikari::statusBar.retrying", "Retrying {retryCount} / {maxRetries}")
                       .replace("{retryCount}", String(attempt))
@@ -605,7 +605,7 @@ export const HkStatusBar = defineComponent({
                 <Plug size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
                 <span style={{ opacity: 0.5, marginRight: "auto" }}>{t("hikari::statusBar.protocol", "Protocol")}</span>
                 {connecting ? (
-                  <span style={{ color: "rgb(var(--color-warning))" }}>
+                  <span style={{ color: "var(--hi-color-warning-fg, rgb(var(--color-warning)))" }}>
                     {t("hikari::statusBar.probing", "Probing...")}
                   </span>
                 ) : (

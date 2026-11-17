@@ -449,6 +449,14 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     return layers;
   }
 
+  // FALSE REDS ARE THE INTENDED FAILURE MODE. These pins are source-level
+  // allowlists, so a legitimate edit can trip one — tinting a border
+  // (`border-inline-color`), adding a corner radius longhand, a gradient
+  // icon inside the item, moving the inset to a wider token, a second
+  // pseudo-element. Each fails LOUDLY and names the property/rule; the fix
+  // is to update this contract in the same commit as the design change, not
+  // to loosen the pin. A silent green is the failure this file exists to
+  // prevent.
   const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
   const ITEM = ".hk-selection-grid-item";
   const SELECTED = ".hk-selection-grid-item[data-selected]";
@@ -464,9 +472,11 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
    *  `[data-selected="true"]`, `[data-selected] .child` and the plain form
    *  all carry it, and all of them can restyle a selected item. */
   function rulesTouching(token: string): CssRule[] {
-    const needle = new RegExp(`\\[${token}(?![a-z-])`);
+    // `i` + a lowercased subject: HTML attribute NAMES are ASCII
+    // case-insensitive, so `[Data-Selected]` styles the same element.
+    const needle = new RegExp(`\\[${token}(?![a-z-])`, "i");
     return rules.filter((r) =>
-      r.selector.split(",").some((one) => needle.test(one)),
+      r.selector.split(",").some((one) => needle.test(one.toLowerCase())),
     );
   }
 
@@ -565,40 +575,77 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     );
   });
 
-  it("paints the selected state with no stripe outside the ring", () => {
-    // The frame's paint is the border, the inset ring and the detached tab.
-    // A stripe drawn through another channel — `background-image:
-    // linear-gradient(… 0 3px …)` on the selected item is the obvious one —
-    // rebuilds the leading slab the ring and tab pins cannot see, because it
-    // is neither a `border*` property nor a `box-shadow`.
-    const stripy: string[] = [];
-    for (const rule of rulesNaming(".hk-selection-grid-item")) {
+  it("paints the frame only through the border, the ring and the tab", () => {
+    // A leading slab can be rebuilt through any paint channel, not just a
+    // `border*` property or an inset shadow. Two spellings matter:
+    //  - a gradient through `background-image`, AND through the `background`
+    //    SHORTHAND (which sets background-image — the obvious edit, since the
+    //    selected rule already uses `background:`);
+    //  - a filter halo (`drop-shadow(-3px 0 0 …)`) on the item.
+    // Both are checked on every rule that names the item or carries
+    // `data-selected`, in ANY order (a later shorthand overriding an earlier
+    // gradient is still a red here — loud beats clever).
+    const IMAGE = /(gradient|url|image-set)\(/;
+    const offenders: string[] = [];
+    const candidates = [
+      ...rulesNaming(".hk-selection-grid-item"),
+      ...rulesTouching("data-selected"),
+    ];
+    for (const rule of candidates) {
       for (const [prop, value] of rule.declarations) {
-        if (prop === "background-image") stripy.push(`${rule.selector} → ${value}`);
+        if (prop === "background" || prop === "background-image") {
+          if (IMAGE.test(value)) offenders.push(`${rule.selector} → ${prop}: ${value}`);
+        }
+        if (prop === "filter" || prop === "backdrop-filter") {
+          if (/drop-shadow\(/.test(value)) {
+            offenders.push(`${rule.selector} → ${prop}: ${value}`);
+          }
+        }
       }
     }
-    for (const rule of rulesTouching("data-selected")) {
-      for (const [prop, value] of rule.declarations) {
-        if (prop === "background-image") stripy.push(`${rule.selector} → ${value}`);
+    expect(offenders).toEqual([]);
+    // …and the component sheet may not shadow a spacing/radius token it does
+    // not own: a component-local `--space-4: 0px` collapses the tab inset to
+    // flush while every upstream-token assertion still passes (custom
+    // properties inherit, so the local value wins for every consumer inside).
+    const localTokens: string[] = [];
+    for (const rule of rules) {
+      for (const [prop] of rule.declarations) {
+        if (/^--(space|radius)-/.test(prop)) localTokens.push(`${rule.selector} → ${prop}`);
       }
     }
-    expect(stripy).toEqual([]);
+    expect(localTokens).toEqual([]);
   });
 
-  it("keeps the spacing token wide enough to stay detached", () => {
-    // The pins above compare the inset against the TOKEN (`--space-4`), not
-    // against a length — so a token edit to 0–2px collapses the gap between
-    // the tab and the ring and every one of them still passes. The sheet is
-    // rem-based, so resolve the token here and require a gap the eye can see
-    // (2px at the 16px default root).
+  it("keeps the upstream spacing token wide enough for a visible gap", () => {
+    // SCOPE, stated so it is not read as more than it is: this pins the
+    // CANONICAL UPSTREAM token, not the rendered gap. The component may not
+    // shadow the token (pinned above), so for a host that resolves the
+    // sheet's own scale the two are the same fact; a consumer that redefines
+    // `--space-4` on an ANCESTOR at runtime is outside this file's reach and
+    // was measured in the review instead (the tab sits 5px from the border
+    // box at the shipped 0.25rem).
+    //
+    // The gap is `token − 1px` (the tab starts inside the 1px border), so a
+    // 2px token leaves a 1px hairline: require 3px.
     const scale = readFileSync(resolve(here, "../scale.scss"), "utf8");
-    const space4 = scale.match(/--space-4:\s*([^;]+);/)?.[1].trim() ?? "";
-    expect(space4, "the sheet's inset token must be defined").not.toBe("");
-    const px = space4.endsWith("rem") ? Number.parseFloat(space4) * 16 : Number.parseFloat(space4);
-    expect(Number.isFinite(px)).toBe(true);
-    expect(px, `--space-4 resolves to ${px}px`).toBeGreaterThanOrEqual(2);
-    // …and the pill's own radius token has to exist too.
-    expect(scale).toMatch(/--radius-full:\s*[^;]+;/);
+    // Strip comments and take the LAST declaration — a commented mention or a
+    // later override must not be what this reads.
+    const source = scale.replace(/\/\*[\s\S]*?\*\//g, "");
+    const declared = [...source.matchAll(/--space-4:\s*([^;]+);/g)].map((m) => m[1].trim());
+    expect(declared.length, "--space-4 must be declared upstream").toBeGreaterThan(0);
+    const raw = declared[declared.length - 1];
+    const rem = raw.match(/^(-?[\d.]+)rem$/);
+    const px = raw.match(/^(-?[\d.]+)px$/);
+    expect(
+      rem !== null || px !== null,
+      `--space-4 must be a plain rem/px length to be checkable, got "${raw}"`,
+    ).toBe(true);
+    const resolved = rem ? Number.parseFloat(rem[1]) * 16 : Number.parseFloat(px![1]);
+    expect(resolved, `--space-4 resolves to ${resolved}px (gap ${resolved - 1}px)`).toBeGreaterThanOrEqual(3);
+    // The pill's radius token must exist as well (the tab falls back to a
+    // square cap without it, which reads as a different shape).
+    expect(source).toMatch(/--radius-full:\s*[^;]+;/);
   });
 
   it("keeps the selected emphasis a single inset ring, and only there", () => {
@@ -619,7 +666,20 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
         if (prop !== "box-shadow") continue;
         for (const layer of splitLayers(value)) {
           const inset = /^inset\b/.test(layer);
-          if (inset && !/^inset 0 0 0 1px /.test(layer)) {
+          if (inset) {
+            if (!/^inset 0 0 0 1px /.test(layer)) {
+              offenders.push(`${rule.selector} → ${layer}`);
+            }
+            continue;
+          }
+          // A NON-inset layer is elevation, and elevation has to be BLURRED.
+          // A hard-edged one (`-3px 0 0 0 …`) is a painted bar, and it can
+          // also displace the ring above: `box-shadow` is one property, so a
+          // later rule wins outright even though the canonical rule still
+          // reads correct on its own.
+          const lengths = layer.match(/(^|\s)-?[\d.]+(px|rem|em)?(?=\s|$)/g) ?? [];
+          const blur = lengths.length >= 3 ? Number.parseFloat(lengths[2]) : 0;
+          if (!(blur > 0)) {
             offenders.push(`${rule.selector} → ${layer}`);
           }
         }

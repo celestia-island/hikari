@@ -13,9 +13,9 @@
 //   div.hk-usage-flow
 //     div.hk-usage-flow__body                       (with data)
 //       svg.hk-usage-flow__chart[role=img][aria-label][viewBox]
-//         path.hk-usage-flow__ribbon                (one per link, fill = target)
+//         path.hk-usage-flow__ribbon[data-hint]      (one per link, fill = target)
 //         g.hk-usage-flow__node                     (one per node)
-//           rect.hk-usage-flow__bar[fill]
+//           rect.hk-usage-flow__bar[fill][data-hint]
 //           text.hk-usage-flow__label[.hk-usage-flow__label--others]
 //       ul.hk-usage-flow__legend                    (showLegend)
 //         li.hk-usage-flow__legend-row[.hk-usage-flow__legend-row--idle]
@@ -29,6 +29,11 @@
 // HkBarChart/HkDonutChart convention — no native title bubble, no chart
 // library, no measurement API (the viewBox scales the frame; label text is
 // sized in SVG units so hosts pick a width that matches their column).
+// The `<svg role="img">` owns the accessible name (its aria-label is the
+// legend's share summary); per-bar aria-labels are deliberately absent —
+// an img-role subtree is presentational, so they would be dead markup.
+// The legend list below the chart is real text and is the accessible
+// breakdown.
 //
 // AI-generated (DeepSeek V4.1 via DeepSeek Harness), 2026-11-17 — SySL-1.0 §2.3.
 
@@ -58,7 +63,9 @@ export default defineComponent({
      *  greyed legend row. Models that served traffic without a roster row
      *  are appended after it. */
     models: { type: asPropType<HkUsageFlowRosterEntry[] | null>(Array), default: null },
-    /** Value formatter for legend numbers and hints (locale-owned). */
+    /** Value formatter for legend numbers and hints. Absent = the runtime
+     *  locale's `toLocaleString()` — hosts that pin a locale pass their own
+     *  formatter (the admin panels do). */
     formatValue: {
       type: Function as PropType<(value: number) => string>,
       default: null,
@@ -164,7 +171,6 @@ export default defineComponent({
                     rx={2}
                     fill={node.color}
                     data-hint={nodeHint(node)}
-                    aria-label={nodeHint(node)}
                   />
                   <text
                     class={[

@@ -9,12 +9,16 @@
 //   { source: "arona-1a…9f3c", middle: "upstream-a", target: "model-x", value: 1200 }
 //
 // The layout turns them into three stacked columns of bars plus ribbon
-// paths, with ONE shared value scale across the columns: a node's height is
-// its flow total, so a ribbon's thickness means the same thing at every
-// stage and the columns always line up. Nodes beyond `maxNodes` in a column
-// collapse into one synthetic "others" bucket BEFORE geometry runs, so the
-// collapsed total still equals the column total (the conservation invariant
-// the tests pin).
+// paths, with ONE shared value scale across the columns: a ribbon's
+// thickness means the same thing at every stage and the columns always line
+// up. A node's bar is `value × scale` floored at a visibility minimum; its
+// ribbon stacks are the EXACT `value × scale` slots (never floored), so a
+// bar can be slightly taller than its stacks but no stack ever overhangs
+// its bar. Nodes beyond `maxNodes` in a column collapse into one synthetic
+// "others" bucket BEFORE geometry runs, so the collapsed total still equals
+// the column total (the conservation invariant the tests pin). The cap is
+// also clamped to what the frame can actually stack, so a tall column never
+// collapses every magnitude to the floor or escapes the viewBox.
 //
 // Colours: the last column (models) is the legend's colour source. A
 // roster (`models`) fixes the colour order regardless of usage — so a
@@ -77,6 +81,12 @@ export interface HkUsageFlowLink {
   path: string;
   /** The TARGET node's fill — ribbons are read as "flow into X". */
   color: string;
+  /** Ribbon thickness in layout units (exactly `value × scale`). */
+  thickness: number;
+  /** Source-side slot origin (the top edge on the source bar). */
+  startY: number;
+  /** Target-side slot origin (the top edge on the target bar). */
+  endY: number;
 }
 
 /** One legend row: the measured total for a registered model (idle ones
@@ -112,7 +122,9 @@ export interface HkUsageFlowLayoutOptions {
   width?: number;
   height?: number;
   /** Per-column cap; beyond it the tail collapses into `othersLabel`.
-   *  Clamped to ≥ 2 (a bucket plus at least one real node). */
+   *  Clamped to ≥ 2 AND to what the frame can stack (a cap that would not
+   *  fit silently shrinks rather than collapsing every magnitude into an
+   *  invisible column). `0` / absent / non-finite = "as many as fit". */
   maxNodes?: number;
   othersLabel?: string;
   /** The complete registered roster. Roster order fixes the model colours
@@ -130,7 +142,6 @@ const PAD_Y = 12;
 const NODE_WIDTH = 14;
 const NODE_GAP = 10;
 const MIN_NODE_HEIGHT = 2;
-const LABEL_GAP = 6;
 
 /** The default categorical ladder — every entry a theme-token expression, so
  *  light/dark/brand-preset flips repaint the chart without JS. The five
@@ -235,7 +246,9 @@ function px(value: number): number {
 /** The ribbon outline: right edge of the source bar → left edge of the
  *  target bar, thick end caps and two mirrored cubic edges. */
 function ribbonPath(x0: number, y0: number, x1: number, y1: number, thickness: number): string {
-  const t = Math.max(0.5, thickness);
+  // The drawn thickness IS the scaled slot: flooring it here would let a
+  // dense stack overhang its bar without the geometry saying so.
+  const t = Math.max(0, thickness);
   const bend = Math.max(8, (x1 - x0) * 0.5);
   const a = `${px(x0)} ${px(y0)}`;
   const b = `${px(x1)} ${px(y1)}`;
@@ -264,11 +277,14 @@ export function usageFlowLayout(
   rows: readonly HkUsageFlowRow[],
   options: HkUsageFlowLayoutOptions = {},
 ): HkUsageFlowLayout {
-  const width = Math.max(320, options.width ?? 960);
-  const height = Math.max(180, options.height ?? 420);
-  const maxNodes = options.maxNodes ?? 10;
+  const finite = (value: number | undefined, fallback: number): number =>
+    typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  const width = Math.max(320, finite(options.width, 960));
+  const height = Math.max(180, finite(options.height, 420));
+  const requestedMax = finite(options.maxNodes, 0);
   const othersLabel = options.othersLabel?.trim() || "Others";
-  const labelMaxChars = options.labelMaxChars ?? 28;
+  const labelChars = finite(options.labelMaxChars, 28);
+  const labelMaxChars = labelChars > 0 ? labelChars : 28;
   const palette = options.colors && options.colors.length > 0 ? options.colors : USAGE_FLOW_PALETTE;
   const roster = options.models ?? [];
 
@@ -285,6 +301,11 @@ export function usageFlowLayout(
     const previous = raw.get(key);
     if (previous) {
       previous.value += value;
+      // A summed overflow (two absurd magnitudes, or a host feeding
+      // ±Infinity-ish values) must drop the row: an Infinity total makes
+      // `scale` zero and `value × scale` NaN, which poisons every later
+      // node in the column.
+      if (!Number.isFinite(previous.value)) raw.delete(key);
     } else {
       raw.set(key, { source, middle, target, value });
     }
@@ -304,7 +325,17 @@ export function usageFlowLayout(
     addValue(columnValues[2], flow.target, flow.value);
   }
 
-  // ── Collapse each column, then re-key the flows onto display labels. ──
+  // ── Collapse each column, then re-key the flows onto display labels.
+  //    The cap is clamped to what the frame can stack: each extra node
+  //    costs `MIN_NODE_HEIGHT` plus a `NODE_GAP`, and the usable band is
+  //    `height - 2 × PAD_Y` — a cap beyond that would leave `scale` at 0
+  //    (every bar at the floor) and paint below the viewBox. ──
+  const fitCount = Math.max(
+    2,
+    Math.floor((height - PAD_Y * 2 + NODE_GAP) / (MIN_NODE_HEIGHT + NODE_GAP)),
+  );
+  const maxNodes =
+    requestedMax > 0 ? Math.max(2, Math.min(Math.floor(requestedMax), fitCount)) : fitCount;
   const collapsed = columnValues.map((values) => collapseColumn(values, maxNodes, othersLabel));
   const flows = new Map<string, ResolvedFlow>();
   for (const flow of raw.values()) {
@@ -342,15 +373,19 @@ export function usageFlowLayout(
   // models with traffic but no roster row take the slots after the roster.
   const modelColor = new Map<string, string>();
   const rosterIndex = new Map<string, number>();
-  roster.forEach((entry, index) => {
+  roster.forEach((entry) => {
     const label = entry.label;
     if (rosterIndex.has(label)) return;
-    rosterIndex.set(label, index);
-    modelColor.set(label, entry.color ?? palette[index % palette.length]);
+    // The slot is the ASSIGNED position, not the raw array index: a
+    // duplicated roster row must not skip a palette slot (which would
+    // hand two different models the same colour).
+    const slot = rosterIndex.size;
+    rosterIndex.set(label, slot);
+    modelColor.set(label, entry.color ?? palette[slot % palette.length]);
   });
   const unregistered = columns[2].filter((label) => !rosterIndex.has(label));
   unregistered.forEach((label, rank) => {
-    modelColor.set(label, palette[(roster.length + rank) % palette.length]);
+    modelColor.set(label, palette[(rosterIndex.size + rank) % palette.length]);
   });
 
   const sourceColor = new Map<string, string>();
@@ -360,8 +395,13 @@ export function usageFlowLayout(
 
   // ── Vertical scale: one scale for all three columns. ──
   const maxCount = Math.max(1, ...columns.map((labels) => labels.length));
-  const usable = height - PAD_Y * 2 - (maxCount - 1) * NODE_GAP - maxCount * MIN_NODE_HEIGHT;
-  const scale = total > 0 && usable > 0 ? usable / total : 0;
+  // Always ≥ 1: the fit clamp above guarantees the column fits, and the
+  // 1-unit floor keeps `scale` strictly positive for any non-empty input.
+  const usable = Math.max(
+    1,
+    height - PAD_Y * 2 - (maxCount - 1) * NODE_GAP - maxCount * MIN_NODE_HEIGHT,
+  );
+  const scale = total > 0 && Number.isFinite(total) ? usable / total : 0;
 
   const xForColumn = (column: number): number => {
     if (column === 0) return PAD_X;
@@ -444,6 +484,8 @@ export function usageFlowLayout(
       let cursor = node.y;
       for (const item of items) {
         startCursor.set(`${item.left}\u0000${item.right}`, cursor);
+        // The slot is the EXACT scaled value — never the floored bar
+        // height — so the stack sums to `value × scale` on both sides.
         cursor += item.value * scale;
       }
     }
@@ -483,6 +525,9 @@ export function usageFlowLayout(
         value: pair.value,
         path: ribbonPath(source.x + source.width, y0, target.x, y1, thickness),
         color: target.color,
+        thickness,
+        startY: px(y0),
+        endY: px(y1),
       });
     }
   }
@@ -517,7 +562,9 @@ export function usageFlowLayout(
       percent: total > 0 ? (value / total) * 100 : 0,
       color: modelColor.get(label) ?? palette[0],
       idle: value <= 0,
-      others: label === othersLabel,
+      // Same guard as the node path: a kept model that happens to be
+      // labelled like the fold bucket is a REAL model, not the bucket.
+      others: label === othersLabel && !collapsed[2].kept.has(label),
     });
   }
 

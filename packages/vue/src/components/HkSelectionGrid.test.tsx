@@ -245,36 +245,54 @@ describe("HkSelectionGrid list layout, actions and edge", () => {
 describe("HkSelectionGrid selected-edge stylesheet contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const css = compile(resolve(here, "HkSelectionGrid.scss"), { style: "expanded" }).css;
-  const TAB = /\.hk-selection-grid\[data-edge\] \.hk-selection-grid-item\[data-selected\]::before/;
-  /** The tab's own declaration block — looked up by its SELECTOR, so both
-   *  halves of the contract are graded against the same subject (grading the
-   *  sheet's first `::before` would silently follow a foreign rule in). */
-  function tabRule(): string {
-    const at = css.search(TAB);
-    if (at < 0) throw new Error("the selected-edge sheet declares no accent tab");
-    return css.slice(at, css.indexOf("}", at) + 1);
+
+  const TAB_SELECTOR =
+    ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
+  const SELECTED_SELECTOR = ".hk-selection-grid-item[data-selected] {";
+
+  /** One rule's declaration block, looked up by its own SELECTOR — grading
+   *  the sheet's first `::before` or first `{` would silently follow a
+   *  foreign rule in. */
+  function ruleBody(selector: string, what: string): string {
+    const at = css.indexOf(selector);
+    if (at < 0) throw new Error(`the sheet declares no ${what}`);
+    const open = css.indexOf("{", at);
+    return css.slice(open + 1, css.indexOf("}", open));
   }
 
   it("detaches the accent tab from the selected frame", () => {
-    // The tab must NOT sit flush at the leading edge: flush, it merged with
-    // the border + inset ring into one ~5px slab (the fattened frame).
-    expect(tabRule()).toMatch(/inset-inline-start:\s*var\(--space-4/);
+    // Flush (`0`), the bar merged with the 1px border and the 1px inset ring
+    // into one unbroken primary slab on the leading edge — the reported
+    // defect. Exact declarations, so a zeroed FALLBACK cannot pass either.
+    const tab = ruleBody(TAB_SELECTOR, "selected-edge accent tab");
+    expect(tab).toContain("inset-inline-start: var(--space-4, 0.25rem)");
+    expect(tab).toContain("top: var(--space-4, 0.25rem)");
+    expect(tab).toContain("bottom: var(--space-4, 0.25rem)");
   });
 
-  it("insets the tab vertically so it reads as a tab, not a frame side", () => {
-    const rule = tabRule();
-    expect(rule).toMatch(/top:\s*var\(--space-4/);
-    expect(rule).toMatch(/bottom:\s*var\(--space-4/);
-    expect(rule).toMatch(/border-radius:\s*var\(--radius-full/);
+  it("draws the tab 3px wide with pill ends", () => {
+    // The width IS the clearance budget: the leading-side padding is 12px
+    // (10px dense), so a wider bar eats into the label. A zero width would
+    // render the feature away entirely; both were unguarded before.
+    const tab = ruleBody(TAB_SELECTOR, "selected-edge accent tab");
+    expect(tab).toContain("width: 3px");
+    expect(tab).toContain("border-radius: var(--radius-full, 9999px)");
   });
 
-  it("keeps the selected emphasis a uniform inset ring on every side", () => {
-    // This pins an invariant the tab must NOT disturb rather than the fix
-    // itself (it is green on the pre-fix sheet too): the frame's emphasis is
-    // one even inset ring, so the lopsidedness cannot be "fixed" later by
-    // thickening a single side — the shape has to come from the detached tab.
-    expect(css).toMatch(
-      /\.hk-selection-grid-item\[data-selected\]\s*\{[^}]*box-shadow:\s*inset 0 0 0 1px/,
-    );
+  it("keeps the selected frame a uniform ring and no thicker on any side", () => {
+    // The ring is the frame's ONLY emphasis; the tab is the accent. A
+    // single-side thickening reintroduces the exact lopsidedness this
+    // component was fixed for, so it is pinned two ways:
+    //  (a) the selected rule's shadow is ONE inset ring, never a layer list;
+    const shadow = ruleBody(SELECTED_SELECTOR, "selected item rule")
+      .match(/box-shadow:\s*([^;]+);/)?.[1] ?? "";
+    const layers = shadow.split(/,(?![^(]*\))/).map((l) => l.trim()).filter(Boolean);
+    expect(layers).toHaveLength(1);
+    expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
+    //  (b) nothing in the sheet widens one border side (or sets a per-side
+    //      width at all) — the frame thickness comes from the one shorthand.
+    expect(css).not.toMatch(/border-(?:inline-|block-)?(?:start|end|left|right|top|bottom)-width/);
+    expect(css).not.toMatch(/border-(?:inline|block)-width/);
+    expect(css.match(/border-width/g) ?? []).toHaveLength(0);
   });
 });

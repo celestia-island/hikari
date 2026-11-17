@@ -28,7 +28,7 @@ import {
 // the preset table through "@celestia-island/hikari" would close a loop whose
 // module-init order decides whether the table exists yet. Theme-internal
 // modules never import components, so this edge cannot loop.
-import { stockDefaultPreset, themePresets } from "../theme";
+import { solidInk, stockDefaultPreset, themePresets } from "../theme";
 // The ONE contrast implementation lives in the derivation module; the editor
 // must not grow a second copy of it.
 import { contrastRatio } from "../theme/semanticPalette";
@@ -95,13 +95,16 @@ const toneFillOf: Record<(typeof toneInkTokens)[number], RequiredTokenKey> = {
 const BLACK: ThemeTokenRGB = { r: 0, g: 0, b: 0 };
 
 /**
- * The ink that READS on a tone fill — black or white, whichever the WCAG
- * ratio favours (the perceptual rule, same one the consumer's derivation
- * uses). White wins ties, keeping the house default stable.
+ * The ink for a tone fill — the HOUSE rule (`solidInk`, user direction
+ * 2026-11-12): white by default, black only when the fill is light enough to
+ * need it. Deliberately NOT "whichever side wins the WCAG ratio"; the
+ * contract test in presets owns that decision, and this editor must not
+ * grow a second ink rule.
  */
-export function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
-  return contrastRatio(WHITE, fill) >= contrastRatio(BLACK, fill) ? { ...WHITE } : { ...BLACK };
+function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
+  return solidInk(fill);
 }
+
 
 function sameBytes(a: ThemeTokenRGB | undefined, b: ThemeTokenRGB | undefined): boolean {
   if (!a || !b) return false;
@@ -229,28 +232,22 @@ export const HkColorSchemeEditor = defineComponent({
       }
     }
 
-    // Previous tone fills, per mode: a stored ink that still equals the ink
-    // derived from the PREVIOUS fill is the derived value, not a designer
-    // choice — so it follows the new fill. An ink the designer picked
-    // (anything else) is left alone.
-    const prevToneFills: Record<"dark" | "light", Partial<Record<RequiredTokenKey, ThemeTokenRGB>>> = {
-      dark: {},
-      light: {},
-    };
-
     function rederiveToneInks(mode: "dark" | "light"): void {
       const target = mode === "dark" ? dark : light;
-      const prev = prevToneFills[mode];
       for (const inkKey of toneInkTokens) {
         const fillKey = toneFillOf[inkKey];
         const fill = target[fillKey];
         if (!fill) continue;
-        const prevFill = prev[fillKey];
         const stored = target[inkKey];
-        const wasDerived =
-          stored == null || (prevFill != null && sameBytes(stored, toneInkOn(prevFill)));
-        if (wasDerived) target[inkKey] = toneInkOn(fill);
-        prev[fillKey] = { ...fill };
+        // ABSENT stays absent: `tokensToCSSVars` already derives it through
+        // solidInk, and materialising one here would freeze the house rule's
+        // output into the draft (the MUST_STAY_WHITE set).
+        if (stored == null) continue;
+        // A stored ink survives as long as it still READS on its fill. Once it
+        // does not (a retune moved the fill, or the theme was saved while the
+        // stale-ink bug was live), it is not a design choice — it is an
+        // unreadable label — so the house rule takes over.
+        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = toneInkOn(fill);
       }
     }
 
@@ -288,19 +285,11 @@ export const HkColorSchemeEditor = defineComponent({
       }
       seedGroups(groupDark, "dark", props.initialGroups?.dark);
       seedGroups(groupLight, "light", props.initialGroups?.light);
-      // Seed the tone-fill baseline BEFORE the first re-derivation: a prefill
-      // that already carries the derived inks (the consumer's seam does) must
-      // still re-derive when the designer moves that fill, instead of looking
-      // like a hand-picked override.
-      for (const mode of ["dark", "light"] as const) {
-        const target = mode === "dark" ? dark : light;
-        prevToneFills[mode] = {};
-        for (const fillKey of Object.values(toneFillOf)) {
-          const fill = target[fillKey];
-          if (fill) prevToneFills[mode][fillKey] = { ...fill };
-        }
-        rederiveToneInks(mode);
-      }
+      // Heal any stored ink that no longer reads on its fill (the bug's saved
+      // state). Readable inks — including a consumer's own derivation — are
+      // left exactly as they are.
+      rederiveToneInks("dark");
+      rederiveToneInks("light");
       rederiveSurface();
     }
 

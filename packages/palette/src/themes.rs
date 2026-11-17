@@ -5,8 +5,11 @@
 //! keeps the theming layer decoupled from the (opt-in) color catalogs — you can
 //! use any theme without enabling a single collection feature.
 //!
-//! The hex values below mirror the colors that the old chinese-constant-based
-//! themes referenced, so the visual output is unchanged.
+//! The BRAND role colors (primary / secondary / accent / background / surface /
+//! border / text) keep the chinese-constant hexes, so those surfaces look
+//! unchanged. The SEMANTIC trio (success / warning / danger) does not: it follows
+//! the canonical perceptual family so the house white ink reads on it — see the
+//! note above `Hikari::palette`.
 
 use std::collections::HashMap;
 use std::sync::RwLock;
@@ -42,7 +45,18 @@ impl Palette {
     /// Contrast color (black or white) for a button variant color, used for
     /// glow effects. Dynamic opacity is derived from the button's brightness.
     pub fn button_glow_color(&self, color: &Color) -> String {
-        color.glow_contrast_dynamic_rgba()
+        let (r, g, b, alpha) = color.glow_contrast_dynamic();
+        // A glow is drawn ON the page, so it must separate from the palette's
+        // own background — not merely from the button. The fill-derived ink
+        // stops working when the fills go dark on a light page (a white halo
+        // on 月白 sits at ~1.1:1, i.e. invisible), so flip it when it cannot
+        // separate.
+        let glow = Color::from_rgb_hex(r, g, b);
+        if glow.contrast_ratio(&self.background) >= 3.0 {
+            return format!("rgba({r}, {g}, {b}, {alpha})");
+        }
+        let (fr, fg, fb) = if r == 255 { (0, 0, 0) } else { (255, 255, 255) };
+        format!("rgba({fr}, {fg}, {fb}, {alpha})")
     }
 
     /// Ghost-button text color: black for light themes, white for dark.
@@ -81,7 +95,9 @@ impl Palette {
 
 // === Hikari — Light theme (default) ==========================================
 // primary 牡丹粉红 #eea2a4, secondary 苍翠 #519a73, accent 姜黄 #ffc773,
-// success 葱倩 #0eb840, warning 鹅黄 #fff143, danger 朱红 #ff4c00,
+// Semantic trio (success / warning / danger) is DERIVED, not brand: canonical
+// OKLCH hues + lightness chosen so the house white ink clears 7:1 (see the
+// `semantic_tests` module at the bottom of this file).
 // background 月白 #d6ecf0, surface/border 素 #e0f0e9.
 
 /// Hikari — the default light theme.
@@ -363,8 +379,10 @@ mod tests {
 mod semantic_tests {
     use super::*;
 
-    /// Canonical semantic hues (the OKLCH family the derivation targets).
-    const CANONICAL: [(f64, f64); 3] = [(148.0, 0.11), (58.0, 0.13), (20.0, 0.16)];
+    /// Canonical semantic hues (OKLCH degrees) — the family the derivation
+    /// targets. Chroma is deliberately absent: gamut mapping trims it in 8-bit,
+    /// so the assertion that matters is `C > 0.02` (a slot must carry hue).
+    const CANONICAL_HUES: [f64; 3] = [148.0, 58.0, 20.0];
 
     fn semantic_trio(p: &Palette) -> [Color; 3] {
         [p.success.clone(), p.warning.clone(), p.danger.clone()]
@@ -378,7 +396,7 @@ mod semantic_tests {
             ("hikari", Hikari::palette()),
             ("tairitsu", Tairitsu::palette()),
         ] {
-            for (color, (canon_hue, _)) in semantic_trio(&palette).iter().zip(CANONICAL) {
+            for (color, canon_hue) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
                 let (_, chroma, hue) = color.oklch();
                 assert!(
                     chroma > 0.02,
@@ -416,6 +434,38 @@ mod semantic_tests {
                     "#FFFFFF",
                     "{name}: {} must read white by the perceptual rule",
                     color.hex()
+                );
+            }
+        }
+    }
+
+    /// A semantic fill's glow must stay visible ON THE PAGE: the fill-derived
+    /// ink flips to white once the fills go dark, and a white halo on 月白 is
+    /// invisible, so `button_glow_color` flips it back when it cannot separate
+    /// from the palette background.
+    #[test]
+    fn semantic_glow_separates_from_the_page() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for fill in semantic_trio(&palette) {
+                let rgba = palette.button_glow_color(&fill);
+                let parts: Vec<&str> = rgba
+                    .trim_start_matches("rgba(")
+                    .trim_end_matches(')')
+                    .split(", ")
+                    .collect();
+                let glow = Color::from_rgb_hex(
+                    parts[0].parse().unwrap(),
+                    parts[1].parse().unwrap(),
+                    parts[2].parse().unwrap(),
+                );
+                let ratio = glow.contrast_ratio(&palette.background);
+                assert!(
+                    ratio >= 3.0,
+                    "{name}: glow {rgba} on background {} is only {ratio:.2}:1",
+                    palette.background.hex()
                 );
             }
         }

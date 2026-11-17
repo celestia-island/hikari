@@ -1495,21 +1495,22 @@ const DETAILS_RUNTIME = String.raw`
      values arrive backslash-escaped (\"password\":\"...\"") and the plain
      key pattern above cannot see them. The error-context capture makes this
      the DOMINANT shape (console lines are strings), so the family mask runs
-     over it too; the value part tolerates escape pairs, so a nested \" inside
-     the secret does not
-         end the match early. TWO widths, because boot code logs JSON both
-         ways:
-       - COMPACT (\"key\":\"value\") -- one backslash before each quote;
-       - PRETTY-PRINTED (JSON.stringify(v, null, 2)) -- whitespace around the
-         colon, and a two-level-nested body (an API error whose payload is
-         itself a JSON string) carries two backslashes before the inner
-         quotes. The width is measured on the SERIALIZED paste, not the raw
-         console line: an entry with N backslashes before a quote arrives in
-         the payload text with N+1 (JSON escaping), so the run is {1,3}
-         (raw 0..2), and the colon tolerates whitespace; the value part
-         tolerates escape pairs, so a nested \" inside the secret does not
-         end the match early. */
-  var CREDENTIAL_KEY_ESCAPED = /(\\{1,3}"(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)\\{1,3}":\s*\\{1,3}")((?:[^\\]|\\.)*?)(\\{1,3}")/gi;
+     over it too. Measured on the SERIALIZED paste: every JSON.stringify
+     round turns N backslashes into 2N+1, so a BARE structural quote of the
+     console line arrives as one backslash + quote, while a quote INSIDE a
+     secret value arrives with 3, 7, 15... -- which is exactly what makes
+     the two distinguishable:
+       - the CLOSING quote of a masked value is bs{1} + quote (exactly one)
+       - the VALUE tolerates backslash-runs of 2+ plus any character (the
+         embedded-quote sequences) and stays lazy, so it stops at the own
+         structural close of that value -- no swallowing of neighbouring
+         pairs, and the redacted JSON keeps re-parsing for the tree.
+     The one ambiguity that remains: a secret ENDING in a backslash
+     arrives with its trailing run merged into the closing quote and can
+     evade the mask -- inherent to quoting, and the safe direction is the
+         operator re-reading the raw console, not a redaction that eats the
+         neighbourhood of the value. */
+  var CREDENTIAL_KEY_ESCAPED = /(\\+"(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)\\+":\s*\\+")((?:\\{2,}.|\\[^"]|[^\\])*?)(\\{1}")/gi;
   var CREDENTIAL_HEADER = /\b(Authorization|Cookie|Proxy-Authorization)\s*:\s*([^\n"']+)/gi;
   var detailsRefresh = null;
   function safeCall(fn, fallback) {

@@ -722,8 +722,53 @@ describe("the classification upgrade (watchdog + capture)", () => {
     const text = run.written[0];
     expect(text).not.toContain("hunter2");
     // The username survives UNMASKED — in the payload's serialized form the
-    // console line's own quotes are themselves escaped.
+    // console line's own quote arrives as backslash + quote (and a quote
+    // inside a secret value arrives with three — every stringify round
+    // doubles the run and adds one).
     expect(text).toContain('\\"user\\": \\"u\\"');
+  });
+
+  it("masks a secret that itself contains a quote, whole", async () => {
+    // The lazy value of the older pattern stopped at the secret's OWN
+    // embedded quote and leaked the tail (R7 S1). The value now tolerates
+    // backslash-runs of 2+ (the embedded-quote sequences in the paste) and
+    // closes at the structural quote (exactly one backslash + quote), so the
+    // embedded quote is INSIDE the mask.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.console.error(JSON.stringify({ password: 'p"ssword' }));
+    paintedCard(run);
+    await clickCopy(run);
+    const text = run.written[0];
+    // NOTHING of the secret's tail survives. (The secret's head `p` is not
+    // a usable needle: the logged JSON's own key `password` legitimately
+    // contains quote-then-p after masking.)
+    // The secret's DISTINCTIVE paste form: the value `p"ssword` arrives as
+    // p + 3 backslashes + quote + ssword (2N+1 with N=1). Neither the head
+    // nor the tail may survive; the logged JSON's own KEY `password`
+    // legitimately keeps `ssword` as a substring, so the needle is the
+    // value-with-embedded-quote, not the bare tail.
+    expect(text).not.toMatch(/p\\{3,}"/);
+    expect(text).not.toContain("hunter2");
+    // ...and the embedded quote is INSIDE the masked region: the serialized
+    // masked form carries the three-disc mask between the structural
+    // backslash-quote pairs. (BS is built via fromCharCode -- string-escape
+    // layers have burned this file twice.)
+    const BS = String.fromCharCode(92);
+    expect(text).toContain(
+      "password" + BS + '":' + BS + '"' + "●●●",
+    );
+  });
+
+  it("masks credentials through three stringify levels (7-backslash runs)", async () => {
+    // Raw 2 backslashes in the entry arrive as 7 in the paste (2N+1 per
+    // round) — the unbounded run is what covers this; a bounded {1,3} leaked.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    const inner = JSON.stringify({ password: "hunter2" });
+    const mid = JSON.stringify({ payload: inner });
+    run.console.error("wrapped:", JSON.stringify({ body: mid }));
+    paintedCard(run);
+    await clickCopy(run);
+    expect(run.written[0]).not.toContain("hunter2");
   });
 
   it("masks credentials in a two-level nested JSON string", async () => {

@@ -93,6 +93,35 @@ describe("usageFlowLayout", () => {
     expect(k1.height / k1.value).toBeCloseTo(k2.height / k2.value, 3);
   });
 
+  it("orders equal values by label, not insertion order", () => {
+    const layout = usageFlowLayout([
+      { source: "c", middle: "up", target: "m3", value: 10 },
+      { source: "a", middle: "up", target: "m1", value: 10 },
+      { source: "b", middle: "up", target: "m2", value: 10 },
+    ]);
+    expect(columnNodes(layout, 0).map((node) => node.fullLabel)).toEqual(["a", "b", "c"]);
+    expect(layout.legend.map((row) => row.label)).toEqual(["m1", "m2", "m3"]);
+  });
+
+  it("stacks a node's ribbons in the neighbour's vertical order", () => {
+    const layout = usageFlowLayout([
+      { source: "k1", middle: "up-a", target: "m1", value: 100 },
+      { source: "k1", middle: "up-b", target: "m2", value: 100 },
+    ]);
+    const k1 = layout.nodes.find((node) => node.fullLabel === "k1" && node.column === 0)!;
+    const outgoing = layout.links
+      .filter((link) => link.sourceKey === k1.key)
+      .sort((a, b) => a.startY - b.startY);
+    const targets = outgoing.map(
+      (link) => layout.nodes.find((node) => node.key === link.targetKey)!.fullLabel,
+    );
+    // up-a is the higher-valued (first) middle node; its ribbon starts
+    // first. A reversed sort would invert this while stacking tests stay
+    // order-agnostic.
+    expect(targets).toEqual(["up-a", "up-b"]);
+    expect(outgoing[0].startY).toBeLessThan(outgoing[1].startY);
+  });
+
   it("stacks each node's ribbons exactly on its scaled height, on both sides", () => {
     const layout = usageFlowLayout(ROWS, { height: 480 });
     const scale = layout.links[0].thickness / layout.links[0].value;
@@ -297,6 +326,26 @@ describe("usageFlowLayout", () => {
     const colors = new Map(layout.legend.map((row) => [row.label, row.color]));
     expect(colors.get("a")).toBe("c0");
     expect(colors.get("b")).toBe("c1");
+  });
+
+  it("gives the folded chart bucket the slot after every real label", () => {
+    const layout = usageFlowLayout(
+      [
+        { source: "k1", middle: "up", target: "model-kept", value: 60 },
+        { source: "k2", middle: "up", target: "model-folded-a", value: 30 },
+        { source: "k3", middle: "up", target: "model-folded-b", value: 10 },
+      ],
+      {
+        maxNodes: 2,
+        models: [{ label: "model-kept" }],
+        colors: ["c0", "c1", "c2", "c3"],
+      },
+    );
+    const bucket = layout.nodes.find((node) => node.column === 2 && node.others);
+    // Slot 0 is the kept roster model, slots 1 and 2 the two unregistered
+    // models (folded in the chart, still real labels), so the bucket takes
+    // slot 3 — never palette[0].
+    expect(bucket?.color).toBe("c3");
   });
 
   it("wraps a palette shorter than the roster", () => {

@@ -78,6 +78,20 @@ describe("HkUsageFlow", () => {
     expect(rows[2].querySelector(".hk-usage-flow__legend-pct")?.textContent).toBe("0%");
   });
 
+  it("draws caller labels right of their bar and model labels left of it", () => {
+    const el = mount(<HkUsageFlow rows={ROWS} />);
+    const labels = [...el.querySelectorAll(".hk-usage-flow__label")] as SVGTextElement[];
+    const byText = new Map(labels.map((label) => [label.textContent, label]));
+    const caller = byText.get("caller-a")!;
+    const model = byText.get("model-x")!;
+    const callerX = Number(caller.getAttribute("x"));
+    const modelX = Number(model.getAttribute("x"));
+    const callerBar = caller.parentElement!.querySelector("rect")!;
+    const modelBar = model.parentElement!.querySelector("rect")!;
+    expect(callerX).toBeGreaterThan(Number(callerBar.getAttribute("x")) + Number(callerBar.getAttribute("width")));
+    expect(modelX).toBeLessThan(Number(modelBar.getAttribute("x")));
+  });
+
   it("formats values through the host formatter", () => {
     const el = mount(
       <HkUsageFlow rows={ROWS} models={[{ label: "model-x" }]} formatValue={(v) => `${v / 1000}k`} />,

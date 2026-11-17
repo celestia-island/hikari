@@ -59,12 +59,12 @@ export default defineComponent({
   props: {
     /** Settled aggregate rows: caller → upstream → model → metric value.
      *  The caller owns aggregation (one row per distinct triple). */
-    rows: { type: asPropType<HkUsageFlowRow[]>(Array), required: true },
+    rows: { type: asPropType<readonly HkUsageFlowRow[]>(Array), required: true },
     /** The complete registered-model roster. Roster order fixes the model
      *  colours, so an idle model keeps its swatch; idle models still get a
      *  greyed legend row. Models that served traffic without a roster row
      *  are appended after it. */
-    models: { type: asPropType<HkUsageFlowRosterEntry[] | null>(Array), default: null },
+    models: { type: asPropType<readonly HkUsageFlowRosterEntry[] | null>(Array), default: null },
     /** Value formatter for legend numbers and hints. Absent = the runtime
      *  locale's `toLocaleString()` — hosts that pin a locale pass their own
      *  formatter (the admin panels do). */
@@ -148,7 +148,7 @@ export default defineComponent({
         return (
           <div
             class="hk-usage-flow hk-usage-flow--empty"
-            role="status"
+            role="group"
             aria-label={props.ariaLabel ?? undefined}
           >
             <div class="hk-usage-flow__empty">{props.emptyText}</div>

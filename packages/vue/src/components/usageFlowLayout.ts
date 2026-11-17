@@ -17,8 +17,13 @@
 // its bar. Nodes beyond `maxNodes` in a column collapse into one synthetic
 // "others" bucket BEFORE geometry runs, so the collapsed total still equals
 // the column total (the conservation invariant the tests pin). The cap is
-// also clamped to what the frame can actually stack, so a tall column never
-// collapses every magnitude to the floor or escapes the viewBox.
+// also clamped to what the frame can stack proportionally, so a tall
+// column does not escape the viewBox. CAVEAT, by design: if a window holds
+// so many similarly-sized keys that one key's share is smaller than the
+// 2-unit visibility minimum, that key's bar sits ON the floor — the frame
+// has a finite pixel budget and the bucket carries the rest. The cap only
+// guarantees the column fits; it cannot create room the data does not
+// leave.
 //
 // Colours: the last column (models) is the legend's colour source. A
 // roster (`models`) fixes the colour order regardless of usage — so a
@@ -130,15 +135,17 @@ export interface HkUsageFlowLayoutOptions {
   width?: number;
   height?: number;
   /** Per-column cap; beyond it the tail collapses into `othersLabel`.
-   *  Clamped to ≥ 2 AND to what the frame can stack WITH PROPORTIONAL
-   *  bars (each node also reserves a `MIN_PROPORTIONAL_HEIGHT` band), so
-   *  an oversized cap silently shrinks instead of painting every bar at
-   *  the visibility floor. `0` / absent / non-finite = "as many as fit". */
+   *  Clamped to ≥ 2 AND to what the frame can stack with an average
+   *  proportional band per node, so an oversized cap silently shrinks
+   *  instead of overrunning the viewBox. `0` / absent / non-finite =
+   *  "as many as the frame allows". (A tail-heavy window can still leave
+   *  individual keys on the 2-unit floor — that is the data's share, not
+   *  the cap; see the module caveat.) */
   maxNodes?: number;
   othersLabel?: string;
   /** The complete registered roster. Roster order fixes the model colours
    *  (idle rows included), so a model's swatch is stable across windows. */
-  models?: HkUsageFlowRosterEntry[];
+  models?: readonly HkUsageFlowRosterEntry[];
   /** Colour ladder; defaults to the theme-token palette below. Readonly so
    *  a consumer can pass the exported `USAGE_FLOW_PALETTE` directly. */
   colors?: readonly string[];
@@ -343,8 +350,10 @@ export function usageFlowLayout(
   const height = Math.max(180, finite(options.height, 420));
   const requestedMax = finite(options.maxNodes, 0);
   const othersLabel = options.othersLabel?.trim() || "Others";
-  const labelChars = finite(options.labelMaxChars, 28);
-  const labelMaxChars = labelChars > 0 ? labelChars : 28;
+  const labelChars = options.labelMaxChars ?? 28;
+  // Non-finite / non-positive budgets are meaningless: the default keeps
+  // truncation on (a NaN comparison would otherwise disable it silently).
+  const labelMaxChars = Number.isFinite(labelChars) && labelChars > 0 ? labelChars : 28;
   const palette = options.colors && options.colors.length > 0 ? options.colors : USAGE_FLOW_PALETTE;
   const roster = options.models ?? [];
 
@@ -428,11 +437,10 @@ export function usageFlowLayout(
     const key = `${source}\u0000${middle}\u0000${target}`;
     const previous = flows.get(key);
     if (previous) {
+      // Cannot overflow: a fold merge sums a SUBSET of the raw rows, and
+      // the raw grand total was already required finite above — so this
+      // sum is finite too.
       previous.value += flow.value;
-      // The re-key merge can overflow AFTER the per-triple guard above
-      // (distinct triples folding onto one display triple); a non-finite
-      // total would poison the whole column with NaN geometry.
-      if (!Number.isFinite(previous.value)) flows.delete(key);
     } else {
       flows.set(key, { source, middle, target, value: flow.value });
     }

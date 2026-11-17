@@ -342,6 +342,8 @@ export {
   type ThemeDecorSlot, type ThemeDecorRegistration, type ThemeDecorBuiltinRegistration,
   type FontContextOverrides,
 } from "./theme";
+export { deriveSemanticPalette, CANONICAL_SEMANTIC, contrastRatio, hueDistance, rgbToOklch, oklchToRgb } from "./theme/semanticPalette";
+export type { SemanticPalette, SemanticFills, OKLCH } from "./theme/semanticPalette";
 
 // Wallpaper logic layer (ported from shittim-chest). The pack, the brand map
 // and the pipeline registry arrive as host registrations.

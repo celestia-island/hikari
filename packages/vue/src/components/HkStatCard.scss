@@ -106,7 +106,7 @@
 .hk-stat-card-chip-icon-success { background: rgb(var(--color-success) / 12%); color: var(--hi-color-success-fg, rgb(var(--color-success))); }
 .hk-stat-card-chip-icon-warning { background: rgb(var(--color-warning) / 12%); color: var(--hi-color-warning-fg, rgb(var(--color-warning))); }
 .hk-stat-card-chip-icon-error { background: rgb(var(--color-error) / 12%); color: var(--hi-color-danger-fg, rgb(var(--color-error))); }
-.hk-stat-card-chip-icon-info { background: rgb(var(--color-info, rgb(var(--color-primary))) / 12%); color: rgb(var(--color-info, rgb(var(--color-primary)))); }
+.hk-stat-card-chip-icon-info { background: rgb(var(--color-info, rgb(var(--color-primary))) / 12%); color: var(--hi-color-info-fg, rgb(var(--color-info))); }
 .hk-stat-card-chip-icon-primary { background: rgb(var(--color-primary) / 12%); color: rgb(var(--color-primary)); }
 .hk-stat-card-chip-icon-muted { background: rgb(var(--color-muted) / 12%); color: rgb(var(--color-muted)); }
 

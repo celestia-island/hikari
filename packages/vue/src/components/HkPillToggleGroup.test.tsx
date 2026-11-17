@@ -256,9 +256,13 @@ describe("HkPillToggleGroup tone channel", () => {
       // so swapping one for another hue kept this green (R3 M9/M9b). Pin the
       // ink and the fill to their own channels — muted is the documented
       // exception (text ink, muted wash).
-      expect(body, `${tone} INK uses its own channel`).toContain(
-        `color: rgb(var(--color-${tone === "muted" ? "text" : tone}`,
-      );
+      // The ink may be the raw fill channel or the fg variant (both valid).
+      // Muted and secondary are brand/muted slots — no fg variant exists.
+      // The error tone maps to the danger-fg token (danger→error channel).
+      const inkPat = ["muted", "secondary"].includes(tone)
+        ? `color: rgb(var(--color-${tone === "muted" ? "text" : tone}`
+        : `color: var(--hi-color-${tone === "error" ? "danger" : tone}-fg`;
+      expect(body, `${tone} INK uses its own channel`).toContain(inkPat);
       expect(body, `${tone} FILL uses its own channel`).toContain(
         `background: rgb(var(--color-${tone}`,
       );

@@ -75,15 +75,15 @@
 }
 .hk-status-row--success .hk-status-row__chip {
   background: rgb(var(--color-success, 0 128 68) / 12%);
-  color: rgb(var(--color-success, 0 128 68));
+  color: var(--hi-color-success-fg, rgb(var(--color-success)));
 }
 .hk-status-row--warning .hk-status-row__chip {
   background: rgb(var(--color-warning, 200 140 30) / 14%);
-  color: rgb(var(--color-warning, 200 140 30));
+  color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
 }
 .hk-status-row--error .hk-status-row__chip {
   background: rgb(var(--color-error, 226 58 69) / 12%);
-  color: rgb(var(--color-error, 226 58 69));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }
 
 .hk-status-row__body {

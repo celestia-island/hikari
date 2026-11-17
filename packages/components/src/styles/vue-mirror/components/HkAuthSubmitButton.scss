@@ -18,5 +18,5 @@
 .s-auth-submit-error {
   margin: 0;
   font-size: var(--text-sm, 0.8125rem);
-  color: rgb(var(--color-error, 166 41 55));
+  color: var(--hi-color-danger-fg, rgb(var(--color-error)));
 }

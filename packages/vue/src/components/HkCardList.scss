@@ -173,7 +173,7 @@
 
     &:hover:not(:disabled) {
       background: rgb(var(--color-error, 166 41 55) / 10%);
-      color: rgb(var(--color-error, 166 41 55));
+      color: var(--hi-color-danger-fg, rgb(var(--color-error)));
     }
   }
 }

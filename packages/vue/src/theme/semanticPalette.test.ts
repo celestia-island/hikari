@@ -596,6 +596,18 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(worst, "warning's worst anchor is maximised").toBeGreaterThanOrEqual(4.4);
   });
 
+  it("the AA-band retake takes the CHROMATIC candidate (byte snapshot)", () => {
+    // r28 adversarial M24: replacing the chroma criterion with worst
+    // turns the chromatic warning (4,0,0 @C=0.0275) into pure white
+    // (255,255,255 @C=0) — grey-instead-of-hue on 14/1,024 shapes.
+    const p = deriveSemanticPalette({
+      primary: rgb(130, 189, 67),
+      background: rgb(61, 131, 85),
+      surface: rgb(203, 43, 179),
+    });
+    expect(`${p.warning.r},${p.warning.g},${p.warning.b}`).toBe("4,0,0");
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

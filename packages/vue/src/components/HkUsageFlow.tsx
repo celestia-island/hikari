@@ -137,9 +137,31 @@ export default defineComponent({
     return () => {
       const model = layout.value;
       if (model.empty) {
+        // No measured rows: the honest empty face — plus the roster table
+        // when the host supplied one, so "all registered models" is still
+        // answerable (every row reads 0 / idle).
         return (
           <div class="hk-usage-flow hk-usage-flow--empty">
             <div class="hk-usage-flow__empty">{props.emptyText}</div>
+            {props.showLegend && model.legend.length > 0 ? (
+              <ul class="hk-usage-flow__legend">
+                {model.legend.map((row) => (
+                  <li
+                    key={row.label}
+                    class={["hk-usage-flow__legend-row", { "hk-usage-flow__legend-row--idle": row.idle }]}
+                  >
+                    <span
+                      class="hk-usage-flow__legend-swatch"
+                      style={{ background: row.color }}
+                      aria-hidden="true"
+                    />
+                    <span class="hk-usage-flow__legend-label">{row.label}</span>
+                    <span class="hk-usage-flow__legend-value">{format(row.value)}</span>
+                    <span class="hk-usage-flow__legend-pct">0%</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         );
       }
@@ -194,13 +216,10 @@ export default defineComponent({
               <ul class="hk-usage-flow__legend">
                 {model.legend.map((row) => (
                   <li
-                    key={`${row.label}:${row.others ? "others" : "model"}`}
+                    key={row.label}
                     class={[
                       "hk-usage-flow__legend-row",
-                      {
-                        "hk-usage-flow__legend-row--idle": row.idle,
-                        "hk-usage-flow__legend-row--others": row.others,
-                      },
+                      { "hk-usage-flow__legend-row--idle": row.idle },
                     ]}
                     data-hint={`${row.label} · ${format(row.value)} · ${formatFlowPercent(row.percent)}`}
                   >

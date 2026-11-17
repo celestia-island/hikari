@@ -94,7 +94,12 @@ export interface HkUsageFlowLink {
 }
 
 /** One legend row: the measured total for a registered model (idle ones
- *  included) or for a model that served traffic but is not registered. */
+ *  included) or for a model that served traffic but is not registered.
+ *
+ *  Values are PRE-collapse: the chart may fold a long tail into its
+ *  `othersLabel` node, but the legend is the full model table — a folded
+ *  registered model reports the traffic it actually carried, never a
+ *  zero it did not have. */
 export interface HkUsageFlowLegendRow {
   label: string;
   value: number;
@@ -104,8 +109,6 @@ export interface HkUsageFlowLegendRow {
   color: string;
   /** No measured usage: the registered-but-unused row (greyed by CSS). */
   idle: boolean;
-  /** True for the synthetic collapsed bucket rather than a real model. */
-  others: boolean;
 }
 
 /** The full layout HkUsageFlow renders. */
@@ -255,17 +258,24 @@ function px(value: number): number {
  *  target bar, thick end caps and two mirrored cubic edges. */
 function ribbonPath(x0: number, y0: number, x1: number, y1: number, thickness: number): string {
   // The drawn thickness IS the scaled slot: flooring it here would let a
-  // dense stack overhang its bar without the geometry saying so.
+  // dense stack overhang its bar without the geometry saying so. The four
+  // cap edges are y0 / y0+t on the source side and y1 / y1+t on the target
+  // side; the layout builds the path from its exported slot values, so the
+  // drawn edges and the reported geometry can never disagree.
   const t = Math.max(0, thickness);
   const bend = Math.max(8, (x1 - x0) * 0.5);
-  const a = `${px(x0)} ${px(y0)}`;
-  const b = `${px(x1)} ${px(y1)}`;
-  const c0 = `${px(x0 + bend)} ${px(y0)}`;
-  const c1 = `${px(x1 - bend)} ${px(y1)}`;
-  const d0 = `${px(x1)} ${px(y1 + t)}`;
-  const d1 = `${px(x0)} ${px(y0 + t)}`;
-  const e0 = `${px(x1 - bend)} ${px(y1 + t)}`;
-  const e1 = `${px(x0 + bend)} ${px(y0 + t)}`;
+  const top0 = px(y0);
+  const bot0 = px(y0 + t);
+  const top1 = px(y1);
+  const bot1 = px(y1 + t);
+  const a = `${px(x0)} ${top0}`;
+  const b = `${px(x1)} ${top1}`;
+  const c0 = `${px(x0 + bend)} ${top0}`;
+  const c1 = `${px(x1 - bend)} ${top1}`;
+  const d0 = `${px(x1)} ${bot1}`;
+  const d1 = `${px(x0)} ${bot0}`;
+  const e0 = `${px(x1 - bend)} ${bot1}`;
+  const e1 = `${px(x0 + bend)} ${bot0}`;
   return `M ${a} C ${c0}, ${c1}, ${b} L ${d0} C ${e0}, ${e1}, ${d1} Z`;
 }
 
@@ -354,6 +364,10 @@ export function usageFlowLayout(
     const previous = flows.get(key);
     if (previous) {
       previous.value += flow.value;
+      // The re-key merge can overflow AFTER the per-triple guard above
+      // (distinct triples folding onto one display triple); a non-finite
+      // total would poison the whole column with NaN geometry.
+      if (!Number.isFinite(previous.value)) flows.delete(key);
     } else {
       flows.set(key, { source, middle, target, value: flow.value });
     }
@@ -373,6 +387,13 @@ export function usageFlowLayout(
     addValue(nodeValues[2], flow.target, flow.value);
   }
 
+  // Belt-and-braces: if any merge slipped a non-finite amount through,
+  // the whole layout is meaningless — an explicit empty face beats NaN
+  // geometry and invalid `d` attributes.
+  if (!Number.isFinite(total)) {
+    return { width, height, nodes: [], links: [], legend: [], total: 0, empty: true };
+  }
+
   const columns = nodeValues.map((values) => rankLabels(values));
 
   // ── Colour assignment ──
@@ -382,6 +403,10 @@ export function usageFlowLayout(
   const modelColor = new Map<string, string>();
   const rosterIndex = new Map<string, number>();
   roster.forEach((entry) => {
+    // A malformed roster entry must not throw out of the component's
+    // computed (which would kill the render) or render a literal
+    // "undefined" legend row.
+    if (!entry || typeof entry.label !== "string" || entry.label === "") return;
     const label = entry.label;
     if (rosterIndex.has(label)) return;
     // The slot is the ASSIGNED position, not the raw array index: a
@@ -391,10 +416,18 @@ export function usageFlowLayout(
     rosterIndex.set(label, slot);
     modelColor.set(label, entry.color ?? palette[slot % palette.length]);
   });
-  const unregistered = columns[2].filter((label) => !rosterIndex.has(label));
+  // Unregistered models take the slots AFTER the roster. Colour
+  // assignment is pre-fold (ranked by the real totals), so a model that
+  // the chart folds into the bucket still owns its stable colour.
+  const unregistered = [...columnValues[2].entries()]
+    .filter(([label]) => !rosterIndex.has(label))
+    .sort((a, b) => (b[1] - a[1]) || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+    .map(([label]) => label);
   unregistered.forEach((label, rank) => {
     modelColor.set(label, palette[(rosterIndex.size + rank) % palette.length]);
   });
+  /** The folded bucket's own colour: after every real label. */
+  const bucketColor = palette[(rosterIndex.size + unregistered.length) % palette.length];
 
   const sourceColor = new Map<string, string>();
   columns[0].forEach((label, rank) => sourceColor.set(label, palette[rank % palette.length]));
@@ -442,7 +475,7 @@ export function usageFlowLayout(
         height: px(nodeHeight),
         color:
           column === 2
-            ? (modelColor.get(label) ?? palette[0])
+            ? (modelColor.get(label) ?? bucketColor)
             : column === 0
               ? (sourceColor.get(label) ?? palette[0])
               : (middleColor.get(label) ?? palette[0]),
@@ -525,55 +558,57 @@ export function usageFlowLayout(
       const target = targetNodes.get(pair.right);
       if (!source || !target) continue;
       const thickness = pair.value * scale;
-      const y0 = startCursor.get(`${pair.left}\u0000${pair.right}`) ?? source.y;
-      const y1 = endCursor.get(`${pair.left}\u0000${pair.right}`) ?? target.y;
+      const y0 = px(startCursor.get(`${pair.left}\u0000${pair.right}`) ?? source.y);
+      const y1 = px(endCursor.get(`${pair.left}\u0000${pair.right}`) ?? target.y);
       links.push({
         key: `${source.key}->${target.key}`,
         sourceKey: source.key,
         targetKey: target.key,
         value: pair.value,
+        // The path is built from the SAME rounded slot values the layout
+        // exports, so a draw-time floor (or any other divergence between
+        // the drawn edge and the geometry) is observable from `d`.
         path: ribbonPath(source.x + source.width, y0, target.x, y1, thickness),
         color: target.color,
         thickness,
-        startY: px(y0),
-        endY: px(y1),
+        startY: y0,
+        endY: y1,
       });
     }
   }
 
-  // ── Legend: roster order first (idle rows included), then unregistered
-  //    models that served traffic, then the collapsed bucket. ──
-  const targetValues = nodeValues[2];
+  // ── Legend: the FULL model table, pre-collapse. Roster order first
+  //    (idle rows included), then models that served traffic without a
+  //    roster row. The chart's folded bucket is NOT a legend row: the
+  //    legend's job is every model's real total, and folding is a chart
+  //    layout decision, not a usage fact. ──
+  const measuredValues = columnValues[2];
   const legend: HkUsageFlowLegendRow[] = [];
   const seen = new Set<string>();
   for (const entry of roster) {
+    if (!entry || typeof entry.label !== "string" || entry.label === "") continue;
     const label = entry.label;
     if (seen.has(label)) continue;
     seen.add(label);
-    const value = targetValues.get(label) ?? 0;
+    const value = measuredValues.get(label) ?? 0;
     legend.push({
       label,
       value,
       percent: total > 0 ? (value / total) * 100 : 0,
       color: modelColor.get(label) ?? palette[(rosterIndex.get(label) ?? 0) % palette.length],
       idle: value <= 0,
-      others: false,
     });
   }
-  const extra = columns[2]
-    .filter((label) => !seen.has(label))
-    .sort((a, b) => (targetValues.get(b) ?? 0) - (targetValues.get(a) ?? 0) || (a < b ? -1 : a > b ? 1 : 0));
-  for (const label of extra) {
-    const value = targetValues.get(label) ?? 0;
+  for (const label of unregistered) {
+    if (seen.has(label)) continue;
+    seen.add(label);
+    const value = measuredValues.get(label) ?? 0;
     legend.push({
       label,
       value,
       percent: total > 0 ? (value / total) * 100 : 0,
-      color: modelColor.get(label) ?? palette[0],
+      color: modelColor.get(label) ?? bucketColor,
       idle: value <= 0,
-      // Same guard as the node path: a kept model that happens to be
-      // labelled like the fold bucket is a REAL model, not the bucket.
-      others: label === othersLabel && !collapsed[2].kept.has(label),
     });
   }
 

@@ -26,6 +26,14 @@ function linksFrom(layout: ReturnType<typeof usageFlowLayout>, key: string) {
   return layout.links.filter((link) => link.sourceKey === key);
 }
 
+/** Every coordinate pair inside a ribbon path, in document order. */
+function pathPoints(d: string): Array<{ x: number; y: number }> {
+  return [...d.matchAll(/(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g)].map((match) => ({
+    x: Number(match[1]),
+    y: Number(match[2]),
+  }));
+}
+
 describe("usageFlowLayout", () => {
   it("returns an empty layout when no row carries a positive value", () => {
     const layout = usageFlowLayout([
@@ -174,6 +182,33 @@ describe("usageFlowLayout", () => {
     }
   });
 
+  it("falls back to the empty face when the total itself is non-finite", () => {
+    const layout = usageFlowLayout([
+      { source: "a", middle: "u", target: "m1", value: 1e308 },
+      { source: "b", middle: "u", target: "m2", value: 1e308 },
+    ]);
+    // Two FINITE distinct triples whose sum overflows: an empty face is
+    // the honest answer — NaN geometry and `d="… NaN …"` are not.
+    expect(layout.empty).toBe(true);
+    expect(layout.nodes).toHaveLength(0);
+    expect(layout.links).toHaveLength(0);
+  });
+
+  it("drops a fold merge whose summed label value overflows", () => {
+    const layout = usageFlowLayout(
+      [
+        { source: "a", middle: "u", target: "m1", value: 1e308 },
+        { source: "b", middle: "u", target: "zzz", value: 1e308 },
+      ],
+      // `othersLabel` deliberately equal to the kept label: the folded
+      // "zzz" merges onto "m1" and the summed value overflows.
+      { maxNodes: 2, othersLabel: "m1" },
+    );
+    expect(layout.empty).toBe(true);
+    expect(layout.nodes.every((node) => Number.isFinite(node.height))).toBe(true);
+    expect(layout.links.every((link) => !link.path.includes("NaN"))).toBe(true);
+  });
+
   it("drops a duplicate sum that overflows instead of poisoning the column", () => {
     const layout = usageFlowLayout([
       { source: "a", middle: "up", target: "m1", value: 1e308 },
@@ -249,7 +284,7 @@ describe("usageFlowLayout", () => {
     expect(layout.legend.map((row) => row.label)).toEqual(["m1"]);
   });
 
-  it("folds an overflowing model column into a legend bucket", () => {
+  it("folds an overflowing model column in the chart but lists every model", () => {
     const rows = ["m1", "m2", "m3", "m4"].map((target) => ({
       source: "k",
       middle: "up",
@@ -258,15 +293,41 @@ describe("usageFlowLayout", () => {
     }));
     const layout = usageFlowLayout(rows, { maxNodes: 3, othersLabel: "Other models" });
     expect(layout.total).toBe(40);
-    const bucket = layout.legend.find((row) => row.label === "Other models");
-    expect(bucket).toBeTruthy();
-    expect(bucket?.others).toBe(true);
-    expect(bucket?.value).toBe(20);
-    expect(bucket?.idle).toBe(false);
-    // The retained models still carry their own rows and value.
-    expect(layout.legend.map((row) => row.label)).toEqual(
-      expect.arrayContaining(["m1", "m2"]),
+    // The chart collapses the tail into one bucket node...
+    const bucket = layout.nodes.find(
+      (node) => node.column === 2 && node.fullLabel === "Other models",
     );
+    expect(bucket?.value).toBe(20);
+    expect(bucket?.others).toBe(true);
+    // ...while the legend keeps the FULL model table, pre-fold: folding
+    // is a chart layout decision, not a usage fact.
+    expect(layout.legend.map((row) => row.label)).toEqual(["m1", "m2", "m3", "m4"]);
+    for (const row of layout.legend) {
+      expect(row.value, `${row.label} keeps its real total`).toBe(10);
+      expect(row.percent).toBe(25);
+      expect(row.idle).toBe(false);
+    }
+    expect(layout.legend.some((row) => row.label === "Other models")).toBe(false);
+  });
+
+  it("reports a folded registered model's real total, never a zero it did not have", () => {
+    const rows = ["m1", "m2", "m3", "m4"].map((target) => ({
+      source: "k",
+      middle: "up",
+      target,
+      value: 10,
+    }));
+    const layout = usageFlowLayout(rows, {
+      maxNodes: 2,
+      models: [{ label: "m1" }, { label: "m2" }, { label: "m3" }, { label: "m4" }],
+    });
+    // m3/m4 are folded into the chart's bucket; the legend must still
+    // report the traffic they carried (the S1 the round-2 reviewer found).
+    const m3 = layout.legend.find((row) => row.label === "m3")!;
+    expect(m3.value).toBe(10);
+    expect(m3.idle).toBe(false);
+    expect(m3.percent).toBe(25);
+    expect(layout.legend.map((row) => row.label)).toEqual(["m1", "m2", "m3", "m4"]);
   });
 
   it("merges a real label that equals the others bucket into the fold", () => {
@@ -311,7 +372,7 @@ describe("usageFlowLayout", () => {
     expect(layout.legend[1].value).toBe(60);
   });
 
-  it("treats a real model labelled like the fold bucket as a real row", () => {
+  it("keeps a real model labelled like the fold bucket as its own row", () => {
     const rows = [
       { source: "k", middle: "up", target: "Others", value: 50 },
       { source: "k", middle: "up", target: "m1", value: 30 },
@@ -319,12 +380,16 @@ describe("usageFlowLayout", () => {
       { source: "k", middle: "up", target: "m3", value: 5 },
     ];
     const layout = usageFlowLayout(rows, { maxNodes: 3, othersLabel: "Others" });
-    const bucket = layout.legend.find((row) => row.label === "Others")!;
-    // "Others" is kept by rank here, so it is a REAL model row — the
-    // folded tail merges into it by label, and the synthetic flag must
-    // stay false (a mutation dropping the kept guard flips this).
-    expect(bucket.others).toBe(false);
-    expect(bucket.value).toBe(65);
+    const row = layout.legend.find((candidate) => candidate.label === "Others")!;
+    // The fold bucket merges into the real kept model by label in the
+    // CHART; the legend reports the model's own traffic (50), not the
+    // merged bucket sum.
+    expect(row.value).toBe(50);
+    expect(row.percent).toBeCloseTo((50 / 95) * 100, 5);
+    const node = layout.nodes.find(
+      (candidate) => candidate.column === 2 && candidate.fullLabel === "Others",
+    )!;
+    expect(node.value).toBe(65);
     expect(layout.total).toBe(95);
   });
 
@@ -339,6 +404,112 @@ describe("usageFlowLayout", () => {
     expect(layout.legend.map((row) => row.label)).toEqual(["registered", "unregistered"]);
     expect(layout.legend[1].color).toBe(USAGE_FLOW_PALETTE[1]);
     expect(layout.legend[1].idle).toBe(false);
+  });
+
+  it("draws the exact slot thickness — the path's cap edges carry it", () => {
+    const rows = [
+      { source: "huge", middle: "up", target: "m1", value: 9_800_000 },
+      ...Array.from({ length: 9 }, (_, i) => ({
+        source: `tiny-${i}`,
+        middle: "up",
+        target: "m1",
+        value: 2_000,
+      })),
+    ];
+    const layout = usageFlowLayout(rows, { height: 420 });
+    let thin = 0;
+    for (const link of layout.links) {
+      const points = pathPoints(link.path);
+      for (const x of new Set(points.map((point) => point.x))) {
+        const ys = points.filter((point) => point.x === x).map((point) => point.y);
+        if (ys.length !== 2) continue;
+        expect(
+          Math.abs(ys[0] - ys[1]),
+          `drawn cap thickness of ${link.key}`,
+        ).toBeCloseTo(link.thickness, 1);
+      }
+      if (link.thickness < 0.5) thin += 1;
+    }
+    // The dataset must actually exercise sub-unit slots: a draw floor
+    // (the round-2 defect) only shows up on thin ribbons.
+    expect(thin).toBeGreaterThan(0);
+  });
+
+  it("keeps a floored node's multi-link slots contiguous and scaled", () => {
+    const rows = [
+      { source: "huge", middle: "up", target: "m1", value: 9_800_000 },
+      { source: "tiny", middle: "up-a", target: "m1", value: 1_000 },
+      { source: "tiny", middle: "up-b", target: "m1", value: 1_000 },
+    ];
+    const layout = usageFlowLayout(rows, { height: 420 });
+    const tiny = layout.nodes.find(
+      (node) => node.fullLabel === "tiny" && node.column === 0,
+    )!;
+    expect(tiny.height).toBe(2); // floored bar
+    const scale =
+      layout.links.find((link) => link.value === 9_800_000)!.thickness / 9_800_000;
+    const outgoing = layout.links
+      .filter((link) => link.sourceKey === tiny.key)
+      .sort((a, b) => a.startY - b.startY);
+    expect(outgoing).toHaveLength(2);
+    expect(outgoing[0].startY).toBeCloseTo(tiny.y, 2);
+    expect(outgoing[0].startY + outgoing[0].thickness).toBeCloseTo(
+      outgoing[1].startY,
+      2,
+    );
+    expect(outgoing[1].startY).toBeCloseTo(tiny.y + 1_000 * scale, 2);
+    expect(outgoing[1].startY + outgoing[1].thickness).toBeCloseTo(
+      tiny.y + tiny.value * scale,
+      2,
+    );
+  });
+
+  it("falls back to its defaults for non-finite frame/truncation options", () => {
+    const layout = usageFlowLayout(
+      [{ source: "s".repeat(60), middle: "up", target: "m", value: 1 }],
+      {
+        width: Number.NaN,
+        height: Number.NaN,
+        maxNodes: Number.NaN,
+        labelMaxChars: Number.NaN,
+      },
+    );
+    expect(layout.width).toBe(960);
+    expect(layout.height).toBe(420);
+    for (const node of layout.nodes) {
+      expect(Number.isFinite(node.x)).toBe(true);
+      expect(Number.isFinite(node.y)).toBe(true);
+      expect(Number.isFinite(node.height)).toBe(true);
+    }
+    // Truncation is NOT silently disabled by a NaN budget.
+    const source = layout.nodes.find((node) => node.column === 0)!;
+    expect(source.label.endsWith("…")).toBe(true);
+  });
+
+  it("offsets unregistered model slots by the ASSIGNED roster slots", () => {
+    const layout = usageFlowLayout(
+      [
+        { source: "k", middle: "up", target: "a", value: 3 },
+        { source: "k", middle: "up", target: "b", value: 2 },
+      ],
+      { models: [{ label: "a" }, { label: "a" }], colors: ["c0", "c1", "c2"] },
+    );
+    const b = layout.legend.find((row) => row.label === "b")!;
+    // One DISTINCT roster label, so "b" takes the slot after it (c1) —
+    // not the slot after the duplicate-inflated array length (c2).
+    expect(b.color).toBe("c1");
+  });
+
+  it("ignores malformed roster entries instead of throwing", () => {
+    const layout = usageFlowLayout(
+      [{ source: "k", middle: "up", target: "m", value: 1 }],
+      { models: [null as never, { label: "" }, { label: "m" }] },
+    );
+    expect(layout.legend.map((row) => row.label)).toEqual(["m"]);
+    for (const row of layout.legend) {
+      expect(typeof row.label).toBe("string");
+      expect(row.label).not.toBe("undefined");
+    }
   });
 
   it("honours explicit roster colours and a custom palette", () => {

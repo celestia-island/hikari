@@ -20,6 +20,12 @@
     width: 100%;
     height: auto;
     overflow: visible;
+    /* The chart's coordinate system is LTR: label anchors are
+       direction-relative in SVG, so an RTL host would otherwise flip
+       start/end and paint the first column's label across its own bar
+       (and the last column's past the frame). The axis is LTR by
+       construction; label TEXT still renders with its own bidi. */
+    direction: ltr;
   }
 
   // Ribbons read as "flow into the target": translucent so stacked paths
@@ -78,10 +84,6 @@
   // A registered model with no measured usage keeps its slot but recedes.
   &__legend-row--idle {
     opacity: 0.45;
-  }
-
-  &__legend-row--others &__legend-label {
-    font-style: italic;
   }
 
   &__legend-swatch {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import HkUsageFlow from "./HkUsageFlow";
 
@@ -107,6 +107,8 @@ describe("HkUsageFlow", () => {
     expect(el.querySelector(".hk-usage-flow--empty")).toBeTruthy();
     expect(el.querySelector(".hk-usage-flow__empty")?.textContent).toBe("暂无用量");
     expect(el.querySelector(".hk-usage-flow__chart")).toBeNull();
+    // No roster passed: no legend either.
+    expect(el.querySelector(".hk-usage-flow__legend")).toBeNull();
   });
 
   it("summarises the legend for assistive tech, with an explicit override", () => {
@@ -118,6 +120,49 @@ describe("HkUsageFlow", () => {
     expect(
       overridden.querySelector(".hk-usage-flow__chart")?.getAttribute("aria-label"),
     ).toBe("模型用量分布");
+  });
+
+  it("still lists the registered roster when nothing measured", () => {
+    const el = mount(
+      <HkUsageFlow
+        rows={[]}
+        emptyText="No usage"
+        models={[{ label: "model-x" }, { label: "model-idle" }]}
+      />,
+    );
+    expect(el.querySelector(".hk-usage-flow__empty")?.textContent).toBe("No usage");
+    const rows = el.querySelectorAll(".hk-usage-flow__legend-row");
+    expect(rows).toHaveLength(2);
+    expect(rows[0].classList.contains("hk-usage-flow__legend-row--idle")).toBe(true);
+    expect(rows[0].textContent).toContain("0%");
+  });
+
+  it("pins its frame to the width/height props (the viewBox)", () => {
+    const el = mount(<HkUsageFlow rows={ROWS} width={800} height={360} />);
+    expect(el.querySelector(".hk-usage-flow__chart")?.getAttribute("viewBox")).toBe(
+      "0 0 800 360",
+    );
+  });
+
+  it("re-renders its geometry when the host swaps the rows", async () => {
+    const rows = ref(ROWS);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({ render: () => h(HkUsageFlow, { rows: rows.value }) });
+    app.mount(container);
+    mounts.push({ app, container });
+    expect(container.querySelectorAll(".hk-usage-flow__node")).toHaveLength(6);
+    rows.value = [{ source: "x", middle: "y", target: "z", value: 1 }];
+    await nextTick();
+    expect(container.querySelectorAll(".hk-usage-flow__node")).toHaveLength(3);
+  });
+
+  it("leaves the per-bar accessible name to the svg (no dead aria-labels)", () => {
+    const el = mount(<HkUsageFlow rows={ROWS} />);
+    const bar = el.querySelector(".hk-usage-flow__bar");
+    expect(bar?.getAttribute("aria-label")).toBeNull();
+    expect(bar?.getAttribute("data-hint")).toBeTruthy();
+    expect(el.querySelector(".hk-usage-flow__chart")?.getAttribute("role")).toBe("img");
   });
 
   it("can hide the legend without dropping the chart", () => {

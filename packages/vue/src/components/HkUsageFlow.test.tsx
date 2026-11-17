@@ -1,4 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { createApp, h, nextTick, ref } from "vue";
 
 import HkUsageFlow from "./HkUsageFlow";
@@ -202,5 +206,17 @@ describe("HkUsageFlow", () => {
     ].map((node) => node.getAttribute("data-hint"));
     expect(hints.every((hint) => typeof hint === "string" && hint.length > 0)).toBe(true);
     expect(hints.some((hint) => hint?.includes("caller-a → up-1"))).toBe(true);
+  });
+});
+
+describe("HkUsageFlow sheet contracts", () => {
+  /** Source-scan pin for the RTL fix: SVG `text-anchor` start/end resolve
+   *  against the inline base direction, so the chart MUST declare an LTR
+   *  base — deleting the declaration would flip the labels in an RTL host
+   *  and no unit test would notice. */
+  it("keeps the chart's inline base direction LTR", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const sheet = readFileSync(resolve(here, "HkUsageFlow.scss"), "utf8");
+    expect(sheet).toMatch(/&__chart\s*\{[^}]*direction:\s*ltr;/s);
   });
 });

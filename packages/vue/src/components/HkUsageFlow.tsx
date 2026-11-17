@@ -118,10 +118,15 @@ export default defineComponent({
     const nodeHint = (node: { fullLabel: string; value: number }): string =>
       `${node.fullLabel} · ${format(node.value)}`;
 
+    /** One keyed lookup per render — not two linear scans per link. */
+    const nodeByKey = computed(() => {
+      const map = new Map<string, { fullLabel: string }>();
+      for (const node of layout.value.nodes) map.set(node.key, node);
+      return map;
+    });
     const linkHint = (link: { sourceKey: string; targetKey: string; value: number }): string => {
-      const nodes = layout.value.nodes;
-      const from = nodes.find((n) => n.key === link.sourceKey);
-      const to = nodes.find((n) => n.key === link.targetKey);
+      const from = nodeByKey.value.get(link.sourceKey);
+      const to = nodeByKey.value.get(link.targetKey);
       return `${from?.fullLabel ?? "?"} → ${to?.fullLabel ?? "?"} · ${format(link.value)}`;
     };
 
@@ -141,7 +146,11 @@ export default defineComponent({
         // when the host supplied one, so "all registered models" is still
         // answerable (every row reads 0 / idle).
         return (
-          <div class="hk-usage-flow hk-usage-flow--empty">
+          <div
+            class="hk-usage-flow hk-usage-flow--empty"
+            role="status"
+            aria-label={props.ariaLabel ?? undefined}
+          >
             <div class="hk-usage-flow__empty">{props.emptyText}</div>
             {props.showLegend && model.legend.length > 0 ? (
               <ul class="hk-usage-flow__legend">
@@ -149,6 +158,7 @@ export default defineComponent({
                   <li
                     key={row.label}
                     class={["hk-usage-flow__legend-row", { "hk-usage-flow__legend-row--idle": row.idle }]}
+                    data-hint={`${row.label} · ${format(row.value)} · ${formatFlowPercent(row.percent)}`}
                   >
                     <span
                       class="hk-usage-flow__legend-swatch"

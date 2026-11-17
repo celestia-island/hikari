@@ -841,6 +841,7 @@ export { default as HUsageFlow } from "./components/HkUsageFlow";
 export {
   usageFlowLayout,
   truncateFlowLabel,
+  flowLabelVisible,
   formatFlowPercent,
   USAGE_FLOW_PALETTE,
 } from "./components/usageFlowLayout";

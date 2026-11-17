@@ -130,9 +130,10 @@ export interface HkUsageFlowLayoutOptions {
   width?: number;
   height?: number;
   /** Per-column cap; beyond it the tail collapses into `othersLabel`.
-   *  Clamped to ≥ 2 AND to what the frame can stack (a cap that would not
-   *  fit silently shrinks rather than collapsing every magnitude into an
-   *  invisible column). `0` / absent / non-finite = "as many as fit". */
+   *  Clamped to ≥ 2 AND to what the frame can stack WITH PROPORTIONAL
+   *  bars (each node also reserves a `MIN_PROPORTIONAL_HEIGHT` band), so
+   *  an oversized cap silently shrinks instead of painting every bar at
+   *  the visibility floor. `0` / absent / non-finite = "as many as fit". */
   maxNodes?: number;
   othersLabel?: string;
   /** The complete registered roster. Roster order fixes the model colours
@@ -179,6 +180,32 @@ export const USAGE_FLOW_PALETTE: readonly string[] = [
   "color-mix(in srgb, rgb(var(--color-secondary, 81 154 115)) 65%, rgb(var(--color-primary, 122 162 247)))",
   "color-mix(in srgb, rgb(var(--color-accent, 247 181 0)) 65%, rgb(var(--color-error, 247 118 142)))",
 ];
+
+/** The roster-only legend an empty face shows: every registered model at
+ *  0 / idle, in roster order with the assigned colour slot. */
+function idleRosterRows(
+  roster: readonly HkUsageFlowRosterEntry[],
+  palette: readonly string[],
+): HkUsageFlowLegendRow[] {
+  const rows: HkUsageFlowLegendRow[] = [];
+  const seen = new Set<string>();
+  for (const entry of roster) {
+    if (!entry || typeof entry.label !== "string" || entry.label === "") continue;
+    if (seen.has(entry.label)) continue;
+    seen.add(entry.label);
+    const slot = seen.size - 1;
+    const explicit =
+      typeof entry.color === "string" && entry.color.trim() !== "" ? entry.color : null;
+    rows.push({
+      label: entry.label,
+      value: 0,
+      percent: 0,
+      color: explicit ?? palette[slot % palette.length],
+      idle: true,
+    });
+  }
+  return rows;
+}
 
 /** Truncate a label to `maxChars` character units (CJK counts 2), adding an
  *  ellipsis. The full label always rides the node's `fullLabel`. */
@@ -344,6 +371,24 @@ export function usageFlowLayout(
     }
   }
 
+  // A grand total that overflows means no column sum below it can be
+  // trusted either: the legend reads the PRE-fold column sums, and an
+  // Infinity there would print "∞" beside a normal-looking chart. Bail to
+  // the empty face before anything is derived. (All raw values are finite
+  // — the dedupe loop above dropped the overflowing ones.)
+  let rawTotal = 0;
+  for (const flow of raw.values()) rawTotal += flow.value;
+  if (!Number.isFinite(rawTotal)) {
+    return {
+      width,
+      height,
+      nodes: [],
+      links: [],
+      legend: idleRosterRows(roster, palette),
+      total: 0,
+      empty: true,
+    };
+  }
   const empty = raw.size === 0;
 
   // ── Per-column totals before collapsing. ──
@@ -359,10 +404,11 @@ export function usageFlowLayout(
   }
 
   // ── Collapse each column, then re-key the flows onto display labels.
-  //    The cap is clamped to what the frame can stack: each extra node
-  //    costs `MIN_NODE_HEIGHT` plus a `NODE_GAP`, and the usable band is
-  //    `height - 2 × PAD_Y` — a cap beyond that would leave `scale` at 0
-  //    (every bar at the floor) and paint below the viewBox. ──
+  //    The cap is clamped to what the frame can stack with PROPORTIONAL
+  //    bars: each extra node costs `MIN_NODE_HEIGHT` + `NODE_GAP` plus the
+  //    per-node proportional band (`MIN_PROPORTIONAL_HEIGHT`), inside
+  //    `height - 2 × PAD_Y`. The floor-only fit is the looser upper bound
+  //    kept for the degenerate small-frame case. ──
   const fitsWithFloors = Math.floor(
     (height - PAD_Y * 2 + NODE_GAP) / (MIN_NODE_HEIGHT + NODE_GAP),
   );
@@ -408,9 +454,18 @@ export function usageFlowLayout(
 
   // Belt-and-braces: if any merge slipped a non-finite amount through,
   // the whole layout is meaningless — an explicit empty face beats NaN
-  // geometry and invalid `d` attributes.
+  // geometry and invalid `d` attributes. A supplied roster still gets its
+  // (all-idle) table, exactly like the ordinary empty face.
   if (!Number.isFinite(total)) {
-    return { width, height, nodes: [], links: [], legend: [], total: 0, empty: true };
+    return {
+      width,
+      height,
+      nodes: [],
+      links: [],
+      legend: idleRosterRows(roster, palette),
+      total: 0,
+      empty: true,
+    };
   }
 
   const columns = nodeValues.map((values) => rankLabels(values));
@@ -433,7 +488,11 @@ export function usageFlowLayout(
     // hand two different models the same colour).
     const slot = rosterIndex.size;
     rosterIndex.set(label, slot);
-    modelColor.set(label, entry.color ?? palette[slot % palette.length]);
+    // A blank string is not an explicit colour: it would set an empty
+    // `background` and leave the swatch invisible.
+    const explicit =
+      typeof entry.color === "string" && entry.color.trim() !== "" ? entry.color : null;
+    modelColor.set(label, explicit ?? palette[slot % palette.length]);
   });
   // Unregistered models take the slots AFTER the roster. Colour
   // assignment is pre-fold (ranked by the real totals), so a model that
@@ -461,7 +520,13 @@ export function usageFlowLayout(
     1,
     height - PAD_Y * 2 - (maxCount - 1) * NODE_GAP - maxCount * MIN_NODE_HEIGHT,
   );
-  const scale = total > 0 && Number.isFinite(total) ? usable / total : 0;
+  // A finite-but-tiny window total (e.g. 1e-320) can overflow the RATIO
+  // even though both operands are finite: an Infinity scale would paint
+  // Infinity heights and an invalid `d`. Clamp it to zero instead — the
+  // visibility floor still shows every bar; only the magnitudes vanish,
+  // which is honest for a window whose total is numerically degenerate.
+  const rawScale = total > 0 && Number.isFinite(total) ? usable / total : 0;
+  const scale = Number.isFinite(rawScale) && rawScale > 0 ? rawScale : 0;
 
   const xForColumn = (column: number): number => {
     if (column === 0) return PAD_X;

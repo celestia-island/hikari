@@ -22,6 +22,7 @@ describe("the public barrel", () => {
     expect(typeof barrel.usageFlowLayout).toBe("function");
     expect(typeof barrel.truncateFlowLabel).toBe("function");
     expect(typeof barrel.formatFlowPercent).toBe("function");
+    expect(typeof barrel.flowLabelVisible).toBe("function");
     expect(Array.isArray(barrel.USAGE_FLOW_PALETTE)).toBe(true);
     expect(barrel.USAGE_FLOW_PALETTE.length).toBeGreaterThanOrEqual(8);
   });

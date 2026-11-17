@@ -197,19 +197,48 @@ describe("usageFlowLayout", () => {
     expect(layout.links).toHaveLength(0);
   });
 
-  it("drops a fold merge whose summed label value overflows", () => {
+  it("bails to the empty face when the window total would overflow a fold", () => {
+    // Three callers on one target with a 2-node cap WOULD fold two of them
+    // into one bucket whose sum overflows. The grand-total guard catches
+    // it before any merge runs, so the chart never silently drops traffic
+    // while the legend still sums to 300%.
     const layout = usageFlowLayout(
       [
         { source: "a", middle: "u", target: "m1", value: 1e308 },
-        { source: "b", middle: "u", target: "zzz", value: 1e308 },
+        { source: "b", middle: "u", target: "m1", value: 1e308 },
+        { source: "c", middle: "u", target: "m1", value: 1e308 },
       ],
-      // `othersLabel` deliberately equal to the kept label: the folded
-      // "zzz" merges onto "m1" and the summed value overflows.
-      { maxNodes: 2, othersLabel: "m1" },
+      { maxNodes: 2 },
     );
     expect(layout.empty).toBe(true);
-    expect(layout.nodes.every((node) => Number.isFinite(node.height))).toBe(true);
-    expect(layout.links.every((link) => !link.path.includes("NaN"))).toBe(true);
+    expect(layout.nodes).toHaveLength(0);
+    expect(layout.legend).toHaveLength(0);
+  });
+
+  it("keeps geometry finite when the total is tiny enough to overflow the scale", () => {
+    // NaN/Infinity guards on the VALUES are not enough: 1e-320 + 1e-320 is
+    // finite but `usable / total` overflows. The scale clamp keeps every
+    // coordinate finite (the bars sit on the visibility floor).
+    const layout = usageFlowLayout([
+      { source: "a", middle: "u", target: "m1", value: 1e-320 },
+      { source: "b", middle: "u", target: "m2", value: 1e-320 },
+    ]);
+    expect(layout.empty).toBe(false);
+    for (const node of layout.nodes) {
+      expect(Number.isFinite(node.y)).toBe(true);
+      expect(Number.isFinite(node.height)).toBe(true);
+    }
+    for (const link of layout.links) expect(link.path.includes("Infinity")).toBe(false);
+  });
+
+  it("orders unregistered models by their real totals, descending", () => {
+    const layout = usageFlowLayout([
+      { source: "k", middle: "up", target: "small", value: 10 },
+      { source: "k", middle: "up", target: "big", value: 30 },
+      { source: "k", middle: "up", target: "mid", value: 20 },
+    ]);
+    expect(layout.legend.map((row) => row.label)).toEqual(["big", "mid", "small"]);
+    expect(layout.legend.map((row) => row.value)).toEqual([30, 20, 10]);
   });
 
   it("keeps proportional bars at capacity (the cap is not just a fit check)", () => {

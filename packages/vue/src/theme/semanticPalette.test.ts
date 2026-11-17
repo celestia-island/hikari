@@ -375,16 +375,16 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
   });
 
-  it("the coincidence scan splits the near-white pair (byte snapshot)", () => {
-    // BYTE SNAPSHOT: sec 255,255,254 / acc 255,254,255 at the 1504
-    // resolution (both 255,255,255 at 376 or with the scan removed).
+  it("the coincidence scan's own effect (byte snapshot on the divergence shape)", () => {
+    // BYTE SNAPSHOT on the shape where the scan and the fallback
+    // DISAGREE (r26 delta): accent 2,0,0 with the scan, 1,0,0 without.
+    // This is the ONLY fixture class that pins the scan itself.
     const p = deriveSemanticPalette({
-      primary: rgb(174, 69, 34),
-      background: rgb(196, 7, 33),
-      surface: rgb(126, 118, 93),
+      primary: rgb(110, 251, 80),
+      background: rgb(100, 106, 212),
+      surface: rgb(101, 156, 44),
     });
-    expect(`${p.secondary.r},${p.secondary.g},${p.secondary.b}`).toBe("255,255,254");
-    expect(`${p.accent.r},${p.accent.g},${p.accent.b}`).toBe("255,254,255");
+    expect(`${p.accent.r},${p.accent.g},${p.accent.b}`).toBe("2,0,0");
   });
 
   it("the ACHROMATIC branch puts secondary at the band TOP (byte snapshot)", () => {

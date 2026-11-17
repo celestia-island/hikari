@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
+import { readFileSync } from "node:fs";
 import { compile } from "sass";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -448,25 +449,59 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     return layers;
   }
 
+  // FALSE REDS ARE THE INTENDED FAILURE MODE. These pins are source-level
+  // allowlists, so a legitimate edit can trip one — tinting a border
+  // (`border-inline-color`), adding a corner radius longhand, a gradient
+  // icon inside the item, moving the inset to a wider token, a second
+  // pseudo-element — INCLUDING one declared on the base or edge class,
+  // which paints on selected items too; removing the selected ring outright
+  // (`box-shadow: none`, at any specificity); and vendor-prefixed
+  // `box-shadow` aliases. Each fails LOUDLY and names the property/rule;
+  // the fix is to update this contract in the same commit as the design
+  // change, not to loosen the pin. A silent green is the failure this file
+  // exists to prevent. The shadow set is value-level and rule-agnostic: a
+  // scoped rule reusing one of the four canonical values exactly is allowed
+  // (it paints the same thing); any other text is red.
   const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
   const ITEM = ".hk-selection-grid-item";
   const SELECTED = ".hk-selection-grid-item[data-selected]";
 
-  /** Rules whose selector list names this class, in document order. A
-   *  source-level pin has to look at EVERY rule that can match the element,
+  /** Rules whose selector list can match an element carrying `token`
+   *  (`data-selected` here), in document order.
+   *
+   *  A source-level pin has to look at EVERY rule that can match the element,
    *  not just the one canonical spelling — otherwise a higher-specificity
-   *  descendant selector or a `::after` clone overrides the canonical rule
-   *  in the browser while this file stays green. */
+   *  descendant selector or a `::after` clone overrides the canonical rule in
+   *  the browser while this file stays green. Matching is therefore on the
+   *  ATTRIBUTE TOKEN, not the whole compound: `:is([data-selected])`,
+   *  `[data-selected="true"]`, `[data-selected] .child` and the plain form
+   *  all carry it, and all of them can restyle a selected item. */
+  function rulesTouching(token: string): CssRule[] {
+    // `i` + a lowercased subject: HTML attribute NAMES are ASCII
+    // case-insensitive, so `[Data-Selected]` styles the same element.
+    const needle = new RegExp(`\\[${token}(?![a-z-])`, "i");
+    return rules.filter((r) =>
+      r.selector.split(",").some((one) => needle.test(one.toLowerCase())),
+    );
+  }
+
+  /** Rules that name the component's item at all (any state). */
   function rulesNaming(needle: string): CssRule[] {
     return rules.filter((r) =>
       r.selector.split(",").some((one) => one.includes(needle)),
     );
   }
 
-  /** Normalized form of one compound selector: `:before` and `::before` are
-   *  the same pseudo-element in CSS, so they are compared as one. */
+  /** Normalized form of one compound selector: lowercased (pseudo-element
+   *  NAMES are ASCII case-insensitive in CSS) and with `:before` folded
+   *  into `::before` (the same pseudo-element). Both sides of a comparison
+   *  go through this, so the folding is consistent. */
   function normalized(selector: string): string {
-    return selector.replace(/\s+/g, " ").trim().replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
+    return selector
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
   }
 
   it("detaches the accent tab from the selected frame", () => {
@@ -496,9 +531,19 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     // Exactly ONE pseudo-element draws on a selected item. A second tab
     // (a `::after` clone, or the single-colon spelling, or a `:hover`
     // variant) would paint a competing bar the geometry pins never see.
-    const tabs = rulesNaming(".hk-selection-grid-item[data-selected]")
-      .filter((r) => /::?(before|after)\b/.test(r.selector))
-      .map((r) => normalized(r.selector));
+    // ANY pseudo-element rule that can touch an item counts — by CLASS
+    // spelling (base/edge variants) AND by attribute token (`:is()`,
+    // `[data-selected="true"]`, attribute-only descendants). The two
+    // matchers are UNIONED: five rounds each found a spelling one of them
+    // missed, never both.
+    const pseudo = /::?(before|after)\b/i;
+    const tabs = [
+      ...new Set(
+        [...rulesNaming(".hk-selection-grid-item"), ...rulesTouching("data-selected")]
+          .filter((r) => pseudo.test(r.selector))
+          .map((r) => normalized(r.selector)),
+      ),
+    ];
     expect(tabs).toEqual([normalized(TAB)]);
     // The tab's declaration set is closed: no extra `inset`/`margin`/
     // `translate`/`rotate` may move or resize it behind the pins' back.
@@ -529,19 +574,15 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     // selected state) is a design change, not this defect — the other pins
     // still hold the ring and the tab. Which four sides the browser really
     // paints was verified by pixel measurement during review (see the PR).
-    const borderProps = new Set(
-      rules
-        .flatMap((r) => r.declarations)
-        .map(([prop]) => prop)
-        .filter((prop) => /^border(-|$)/.test(prop)),
-    );
-    expect([...borderProps].sort()).toEqual([
-      "border",
-      "border-color",
-      "border-radius",
-      "border-start-start-radius",
-      "border-end-start-radius",
-    ].filter((prop) => borderProps.has(prop)).sort());
+    const borderProps = [
+      ...new Set(
+        rules
+          .flatMap((r) => r.declarations)
+          .map(([prop]) => prop)
+          .filter((prop) => /^border(-|$)/.test(prop)),
+      ),
+    ].sort();
+    expect(borderProps).toEqual(["border", "border-color", "border-radius"]);
     // The one width-bearing declaration is the item's shorthand, and the
     // selected state colours the border instead of resizing it.
     expect(computedFor(ITEM).get("border")).toMatch(/^1px solid /);
@@ -551,43 +592,131 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     );
   });
 
-  it("keeps the selected emphasis a single inset ring, and only there", () => {
-    // One inset ring, split with a depth-aware scanner so a legitimate single
-    // layer carrying `color-mix(...)` is not mistaken for two.
-    const layers = splitLayers(computedFor(SELECTED).get("box-shadow") ?? "");
-    expect(layers).toHaveLength(1);
-    expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
-    // EVERY shadow layer of EVERY rule that names the item is inspected, not
-    // just the base selected rule: the reported state is a HOVERED selected
-    // row, so a one-sided `inset 3px 0 0 3px` in `[data-selected]:hover`
-    // reproduces the lopsidedness with the base rule untouched. Allowed
-    // layers are exactly the two shapes the sheet really uses: the even 1px
-    // inset ring, and non-inset elevation shadows.
+  it("paints no image, no halo, and shadows no layout token, anywhere", () => {
+    // SHEET-WIDE VALUE SCAN (case-insensitive — CSS function names are
+    // ASCII case-insensitive, so `linear-Gradient(` is the same call). A
+    // leading slab can be rebuilt through channels a border/box-shadow
+    // whitelist never reads: a gradient via `background-image` OR via the
+    // `background` SHORTHAND, OR parked in a custom property and consumed
+    // through `var()`; a halo through `filter`/`backdrop-filter`
+    // `drop-shadow`. None of those may appear in THIS sheet — a gradient
+    // parked in the token sheet and consumed through `var()` is outside
+    // this pin's reach (the token file is prose-scanned for the spacing
+    // token only).
     const offenders: string[] = [];
-    for (const rule of rulesNaming(".hk-selection-grid-item")) {
+    for (const rule of rules) {
       for (const [prop, value] of rule.declarations) {
-        if (prop !== "box-shadow") continue;
-        for (const layer of splitLayers(value)) {
-          const inset = /^inset\b/.test(layer);
-          if (inset && !/^inset 0 0 0 1px /.test(layer)) {
-            offenders.push(`${rule.selector} → ${layer}`);
-          }
+        if (/(gradient|url|image-set)\(/i.test(value)) {
+          offenders.push(`${rule.selector} → ${prop}: ${value}`);
+        } else if (/drop-shadow\(/i.test(value)) {
+          offenders.push(`${rule.selector} → ${prop}: ${value}`);
+        } else if (/^--(space|radius)-/.test(prop)) {
+          offenders.push(`${rule.selector} declares ${prop} (tokens live in scale.scss)`);
         }
       }
     }
     expect(offenders).toEqual([]);
-    // The selected state and its `:hover` sibling are the only two rules that
-    // may carry an inset ring at all.
-    const ringed = rulesNaming(".hk-selection-grid-item")
-      .filter((r) =>
-        r.declarations.some(
-          ([prop, value]) => prop === "box-shadow" && /inset\b/.test(value),
-        ),
-      )
-      .map((r) => normalized(r.selector))
-      .sort();
-    expect(ringed).toEqual(
-      [normalized(SELECTED), normalized(`${SELECTED}:hover`)].sort(),
-    );
   });
+
+  it("keeps the upstream spacing token wide enough for a visible gap", () => {
+    // SCOPE, stated so it is not read as more than it is: this pins the
+    // CANONICAL UPSTREAM token, not the rendered gap. The sheet may not
+    // shadow the token (pinned above), so for a host that resolves the
+    // sheet's own scale the two are the same fact; a consumer that
+    // redefines `--space-4` on an ANCESTOR at runtime is outside this
+    // file's reach and was measured in the review instead (the tab sits 5px
+    // from the border box at the shipped 0.25rem).
+    //
+    // EVERY declaration of the token must clear the bar — a media-scoped
+    // retune to 2px is as much a hairline gap as a base one, so "last one
+    // wins" would be exactly the cascade-blindness this file exists to
+    // prevent. The gap is `token − 1px` (the tab starts inside the 1px
+    // border), so 2px leaves a 1px hairline: require 3px.
+    const scale = readFileSync(resolve(here, "../scale.scss"), "utf8");
+    // Reading the UPSTREAM sheet is sufficient because the vendored theme
+    // copy is pinned byte-identical to it (`src/styles/vendoredSync.test.ts`)
+    // and the Rust mirror drift-guard keeps the crates copy in step.
+    // Strip block comments AND line comments (a commented mention must not
+    // be what this reads), then match case-insensitively — matching the
+    // component-token ban, which is case-insensitive too.
+    const source = scale
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .replace(/(^|\s)\/\/[^\n]*/g, "$1")
+      .toLowerCase();
+    const declared = [...source.matchAll(/--space-4\s*:\s*([^;]+);/g)].map((m) =>
+      m[1].trim(),
+    );
+    expect(declared.length, "--space-4 must be declared upstream").toBeGreaterThan(0);
+    for (const raw of declared) {
+      const rem = raw.match(/^(-?[\d.]+)rem$/);
+      const px = raw.match(/^(-?[\d.]+)px$/);
+      expect(
+        rem !== null || px !== null,
+        `--space-4 must be a plain rem/px length to be checkable, got "${raw}"`,
+      ).toBe(true);
+      const resolved = rem ? Number.parseFloat(rem[1]) * 16 : Number.parseFloat(px![1]);
+      expect(
+        resolved,
+        `--space-4 resolves to ${resolved}px (gap ${resolved - 1}px)`,
+      ).toBeGreaterThanOrEqual(3);
+    }
+    // The pill's radius token must exist as well (the tab falls back to a
+    // square cap without it, which reads as a different shape).
+    expect(source).toMatch(/--radius-full:\s*[^;]+;/);
+  });
+
+  it("keeps the shadow vocabulary closed to the four canonical declarations", () => {
+    // THE FINAL FORM of this pin, after four rounds of value-judging leaks:
+    // instead of deciding what a shadow layer MEANS (blur? spread? var()
+    // fallback? which colour spelling?), the sheet's shadow vocabulary is a
+    // CLOSED SET. These four declarations — compared as normalized TEXT —
+    // are the only box-shadow values allowed to exist anywhere in the sheet:
+    //
+    //   item:hover          0 2px 12px color-mix(...)   (elevation)
+    //   item:active         0 1px 4px  color-mix(...)   (pressed)
+    //   item[data-selected] inset 0 0 0 1px var(…)      (the ring)
+    //   …[data-selected]:hover  ring + the same elevation
+    //
+    // Everything else is a loud red that means "update this contract in the
+    // same commit as the design change": a scoped variant, a var()-composed
+    // layer, a hard bar (whether its colour is spelled `#hex`, `rgb(...)`
+    // or `var()`), a unit variant (`0.0625rem`), `none`, a second layer —
+    // ALL of them change the text, so ALL of them fail. Which sides the
+    // browser really paints was pixel-measured in review (see the PR); this
+    // pin exists so the vocabulary cannot drift silently.
+    // LITERALS, not derived from the sheet: an allowlist read back from the
+    // sheet it polices is self-fulfilling (a mutation to a canonical rule
+    // would redefine the allowlist and pass). These four strings are the
+    // merged single-line forms of the sheet's declarations; whitespace and
+    // case are normalized on both sides, nothing else is.
+    const canonical = new Set(
+      [
+        "0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 10%, transparent)",
+        "0 1px 4px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 6%, transparent)",
+        "inset 0 0 0 1px var(--hi-color-primary, #7aa2f7)",
+        "inset 0 0 0 1px var(--hi-color-primary, #7aa2f7), 0 2px 12px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 14%, transparent)",
+      ].map((v) => v.replace(/\s+/g, " ").trim().toLowerCase()),
+    );
+    expect(canonical.size).toBe(4);
+    const foreign: string[] = [];
+    for (const rule of rules) {
+      for (const [prop, value] of rule.declarations) {
+        // `-webkit-box-shadow` is the same property to the engine (and the
+        // repo has precedent for the spelling) — alias and bare form are
+        // both policed.
+        if (!/(^|-)box-shadow$/.test(prop)) continue;
+        const norm = value.replace(/\s+/g, " ").trim().toLowerCase();
+        if (!canonical.has(norm)) foreign.push(`${rule.selector} → ${prop}: ${value}`);
+      }
+    }
+    expect(foreign).toEqual([]);
+    // The selected state's own shadow carries exactly ONE inset layer — the
+    // ring (its `:hover` sibling adds the documented elevation on top).
+    const insetLayers = splitLayers(computedFor(SELECTED).get("box-shadow") ?? "").filter(
+      (l) => /^inset\b/i.test(l),
+    );
+    expect(insetLayers).toHaveLength(1);
+    expect(insetLayers[0]).toMatch(/^inset 0 0 0 1px/i);
+  });
+
 });

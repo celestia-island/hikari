@@ -274,7 +274,7 @@ fn status_bar_probe_style(connecting: bool) -> String {
 
 /// Vue's `latencyColor`: `< 30ms` good, `< 100ms` fair, else poor; `None` is
 /// the muted ink.
-fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
+pub fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
     match ms {
         None => "var(--color-muted)",
         Some(ms) if ms < 30.0 => "var(--hi-success-fg, rgb(var(--color-success)))",

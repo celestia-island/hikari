@@ -766,6 +766,7 @@ mod interaction_alias_tests {
             "--color-background:",
             "--color-text:",
             "--color-muted:",
+            "--color-text-secondary:",
             "--color-border:",
             "--color-primary:",
         ] {
@@ -794,6 +795,7 @@ mod interaction_alias_tests {
             "--color-info:",
             "--color-text:",
             "--color-muted:",
+            "--color-text-secondary:",
             "--color-border:",
             "--color-primary:",
         ] {

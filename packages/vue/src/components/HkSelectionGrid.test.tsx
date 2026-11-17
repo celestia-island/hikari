@@ -492,10 +492,16 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     );
   }
 
-  /** Normalized form of one compound selector: `:before` and `::before` are
-   *  the same pseudo-element in CSS, so they are compared as one. */
+  /** Normalized form of one compound selector: lowercased (pseudo-element
+   *  NAMES are ASCII case-insensitive in CSS) and with `:before` folded
+   *  into `::before` (the same pseudo-element). Both sides of a comparison
+   *  go through this, so the folding is consistent. */
   function normalized(selector: string): string {
-    return selector.replace(/\s+/g, " ").trim().replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
+    return selector
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
   }
 
   it("detaches the accent tab from the selected frame", () => {
@@ -525,13 +531,19 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     // Exactly ONE pseudo-element draws on a selected item. A second tab
     // (a `::after` clone, or the single-colon spelling, or a `:hover`
     // variant) would paint a competing bar the geometry pins never see.
-    // ANY pseudo-element rule that can touch an item counts — including one
-    // declared on the base or edge CLASS, without `data-selected`: it still
-    // paints on selected items. (This is why the scan uses rulesNaming, not
-    // rulesTouching.)
-    const tabs = rulesNaming(".hk-selection-grid-item")
-      .filter((r) => /::?(before|after)\b/.test(r.selector))
-      .map((r) => normalized(r.selector));
+    // ANY pseudo-element rule that can touch an item counts — by CLASS
+    // spelling (base/edge variants) AND by attribute token (`:is()`,
+    // `[data-selected="true"]`, attribute-only descendants). The two
+    // matchers are UNIONED: five rounds each found a spelling one of them
+    // missed, never both.
+    const pseudo = /::?(before|after)\b/i;
+    const tabs = [
+      ...new Set(
+        [...rulesNaming(".hk-selection-grid-item"), ...rulesTouching("data-selected")]
+          .filter((r) => pseudo.test(r.selector))
+          .map((r) => normalized(r.selector)),
+      ),
+    ];
     expect(tabs).toEqual([normalized(TAB)]);
     // The tab's declaration set is closed: no extra `inset`/`margin`/
     // `translate`/`rotate` may move or resize it behind the pins' back.

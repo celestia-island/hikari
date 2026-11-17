@@ -428,9 +428,46 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     return map;
   }
 
+  /** Split a comma-separated CSS value into layers, ignoring commas nested
+   *  inside a function (`color-mix(in srgb, …)`, `var(--x, …)`). */
+  function splitLayers(value: string): string[] {
+    const layers: string[] = [];
+    let current = "";
+    let depth = 0;
+    for (const ch of value) {
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth -= 1;
+      if (ch === "," && depth === 0) {
+        layers.push(current.trim());
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    if (current.trim()) layers.push(current.trim());
+    return layers;
+  }
+
   const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
   const ITEM = ".hk-selection-grid-item";
   const SELECTED = ".hk-selection-grid-item[data-selected]";
+
+  /** Rules whose selector list names this class, in document order. A
+   *  source-level pin has to look at EVERY rule that can match the element,
+   *  not just the one canonical spelling — otherwise a higher-specificity
+   *  descendant selector or a `::after` clone overrides the canonical rule
+   *  in the browser while this file stays green. */
+  function rulesNaming(needle: string): CssRule[] {
+    return rules.filter((r) =>
+      r.selector.split(",").some((one) => one.includes(needle)),
+    );
+  }
+
+  /** Normalized form of one compound selector: `:before` and `::before` are
+   *  the same pseudo-element in CSS, so they are compared as one. */
+  function normalized(selector: string): string {
+    return selector.replace(/\s+/g, " ").trim().replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
+  }
 
   it("detaches the accent tab from the selected frame", () => {
     // Flush (`0`), the bar merged with the 1px border and the 1px inset ring
@@ -443,7 +480,7 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     expect(tab.get("bottom")).toBe("var(--space-4, 0.25rem)");
   });
 
-  it("draws the tab 3px wide with pill ends", () => {
+  it("draws exactly one 3px pill, and it is the only tab on the item", () => {
     // The width IS the clearance budget: the leading padding is 12px (10px
     // dense), so a wider bar eats into the label and a zero width renders
     // the feature away. `width` is read as a PROPERTY, so `max-width: 3px`
@@ -451,47 +488,90 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     const tab = computedFor(TAB);
     expect(tab.get("width")).toBe("3px");
     expect(tab.get("border-radius")).toBe("var(--radius-full, 9999px)");
+    // …and it has to be DRAWN: a transparent or display-less tab renders
+    // nothing while every geometry value above still reads correctly.
+    expect(tab.get("content")).toBe('""');
+    expect(tab.get("display")).toBeUndefined();
+    expect(tab.get("background")).toBe("var(--hi-color-primary, #7aa2f7)");
+    // Exactly ONE pseudo-element draws on a selected item. A second tab
+    // (a `::after` clone, or the single-colon spelling, or a `:hover`
+    // variant) would paint a competing bar the geometry pins never see.
+    const tabs = rulesNaming(".hk-selection-grid-item[data-selected]")
+      .filter((r) => /::?(before|after)\b/.test(r.selector))
+      .map((r) => normalized(r.selector));
+    expect(tabs).toEqual([normalized(TAB)]);
+    // The tab's declaration set is closed: no extra `inset`/`margin`/
+    // `translate`/`rotate` may move or resize it behind the pins' back.
+    expect(new Set(Object.keys(Object.fromEntries(declarationsFor(TAB))))).toEqual(
+      new Set([
+        "content",
+        "position",
+        "inset-inline-start",
+        "top",
+        "bottom",
+        "width",
+        "border-radius",
+        "background",
+      ]),
+    );
   });
 
-  it("keeps the selected frame a uniform ring, never thicker on one side", () => {
-    // The ring is the frame's ONLY emphasis; the tab is the accent. The
-    // reported lopsidedness came from a SINGLE side getting thicker, so it
-    // is pinned from three directions:
-    //  (a) no declaration anywhere in the sheet targets one border side —
-    //      shorthand or `-width`, logical or physical, all of them;
-    const sideTargeted = rules
-      .flatMap((r) => r.declarations)
-      .map(([prop]) => prop)
-      .filter((prop) => /^border(-(inline|block))?-(start|end|left|right|top|bottom)(-|$)/.test(prop));
-    expect(sideTargeted).toEqual([]);
-    //  (b) the frame's thickness is the one shorthand, and any explicit
-    //      `border-width` (item or state) is UNIFORM across the four sides;
+  it("declares no per-side border geometry anywhere in the sheet", () => {
+    // THIS IS A SOURCE-LEVEL PIN, not a rendering proof, and its scope is
+    // "no single SIDE may get thicker". It keeps the frame's thickness coming
+    // from ONE uniform `border` shorthand plus the selected ring and rejects
+    // every per-side border property by NAME — a whitelist, because
+    // enumerating the shapes a side could be thickened through (`-width`, the
+    // axis shorthands, `border-left`, …) misses one every round.
+    //
+    // Out of scope on purpose: a UNIFORM thickening of the whole frame
+    // (`outline: 2px solid` with a negative offset, or a 3px `border` on the
+    // selected state) is a design change, not this defect — the other pins
+    // still hold the ring and the tab. Which four sides the browser really
+    // paints was verified by pixel measurement during review (see the PR).
+    const borderProps = new Set(
+      rules
+        .flatMap((r) => r.declarations)
+        .map(([prop]) => prop)
+        .filter((prop) => /^border(-|$)/.test(prop)),
+    );
+    expect([...borderProps].sort()).toEqual([
+      "border",
+      "border-color",
+      "border-radius",
+      "border-start-start-radius",
+      "border-end-start-radius",
+    ].filter((prop) => borderProps.has(prop)).sort());
+    // The one width-bearing declaration is the item's shorthand, and the
+    // selected state colours the border instead of resizing it.
     expect(computedFor(ITEM).get("border")).toMatch(/^1px solid /);
-    for (const rule of rules) {
-      for (const [prop, value] of rule.declarations) {
-        if (prop !== "border-width") continue;
-        const sides = value.split(/\s+/);
-        expect(new Set(sides).size, `uniform border-width in ${rule.selector}: ${value}`).toBe(1);
-      }
-    }
-    //  (c) the selected state's emphasis is ONE inset ring, never a layer
-    //      list that could add a second shadow on one side.
-    const shadow = computedFor(SELECTED).get("box-shadow") ?? "";
-    const layers: string[] = [];
-    let current = "";
-    let depth = 0;
-    for (const ch of shadow) {
-      if (ch === "(") depth += 1;
-      if (ch === ")") depth -= 1;
-      if (ch === "," && depth === 0) {
-        layers.push(current.trim());
-        current = "";
-        continue;
-      }
-      current += ch;
-    }
-    if (current.trim()) layers.push(current.trim());
+    expect(computedFor(SELECTED).get("border")).toBeUndefined();
+    expect(computedFor(SELECTED).get("border-color")).toBe(
+      "var(--hi-color-primary, #7aa2f7)",
+    );
+  });
+
+  it("keeps the selected emphasis a single inset ring, and only there", () => {
+    // One inset ring, split with a depth-aware scanner so a legitimate single
+    // layer carrying `color-mix(...)` is not mistaken for two.
+    const layers = splitLayers(computedFor(SELECTED).get("box-shadow") ?? "");
     expect(layers).toHaveLength(1);
     expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
+    // No OTHER rule that can match the item may add an inset shadow: a
+    // one-sided `inset 3px 0 0 3px` under a higher-specificity selector
+    // reinstates the reported lopsidedness in the browser. The selected
+    // rule and its `:hover` sibling are the only two allowed places.
+    const shadowed = rulesNaming(".hk-selection-grid-item")
+      .filter((r) => r.declarations.some(([prop]) => prop === "box-shadow"))
+      .map((r) => normalized(r.selector))
+      .sort();
+    expect(shadowed).toEqual(
+      [
+        normalized(`${ITEM}:hover`),
+        normalized(`${ITEM}:active`),
+        normalized(SELECTED),
+        normalized(`${SELECTED}:hover`),
+      ].sort(),
+    );
   });
 });

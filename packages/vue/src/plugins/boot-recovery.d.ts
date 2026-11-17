@@ -211,6 +211,12 @@ export interface BootRecoveryCopyOptions {
    * the heal-only mode, which never paints a panel). Omit it (or pass
    * `false`) and the script is byte-identical to the panel without the
    * capture; an explicit `true` turns it on with the English default labels.
+   * The freeze rides `__appReady` (see {@link BootRecoveryGlobalsOptions}): a
+   * host that ALSO sets `globals.ready: false` keeps recording for the whole
+   * document's lifetime — the ring stays bounded, but post-mount console
+   * noise can displace the boot evidence, so only do that deliberately.
+   * Present-but-blank `copy` / `copied` / `copyFailed` values fail at config
+   * time (the same rule as a blank `rawDetailsLabel`).
    */
   errorContext?:
     | {

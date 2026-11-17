@@ -332,11 +332,12 @@ describe("byte-compat", () => {
   it("keeps every off spelling on the bytes it already had", () => {
     // The first two shapes are the golden default; the third is the pane-only
     // shape, which is NOT the golden default (it embeds the details sheet,
-    // since this build also carrying the escaped-JSON credential mask --
-    // master's pane-only shape was 922e8c74…, this one is 76c1d8ad…), and
-    // those are the bytes `false` must keep. The runtime also honours a bare
-    // null as "off" (the typings, like browserBlock's, expose only the
-    // boolean spelling).
+    // and this build's pane shapes also carry the escaped-JSON credential
+    // mask -- master's pane-only shape was 922e8c74…, this build's differs)
+    // -- so its `false` spelling must equal the pane-only bytes themselves,
+    // asserted by self-consistency rather than a number that drifts with
+    // every mask widening. The runtime also honours a bare null as "off"
+    // (the typings, like browserBlock's, expose only the boolean spelling).
     expect(
       sha256(bootRecoveryScript({ copy: { errorContext: false } })),
     ).toBe(GOLDEN_DEFAULT_SHA256);
@@ -349,7 +350,7 @@ describe("byte-compat", () => {
           copy: { rawDetailsLabel: "Raw", errorContext: false },
         }),
       ),
-    ).toBe("76c1d8ada1501d366a54e39abda2d9ea9e4454ac0414a6aa801394ba81048255");
+    ).toBe(sha256(bootRecoveryScript({ copy: { rawDetailsLabel: "Raw" } })));
   });
 
   it("keeps the capture's names out of scripts that do not configure it", () => {
@@ -707,6 +708,35 @@ describe("the classification upgrade (watchdog + capture)", () => {
     expect(text).toContain("token\\\":\\\"\u25CF\u25CF\u25CF");
     // The username is NOT a credential key: it must survive untouched.
     expect(text).toContain("bob");
+  });
+
+  it("masks credentials in PRETTY-PRINTED console JSON", async () => {
+    // JSON.stringify(v, null, 2) is the most common way boot code logs an
+    // object: the quotes are still escaped in the string, but whitespace
+    // now surrounds the colon. A pattern that only matched the compact
+    // form leaked exactly this shape (R6 S1).
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.console.error("boot failed", JSON.stringify({ user: "u", password: "hunter2" }, null, 2));
+    paintedCard(run);
+    await clickCopy(run);
+    const text = run.written[0];
+    expect(text).not.toContain("hunter2");
+    // The username survives UNMASKED — in the payload's serialized form the
+    // console line's own quotes are themselves escaped.
+    expect(text).toContain('\\"user\\": \\"u\\"');
+  });
+
+  it("masks credentials in a two-level nested JSON string", async () => {
+    // An API error body that itself carries a JSON string: the inner quotes
+    // arrive with two backslashes before them.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.console.error(
+      "response:",
+      JSON.stringify({ detail: JSON.stringify({ password: "hunter2" }) }),
+    );
+    paintedCard(run);
+    await clickCopy(run);
+    expect(run.written[0]).not.toContain("hunter2");
   });
 
   it("forwards this and the original's return value through the wrapper", async () => {

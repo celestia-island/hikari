@@ -143,6 +143,13 @@ pub struct ThemePalette {
     pub success: String,
     pub warning: String,
     pub danger: String,
+    /// The semantic trio as TEXT on this palette's background. The slots
+    /// themselves are solid fills and deliberately mode-independent (user
+    /// direction), so a consumer that paints them as text (tags, links) must
+    /// use these instead.
+    pub success_fg: String,
+    pub warning_fg: String,
+    pub danger_fg: String,
     pub background: String,
     pub surface: String,
     pub border: String,
@@ -252,6 +259,9 @@ impl ThemePalette {
             success: palette.success.hex(),
             warning: palette.warning.hex(),
             danger: palette.danger.hex(),
+            success_fg: palette.success.readable_on(&palette.background, 4.5).hex(),
+            warning_fg: palette.warning.readable_on(&palette.background, 4.5).hex(),
+            danger_fg: palette.danger.readable_on(&palette.background, 4.5).hex(),
             background: palette.background.hex(),
             surface: palette.surface.rgba(0.7),
             border: palette.border.hex(),
@@ -480,6 +490,9 @@ impl ThemePalette {
             format!("--hi-success: {};", self.success),
             format!("--hi-warning: {};", self.warning),
             format!("--hi-danger: {};", self.danger),
+            format!("--hi-success-fg: {};", self.success_fg),
+            format!("--hi-warning-fg: {};", self.warning_fg),
+            format!("--hi-danger-fg: {};", self.danger_fg),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface),
             format!("--hi-border: {};", self.border),

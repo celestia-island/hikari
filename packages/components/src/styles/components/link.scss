@@ -97,7 +97,7 @@
 }
 
 .hk-link-danger {
-    color: var(--hi-danger, #FF4C00);
+    color: var(--hi-danger-fg, #FF4C00);
 
     &:hover {
         color: var(--hi-button-danger-hover, rgba(255, 76, 0, 0.8));

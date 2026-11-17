@@ -471,6 +471,60 @@ mod semantic_tests {
         }
     }
 
+    /// A semantic slot is a solid FILL and ignores the light/dark mode (user
+    /// direction). Anything that paints it as TEXT needs the readable variant:
+    /// on a dark page the fill itself is invisible (~1.1:1).
+    #[test]
+    fn semantic_foreground_variant_reads_on_the_page() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for fill in semantic_trio(&palette) {
+                let fg = fill.readable_on(&palette.background, 4.5);
+                let ratio = fg.contrast_ratio(&palette.background);
+                assert!(
+                    ratio >= 4.5,
+                    "{name}: {} as text on {} is only {ratio:.2}:1",
+                    fg.hex(),
+                    palette.background.hex()
+                );
+                // Hue is preserved: the variant is a lightness move, not a hue
+                // change.
+                let (_, _, want) = fill.oklch();
+                let (_, _, got) = fg.oklch();
+                let delta = (got - want).abs().min(360.0 - (got - want).abs());
+                assert!(
+                    delta <= 12.0,
+                    "{name}: {} moved {delta:.1}° off {}'s hue",
+                    fg.hex(),
+                    fill.hex()
+                );
+            }
+        }
+    }
+
+    /// The emitted foreground vars must keep the hue family (a tag/link that
+    /// changes hue stops reading as "success"/"danger").
+    #[test]
+    fn semantic_foreground_keeps_the_family_hue() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for (fill, canon) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
+                let fg = fill.readable_on(&palette.background, 4.5);
+                let (_, chroma, hue) = fg.oklch();
+                let delta = (hue - canon).abs().min(360.0 - (hue - canon).abs());
+                assert!(
+                    delta <= 15.0 && chroma > 0.02,
+                    "{name}: text variant {} is {delta:.1}° off {canon}° (C={chroma:.3})",
+                    fg.hex()
+                );
+            }
+        }
+    }
+
     /// The two bundled themes share one semantic family (the ink rule belongs
     /// to the fill, not to the mode).
     #[test]

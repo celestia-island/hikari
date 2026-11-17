@@ -98,6 +98,48 @@ impl Color {
         (ok_l, chroma, hue)
     }
 
+    /// This colour as TEXT on `bg`: itself when it already clears `target`,
+    /// otherwise the nearest lightness step that does, with hue and saturation
+    /// preserved. A semantic slot is a FILL (mode-independent per the user's
+    /// direction); painting it as text needs this variant, not the fill.
+    #[must_use]
+    pub fn readable_on(&self, bg: &Self, target: f64) -> Self {
+        if self.contrast_ratio(bg) >= target {
+            return self.clone();
+        }
+        let hsl = self.to_hsl();
+        let mut best: Option<(f64, Self)> = None;
+        // One pass over every lightness step; keep the hit nearest the original.
+        for step in 0..=200 {
+            let l = f64::from(step) / 200.0;
+            let (r, g, b) = crate::color_math::Hsl::new(hsl.h, hsl.s, l).to_rgb();
+            let candidate = Self::from_rgb_hex(r, g, b);
+            if candidate.contrast_ratio(bg) < target {
+                continue;
+            }
+            let dist = (l - hsl.l).abs();
+            let closer = match best.as_ref() {
+                Some((d, _)) => dist < *d,
+                None => true,
+            };
+            if closer {
+                best = Some((dist, candidate));
+            }
+        }
+        match best {
+            Some((_, colour)) => colour,
+            None => {
+                let white = Self::from_rgb_hex(0xff, 0xff, 0xff);
+                let black = Self::from_rgb_hex(0x00, 0x00, 0x00);
+                if white.contrast_ratio(bg) >= black.contrast_ratio(bg) {
+                    white
+                } else {
+                    black
+                }
+            }
+        }
+    }
+
     /// The ink (black or white) that reads best on this fill — the perceptual
     /// max-contrast rule. Ties go to white (the house white-first default).
     #[must_use]

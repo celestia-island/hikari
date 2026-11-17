@@ -117,7 +117,7 @@ impl StyledComponent for TagComponent {
 
 .hk-tag-success {
     background-color: color-mix(in srgb, var(--hi-success, #10b981) 10%, transparent);
-    color: var(--hi-success, #10b981);
+    color: var(--hi-success-fg, #10b981);
     border-color: color-mix(in srgb, var(--hi-success, #10b981) 30%, transparent);
 }
 
@@ -128,7 +128,7 @@ impl StyledComponent for TagComponent {
 
 .hk-tag-warning {
     background-color: color-mix(in srgb, var(--hi-warning, #f59e0b) 10%, transparent);
-    color: var(--hi-warning, #f59e0b);
+    color: var(--hi-warning-fg, #f59e0b);
     border-color: color-mix(in srgb, var(--hi-warning, #f59e0b) 30%, transparent);
 }
 
@@ -139,7 +139,7 @@ impl StyledComponent for TagComponent {
 
 .hk-tag-danger {
     background-color: color-mix(in srgb, var(--hi-danger, #ff4c00) 10%, transparent);
-    color: var(--hi-danger, #ff4c00);
+    color: var(--hi-danger-fg, #ff4c00);
     border-color: color-mix(in srgb, var(--hi-danger, #ff4c00) 30%, transparent);
 }
 

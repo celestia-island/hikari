@@ -105,11 +105,21 @@ function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
   return solidInk(fill);
 }
 
-
-function sameBytes(a: ThemeTokenRGB | undefined, b: ThemeTokenRGB | undefined): boolean {
-  if (!a || !b) return false;
-  return a.r === b.r && a.g === b.g && a.b === b.b;
+/**
+ * The ink to WRITE when healing. The house rule first; if its answer cannot
+ * reach AA on the fill (real for mid greys — `solidInk` is white there while
+ * white measures 3.95:1), the perceptually readable side wins: an unreadable
+ * label is a defect, not a house preference.
+ */
+function readableInkFor(fill: ThemeTokenRGB): ThemeTokenRGB {
+  const house = toneInkOn(fill);
+  if (contrastRatio(house, fill) >= 4.5) return house;
+  return contrastRatio(WHITE, fill) >= contrastRatio(BLACK, fill)
+    ? { ...WHITE }
+    : { ...BLACK };
 }
+
+
 
 function clamp(v: number): number {
   return Math.max(0, Math.min(255, v));
@@ -247,7 +257,7 @@ export const HkColorSchemeEditor = defineComponent({
         // does not (a retune moved the fill, or the theme was saved while the
         // stale-ink bug was live), it is not a design choice — it is an
         // unreadable label — so the house rule takes over.
-        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = toneInkOn(fill);
+        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = readableInkFor(fill);
       }
     }
 

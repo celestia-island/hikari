@@ -128,6 +128,21 @@ function retiredHits(source: string): string[] {
 }
 
 describe("channel fallbacks mirror the static seed", () => {
+  it(".hk-text-* semantic trio uses one namespace (the components --hi-*-fg)", () => {
+    // base.scss ships inside the components bundle, where the fg tokens are
+    // --hi-{tone}-fg (emitted by css_variables()); the Vue --hi-color-*-fg
+    // tier only resolves in a host that also loads the Vue token sheets.
+    const base = read(resolve(stylesDir, "../../../theme/styles/base.scss"));
+    for (const tone of ["success", "warning", "danger"]) {
+      const re = new RegExp(`\\.hk-text-${tone}\\s*\\{[^}]*color:\\s*var\\((--hi-[a-z-]+)\\)`);
+      const m = base.match(re);
+      expect(m, `.hk-text-${tone} present in base.scss`).toBeTruthy();
+      expect(m![1], `.hk-text-${tone} uses the components fg namespace`).toMatch(
+        /^--hi-(success|warning|danger)-fg$/,
+      );
+    }
+  });
+
   const seedSource = read(resolve(packageDir, "src", "tokens.scss"));
   const seed = seedTriplets(seedSource);
 

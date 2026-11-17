@@ -557,6 +557,7 @@ impl ThemePalette {
             format!("--color-info: {};", Self::hex_triplet(&self.info)),
             format!("--color-text: {};", Self::hex_triplet(&self.text_primary)),
             format!("--color-muted: {};", Self::hex_triplet(&self.text_secondary)),
+            format!("--color-text-secondary: {};", Self::hex_triplet(&self.text_secondary)),
             format!("--color-border: {};", Self::hex_triplet(&self.border)),
             format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
             format!("--hi-background: {};", self.background),
@@ -773,6 +774,86 @@ mod interaction_alias_tests {
                 "css_variables() stopped emitting {name} — its scss/rs consumers resolve to nothing again"
             );
         }
+    }
+
+    /// Value/format pin for the `--color-*` channel tier: every channel must
+    /// carry the `R G B` triplet form (the `rgb(var(--color-X))` pattern needs
+    /// it), and the surface glass must stay semi-transparent. The name-only
+    /// alias test above cannot catch a format regression (e.g. `rgba(...)` in
+    /// a channel slot) because it only checks `css.contains(name)`.
+    #[test]
+    fn color_channels_are_triplets_and_the_surface_stays_translucent() {
+        let palette = ThemePalette::from_palette(&default_theme());
+        let css = palette.css_variables();
+        for name in [
+            "--color-background:",
+            "--color-surface:",
+            "--color-success:",
+            "--color-error:",
+            "--color-warning:",
+            "--color-info:",
+            "--color-text:",
+            "--color-muted:",
+            "--color-border:",
+            "--color-primary:",
+        ] {
+            // css_variables() joins with SPACE, not newline — split on `;`.
+            let value = css
+                .split("; ")
+                .find(|seg| seg.trim_start().starts_with(name))
+                .map(|seg| {
+                    seg.trim()
+                        .trim_start_matches(name)
+                        .trim()
+                        .trim_end_matches(';')
+                        .trim()
+                        .to_string()
+                })
+                .unwrap_or_default();
+            assert!(
+                !value.is_empty(),
+                "{name} not found in css_variables()"
+            );
+            // The triplet regex: three 1-3 digit numbers separated by spaces.
+            let parts: Vec<&str> = value.split(' ').collect();
+            assert_eq!(
+                parts.len(),
+                3,
+                "{name}: expected `R G B` triplet, got `{value}`"
+            );
+            for part in &parts {
+                let n: u16 = part.parse().unwrap_or_else(|_| panic!("{name}: `{value}` is not a triplet"));
+                assert!(n <= 255, "{name}: channel {n} > 255");
+            }
+        }
+        // The glass must stay translucent (not the opaque hex).
+        let glass = css
+            .split("; ")
+            .find(|seg| seg.trim_start().starts_with("--hi-surface:"))
+            .map(|seg| seg.trim().to_string())
+            .unwrap_or_default();
+        assert!(
+            glass.starts_with("--hi-surface: rgba("),
+            "--hi-surface must paint the translucent glass (rgba), got `{glass}`"
+        );
+    }
+
+    /// The surface override must resync `surface_rgba` (the glass paint)
+    /// alongside the hex channel — removing the resync leaves the stale
+    /// palette alpha after a host overrides the surface.
+    #[test]
+    fn surface_override_resyncs_the_glass_paint() {
+        let palette = ThemePalette::from_palette(&default_theme())
+            .with_overrides(PaletteOverrides {
+                surface: Some("#888888".to_string()),
+                ..Default::default()
+            });
+        assert_eq!(palette.surface, "#888888", "surface hex not overridden");
+        assert!(
+            palette.surface_rgba.starts_with("rgba(136, 136, 136"),
+            "surface_rgba not resynced: {}",
+            palette.surface_rgba
+        );
     }
 
     /// Value pin (R2 adversarial round): the name-only contract above stays

@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { solidInk, themePresets, tokensToCSSVars } from "./presets";
+import type { ThemeTokenRGB } from "./presets";
 
 const WHITE = "255 255 255";
 const BLACK = "0 0 0";
@@ -64,6 +65,17 @@ const MUST_STAY_WHITE: Array<["light" | "dark", "danger" | "success" | "warning"
 ];
 
 describe("solid-fill ink rule", () => {
+  it("uses the house 0.65 threshold (not the legacy 0.55)", () => {
+    // #A3A3A3 γlum = 0.6400: the 0.65 house rule says WHITE (≤0.65), while
+    // the rejected 0.55 rule would say BLACK (>0.55).
+    const fill: ThemeTokenRGB = { r: 0xa3, g: 0xa3, b: 0xa3 };
+    const ink = solidInk(fill);
+    expect(ink).toEqual({ r: 255, g: 255, b: 255 });
+    // #A6A6A6 γlum = 0.6587 > 0.65 → black.
+    const above: ThemeTokenRGB = { r: 0xa6, g: 0xa6, b: 0xa6 };
+    expect(solidInk(above)).toEqual({ r: 0, g: 0, b: 0 });
+  });
+
   it("inks each shipped fill by its own lightness", () => {
     const light = tokensToCSSVars(themePresets.default.light);
     const dark = tokensToCSSVars(themePresets.default.dark);

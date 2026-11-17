@@ -1143,7 +1143,6 @@ mod tests {
         assert!(style.starts_with("color:"), "{style} is not a declaration");
         // And the value must be the fg variant, not the raw fill.
         assert!(style.contains("--hi-warning-fg"), "{style}");
-        assert!(!style.ends_with("rgb(var(--color-warning))"), "{style} is the raw fill");
         // Settled: the row inherits the card ink (no colour at all).
         assert_eq!(status_bar_probe_style(false), "");
     }

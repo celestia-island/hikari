@@ -231,6 +231,12 @@ describe("theme token inventory", () => {
       "--hi-color-warning": hexFromSeed("--color-warning"),
       "--hi-color-info": hexFromSeed("--color-info"),
       "--hi-color-focused-border": hexFromSeed("--color-focused-border"),
+      // The fg tier: each entry must map to its OWN tone channel — a wrong
+      // tone name (error-fg vs danger-fg) is exactly the round-7 S1 class.
+      "--hi-color-success-fg": hexFromSeed("--color-success-fg"),
+      "--hi-color-danger-fg": hexFromSeed("--color-error-fg"),
+      "--hi-color-warning-fg": hexFromSeed("--color-warning-fg"),
+      "--hi-color-info-fg": hexFromSeed("--color-info-fg"),
     };
     const KNOWN_DEVIANT_FALLBACKS = new Set<string>([]);
 
@@ -239,9 +245,21 @@ describe("theme token inventory", () => {
     const deviants: string[] = [];
     for (const f of files) {
       const css = read(resolve(componentsDir, f));
+      // Known fg-tier tokens: a reference to any OTHER -fg name is the
+      // round-7 S1 class (undefined var → silent raw-fill fallback).
+      const KNOWN_FG = new Set([
+        "--hi-color-success-fg",
+        "--hi-color-danger-fg",
+        "--hi-color-warning-fg",
+        "--hi-color-info-fg",
+      ]);
       for (const m of css.matchAll(/var\((--hi-color-[a-z0-9-]+),\s*(#[0-9a-fA-F]{3,8})\)/g)) {
         const token = m[1];
         const fallback = m[2].toLowerCase();
+        if (token.endsWith("-fg") && !KNOWN_FG.has(token)) {
+          deviants.push(`${f}: var(${token}, ${m[2]}) — undefined fg token`);
+          continue;
+        }
         const canonical = CANONICAL[token];
         if (!canonical) continue;
         if (fallback !== canonical && !KNOWN_DEVIANT_FALLBACKS.has(fallback)) {

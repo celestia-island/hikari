@@ -16,11 +16,6 @@ impl Color {
         }
     }
 
-    /// Construct from RGB with an inferred category. `const`-friendly.
-    ///
-    /// This is the workhorse constructor used by the generated collection
-    /// modules. The inferred category is a best-effort hue classification; it is
-    /// a UX hint (e.g. for grouping in docs/pickers), not a source of truth.
     /// Parse `#RRGGBB` / `RRGGBB` (the shape every emitted CSS var carries).
     /// Non-hex or non-ASCII input is `None`, never a panic.
     #[must_use]
@@ -36,6 +31,11 @@ impl Color {
         Some(Self::from_rgb_hex(r, g, b))
     }
 
+    /// Construct from RGB with an inferred category. `const`-friendly.
+    ///
+    /// This is the workhorse constructor used by the generated collection
+    /// modules. The inferred category is a best-effort hue classification; it is
+    /// a UX hint (e.g. for grouping in docs/pickers), not a source of truth.
     #[must_use]
     pub const fn from_rgb_hex(r: u8, g: u8, b: u8) -> Self {
         Self::new(r, g, b, ColorCategory::infer(r, g, b))
@@ -176,24 +176,25 @@ impl Color {
         Self::from_rgb_hex(enc(r), enc(g), enc(b))
     }
 
-    /// This colour as TEXT on `bg`: itself when it already clears `target`,
-    /// otherwise the nearest OKLCH-lightness step that does. Hue is preserved
-    /// and chroma is only given up where the sRGB gamut forces it — the same
-    /// trade the fill derivation makes.
+    /// This colour as TEXT on every `bgs`: itself when it already clears
+    /// `target` on all of them, otherwise the nearest OKLCH-lightness step
+    /// that does. Hue is preserved and chroma is only given up where the
+    /// sRGB gamut forces it — the same trade the fill derivation makes.
+    /// A neutral fill stays neutral (no chroma floor).
     ///
     /// A semantic slot is a FILL (mode-independent per the user's direction);
     /// painting it as text needs this variant, not the fill.
     #[must_use]
-    pub fn readable_on(&self, bg: &Self, target: f64) -> Self {
-        if self.contrast_ratio(bg) >= target {
+    pub fn readable_on(&self, bgs: &[&Self], target: f64) -> Self {
+        if bgs.iter().all(|bg| self.contrast_ratio(bg) >= target) {
             return self.clone();
         }
         let (l0, c0, h0) = self.oklch();
         let mut best: Option<(f64, Self)> = None;
         for step in 0..=400 {
             let l = f64::from(step) / 400.0;
-            let candidate = Self::from_oklch(l, c0.max(0.02), h0);
-            if candidate.contrast_ratio(bg) < target {
+            let candidate = Self::from_oklch(l, c0, h0);
+            if bgs.iter().any(|bg| candidate.contrast_ratio(bg) < target) {
                 continue;
             }
             let dist = (l - l0).abs();
@@ -206,7 +207,8 @@ impl Color {
             None => {
                 let white = Self::from_rgb_hex(0xff, 0xff, 0xff);
                 let black = Self::from_rgb_hex(0x00, 0x00, 0x00);
-                if white.contrast_ratio(bg) >= black.contrast_ratio(bg) {
+                let probe = bgs.first().copied().unwrap_or(&white);
+                if white.contrast_ratio(probe) >= black.contrast_ratio(probe) {
                     white
                 } else {
                     black
@@ -222,7 +224,7 @@ impl Color {
     /// rule instead of borrowing the rejected one.
     #[must_use]
     pub fn solid_ink(&self) -> Self {
-        // Rec.601 gamma-space luminance, the exact metric the TS rule uses.
+        // Rec.709 coefficients — the exact metric the TS rule uses.
         let r = f64::from(self.rgb.0) / 255.0;
         let g = f64::from(self.rgb.1) / 255.0;
         let b = f64::from(self.rgb.2) / 255.0;

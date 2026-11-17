@@ -81,6 +81,6 @@
 
 .hk-tag-info {
   background: color-mix(in srgb, var(--hi-color-info, #006274) 10%, transparent);
-  color: var(--hi-color-info, #006274);
+  color: var(--hi-color-info-fg, #006274);
   border-color: color-mix(in srgb, var(--hi-color-info, #006274) 20%, transparent);
 }

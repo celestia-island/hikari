@@ -329,7 +329,7 @@
 .hk-file-browser-rename-error {
   flex-basis: 100%;
   font-size: var(--text-xs);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-error-fg, rgb(var(--color-error)));
 }
 
 // ------
@@ -374,7 +374,7 @@
   border: 1px solid var(--c-error-strong);
   border-radius: var(--radius-md);
   background: var(--c-error-dim);
-  color: rgb(var(--color-error));
+  color: var(--hi-color-error-fg, rgb(var(--color-error)));
   font-size: var(--text-sm);
 }
 

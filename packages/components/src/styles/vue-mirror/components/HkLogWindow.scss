@@ -143,11 +143,11 @@
 }
 
 .s-log-entry-error {
-  color: rgb(var(--color-error));
+  color: var(--hi-color-error-fg, rgb(var(--color-error)));
 }
 
 .s-log-entry-warn {
-  color: rgb(var(--color-warning));
+  color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
 }
 
 .s-log-entry-debug {

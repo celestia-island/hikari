@@ -256,8 +256,13 @@ function contrastColor({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
  * fill derivation makes). This is what lets a semantic FILL stay
  * mode-independent while whatever paints it as text stays readable.
  */
-function readableOn(fg: ThemeTokenRGB, bg: ThemeTokenRGB, target = 4.5): ThemeTokenRGB {
-  if (contrastRatio(fg, bg) >= target) return fg;
+function readableOn(
+  fg: ThemeTokenRGB,
+  backgrounds: ThemeTokenRGB[],
+  target = 4.5,
+): ThemeTokenRGB {
+  // Already readable everywhere it can land: keep the fill's own chroma.
+  if (backgrounds.every((bg) => contrastRatio(fg, bg) >= target)) return fg;
   const { l, c, h } = rgbToOklch(fg);
   let best: ThemeTokenRGB | null = null;
   let bestDist = Infinity;
@@ -265,7 +270,7 @@ function readableOn(fg: ThemeTokenRGB, bg: ThemeTokenRGB, target = 4.5): ThemeTo
     const li = step / 400;
     // oklchToRgb reduces chroma into the sRGB gamut internally.
     const candidate = oklchToRgb({ l: li, c, h });
-    if (contrastRatio(candidate, bg) >= target) {
+    if (backgrounds.every((bg) => contrastRatio(candidate, bg) >= target)) {
       const dist = Math.abs(li - l);
       if (dist < bestDist) {
         bestDist = dist;
@@ -275,7 +280,9 @@ function readableOn(fg: ThemeTokenRGB, bg: ThemeTokenRGB, target = 4.5): ThemeTo
   }
   const white = { r: 255, g: 255, b: 255 };
   const black = { r: 0, g: 0, b: 0 };
-  return best ?? (contrastRatio(white, bg) >= contrastRatio(black, bg) ? white : black);
+  const fallback =
+    contrastRatio(white, backgrounds[0]) >= contrastRatio(black, backgrounds[0]) ? white : black;
+  return best ?? fallback;
 }
 
 export function solidInk({ r, g, b }: ThemeTokenRGB): ThemeTokenRGB {
@@ -328,10 +335,16 @@ export function tokensToCSSVars(
   // unreadable there. This is the lightness-move that fixes it, per mode.
   // The chip backdrop is color-mix(fill 10%, transparent) over the page:
   // 10% fill + 90% background.
-  const successFg = readableOn(tokens.success, mixToken(tokens.background, tokens.success, 0.1));
-  const errorFg = readableOn(tokens.error, mixToken(tokens.background, tokens.error, 0.1));
-  const warningFg = readableOn(tokens.warning, mixToken(tokens.background, tokens.warning, 0.1));
-  const infoFg = readableOn(tokens.info, mixToken(tokens.background, tokens.info, 0.1));
+  // The chip can land on the page background or on a card surface — the fg
+  // must clear its tint against BOTH.
+  const tint = (fill: ThemeTokenRGB): ThemeTokenRGB =>
+    mixToken(tokens.background, fill, 0.1);
+  const tintS = (fill: ThemeTokenRGB): ThemeTokenRGB =>
+    mixToken(tokens.surface, fill, 0.1);
+  const successFg = readableOn(tokens.success, [tint(tokens.success), tintS(tokens.success)]);
+  const errorFg = readableOn(tokens.error, [tint(tokens.error), tintS(tokens.error)]);
+  const warningFg = readableOn(tokens.warning, [tint(tokens.warning), tintS(tokens.warning)]);
+  const infoFg = readableOn(tokens.info, [tint(tokens.info), tintS(tokens.info)]);
   return {
     "--color-primary": `${tokens.primary.r} ${tokens.primary.g} ${tokens.primary.b}`,
     "--color-on-primary": `${onPrimary.r} ${onPrimary.g} ${onPrimary.b}`,
@@ -389,10 +402,10 @@ export function tokensToCSSVars(
     "--hi-color-text-on-info": "rgb(var(--color-on-info))",
     // The semantic fills as TEXT on this palette's page/tint — distinct from
     // the on-solid inks above (those assume the background IS the fill).
-    "--hi-color-success-fg": `${successFg.r} ${successFg.g} ${successFg.b}`,
-    "--hi-color-danger-fg": `${errorFg.r} ${errorFg.g} ${errorFg.b}`,
-    "--hi-color-warning-fg": `${warningFg.r} ${warningFg.g} ${warningFg.b}`,
-    "--hi-color-info-fg": `${infoFg.r} ${infoFg.g} ${infoFg.b}`,
+    "--hi-color-success-fg": `rgb(${successFg.r} ${successFg.g} ${successFg.b})`,
+    "--hi-color-danger-fg": `rgb(${errorFg.r} ${errorFg.g} ${errorFg.b})`,
+    "--hi-color-warning-fg": `rgb(${warningFg.r} ${warningFg.g} ${warningFg.b})`,
+    "--hi-color-info-fg": `rgb(${infoFg.r} ${infoFg.g} ${infoFg.b})`,
     "--hi-color-bg-subtle": "rgb(var(--color-surface) / 0.5)",
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",

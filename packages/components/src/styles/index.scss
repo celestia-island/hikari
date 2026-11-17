@@ -166,12 +166,12 @@
 .hk-text-primary { color: var(--hi-color-text-primary, #2D2D2D); }
 .hk-text-secondary { color: var(--hi-color-text-secondary, #6B7280); }
 .hk-text-muted { color: var(--hi-color-text-secondary, #9CA3AF); }
-.hk-text-accent { color: var(--hi-color-accent, #894800); }
+.hk-text-accent { color: var(--hi-color-accent, #F59E0B); }
 
 // Background Color - 语义化背景色，支持主题切换
 .hk-bg-primary { background-color: var(--hi-color-primary, #7BCFA6); }
-.hk-bg-secondary { background-color: var(--hi-color-secondary, #a62937); }
-.hk-bg-accent { background-color: var(--hi-color-accent, #894800); }
+.hk-bg-secondary { background-color: var(--hi-color-secondary, #FF4C00); }
+.hk-bg-accent { background-color: var(--hi-color-accent, #F59E0B); }
 .hk-bg-white { background-color: var(--hi-color-surface, #FFFFFF); }
 .hk-bg-black { background-color: var(--hi-color-background, #000000); }
 .hk-bg-surface { background-color: var(--hi-color-surface, #FAFAFA); }
@@ -363,8 +363,8 @@
  :root {
   // Theme Colors (fallback to Hikari light theme)
   --hi-primary: #FFC0CB;     // 粉红
-  --hi-secondary: #a62937;   // 朱红
-  --hi-accent: #894800;      // 姜黄
+  --hi-secondary: #FF4C00;   // 朱红
+  --hi-accent: #F59E0B;      // 姜黄
   --hi-success: #1F6530;     // canonical 148°, white 7.09:1
   --hi-warning: #894800;     // canonical 58°, white 7.02:1
   --hi-danger: #A62937;      // canonical 20°, white 7.01:1
@@ -500,7 +500,7 @@
   // Theme Colors
   --hi-primary: #065279;     // 靛蓝
   --hi-secondary: #4B5CC4;   // 宝蓝
-  --hi-accent: #894800;      // 姜黄
+  --hi-accent: #F59E0B;      // 姜黄
   --hi-success: #1F6530;     // canonical 148°, white 7.09:1
   --hi-warning: #894800;     // canonical 58°, white 7.02:1
   --hi-danger: #A62937;      // canonical 20°, white 7.01:1

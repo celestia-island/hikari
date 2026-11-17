@@ -241,7 +241,7 @@ export const HkColorSchemeEditor = defineComponent({
         // A stored ink survives as long as it still READS on its fill. Once it
         // does not (a retune moved the fill, or the theme was saved while the
         // stale-ink bug was live), it is not a design choice — it is an
-        // unreadable label — so readableInkFor takes over.
+        // unreadable label — so the house-rule ink takes over.
         if (contrastRatio(stored, fill) < 4.5) target[inkKey] = toneInkOn(fill);
       }
     }

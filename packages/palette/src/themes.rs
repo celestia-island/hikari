@@ -34,6 +34,9 @@ pub struct Palette {
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    /// The informational accent (canonical 215°). Fills the fourth semantic
+    /// chip and pairs with its own readable text variant.
+    pub info: Color,
     pub background: Color,
     pub surface: Color,
     pub border: Color,
@@ -117,6 +120,7 @@ impl Hikari {
             success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
             warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
             danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
+            info: Color::from_rgb_hex(0x00, 0x62, 0x74),    // canonical 215°, white 7.10:1
             background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
             surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
             border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),  // 素
@@ -152,6 +156,7 @@ impl Tairitsu {
             success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
             warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
             danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
+            info: Color::from_rgb_hex(0x00, 0x62, 0x74),    // canonical 215°, white 7.10:1
             background: Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
             surface: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
             border: Color::from_rgb_hex(0x4a, 0x42, 0x66),  // 黛
@@ -318,6 +323,7 @@ mod tests {
             success: Color::from_rgb_hex(0x0e, 0xb8, 0x40),
             warning: Color::from_rgb_hex(0xff, 0xa6, 0x31),
             danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),
+            info: Color::from_rgb_hex(0x00, 0x98, 0x74),
             background: Color::from_rgb_hex(0xff, 0xff, 0xff),
             surface: Color::from_rgb_hex(0xff, 0xff, 0xff),
             border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
@@ -481,7 +487,7 @@ mod semantic_tests {
             ("tairitsu", Tairitsu::palette()),
         ] {
             for fill in semantic_trio(&palette) {
-                let fg = fill.readable_on(&palette.background, 4.5);
+                let fg = fill.readable_on(&[&palette.background, &palette.surface], 4.5);
                 let ratio = fg.contrast_ratio(&palette.background);
                 assert!(
                     ratio >= 4.5,
@@ -513,7 +519,7 @@ mod semantic_tests {
             ("tairitsu", Tairitsu::palette()),
         ] {
             for (fill, canon) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
-                let fg = fill.readable_on(&palette.background, 4.5);
+                let fg = fill.readable_on(&[&palette.background, &palette.surface], 4.5);
                 let (fg_l, chroma, hue) = fg.oklch();
                 let delta = (hue - canon).abs().min(360.0 - (hue - canon).abs());
                 // Δh ≤ 8°: a lightness move keeps the family hue (the HSL-based

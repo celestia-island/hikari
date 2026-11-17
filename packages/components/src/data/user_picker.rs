@@ -2,7 +2,17 @@
 // UserPicker — mirror of the canonical Vue `HkUserPicker`: the ONE
 // user-selection business component (2026-10-10 user direction) — selected
 // members travel as tags (display name + email), picking happens through a
-// search dialog (type a nickname, username or email, click a row).
+// SEARCH-FIRST anchored panel (2026-11-17 user direction, #1358): the field
+// opens the `hk-select-*` surface the selects use (desktop popout under the
+// field, the shared bottom sheet on phone widths), a search box sits at the
+// top, and the candidates render under it.
+//
+// THE EMPTY-QUERY CONTRACT (the 2026-11-17 ruling's hard line): an empty (or
+// whitespace-only) query means NO candidates and NO request — the panel's
+// opening state is one standing hint ("type to search"), never the whole
+// user directory. [`user_picker_should_search`] is that predicate; the host
+// consults it before running its search (the component carries zero
+// transport either way).
 //
 // The stylesheet is the SAME sheet the Vue library ships
 // (`packages/vue/src/components/HkUserPicker.scss`, vendored under
@@ -12,7 +22,8 @@
 // DOM contract (mirrors the Vue render output one-to-one):
 //
 //   ── the field ──
-//   div.hk-user-picker [.is-disabled]
+//   div.hk-user-picker [.is-disabled] (position:relative — the unmeasured
+//       popout arm pins to it; see the geometry delta below)
 //     div.hk-user-picker-label?                       {label}
 //     div.hk-user-picker-field [role=button] [tabindex=0|-1]
 //         [aria-disabled=true|false] [aria-label]      (click + Enter/Space)
@@ -23,56 +34,97 @@
 //         button.hk-user-picker-tag-x?                 (live field only)
 //             [type=button] [aria-label="Remove {name}"] ×
 //       span.hk-user-picker-add [.is-placeholder?]     (the add hint)
-//   ── the dialog (mirrored Modal, width 30rem) ──
-//   div.hk-modal… > div.hk-user-picker-dialog
-//     {mirrored SearchInput}                            (the query box)
-//     div.hk-user-picker-rows [data-state=loading|failed|empty|ready]
-//       p.hk-user-picker-note?                          (the standing note)
-//       button.hk-user-picker-row [.is-selected] [data-checked?]  (per hit)
-//             [type=button]
-//         span.hk-user-picker-row-main
-//           span.hk-user-picker-row-name                {tagTitle}
-//           span.hk-user-picker-row-email?              {email}
-//         span.hk-user-picker-row-check? [aria-hidden=true] ✓ (multi draft)
-//     p.hk-user-picker-count?                           (multi, draft > 0)
-//     ── multi footer (mirrored Modal footerActions): Cancel / Confirm ──
+//   ── the surface (ONLY while open; desktop popout branch) ──
+//   div.hk-select-popout-host [data-side] [data-align] [style=geometry]
+//     div.hk-select-popout [aria-label] [style=cap] [onkeydown]
+//       div.hk-user-picker-panel
+//         div.hk-user-picker-search [role=search]
+//           {mirrored SearchInput}                      (the query box)
+//         div.hk-user-picker-rows [role=listbox] [aria-multiselectable?]
+//             [aria-label] [data-state=loading|failed|empty|ready]
+//           p.hk-user-picker-note?        (Searching… / the standing hint)
+//           button.hk-user-picker-retry?  (failed; click = re-run the query)
+//           div.hk-user-picker-row [role=option] [aria-selected]
+//               [data-checked?] [.is-selected]           (per hit)
+//             span.hk-user-picker-row-main
+//               span.hk-user-picker-row-name             {tagTitle}
+//               span.hk-user-picker-row-email?           {email}
+//             span.hk-user-picker-row-check? [aria-hidden] ✓ (multi draft)
+//         div.hk-user-picker-footer?                      (multi only)
+//           p.hk-user-picker-count?                       ({n} selected)
+//           div.hk-user-picker-actions
+//             button.hk-user-picker-cancel  (mirrored Button, secondary sm)
+//             button.hk-user-picker-confirm (mirrored Button, primary sm;
+//                 disabled while the draft is empty)
+//   ── the surface (mobile sheet branch) ──
+//   div.hk-select-sheet-scrim                       (click closes)
+//   div.hk-select-sheet-panel [role=dialog] [aria-modal] [aria-label]
+//       [tabindex=-1] [onkeydown]
+//     div.hk-select-sheet-grabber aria-hidden=true  (click closes)
+//     div.hk-select-sheet-header
+//       div.hk-select-sheet-title {title}?          (only when titled)
+//       button.hk-icon-button… .hk-window-close.hk-select-sheet-close
+//           [aria-label="Close"]                    (the shared ✕)
+//     div.hk-select-sheet-body
+//       div.hk-select-sheet-list [style=cap]
+//         div.hk-select-sheet-content > the panel div above
 //
-// STATE CONTRACT (the crate's zero-signal rule): Vue owns the dialog's
-// whole session in refs — `open`, `query`, `results`, `loading`,
-// `failed`, the multi-mode working copy `draft` and the race guard. The
-// mirror takes every one as a CONTROLLED prop and exports the session
-// transitions as pure helpers so the host reproduces Vue's behaviour:
+// STATE CONTRACT (the crate's zero-signal rule): Vue owns the panel's
+// whole session in refs — `open`, `query`, `results`, `loading`, `failed`,
+// the multi-mode working copy `draft`, the keyboard cursor
+// `activeIndex` and the race guard. The mirror takes every one as a
+// CONTROLLED prop and exports the session transitions as pure helpers so
+// the host reproduces Vue's behaviour:
 //
 //   [`user_picker_cap_results`]      Vue's `slice(0, maxResults)` at write
 //   [`UserPickerRowsState`]          the `data-state` ladder (loading →
 //                                    failed → empty → ready)
 //   [`user_picker_note`]             which standing note renders (and
-//                                    empty-with-query vs empty-initial)
+//                                    empty-with-query vs the empty hint)
+//   [`user_picker_should_search`]    THE empty-query contract: false on a
+//                                    blank query — the host must not ask
+//                                    its backend for candidates then
+//   [`user_picker_enter_index`]      Enter's row (the cursor, else the
+//                                    first row, else nothing)
 //   [`user_picker_toggle_draft`]     the multi-mode working-copy toggle
 //   [`user_picker_pick_value`]       what a row pick means per mode
 //   [`user_picker_remove_uid`]       the tag ×'s value edit
 //
 // The events are the session's edges: `on_open` (the field was activated —
-// the host opens AND runs the initial search, Vue's one-search-per-open
-// rule), `on_query_change` (the box text moved — the host debounces and
-// searches; a rejection renders the retry hint, never a throw),
-// `on_search` (Enter in the mirrored SearchInput), `on_pick` (a row),
-// `on_confirm` (multi OK — the host commits the draft),
-// `on_cancel` (the dialog asked to close) and `on_remove` (a tag ×).
+// the host opens the panel and re-seeds the session: blank query, empty
+// results, draft = value; NO initial search fires — the opening state IS
+// the empty hint), `on_query_change` (the box text moved — the host
+// debounces, consults [`user_picker_should_search`], and searches; a
+// rejection renders the retry hint, never a throw), `on_pick` (a row —
+// also Enter's commit), `on_confirm` (multi OK — the host commits the
+// draft), `on_cancel` (the surface asked to close: ✕ / scrim / grabber /
+// Cancel / Escape / single pick) and `on_remove` (a tag ×).
 //
 // Deltas vs Vue (documented, not accidental):
 //   * NO TRANSPORT AND NO ASYNC: Vue's required `search` callback (a
-//     Promise) becomes the host's `on_query_change`/`on_search` handler
-//     feeding `results`/`loading`/`failed` back in — the component carries
-//     zero transport either way, and the race guard belongs to the caller
+//     Promise) becomes the host's `on_query_change` handler feeding
+//     `results`/`loading`/`failed` back in — the component carries zero
+//     transport either way, and the race guard belongs to the caller
 //     that owns the async.
 //   * THE DEBOUNCE IS INERT, like the mirrored SearchInput's `debounce`
 //     prop (250 is still passed for fidelity): the host owns the timing.
 //   * Results are capped AT RENDER here (Vue caps at write); the output is
 //     identical because [`user_picker_cap_results`] is the same slice.
-//   * Vue remounts the search input per open (`key={sessionSeq}`) so a
-//     fresh session starts blank; the mirror simply renders the props the
-//     host re-seeds on open (empty query, empty results).
+//   * NO aria-activedescendant on the search box: the mirrored SearchInput's
+//     prop set is fixed (no aria passthrough), so the live-cursor Announce
+//     rides the listbox's own label instead. The rows keep
+//     `role="option"` / `aria-selected` / `data-checked`.
+//   * NO TELEPORT, no popup-manager z band, no outside-click listener, no
+//     viewport clamp/auto-flip, no transitions — the same surface deltas the
+//     `overlay::select_panel` mirror documents. The host owns outside
+//     dismissal ([`select_panel_outside_click_closes`] is the predicate) and
+//     re-evaluates the branch on resize.
+//   * Geometry comes from the select family, never re-derived:
+//     [`select_panel_popout_style`] places the popout (with a measured
+//     anchor rect it IS Vue's `positionPanel`; without one it pins to the
+//     picker root's `position:relative` box), [`select_panel_cap_style`]
+//     lands the max-height hook, [`select_panel_branch`] decides the form
+//     factor and [`step_highlight`] walks the keyboard cursor.
 //   * The × glyph and the row check are TEXT ("×" / "✓") exactly like
 //     Vue's — no SVG involved.
 //
@@ -82,9 +134,9 @@
 // `packages/vue/src/i18n/locales/en/components.json`), re-keyed to the
 // crate's component namespace (the same mapping `layout/affix_picker.rs`
 // applies; Vue shares its Cancel with `hikari::messageBox.cancel` — the
-// mirror gives it this component's own key). New keys (see the wave
-// receipt): title, add, remove, confirm, cancel, searchPlaceholder,
-// searching, searchFailed, empty, emptyInitial, selectedCount.
+// mirror gives it this component's own key). Keys: title, add, remove,
+// confirm, cancel, searchPlaceholder, searching, searchFailed, empty,
+// emptyInitial, selectedCount.
 
 // These kernels are line-for-line ports of the upstream JS math: the negated
 // comparisons, manual clamps and inline tuple types keep the port auditable
@@ -94,9 +146,17 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 use hikari_i18n::t;
+use hikari_icons::MdiIcon;
 
+use crate::basic::button::{Button, ButtonProps, ButtonSize, ButtonVariant};
 use crate::basic::search_input::{SearchInput, SearchInputProps};
-use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant, ModalProps};
+use crate::basic::select::{SelectAnchorRect, SelectPanelPlacement, step_highlight};
+use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
+use crate::overlay::select_panel::{
+    SelectPanelBranch, SelectPanelKeyAction, select_panel_branch, select_panel_cap_style,
+    select_panel_key_action, select_panel_popout_style,
+};
+use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -139,25 +199,25 @@ pub enum UserPickerMode {
 /// deployment has one, the username otherwise — never both stacked (a
 /// WHITESPACE-only display name counts as none, Vue's `?.trim() ||`).
 pub fn user_picker_tag_title(user: &HkUserOption) -> String {
-    user.display_name
-        .as_deref()
-        .map(str::trim)
-        .filter(|name| !name.is_empty())
-        .unwrap_or(&user.username)
-        .to_string()
+    let display = user.display_name.as_deref().map(str::trim);
+    display
+        .filter(|value| !value.is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| user.username.clone())
 }
 
-/// The tag's native tooltip (Vue: `` `${tagTitle} ${email ?? ""}`.trim() ``).
+/// The tag's `title` tooltip: the primary label with the email joined after
+/// it (Vue's `[tagTitle(user), user.email].filter(Boolean).join(' ')`).
 pub fn user_picker_tag_title_attr(user: &HkUserOption) -> String {
-    let title = user_picker_tag_title(user);
-    match &user.email {
-        Some(email) => format!("{title} {email}").trim().to_string(),
-        None => title,
+    let mut parts = vec![user_picker_tag_title(user)];
+    if let Some(email) = &user.email {
+        parts.push(email.clone());
     }
+    parts.join(" ")
 }
 
-/// The add hint: the placeholder while nothing is selected, the plain
-/// "Select users…" line once tags are on screen (Vue's ternary).
+/// The add hint (Vue's ternary): the placeholder while the selection is
+/// empty, the i18n "add" line once tags exist — never nothing.
 pub fn user_picker_add_text(is_empty: bool, placeholder: Option<&str>) -> String {
     if is_empty {
         placeholder
@@ -168,13 +228,22 @@ pub fn user_picker_add_text(is_empty: bool, placeholder: Option<&str>) -> String
     }
 }
 
-/// A runaway backend answer cannot turn the dialog into a thousand-row
-/// scroll (Vue caps at write; the mirror caps at render — same slice).
+/// The render-time answer cap (Vue caps at write: `slice(0, maxResults)`).
 pub fn user_picker_cap_results(results: &[HkUserOption], max_results: usize) -> Vec<HkUserOption> {
     results.iter().take(max_results).cloned().collect()
 }
 
-/// The rows container's `data-state` ladder (Vue's inline ternary).
+/// THE EMPTY-QUERY CONTRACT (2026-11-17): a blank query asks for nothing —
+/// the host must not run a search (and the panel shows the standing hint,
+/// never candidates). Vue encodes the same guard before calling its
+/// `search` callback.
+pub fn user_picker_should_search(query: &str) -> bool {
+    !query.trim().is_empty()
+}
+
+/// The rows band's state ladder (Vue: `rowsState`), published as
+/// `data-state` so hosts and tests key on the state without reading note
+/// text.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum UserPickerRowsState {
     Loading,
@@ -184,7 +253,6 @@ pub enum UserPickerRowsState {
 }
 
 impl UserPickerRowsState {
-    /// The attribute value exactly as Vue emits it.
     pub fn as_str(self) -> &'static str {
         match self {
             UserPickerRowsState::Loading => "loading",
@@ -195,7 +263,8 @@ impl UserPickerRowsState {
     }
 }
 
-/// Vue's `data-state` ternary, evaluated in its own render order.
+/// Vue's `rowsState` computed as one pick: loading wins, then failed, then
+/// emptiness, then ready.
 pub fn user_picker_row_state(
     loading: bool,
     failed: bool,
@@ -212,10 +281,7 @@ pub fn user_picker_row_state(
     }
 }
 
-/// Which standing note the rows area renders (`None` when rows are on
-/// screen). The empty note splits by query: a trimmed query means "no
-/// users match this search", a blank one means the initial batch came
-/// back empty.
+/// Which standing line the rows band carries while it shows no rows.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum UserPickerNote {
     Searching,
@@ -245,7 +311,9 @@ impl UserPickerNote {
     }
 }
 
-/// Vue's three note guards, collapsed into one pick.
+/// Vue's note guards, collapsed into one pick. A blank query resolves to
+/// the EmptyInitial hint (the panel's opening state — never candidates);
+/// a non-blank query with no answers resolves to the no-match line.
 pub fn user_picker_note(
     loading: bool,
     failed: bool,
@@ -272,13 +340,13 @@ pub fn user_picker_in_draft(draft: &[HkUserOption], uid: &str) -> bool {
     draft.iter().any(|user| user.uid == uid)
 }
 
-/// The multi-mode working-copy toggle (Vue's `pickRow` multi branch):
-/// in-draft rows drop out, the rest append.
+/// The multi-mode working-copy toggle (Vue's `toggleDraft`): a copy first —
+/// the draft is committed only on Confirm, never mutated in place.
 pub fn user_picker_toggle_draft(draft: &[HkUserOption], user: &HkUserOption) -> Vec<HkUserOption> {
     if user_picker_in_draft(draft, &user.uid) {
         draft
             .iter()
-            .filter(|kept| kept.uid != user.uid)
+            .filter(|entry| entry.uid != user.uid)
             .cloned()
             .collect()
     } else {
@@ -288,9 +356,8 @@ pub fn user_picker_toggle_draft(draft: &[HkUserOption], user: &HkUserOption) -> 
     }
 }
 
-/// What a row pick means per mode (Vue's `pickRow`): `single` closes and
-/// replaces the value; `multi` edits the working copy (committed on
-/// Confirm). One helper so the host cannot mix the two up.
+/// What a row pick means per mode (Vue's `pickValue`): `single` replaces
+/// the whole selection; `multi` writes the draft.
 pub fn user_picker_pick_value(
     mode: UserPickerMode,
     draft: &[HkUserOption],
@@ -302,7 +369,7 @@ pub fn user_picker_pick_value(
     }
 }
 
-/// The tag ×'s value edit (Vue's `removeTag` filter).
+/// The tag ×'s value edit: drop `uid`, keep the order.
 pub fn user_picker_remove_uid(value: &[HkUserOption], uid: &str) -> Vec<HkUserOption> {
     value
         .iter()
@@ -311,39 +378,42 @@ pub fn user_picker_remove_uid(value: &[HkUserOption], uid: &str) -> Vec<HkUserOp
         .collect()
 }
 
-/// The row's class string: the legacy `.is-selected` face only exists in
-/// multi mode for a drafted row.
+/// The row's classes (Vue: `class={{ 'hk-user-picker-row': true, 'is-selected': selected }}`).
 pub fn user_picker_row_classes(mode: UserPickerMode, in_draft: bool) -> String {
     if mode == UserPickerMode::Multi && in_draft {
-        "hk-user-picker-row is-selected".to_string()
+        String::from("hk-user-picker-row is-selected")
     } else {
-        "hk-user-picker-row".to_string()
+        String::from("hk-user-picker-row")
     }
 }
 
-/// The unified menu-item grammar's `data-checked` presence marker (the
-/// picked row's face survives hover — emitted beside the legacy class).
-pub fn user_picker_checked_attr(mode: UserPickerMode, in_draft: bool) -> Option<&'static str> {
-    if mode == UserPickerMode::Multi && in_draft {
-        Some("true")
+/// Enter's commit row (Vue: "有光标取光标，无盲光标取首行"): the cursor when
+/// it sits on a live row, the FIRST row when no cursor was ever moved, and
+/// nothing on an empty candidate list.
+pub fn user_picker_enter_index(highlighted: i32, count: usize) -> Option<usize> {
+    if count == 0 {
+        return None;
+    }
+    if highlighted >= 0 && (highlighted as usize) < count {
+        Some(highlighted as usize)
     } else {
-        None
+        Some(0)
     }
 }
 
-/// The multi footer's Confirm is dead while the working copy is empty
-/// (Vue: `disabled: draft.value.length === 0`).
+/// The multi Confirm's dead face: an empty draft cannot commit (single has
+/// no footer at all, so the flag is meaningless there — `false`).
 pub fn user_picker_confirm_disabled(mode: UserPickerMode, draft_count: usize) -> bool {
     mode == UserPickerMode::Multi && draft_count == 0
 }
 
-/// The count line: `{count} selected` (multi mode, drafted rows only).
+/// The draft counter's text (Vue: `"{count} selected"`).
 pub fn user_picker_count_text(count: usize) -> String {
     t("components.hk.userPicker.selectedCount", "{count} selected")
         .replace("{count}", &count.to_string())
 }
 
-/// Whether the count line renders at all.
+/// Whether the counter renders (multi, draft > 0).
 pub fn user_picker_count_visible(mode: UserPickerMode, draft_count: usize) -> bool {
     mode == UserPickerMode::Multi && draft_count > 0
 }
@@ -358,7 +428,8 @@ pub struct UserPickerProps {
     #[default]
     pub mode: UserPickerMode,
 
-    /// Field label; also the dialog's title (Vue: `label ?? t(title)`).
+    /// Field label; also the panel's title / the rows' accessible name
+    /// (Vue: `label ?? t(title)`).
     pub label: Option<String>,
 
     /// The add hint while nothing is selected (falls back to the i18n
@@ -372,13 +443,19 @@ pub struct UserPickerProps {
     #[default(50)]
     pub max_results: usize,
 
-    /// Dialog visibility (Vue's `open` ref).
+    /// The standing hint while the query is empty (Vue: `emptyHint`).
+    /// Defaults to the i18n bundle's `emptyInitial` line.
+    pub empty_hint: Option<String>,
+
+    /// Surface visibility (Vue's `open` ref).
     pub open: bool,
 
-    /// The live query (Vue's `query` ref — re-seeded empty on every open).
+    /// The live query (Vue's `query` ref — re-seeded empty on every open;
+    /// the panel shows NO candidates until this names someone).
     pub query: String,
 
-    /// The current search answer (already host-debounced).
+    /// The current search answer (already host-debounced). The component
+    /// renders the answer verbatim — it never fills the panel itself.
     #[default]
     pub results: Vec<HkUserOption>,
 
@@ -392,32 +469,69 @@ pub struct UserPickerProps {
     #[default]
     pub draft: Vec<HkUserOption>,
 
+    /// Keyboard/pointer cursor over the candidates (`-1` = none). Enter
+    /// commits this row, else the first ([`user_picker_enter_index`]).
+    #[default(-1)]
+    pub highlighted_index: i32,
+
+    /// The measured field rect to anchor the popout against (Vue:
+    /// `anchorRef`). Without one the surface pins to the picker root's
+    /// `position: relative` box, one `offset` below the field.
+    pub anchor: Option<SelectAnchorRect>,
+
+    /// Dock as the bottom sheet on phone-width viewports (Vue default
+    /// true).
+    #[default(true)]
+    pub sheet_on_mobile: bool,
+
+    /// The born form factor (Vue's `activeBranch`): `None` resolves from
+    /// the live viewport per render; a host that wants the shape pinned
+    /// across a resize passes it explicitly.
+    pub active_branch: Option<SelectPanelBranch>,
+
+    /// Desktop-popout placement (Vue default `"bottom-start"`).
+    #[default]
+    pub placement: SelectPanelPlacement,
+
+    /// Gap between the field and the popout, in px (Vue default 4).
+    #[default(4.0)]
+    pub offset: f64,
+
+    /// Cap for the scrolling surface (Vue: `maxHeight`, default
+    /// `min(22rem, 50dvh)`).
+    pub max_height: Option<String>,
+
     /// The field was activated (click / Enter / Space): the host opens the
-    /// dialog, re-seeds the session (blank query, empty results, draft =
-    /// value) and runs the initial search.
+    /// panel and re-seeds the session (blank query, empty results, draft =
+    /// value). NO search fires — the opening state is the empty hint, and
+    /// [`user_picker_should_search`] keeps the first keystroke from being
+    /// treated as one either.
     pub on_open: Option<EventHandler<()>>,
 
     /// The query box text moved (Vue: `update:modelValue` — the host
-    /// debounces and searches).
+    /// debounces, consults [`user_picker_should_search`], and searches).
+    /// The retry button re-fires this edge with the CURRENT query (the
+    /// historic failed/retry semantics).
     pub on_query_change: Option<EventHandler<String>>,
 
-    /// Enter was pressed in the query box (the mirrored SearchInput's
-    /// search emit).
-    pub on_search: Option<EventHandler<String>>,
-
     /// A result row was picked — see [`user_picker_pick_value`] for what
-    /// it means per mode.
+    /// it means per mode. Enter commits the cursor's row through this same
+    /// edge.
     pub on_pick: Option<EventHandler<HkUserOption>>,
 
     /// Multi-mode Confirm: the host commits the draft to the value.
     pub on_confirm: Option<EventHandler<()>>,
 
-    /// The dialog asked to close (✕ / overlay / Cancel / single pick).
+    /// The surface asked to close (✕ / scrim / grabber / Cancel / Escape /
+    /// single pick).
     pub on_cancel: Option<EventHandler<()>>,
 
     /// A tag × was pressed; carries the uid (the host edits the value —
-    /// no dialog involved).
+    /// no surface involved).
     pub on_remove: Option<EventHandler<String>>,
+
+    /// Fires with the desired cursor index (↑/↓ stepping).
+    pub on_highlight_change: Option<EventHandler<i32>>,
 }
 
 /// One selected-member tag.
@@ -460,7 +574,7 @@ fn user_picker_tag(
                 .attr("aria-label", format!("{remove_label} {title}"))
                 .child(VNode::Text(VText::new("×")))
                 .on_click(move |event: MouseEvent| {
-                    // The × must not open the dialog beneath it.
+                    // The × must not open the surface beneath it.
                     event.stop_propagation();
                     if let Some(handler) = handler.as_ref() {
                         handler.call(uid.clone());
@@ -479,7 +593,7 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         root_classes.push_str(" is-disabled");
     }
 
-    let field_label = props
+    let panel_title = props
         .label
         .clone()
         .unwrap_or_else(|| t("components.hk.userPicker.title", "Select users"));
@@ -492,7 +606,7 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
             "aria-disabled",
             if props.disabled { "true" } else { "false" },
         )
-        .attr("aria-label", field_label);
+        .attr("aria-label", panel_title.clone());
 
     for user in &props.model_value {
         field = field.child(user_picker_tag(user, props.disabled, &props.on_remove));
@@ -538,7 +652,11 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
     };
     field = field.on_click(open_click).on_keydown(open_key);
 
-    let mut root = VElement::new("div").class(root_classes);
+    let mut root = VElement::new("div")
+        .class(root_classes)
+        // The unmeasured popout arm pins to this box (the header_picker
+        // precedent); `position:relative` keeps the block layout intact.
+        .attr("style", "position:relative");
     if let Some(label) = &props.label {
         root = root.child(VNode::Element(Box::new(
             VElement::new("div")
@@ -548,11 +666,18 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
     }
     root = root.child(VNode::Element(Box::new(field)));
 
-    // ── the dialog ─────────────────────────────────────────────────────
+    // ── the surface ────────────────────────────────────────────────────
     let results = user_picker_cap_results(&props.results, props.max_results);
     let rows_state = user_picker_row_state(props.loading, props.failed, results.len());
     let note = user_picker_note(props.loading, props.failed, results.len(), &props.query);
+    let empty_hint = props
+        .empty_hint
+        .clone()
+        .unwrap_or_else(|| UserPickerNote::EmptyInitial.text());
 
+    // The query box: the panel's top lane. Enter does NOT search (Vue's
+    // Enter now commits the cursor's row — the panel keydown owns it), so
+    // the mirrored SearchInput's `onsearch` stays unwired.
     let search = SearchInput(SearchInputProps {
         model_value: props.query.clone(),
         placeholder: Some(t(
@@ -563,28 +688,61 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         // number Vue passes.
         debounce: 250.0,
         oninput: props.on_query_change.clone(),
-        onsearch: props.on_search.clone(),
         ..Default::default()
     });
 
+    // The rows band: the standing lines first (a failed search IS a button —
+    // clicking it re-runs the same query through the query-change edge), the
+    // candidate rows after.
     let mut rows = VElement::new("div")
         .class("hk-user-picker-rows")
+        .attr("role", "listbox")
+        .attr("aria-label", panel_title.clone())
         .attr("data-state", rows_state.as_str());
-    if let Some(note) = note {
-        rows = rows.child(VNode::Element(Box::new(
-            VElement::new("p")
-                .class("hk-user-picker-note")
-                .child(VNode::Text(VText::new(&note.text()))),
-        )));
+    if props.mode == UserPickerMode::Multi {
+        rows = rows.attr("aria-multiselectable", "true");
     }
-    for user in &results {
+    if let Some(note) = note {
+        rows = if note == UserPickerNote::Failed {
+            // The retry affordance IS the note (Vue's `hk-user-picker-retry`).
+            let on_query = props.on_query_change.clone();
+            let query = props.query.clone();
+            let mut retry = VElement::new("button")
+                .class("hk-user-picker-retry")
+                .attr("type", "button")
+                .child(VNode::Text(VText::new(&note.text())));
+            retry = retry.on_click(move |_event: MouseEvent| {
+                if let Some(handler) = on_query.as_ref() {
+                    handler.call(query.clone());
+                }
+            });
+            rows.child(VNode::Element(Box::new(retry)))
+        } else {
+            let text = if note == UserPickerNote::EmptyInitial {
+                empty_hint.clone()
+            } else {
+                note.text()
+            };
+            rows.child(VNode::Element(Box::new(
+                VElement::new("p")
+                    .class("hk-user-picker-note")
+                    .child(VNode::Text(VText::new(&text))),
+            )))
+        };
+    }
+    for (index, user) in results.iter().enumerate() {
         let in_draft =
             props.mode == UserPickerMode::Multi && user_picker_in_draft(&props.draft, &user.uid);
-        let mut row = VElement::new("button")
+        let mut row = VElement::new("div")
             .class(user_picker_row_classes(props.mode, in_draft))
-            .attr("type", "button");
-        if let Some(marker) = user_picker_checked_attr(props.mode, in_draft) {
-            row = row.attr("data-checked", marker);
+            .attr("role", "option")
+            .attr("tabindex", "-1")
+            .attr("aria-selected", if in_draft { "true" } else { "false" })
+            .attr("data-user-index", index.to_string());
+        // Grammar face attribute (_menu-item.scss): mi.item's checked face
+        // keys on data-checked — presence-only, multi-draft only.
+        if in_draft {
+            row = row.attr("data-checked", "true");
         }
         let mut main = VElement::new("span").class("hk-user-picker-row-main");
         main = main.child(VNode::Element(Box::new(
@@ -620,66 +778,207 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         rows = rows.child(VNode::Element(Box::new(row)));
     }
 
-    let mut dialog = VElement::new("div").class("hk-user-picker-dialog");
-    dialog = dialog.child(search);
-    dialog = dialog.child(VNode::Element(Box::new(rows)));
-    if user_picker_count_visible(props.mode, props.draft.len()) {
-        dialog = dialog.child(VNode::Element(Box::new(
-            VElement::new("p")
-                .class("hk-user-picker-count")
-                .child(VNode::Text(VText::new(&user_picker_count_text(
-                    props.draft.len(),
-                )))),
-        )));
+    // The panel body: search lane + rows band + the multi footer.
+    let mut panel = VElement::new("div").class("hk-user-picker-panel");
+    panel = panel.child(VNode::Element(Box::new(
+        VElement::new("div")
+            .class("hk-user-picker-search")
+            .attr("role", "search")
+            .child(search),
+    )));
+    panel = panel.child(VNode::Element(Box::new(rows)));
+    if props.mode == UserPickerMode::Multi {
+        let mut footer = VElement::new("div").class("hk-user-picker-footer");
+        if user_picker_count_visible(props.mode, props.draft.len()) {
+            footer = footer.child(VNode::Element(Box::new(
+                VElement::new("p")
+                    .class("hk-user-picker-count")
+                    .child(VNode::Text(VText::new(&user_picker_count_text(
+                        props.draft.len(),
+                    )))),
+            )));
+        }
+        let mut actions = VElement::new("div").class("hk-user-picker-actions");
+        actions = actions.child(Button(ButtonProps {
+            variant: ButtonVariant::Secondary,
+            size: ButtonSize::Sm,
+            label: Some(t("components.hk.userPicker.cancel", "Cancel")),
+            class: "hk-user-picker-cancel".to_string(),
+            onclick: props
+                .on_cancel
+                .clone()
+                .map(|handler| event_handler(move |_: MouseEvent| handler.call(()))),
+            ..Default::default()
+        }));
+        actions = actions.child(Button(ButtonProps {
+            variant: ButtonVariant::Primary,
+            size: ButtonSize::Sm,
+            label: Some(t("components.hk.userPicker.confirm", "Confirm")),
+            class: "hk-user-picker-confirm".to_string(),
+            disabled: user_picker_confirm_disabled(props.mode, props.draft.len()),
+            onclick: props
+                .on_confirm
+                .clone()
+                .map(|handler| event_handler(move |_: MouseEvent| handler.call(()))),
+            ..Default::default()
+        }));
+        footer = footer.child(VNode::Element(Box::new(actions)));
+        panel = panel.child(VNode::Element(Box::new(footer)));
     }
 
-    // The footer only exists in multi mode (Vue's `dialogActions`).
-    let footer_actions = match props.mode {
-        UserPickerMode::Single => None,
-        UserPickerMode::Multi => {
-            let on_cancel = props.on_cancel.clone();
-            let on_confirm = props.on_confirm.clone();
-            Some(vec![
-                ModalAction {
-                    label: t("components.hk.userPicker.cancel", "Cancel"),
-                    variant: ModalActionVariant::Secondary,
-                    on_click: on_cancel
-                        .map(|handler| EventHandler::new(move |()| handler.call(()))),
-                    ..Default::default()
-                },
-                ModalAction {
-                    label: t("components.hk.userPicker.confirm", "Confirm"),
-                    variant: ModalActionVariant::Primary,
-                    disabled: user_picker_confirm_disabled(
-                        UserPickerMode::Multi,
-                        props.draft.len(),
-                    ),
-                    on_click: on_confirm
-                        .map(|handler| EventHandler::new(move |()| handler.call(()))),
-                    ..Default::default()
-                },
-            ])
+    // The panel keydown (Vue's `onPanelKeydown`, reached through the
+    // surface's forwarded keydown): ↑/↓ step the cursor, Enter commits it
+    // (or the first row), Escape closes AND consumes the key. All edges are
+    // the session's own writers — nothing is stored.
+    let pick_wiring = props.on_pick.clone();
+    let highlight_wiring = props.on_highlight_change.clone();
+    let cancel_wiring = props.on_cancel.clone();
+    let key_results = results.clone();
+    let key_highlight = props.highlighted_index;
+    let panel_keydown =
+        move |event: KeyboardEvent| match select_panel_key_action(event.key.as_str()) {
+            SelectPanelKeyAction::Step(delta) => {
+                event.prevent_default();
+                if let Some(handler) = highlight_wiring.as_ref() {
+                    handler.call(step_highlight(key_highlight, key_results.len(), delta));
+                }
+            }
+            SelectPanelKeyAction::Commit => {
+                event.prevent_default();
+                if let Some(index) = user_picker_enter_index(key_highlight, key_results.len())
+                    && let Some(user) = key_results.get(index)
+                    && let Some(handler) = pick_wiring.as_ref()
+                {
+                    handler.call(user.clone());
+                }
+            }
+            SelectPanelKeyAction::CloseAndConsume => {
+                event.prevent_default();
+                event.stop_propagation();
+                if let Some(handler) = cancel_wiring.as_ref() {
+                    handler.call(());
+                }
+            }
+            SelectPanelKeyAction::Forward => {}
+        };
+
+    // The surface: ONLY while open (Vue mounts it on the opening edge).
+    let open = props.open;
+    let branch = props
+        .active_branch
+        .unwrap_or_else(|| select_panel_branch(props.sheet_on_mobile, platform::inner_width()));
+    let aria_label = Some(panel_title.clone()).filter(|title| !title.is_empty());
+    let cap_style = select_panel_cap_style(
+        Some(
+            props
+                .max_height
+                .clone()
+                .unwrap_or_else(|| "min(22rem, 50dvh)".to_string()),
+        )
+        .as_deref(),
+    );
+    let panel_node = VNode::Element(Box::new(panel));
+
+    let layer: Option<VNode> = if open {
+        match branch {
+            SelectPanelBranch::Sheet => {
+                let close_label = t("components.hk.modal.close", "Close");
+                let title = panel_title.clone();
+                let scrim_cancel = props.on_cancel.clone();
+                let grabber_cancel = props.on_cancel.clone();
+                let close_cancel = props.on_cancel.clone();
+                Some(rsx! {
+                    div {
+                        class: "hk-select-sheet-scrim",
+                        onclick: move |_event: MouseEvent| {
+                            if let Some(handler) = scrim_cancel.as_ref() {
+                                handler.call(());
+                            }
+                        },
+                    }
+                    div {
+                        class: "hk-select-sheet-panel",
+                        "role": "dialog",
+                        "aria-modal": "true",
+                        "aria-label": aria_label,
+                        "tabindex": -1,
+                        onkeydown: panel_keydown,
+                        div {
+                            class: "hk-select-sheet-grabber",
+                            "aria-hidden": "true",
+                            onclick: move |_event: MouseEvent| {
+                                if let Some(handler) = grabber_cancel.as_ref() {
+                                    handler.call(());
+                                }
+                            },
+                        }
+                        div {
+                            class: "hk-select-sheet-header",
+                            if !title.is_empty() {
+                                div { class: "hk-select-sheet-title", {title} }
+                            }
+                            IconButton {
+                                size: IconButtonSize::S32,
+                                variant: IconButtonVariant::Ghost,
+                                icon: Some(MdiIcon::Close),
+                                aria_label: Some(close_label),
+                                class: "hk-window-close hk-select-sheet-close".to_string(),
+                                onclick: Some(event_handler(move |_: MouseEvent| {
+                                    if let Some(handler) = close_cancel.as_ref() {
+                                        handler.call(());
+                                    }
+                                })),
+                            }
+                        }
+                        div {
+                            class: "hk-select-sheet-body",
+                            div {
+                                class: "hk-select-sheet-list",
+                                style: cap_style.clone(),
+                                div { class: "hk-select-sheet-content",
+                                    {panel_node}
+                                }
+                            }
+                        }
+                    }
+                })
+            }
+            SelectPanelBranch::Popout => {
+                let (side, align) = props.placement.side_align();
+                let geometry = select_panel_popout_style(
+                    props.placement,
+                    props.anchor,
+                    props.offset,
+                    // Vue: `matchAnchorWidth` defaults true on HkSelectPanel
+                    // and the picker passes nothing — the panel hugs the
+                    // field's width.
+                    true,
+                );
+                Some(rsx! {
+                    div {
+                        class: "hk-select-popout-host",
+                        "data-side": side.token(),
+                        "data-align": align.token(),
+                        style: geometry,
+                        div {
+                            class: "hk-select-popout",
+                            "aria-label": aria_label,
+                            style: cap_style.clone(),
+                            onkeydown: panel_keydown,
+                            {panel_node}
+                        }
+                    }
+                })
+            }
         }
+    } else {
+        None
     };
 
-    let on_cancel = props.on_cancel.clone();
-    let modal = Modal(ModalProps {
-        open: props.open,
-        title: Some(
-            props
-                .label
-                .clone()
-                .unwrap_or_else(|| t("components.hk.userPicker.title", "Select users")),
-        ),
-        width: "30rem".to_string(),
-        footer_actions,
-        on_close: on_cancel
-            .map(|handler| EventHandler::new(move |_event: MouseEvent| handler.call(()))),
-        children: VNode::Element(Box::new(dialog)),
-        ..Default::default()
-    });
-
-    VNode::Fragment(vec![VNode::Element(Box::new(root)), modal])
+    VNode::Fragment(vec![
+        VNode::Element(Box::new(root)),
+        layer.unwrap_or_else(empty_vnode),
+    ])
 }
 
 impl StyledComponent for UserPickerComponent {
@@ -720,19 +1019,27 @@ mod tests {
         assert!(props.placeholder.is_none());
         assert!(!props.disabled);
         assert_eq!(props.max_results, 50);
+        assert!(props.empty_hint.is_none());
         assert!(!props.open);
         assert_eq!(props.query, "");
         assert!(props.results.is_empty());
         assert!(!props.loading);
         assert!(!props.failed);
         assert!(props.draft.is_empty());
+        assert_eq!(props.highlighted_index, -1);
+        assert!(props.anchor.is_none());
+        assert!(props.sheet_on_mobile);
+        assert!(props.active_branch.is_none());
+        assert_eq!(props.placement, SelectPanelPlacement::BottomStart);
+        assert_eq!(props.offset, 4.0);
+        assert!(props.max_height.is_none());
         assert!(props.on_open.is_none());
         assert!(props.on_query_change.is_none());
-        assert!(props.on_search.is_none());
         assert!(props.on_pick.is_none());
         assert!(props.on_confirm.is_none());
         assert!(props.on_cancel.is_none());
         assert!(props.on_remove.is_none());
+        assert!(props.on_highlight_change.is_none());
 
         let option = HkUserOption::default();
         assert_eq!(option.uid, "");
@@ -758,13 +1065,6 @@ mod tests {
             user_picker_row_classes(UserPickerMode::Multi, false),
             "hk-user-picker-row"
         );
-        // The grammar's checked face is presence-only, multi-draft only.
-        assert_eq!(
-            user_picker_checked_attr(UserPickerMode::Multi, true),
-            Some("true")
-        );
-        assert_eq!(user_picker_checked_attr(UserPickerMode::Multi, false), None);
-        assert_eq!(user_picker_checked_attr(UserPickerMode::Single, true), None);
         assert_eq!(UserPickerRowsState::Loading.as_str(), "loading",);
         assert_eq!(UserPickerRowsState::Failed.as_str(), "failed");
         assert_eq!(UserPickerRowsState::Empty.as_str(), "empty");
@@ -824,7 +1124,7 @@ mod tests {
         assert_eq!(
             user_picker_note(false, false, 0, "  "),
             Some(EmptyInitial),
-            "a blank query is the initial batch"
+            "a blank query is the standing hint, never candidates"
         );
         assert_eq!(user_picker_note(false, false, 0, "ada"), Some(EmptyQuery));
         assert_eq!(user_picker_note(false, false, 1, "ada"), None);
@@ -832,6 +1132,39 @@ mod tests {
         assert_eq!(
             UserPickerNote::EmptyQuery.text(),
             "No users match this search."
+        );
+    }
+
+    #[test]
+    fn the_empty_query_contract_never_asks_for_a_blank_query() {
+        // THE hard line (2026-11-17): blank input is "no request, no
+        // candidates" — every blank spelling, and nothing else.
+        assert!(!user_picker_should_search(""));
+        assert!(!user_picker_should_search(" "));
+        assert!(!user_picker_should_search("  \t "));
+        assert!(user_picker_should_search("a"));
+        assert!(user_picker_should_search(" ada "));
+    }
+
+    #[test]
+    fn enter_picks_the_cursor_else_the_first_row() {
+        let three = 3;
+        assert_eq!(
+            user_picker_enter_index(-1, three),
+            Some(0),
+            "no cursor yet → first row"
+        );
+        assert_eq!(user_picker_enter_index(0, three), Some(0));
+        assert_eq!(user_picker_enter_index(2, three), Some(2));
+        assert_eq!(
+            user_picker_enter_index(5, three),
+            Some(0),
+            "an out-of-range cursor is no cursor"
+        );
+        assert_eq!(
+            user_picker_enter_index(-1, 0),
+            None,
+            "an empty list commits nothing"
         );
     }
 
@@ -860,7 +1193,7 @@ mod tests {
             vec![ada.clone()]
         );
 
-        // The tag × removes directly, no dialog.
+        // The tag × removes directly, no surface involved.
         let value = vec![ada.clone(), bob.clone()];
         let removed = user_picker_remove_uid(&value, "1");
         assert_eq!(removed, vec![bob.clone()]);
@@ -927,8 +1260,9 @@ mod tests {
         }
         assert!(!html.contains("is-placeholder"), "{html}");
         assert!(!html.contains("is-disabled"), "{html}");
-        // The dialog is closed.
-        assert!(!html.contains("hk-user-picker-dialog"), "{html}");
+        // Closed → NO surface at all (not even a hidden one).
+        assert!(!html.contains("hk-select-popout-host"), "{html}");
+        assert!(!html.contains("hk-select-sheet-panel"), "{html}");
     }
 
     #[test]
@@ -957,7 +1291,53 @@ mod tests {
     }
 
     #[test]
-    fn user_picker_dialog_renders_rows_states_and_the_multi_footer() {
+    fn user_picker_surface_is_the_select_popout_carrying_the_panel() {
+        // Desktop (the stub viewport is 1024) with a measured anchor: the
+        // surface IS the select family's popout, geometry inline, and the
+        // content is the picker's own panel div.
+        let html = UserPicker(UserPickerProps {
+            open: true,
+            anchor: Some(SelectAnchorRect {
+                x: 12.0,
+                y: 34.0,
+                width: 320.0,
+                height: 40.0,
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+
+        for needle in [
+            r#"class="hk-select-popout-host""#,
+            r#"class="hk-select-popout""#,
+            r#"aria-label="Select users""#,
+            // The anchored geometry IS Vue's positionPanel output: the
+            // field rect + the 4px offset, width tied to the anchor.
+            "left:12px",
+            "top:78px",
+            "min-width:320px",
+            // The panel body and its two lanes.
+            r#"class="hk-user-picker-panel""#,
+            r#"class="hk-user-picker-search""#,
+            r#"role="search""#,
+            "hk-search-input",
+            r#"placeholder="Nickname, username or email""#,
+            r#"class="hk-user-picker-rows""#,
+            r#"role="listbox""#,
+            r#"data-state="empty""#,
+            // The OPENING state is the hint — never candidates, never a
+            // request (the empty-query contract's visible face).
+            "Type a nickname, username or email to search.",
+            // The retired modal dialog stays retired.
+        ] {
+            assert!(html.contains(needle), "missing {needle}: {html}");
+        }
+        assert!(!html.contains("hk-user-picker-dialog"), "{html}");
+        assert!(!html.contains("hk-modal"), "{html}");
+    }
+
+    #[test]
+    fn user_picker_rows_render_as_options_with_the_checked_face() {
         let html = UserPicker(UserPickerProps {
             open: true,
             mode: UserPickerMode::Multi,
@@ -967,16 +1347,15 @@ mod tests {
                 user("2", "bob", None, None),
             ],
             draft: vec![user("1", "ada", Some("Ada Lovelace"), None)],
+            active_branch: Some(SelectPanelBranch::Popout),
             ..Default::default()
         })
         .render_to_html();
 
         for needle in [
-            r#"class="hk-user-picker-dialog""#,
-            "hk-search-input",
-            r#"placeholder="Nickname, username or email""#,
-            r#"class="hk-user-picker-rows""#,
-            r#"data-state="ready""#,
+            r#"role="option""#,
+            r#"aria-selected="true""#,
+            r#"aria-selected="false""#,
             r#"class="hk-user-picker-row is-selected""#,
             r#"data-checked="true""#,
             r#"class="hk-user-picker-row-main""#,
@@ -984,13 +1363,15 @@ mod tests {
             r#"class="hk-user-picker-row-email""#,
             r#"class="hk-user-picker-row-check""#,
             "✓",
+            r#"class="hk-user-picker-footer""#,
             r#"class="hk-user-picker-count""#,
             "1 selected",
-            ">Confirm<",
-            ">Cancel<",
-            // The modal frame, the Vue width.
-            "hk-modal-title",
-            "Select users",
+            // The footer buttons ride the shared Button family (the class
+            // prop merges AFTER the hk-btn* family).
+            "hk-btn hk-btn-secondary hk-btn-sm hk-user-picker-cancel",
+            "hk-btn hk-btn-primary hk-btn-sm hk-user-picker-confirm",
+            ">Cancel</span>",
+            ">Confirm</span>",
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
@@ -1003,10 +1384,26 @@ mod tests {
         );
         // No standing note while rows are on screen.
         assert!(!html.contains("hk-user-picker-note"), "{html}");
+        // The empty draft's Confirm is dead.
+        let html = UserPicker(UserPickerProps {
+            open: true,
+            mode: UserPickerMode::Multi,
+            query: "ad".to_string(),
+            results: vec![user("1", "ada", None, None)],
+            active_branch: Some(SelectPanelBranch::Popout),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("hk-user-picker-confirm"), "{html}");
+        assert!(
+            html.contains("disabled=\"disabled\""),
+            "the empty draft's Confirm is dead: {html}"
+        );
+        assert!(!html.contains("hk-user-picker-count"), "{html}");
     }
 
     #[test]
-    fn user_picker_dialog_renders_the_standing_notes_and_empty_footer_rules() {
+    fn user_picker_surface_renders_the_standing_notes_and_the_sheet_branch() {
         let searching = UserPicker(UserPickerProps {
             open: true,
             loading: true,
@@ -1023,18 +1420,21 @@ mod tests {
         })
         .render_to_html();
         assert!(failed.contains(r#"data-state="failed""#), "{failed}");
+        // The retry affordance IS the note — a button, not a line.
+        assert!(
+            failed.contains(r#"class="hk-user-picker-retry""#),
+            "{failed}"
+        );
         assert!(failed.contains("The search failed; try again."), "{failed}");
 
-        let initial = UserPicker(UserPickerProps {
+        // A custom hint overrides the i18n opening line (Vue: `emptyHint`).
+        let hinted = UserPicker(UserPickerProps {
             open: true,
+            empty_hint: Some("Search the directory".to_string()),
             ..Default::default()
         })
         .render_to_html();
-        assert!(initial.contains(r#"data-state="empty""#), "{initial}");
-        assert!(
-            initial.contains("Type a nickname, username or email to search."),
-            "{initial}"
-        );
+        assert!(hinted.contains("Search the directory"), "{hinted}");
 
         let no_match = UserPicker(UserPickerProps {
             open: true,
@@ -1047,31 +1447,44 @@ mod tests {
             "{no_match}"
         );
 
-        // Single mode has no footer actions; multi with an empty draft
-        // renders a dead Confirm.
+        // Single mode has no footer at all.
         let single = UserPicker(UserPickerProps {
             open: true,
             ..Default::default()
         })
         .render_to_html();
-        assert!(!single.contains(">Cancel<"), "{single}");
-        assert!(!single.contains(">Confirm<"), "{single}");
+        assert!(!single.contains("hk-user-picker-footer"), "{single}");
+        assert!(!single.contains("hk-user-picker-cancel"), "{single}");
+        assert!(!single.contains("hk-user-picker-confirm"), "{single}");
 
-        let multi_empty = UserPicker(UserPickerProps {
+        // The sheet branch: the shared sheet frame, the ✕, the panel inside
+        // the list band.
+        let sheet = UserPicker(UserPickerProps {
             open: true,
             mode: UserPickerMode::Multi,
+            label: Some("Owners".to_string()),
+            active_branch: Some(SelectPanelBranch::Sheet),
             ..Default::default()
         })
         .render_to_html();
-        assert!(multi_empty.contains(">Confirm<"), "{multi_empty}");
-        assert!(
-            multi_empty.contains(r#"disabled="disabled""#),
-            "{multi_empty}"
-        );
-        assert!(
-            !multi_empty.contains("hk-user-picker-count"),
-            "{multi_empty}"
-        );
+        for needle in [
+            r#"class="hk-select-sheet-scrim""#,
+            r#"class="hk-select-sheet-panel""#,
+            r#"role="dialog""#,
+            r#"aria-modal="true""#,
+            r#"class="hk-select-sheet-grabber""#,
+            r#"class="hk-select-sheet-title""#,
+            "Owners",
+            "hk-select-sheet-close",
+            r#"class="hk-select-sheet-body""#,
+            r#"class="hk-select-sheet-content""#,
+            r#"class="hk-user-picker-panel""#,
+            r#"aria-label="Close""#,
+        ] {
+            assert!(sheet.contains(needle), "missing {needle}: {sheet}");
+        }
+        // The popout is absent in the sheet branch.
+        assert!(!sheet.contains("hk-select-popout-host"), "{sheet}");
     }
 
     #[test]
@@ -1083,7 +1496,10 @@ mod tests {
             ".hk-user-picker-tag",
             ".hk-user-picker-tag-x",
             ".hk-user-picker-add",
-            ".hk-user-picker-dialog",
+            ".hk-user-picker-panel",
+            ".hk-user-picker-search",
+            ".hk-user-picker-retry",
+            ".hk-user-picker-footer",
             ".hk-user-picker-rows",
             ".hk-user-picker-row",
             ".hk-user-picker-count",

@@ -49,7 +49,7 @@
 }
 
 .hk-tree-row[data-status="failed"] .hk-tree-label {
-  color: var(--hi-color-danger, #f85149);
+  color: var(--hi-color-danger-fg, #f85149);
 }
 
 .hk-tree-row[data-status="in_progress"],
@@ -60,7 +60,7 @@
 }
 
 .hk-tree-row[data-status="warning"] .hk-tree-label {
-  color: var(--hi-color-warning, #894800);
+  color: var(--hi-color-warning-fg, #894800);
 }
 
 .hk-tree-row[data-status="muted"] {

@@ -23,7 +23,7 @@
 
 .hk-file-field-required {
   margin-inline-start: var(--space-4);
-  color: var(--hi-color-danger, #f85149);
+  color: var(--hi-color-danger-fg, #f85149);
 }
 
 .hk-file-box {
@@ -135,5 +135,5 @@
 }
 
 .hk-file-field-error {
-  color: var(--hi-color-danger, #f85149);
+  color: var(--hi-color-danger-fg, #f85149);
 }

@@ -96,12 +96,12 @@
 
   &[data-variant="success"] {
     background: color-mix(in srgb, var(--hi-color-success, #1f6530) 12%, transparent);
-    color: var(--hi-color-success, #1f6530);
+    color: var(--hi-color-success-fg, #1f6530);
   }
 
   &[data-variant="info"] {
     background: color-mix(in srgb, var(--hi-color-info, #006274) 12%, transparent);
-    color: var(--hi-color-info, #006274);
+    color: var(--hi-color-info-fg, #006274);
   }
 
   &[data-variant="primary"] {

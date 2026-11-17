@@ -17,7 +17,7 @@
   padding: var(--space-12, 0.75rem);
 
   &__icon {
-    color: var(--hi-color-warning, rgb(var(--color-warning, 222 168 62)));
+    color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
   }
 
   &.is-danger &__icon {

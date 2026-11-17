@@ -94,6 +94,6 @@
   color: rgb(var(--color-text) / 60%);
 
   &[data-error] {
-    color: var(--hi-color-danger, #f85149);
+    color: var(--hi-color-danger-fg, #f85149);
   }
 }

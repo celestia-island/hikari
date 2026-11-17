@@ -55,7 +55,7 @@
   border-color: color-mix(in srgb, var(--hi-color-danger, #f85149) 15%, transparent);
   border-inline-start-color: var(--hi-color-danger, #f85149);
 
-  .hk-alert-icon { color: var(--hi-color-danger, #f85149); }
+  .hk-alert-icon { color: var(--hi-color-danger-fg, #f85149); }
 }
 
 .hk-alert-warning {
@@ -63,7 +63,7 @@
   border-color: color-mix(in srgb, var(--hi-color-warning, #894800) 15%, transparent);
   border-inline-start-color: var(--hi-color-warning, #894800);
 
-  .hk-alert-icon { color: var(--hi-color-warning, #894800); }
+  .hk-alert-icon { color: var(--hi-color-warning-fg, #894800); }
 }
 
 .hk-alert-info {
@@ -79,7 +79,7 @@
   border-color: color-mix(in srgb, var(--hi-color-success, #1f6530) 15%, transparent);
   border-inline-start-color: var(--hi-color-success, #1f6530);
 
-  .hk-alert-icon { color: var(--hi-color-success, #1f6530); }
+  .hk-alert-icon { color: var(--hi-color-success-fg, #1f6530); }
 }
 
 /* ── Icon ──────────────────────────────────────── */

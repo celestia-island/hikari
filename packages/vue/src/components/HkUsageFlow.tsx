@@ -17,6 +17,8 @@
 //         g.hk-usage-flow__node                     (one per node)
 //           rect.hk-usage-flow__bar[fill][data-hint]
 //           text.hk-usage-flow__label[.hk-usage-flow__label--others]
+//                                                    (omitted when the bar is
+//                                                     too short to label)
 //       ul.hk-usage-flow__legend                    (showLegend)
 //         li.hk-usage-flow__legend-row[.hk-usage-flow__legend-row--idle]
 //           span.hk-usage-flow__legend-swatch
@@ -172,17 +174,19 @@ export default defineComponent({
                     fill={node.color}
                     data-hint={nodeHint(node)}
                   />
-                  <text
-                    class={[
-                      "hk-usage-flow__label",
-                      { "hk-usage-flow__label--others": node.others },
-                    ]}
-                    x={labelX(node)}
-                    y={node.y + node.height / 2 + 4}
-                    text-anchor={labelAnchor(node.column)}
-                  >
-                    {node.label}
-                  </text>
+                  {node.labelVisible ? (
+                    <text
+                      class={[
+                        "hk-usage-flow__label",
+                        { "hk-usage-flow__label--others": node.others },
+                      ]}
+                      x={labelX(node)}
+                      y={node.y + node.height / 2 + 4}
+                      text-anchor={labelAnchor(node.column)}
+                    >
+                      {node.label}
+                    </text>
+                  ) : null}
                 </g>
               ))}
             </svg>

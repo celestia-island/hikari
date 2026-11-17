@@ -139,6 +139,9 @@ describe("usageFlowLayout", () => {
     const scale = layout.links[0].thickness / layout.links[0].value;
     const tiny = layout.nodes.find((node) => node.fullLabel === "tiny-0")!;
     expect(tiny.height).toBe(2); // the visibility floor
+    // A 2-unit bar cannot carry a label; the hint/legend still name it.
+    expect(tiny.labelVisible).toBe(false);
+    expect(layout.nodes.find((node) => node.fullLabel === "huge")!.labelVisible).toBe(true);
     expect(tiny.value * scale).toBeLessThan(tiny.height);
     const outgoing = layout.links.filter((link) => link.sourceKey === tiny.key);
     expect(outgoing).toHaveLength(1);

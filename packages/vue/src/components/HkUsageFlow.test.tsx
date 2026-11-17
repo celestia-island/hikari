@@ -126,6 +126,29 @@ describe("HkUsageFlow", () => {
     expect(el.querySelector(".hk-usage-flow__legend")).toBeNull();
   });
 
+  it("omits labels on bars too short to read, keeping their hints", () => {
+    const dense = [
+      { source: "huge", middle: "up", target: "model-x", value: 9_800_000 },
+      ...Array.from({ length: 8 }, (_, i) => ({
+        source: `tiny-${i}`,
+        middle: "up",
+        target: "model-x",
+        value: 2_000,
+      })),
+    ];
+    const el = mount(<HkUsageFlow rows={dense} />);
+    const nodes = el.querySelectorAll(".hk-usage-flow__node");
+    const labels = el.querySelectorAll(".hk-usage-flow__label");
+    // 9 callers + 1 upstream + 1 model; only the three tall bars label.
+    expect(nodes).toHaveLength(11);
+    expect(labels).toHaveLength(3);
+    // The omitted labels' identity survives on the hint channel.
+    const hints = [...el.querySelectorAll(".hk-usage-flow__bar")].map((bar) =>
+      bar.getAttribute("data-hint"),
+    );
+    expect(hints.some((hint) => hint?.includes("tiny-0"))).toBe(true);
+  });
+
   it("keeps the hover hint channel on nodes and ribbons", () => {
     const el = mount(<HkUsageFlow rows={ROWS} />);
     const hints = [

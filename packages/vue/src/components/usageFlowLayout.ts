@@ -69,6 +69,10 @@ export interface HkUsageFlowNode {
   color: string;
   /** True for the synthetic collapsed bucket (`othersLabel`). */
   others: boolean;
+  /** False when the bar is too short to carry a readable label (the
+   *  `data-hint` and the legend still name it) — a dense tail must not
+   *  stack overlapping text. */
+  labelVisible: boolean;
 }
 
 /** One ribbon between two adjacent columns. */
@@ -142,6 +146,10 @@ const PAD_Y = 12;
 const NODE_WIDTH = 14;
 const NODE_GAP = 10;
 const MIN_NODE_HEIGHT = 2;
+/* A bar shorter than this cannot carry a readable label without colliding
+   with its neighbours: the label is omitted (the hint and the legend still
+   name the node), so a dense tail never stacks unreadable text. */
+const MIN_LABEL_HEIGHT = 12;
 
 /** The default categorical ladder — every entry a theme-token expression, so
  *  light/dark/brand-preset flips repaint the chart without JS. The five
@@ -439,6 +447,7 @@ export function usageFlowLayout(
               ? (sourceColor.get(label) ?? palette[0])
               : (middleColor.get(label) ?? palette[0]),
         others: label === othersLabel && !collapsed[column].kept.has(label),
+        labelVisible: nodeHeight >= MIN_LABEL_HEIGHT,
       };
       nodes.push(node);
       nodeByColumn[column].set(label, node);

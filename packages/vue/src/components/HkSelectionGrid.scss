@@ -271,17 +271,29 @@
 }
 
 /* ── Optional selected edge ──────────────────────────────────────────────
-   A thickened primary bar on the item's LEADING side, drawn inside the
-   border box (a pseudo element, so nothing shifts) — the "this is the
-   chosen one" cue some hosts want on top of the ring + check. */
+   A primary accent TAB on the item's LEADING side, DETACHED from the
+   selected frame. The frame's emphasis is one even inset ring (1px border
+   + 1px ring = 2px on every side, unchanged by this rule); the tab is a
+   separate 3px pill.
+
+   Measured geometry (Chrome, 2026-11-17): an absolutely-positioned child
+   resolves against the PADDING box, so `inset-inline-start: 4px` puts the
+   tab 5px in from the border box — 3px of visible gap to the ring — and
+   leaves 5px of clearance to the label (3px in `dense`, whose leading
+   padding is 10px). `top`/`bottom` inset the pill the same 4px, so it
+   stops short of the frame instead of running into it.
+
+   The flush bar this replaced sat at the padding edge and merged with the
+   border + ring into one unbroken 4px primary slab on the leading edge
+   only — the frame read as lopsided/fattened there (fleet admission card,
+   user report 2026-11-17). A pseudo element, so nothing shifts. */
 .hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before {
   content: "";
   position: absolute;
-  inset-inline-start: 0;
-  top: 0;
-  bottom: 0;
+  inset-inline-start: var(--space-4, 0.25rem);
+  top: var(--space-4, 0.25rem);
+  bottom: var(--space-4, 0.25rem);
   width: 3px;
-  border-start-start-radius: var(--radius-sm, 4px);
-  border-end-start-radius: var(--radius-sm, 4px);
+  border-radius: var(--radius-full, 9999px);
   background: var(--hi-color-primary, #7aa2f7);
 }

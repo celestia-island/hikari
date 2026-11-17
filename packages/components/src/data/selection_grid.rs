@@ -375,7 +375,9 @@ pub struct SelectionGridProps {
     #[default]
     pub layout: SelectionGridLayout,
 
-    /// Draw the thickened leading edge on the selected option (`data-edge`).
+    /// Draw a primary accent tab on the selected option's leading side
+    /// (`data-edge`): drawn inside the frame, DETACHED from it, so the
+    /// selected ring stays uniform on all four sides.
     #[default]
     pub selected_edge: bool,
 

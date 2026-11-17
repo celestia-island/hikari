@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
+import { compile } from "sass";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import HkSelectionGrid, { type SelectionGridItem } from "./HkSelectionGrid";
 
@@ -16,6 +19,10 @@ import HkSelectionGrid, { type SelectionGridItem } from "./HkSelectionGrid";
  *   the floor as a CSS var, and NO `data-cols` hook (the narrow-viewport
  *   overrides key off data-cols and must not fight the fluid template)
  * - without `minItemWidth` the fixed `columns` contract is unchanged
+ * - `selectedEdge`'s accent tab stays DETACHED from the selected frame
+ *   (stylesheet contract below): flush against border + inset ring it
+ *   merged into one fattened leading edge (fleet admission card, user
+ *   report 2026-11-17)
  *
  * House style: raw createApp mounts on a shared container list torn down
  * after each case; DOM assertions via document queries.
@@ -233,4 +240,354 @@ describe("HkSelectionGrid list layout, actions and edge", () => {
     expect(seen).toEqual([]);
   });
 });
+});
+
+describe("HkSelectionGrid selected-edge stylesheet contract", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const css = compile(resolve(here, "HkSelectionGrid.scss"), { style: "expanded" }).css;
+
+  // ── A dependency-free CSS reader ──────────────────────────────────────
+  // Text scraping cannot answer the questions these contracts ask (which
+  // RULE wins the cascade, whether a SHORTHAND set a width, whether a
+  // later rule overrides the base one), so the compiled sheet is walked
+  // into rules + declarations in DOCUMENT order. Quotes, comments and
+  // parentheses are tracked while scanning, so a comma inside `var(...)`
+  // or `color-mix(...)` never splits a value.
+
+  interface CssRule {
+    selector: string;
+    declarations: Array<[string, string]>;
+  }
+
+  /** Split a declaration list on `;` outside quotes/parentheses. */
+  function splitDeclarations(body: string): Array<[string, string]> {
+    const out: Array<[string, string]> = [];
+    let current = "";
+    let quote = "";
+    let depth = 0;
+    for (let i = 0; i < body.length; i += 1) {
+      const ch = body[i];
+      if (ch === "/" && body[i + 1] === "*") {
+        const end = body.indexOf("*/", i + 2);
+        i = end < 0 ? body.length : end + 2;
+        continue;
+      }
+      if (quote) {
+        current += ch;
+        if (ch === "\\") {
+          current += body[i + 1] ?? "";
+          i += 1;
+        } else if (ch === quote) {
+          quote = "";
+        }
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        quote = ch;
+        current += ch;
+        continue;
+      }
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth -= 1;
+      if (ch === ";" && depth === 0) {
+        const at = current.indexOf(":");
+        if (at > 0) {
+          out.push([
+            current.slice(0, at).trim().toLowerCase(),
+            current.slice(at + 1).trim(),
+          ]);
+        }
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    const at = current.indexOf(":");
+    if (at > 0) {
+      out.push([current.slice(0, at).trim().toLowerCase(), current.slice(at + 1).trim()]);
+    }
+    return out;
+  }
+
+  /** Every style rule in the sheet, in document order (at-rule bodies are
+   *  walked too, so a media override is graded like any other rule). */
+  function parseRules(source: string): CssRule[] {
+    const rules: CssRule[] = [];
+    let i = 0;
+    while (i < source.length) {
+      if (/\s/.test(source[i])) {
+        i += 1;
+        continue;
+      }
+      if (source[i] === "/" && source[i + 1] === "*") {
+        const end = source.indexOf("*/", i + 2);
+        i = end < 0 ? source.length : end + 2;
+        continue;
+      }
+      // Prelude: up to the `{` that opens this block — or up to a `;`, which
+      // means this is a statement at-rule (`@charset "UTF-8";` opens the
+      // sheet) and has no body to read.
+      let j = i;
+      let quote = "";
+      let paren = 0;
+      let statement = false;
+      while (j < source.length) {
+        const ch = source[j];
+        if (quote) {
+          if (ch === "\\") j += 1;
+          else if (ch === quote) quote = "";
+          j += 1;
+          continue;
+        }
+        // Comments are skipped HERE too: prose like "the item's leading
+        // side" is an apostrophe to a naive scanner, which then swallows the
+        // rest of the sheet as a string.
+        if (ch === "/" && source[j + 1] === "*") {
+          const end = source.indexOf("*/", j + 2);
+          j = end < 0 ? source.length : end + 2;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          quote = ch;
+          j += 1;
+          continue;
+        }
+        if (ch === "(") paren += 1;
+        else if (ch === ")") paren -= 1;
+        else if (ch === "{" && paren === 0) break;
+        else if (ch === ";" && paren === 0) {
+          statement = true;
+          break;
+        } else if (ch === "}" && paren === 0) {
+          j += 1;
+          statement = true;
+          break;
+        }
+        j += 1;
+      }
+      if (j >= source.length) break;
+      if (statement) {
+        i = j + 1;
+        continue;
+      }
+      const prelude = source.slice(i, j).trim();
+      // Body: balanced braces.
+      let k = j + 1;
+      let depth = 1;
+      let bodyQuote = "";
+      let bodyParen = 0;
+      while (k < source.length && depth > 0) {
+        const ch = source[k];
+        if (ch === "/" && source[k + 1] === "*") {
+          const end = source.indexOf("*/", k + 2);
+          k = end < 0 ? source.length : end + 2;
+          continue;
+        }
+        if (bodyQuote) {
+          if (ch === "\\") k += 1;
+          else if (ch === bodyQuote) bodyQuote = "";
+          k += 1;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          bodyQuote = ch;
+          k += 1;
+          continue;
+        }
+        if (ch === "(") bodyParen += 1;
+        else if (ch === ")") bodyParen -= 1;
+        else if (ch === "{" && bodyParen === 0) depth += 1;
+        else if (ch === "}" && bodyParen === 0) depth -= 1;
+        if (depth === 0) break;
+        k += 1;
+      }
+      const body = source.slice(j + 1, k);
+      if (prelude.startsWith("@")) {
+        rules.push(...parseRules(body));
+      } else if (prelude) {
+        rules.push({ selector: prelude, declarations: splitDeclarations(body) });
+      }
+      i = k + 1;
+    }
+    return rules;
+  }
+
+  const rules = parseRules(css);
+
+  /** The declarations that apply to an exact selector, in cascade order. */
+  function declarationsFor(selector: string): Array<[string, string]> {
+    return rules
+      .filter((r) => r.selector.split(",").some((one) => one.trim() === selector))
+      .flatMap((r) => r.declarations);
+  }
+
+  /** Property → the LAST value declared for it (what the cascade uses). */
+  function computedFor(selector: string): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const [prop, value] of declarationsFor(selector)) map.set(prop, value);
+    return map;
+  }
+
+  /** Split a comma-separated CSS value into layers, ignoring commas nested
+   *  inside a function (`color-mix(in srgb, …)`, `var(--x, …)`). */
+  function splitLayers(value: string): string[] {
+    const layers: string[] = [];
+    let current = "";
+    let depth = 0;
+    for (const ch of value) {
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth -= 1;
+      if (ch === "," && depth === 0) {
+        layers.push(current.trim());
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    if (current.trim()) layers.push(current.trim());
+    return layers;
+  }
+
+  const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
+  const ITEM = ".hk-selection-grid-item";
+  const SELECTED = ".hk-selection-grid-item[data-selected]";
+
+  /** Rules whose selector list names this class, in document order. A
+   *  source-level pin has to look at EVERY rule that can match the element,
+   *  not just the one canonical spelling — otherwise a higher-specificity
+   *  descendant selector or a `::after` clone overrides the canonical rule
+   *  in the browser while this file stays green. */
+  function rulesNaming(needle: string): CssRule[] {
+    return rules.filter((r) =>
+      r.selector.split(",").some((one) => one.includes(needle)),
+    );
+  }
+
+  /** Normalized form of one compound selector: `:before` and `::before` are
+   *  the same pseudo-element in CSS, so they are compared as one. */
+  function normalized(selector: string): string {
+    return selector.replace(/\s+/g, " ").trim().replace(/(^|[^:]):(before|after)\b/g, "$1::$2");
+  }
+
+  it("detaches the accent tab from the selected frame", () => {
+    // Flush (`0`), the bar merged with the 1px border and the 1px inset ring
+    // into one unbroken primary slab on the leading edge — the reported
+    // defect. Exact values, so a zeroed FALLBACK cannot pass either.
+    const tab = computedFor(TAB);
+    expect(tab.get("position")).toBe("absolute");
+    expect(tab.get("inset-inline-start")).toBe("var(--space-4, 0.25rem)");
+    expect(tab.get("top")).toBe("var(--space-4, 0.25rem)");
+    expect(tab.get("bottom")).toBe("var(--space-4, 0.25rem)");
+  });
+
+  it("draws exactly one 3px pill, and it is the only tab on the item", () => {
+    // The width IS the clearance budget: the leading padding is 12px (10px
+    // dense), so a wider bar eats into the label and a zero width renders
+    // the feature away. `width` is read as a PROPERTY, so `max-width: 3px`
+    // (which computes to nothing) cannot satisfy it.
+    const tab = computedFor(TAB);
+    expect(tab.get("width")).toBe("3px");
+    expect(tab.get("border-radius")).toBe("var(--radius-full, 9999px)");
+    // …and it has to be DRAWN: a transparent or display-less tab renders
+    // nothing while every geometry value above still reads correctly.
+    expect(tab.get("content")).toBe('""');
+    expect(tab.get("display")).toBeUndefined();
+    expect(tab.get("background")).toBe("var(--hi-color-primary, #7aa2f7)");
+    // Exactly ONE pseudo-element draws on a selected item. A second tab
+    // (a `::after` clone, or the single-colon spelling, or a `:hover`
+    // variant) would paint a competing bar the geometry pins never see.
+    const tabs = rulesNaming(".hk-selection-grid-item[data-selected]")
+      .filter((r) => /::?(before|after)\b/.test(r.selector))
+      .map((r) => normalized(r.selector));
+    expect(tabs).toEqual([normalized(TAB)]);
+    // The tab's declaration set is closed: no extra `inset`/`margin`/
+    // `translate`/`rotate` may move or resize it behind the pins' back.
+    expect(new Set(Object.keys(Object.fromEntries(declarationsFor(TAB))))).toEqual(
+      new Set([
+        "content",
+        "position",
+        "inset-inline-start",
+        "top",
+        "bottom",
+        "width",
+        "border-radius",
+        "background",
+      ]),
+    );
+  });
+
+  it("declares no per-side border geometry anywhere in the sheet", () => {
+    // THIS IS A SOURCE-LEVEL PIN, not a rendering proof, and its scope is
+    // "no single SIDE may get thicker". It keeps the frame's thickness coming
+    // from ONE uniform `border` shorthand plus the selected ring and rejects
+    // every per-side border property by NAME — a whitelist, because
+    // enumerating the shapes a side could be thickened through (`-width`, the
+    // axis shorthands, `border-left`, …) misses one every round.
+    //
+    // Out of scope on purpose: a UNIFORM thickening of the whole frame
+    // (`outline: 2px solid` with a negative offset, or a 3px `border` on the
+    // selected state) is a design change, not this defect — the other pins
+    // still hold the ring and the tab. Which four sides the browser really
+    // paints was verified by pixel measurement during review (see the PR).
+    const borderProps = new Set(
+      rules
+        .flatMap((r) => r.declarations)
+        .map(([prop]) => prop)
+        .filter((prop) => /^border(-|$)/.test(prop)),
+    );
+    expect([...borderProps].sort()).toEqual([
+      "border",
+      "border-color",
+      "border-radius",
+      "border-start-start-radius",
+      "border-end-start-radius",
+    ].filter((prop) => borderProps.has(prop)).sort());
+    // The one width-bearing declaration is the item's shorthand, and the
+    // selected state colours the border instead of resizing it.
+    expect(computedFor(ITEM).get("border")).toMatch(/^1px solid /);
+    expect(computedFor(SELECTED).get("border")).toBeUndefined();
+    expect(computedFor(SELECTED).get("border-color")).toBe(
+      "var(--hi-color-primary, #7aa2f7)",
+    );
+  });
+
+  it("keeps the selected emphasis a single inset ring, and only there", () => {
+    // One inset ring, split with a depth-aware scanner so a legitimate single
+    // layer carrying `color-mix(...)` is not mistaken for two.
+    const layers = splitLayers(computedFor(SELECTED).get("box-shadow") ?? "");
+    expect(layers).toHaveLength(1);
+    expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
+    // EVERY shadow layer of EVERY rule that names the item is inspected, not
+    // just the base selected rule: the reported state is a HOVERED selected
+    // row, so a one-sided `inset 3px 0 0 3px` in `[data-selected]:hover`
+    // reproduces the lopsidedness with the base rule untouched. Allowed
+    // layers are exactly the two shapes the sheet really uses: the even 1px
+    // inset ring, and non-inset elevation shadows.
+    const offenders: string[] = [];
+    for (const rule of rulesNaming(".hk-selection-grid-item")) {
+      for (const [prop, value] of rule.declarations) {
+        if (prop !== "box-shadow") continue;
+        for (const layer of splitLayers(value)) {
+          const inset = /^inset\b/.test(layer);
+          if (inset && !/^inset 0 0 0 1px /.test(layer)) {
+            offenders.push(`${rule.selector} → ${layer}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+    // The selected state and its `:hover` sibling are the only two rules that
+    // may carry an inset ring at all.
+    const ringed = rulesNaming(".hk-selection-grid-item")
+      .filter((r) =>
+        r.declarations.some(
+          ([prop, value]) => prop === "box-shadow" && /inset\b/.test(value),
+        ),
+      )
+      .map((r) => normalized(r.selector))
+      .sort();
+    expect(ringed).toEqual(
+      [normalized(SELECTED), normalized(`${SELECTED}:hover`)].sort(),
+    );
+  });
 });

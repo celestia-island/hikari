@@ -60,9 +60,11 @@ export default defineComponent({
      *  picker list rather than a card grid): the check cell centers on the
      *  row's trailing edge instead of parking at the top corner. */
     layout: { type: String as PropType<"grid" | "list">, default: "grid" },
-    /** Optional emphasis for the selected item: a thickened primary edge
-     *  bar on the item's leading side (drawn inside the border box, so the
-     *  geometry never shifts). */
+    /** Optional emphasis for the selected item: a primary accent tab on
+     *  the item's leading side, DETACHED from the selected frame (a pseudo
+     *  element inside the border box, so the geometry never shifts — and
+     *  the 2px ring stays uniform on all four sides instead of merging
+     *  with the tab into a fattened leading edge). */
     selectedEdge: { type: Boolean, default: false },
   },
   emits: {

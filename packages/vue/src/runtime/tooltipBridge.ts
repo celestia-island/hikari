@@ -47,7 +47,7 @@
 // overlay root on hide: the elevation is granted per trigger and only
 // while the bubble is up, exactly like the exemption itself.
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
-import { ensureTopRoot } from "../overlay/topRoot";
+import { TOP_ROOT_SELECTOR, ensureTopRoot } from "../overlay/topRoot";
 import { applyTooltipPosition, type TooltipPlacement } from "./tooltipPosition";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
@@ -187,12 +187,18 @@ function showPopup(state: BridgeState, el: Element) {
   // "false" opts OUT even on an overlap-by-default one.
   const ownMarker = el.getAttribute("data-hk-tooltip-band-overlap");
   const ancestorMarker = el.closest("[data-hk-tooltip-band-overlap]");
-  const allowBandOverlap =
+  const exempted =
     ownMarker !== null
       ? ownMarker !== "false"
       : ancestorMarker
         ? ancestorMarker.getAttribute("data-hk-tooltip-band-overlap") !== "false"
         : state.allowBandOverlap;
+  // A trigger INSIDE an above-titlebar layer (a title on a notification
+  // row, a caption menu entry) shares that layer's home and exemption:
+  // the bubble would otherwise be painted under its own parent surface
+  // (round-1 verification finding, 2026-11-17).
+  const insideTopRoot = el.closest(TOP_ROOT_SELECTOR) != null;
+  const allowBandOverlap = exempted || insideTopRoot;
   const home = allowBandOverlap ? ensureTopRoot() ?? ensureOverlayRoot() : ensureOverlayRoot();
   if (home && state.popup.parentElement !== home) home.appendChild(state.popup);
   // Same geometry as component tooltips: the fixed popup pins to the

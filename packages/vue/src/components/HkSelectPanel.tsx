@@ -26,7 +26,7 @@ import HIcon from "./HkIcon";
 import "./window-close.scss";
 import "./HkSelect.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
-import { ensureTopRoot } from "../overlay/topRoot";
+import { TOP_ROOT_SELECTOR, ensureTopRoot } from "../overlay/topRoot";
 
 /**
  * The dropdown panel of HkSelect, detached from the select's trigger so it
@@ -165,6 +165,19 @@ export default defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const manager = usePopupManager();
+    /** Nested caption attachment (round-1 verification finding,
+     *  2026-11-17): a panel whose ANCHOR lives inside an above-titlebar
+     *  layer joins that root, so a select/menu opened from a caption
+     *  menu or panel row is never painted under its own parent. The
+     *  anchor contract also accepts a synthetic rect (cascade/context
+     *  menu) — those carry no DOM node and inherit nothing. */
+    const nestedInTopRoot = computed(() => {
+      const anchor = props.anchorRef as unknown as Element | null;
+      return typeof anchor?.closest === "function"
+        ? anchor.closest(TOP_ROOT_SELECTOR) != null
+        : false;
+    });
+    const aboveChrome = computed(() => props.aboveChrome || nestedInTopRoot.value);
     const { t } = useI18n();
     const handle = ref<PopupHandle | null>(null);
     /** z of the last live registration — the leave transition keeps
@@ -594,7 +607,7 @@ export default defineComponent({
       // The popup viewport: the window minus the app-chrome band the host
       // configured (popupBounds) — full-window when none, in which case
       // every flip and clamp below is the raw-window math.
-      const frame = popupViewportRect(window, { rawWindow: props.aboveChrome });
+      const frame = popupViewportRect(window, { rawWindow: aboveChrome.value });
       let side: "top" | "bottom" = props.placement.startsWith("top-") ? "top" : "bottom";
       let top =
         side === "top"
@@ -689,7 +702,7 @@ export default defineComponent({
       // above-titlebar root in BOTH form factors: the band row is the
       // PAGE's top owner, but the wells it opens must stay visible over
       // it (overlay/topRoot.ts).
-      const portalHost = props.aboveChrome ? ensureTopRoot() : ensureOverlayRoot();
+      const portalHost = aboveChrome.value ? ensureTopRoot() : ensureOverlayRoot();
       if (activeBranch.value === "sheet") {
         return (
           <Teleport to={portalHost}>
@@ -770,7 +783,7 @@ export default defineComponent({
                 class={["hk-select-popout-host", ...machine.classesFor("hk-select-popout")]}
                 data-side={resolved.value.side}
                 data-align={resolved.value.align}
-                data-hk-top-layer={props.aboveChrome ? "" : undefined}
+                data-hk-top-layer={aboveChrome.value ? "" : undefined}
                 style={{ ...coords.value, zIndex: popoutZ.value }}
               >
                 <div

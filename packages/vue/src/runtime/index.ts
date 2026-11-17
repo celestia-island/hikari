@@ -54,6 +54,7 @@ export {
   popupViewportRect,
   POPUP_INSET_VARS,
   type PopupInsets,
+  type PopupViewportOptions,
   type ResolvedPopupInsets,
   type PopupViewportRect,
 } from "./popupBounds";

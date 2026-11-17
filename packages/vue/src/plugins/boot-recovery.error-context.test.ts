@@ -119,6 +119,10 @@ function runScript(
     navigator?: Record<string, unknown>;
     /** Seed `navigator.clipboard.writeText` with a recorder. */
     withClipboard?: boolean;
+    /** Use THIS object as the console the script sees (hostile accessors,
+     *  shims with return values). Default: a fresh per-level fake whose calls
+     *  are recorded into `calls`. */
+    consoleObject?: Record<string, unknown>;
   } = {},
 ): Run {
   for (const stale of document.querySelectorAll("#loading-screen")) stale.remove();
@@ -146,6 +150,8 @@ function runScript(
       calls.push({ level, args });
     };
   }
+  const scriptConsole = (options.consoleObject ??
+    fakeConsole) as Run["console"];
   const navigatorOptions = options.navigator ?? {
     languages: ["en-US"],
     language: "en-US",
@@ -189,7 +195,7 @@ function runScript(
     { getEntriesByType: () => options.resources ?? [] },
     undefined,
     FakeDate,
-    fakeConsole,
+    scriptConsole,
   );
   return { loader, window: win, timers, console: fakeConsole, calls, written };
 }
@@ -341,7 +347,7 @@ describe("byte-compat", () => {
           copy: { rawDetailsLabel: "Raw", errorContext: false },
         }),
       ),
-    ).toBe("922e8c74ade0250de9c05a6d36279dd67a76541e73315c5616cbadf3873d196b");
+    ).toBe("76c1d8ada1501d366a54e39abda2d9ea9e4454ac0414a6aa801394ba81048255");
   });
 
   it("keeps the capture's names out of scripts that do not configure it", () => {
@@ -525,6 +531,79 @@ describe("the capture (real listeners, real console wrap)", () => {
     expect(log[0].text).toContain("user navigated away");
   });
 
+  it("stops recording after __appReady -- observable through a later repaint", async () => {
+    // The ring is closure-private and the panel is down after ready(), so the
+    // observable route is a SECOND paint: __appFatal repaints on demand and
+    // builds a FRESH payload from the live ring. A reverted freeze guard
+    // (either of them) would put the post-mount lines into that payload.
+    const run = runScript(bootRecoveryScript(CTX_REASONS_OPTION), {
+      withClipboard: true,
+    });
+    run.console.error("during boot");
+    paintedCard(run);
+    const ready = run.window[BOOT_RECOVERY_READY_GLOBAL] as () => void;
+    ready();
+    run.console.error("after mount");
+    run.window.dispatch("error", { message: "Uncaught TypeError: late" });
+    const fatal = run.window[BOOT_RECOVERY_FATAL_GLOBAL] as (
+      message?: string,
+      detail?: Record<string, unknown>,
+    ) => void;
+    fatal("host report after mount", { name: "HostError" });
+    await clickCopy(run);
+    const payload = pastedPayload(run);
+    const log = payload.console as Array<{ text: string }>;
+    expect(log.map((entry) => entry.text)).toEqual(["during boot"]);
+    // The post-ready error event is not the fatal either.
+    expect(payload.lastError).toBeUndefined();
+    // Pass-through continued for both post-mount calls.
+    expect(run.calls.map((call) => call.args[0])).toEqual([
+      "during boot",
+      "after mount",
+    ]);
+  });
+
+  it("keeps the pass-through after the freeze", () => {
+    // A healthy mount leaves the wrappers installed (unwinding could clobber
+    // a later wrapper in a chained console); the freeze only stops RECORDING.
+    const run = runScript(bootRecoveryScript(CTX_REASONS_OPTION));
+    run.console.error("during boot");
+    paintedCard(run);
+    const ready = run.window[BOOT_RECOVERY_READY_GLOBAL] as () => void;
+    ready();
+    expect(() => run.console.error("after mount")).not.toThrow();
+    expect(run.calls.map((call) => call.args[0])).toEqual([
+      "during boot",
+      "after mount",
+    ]);
+  });
+
+  it("publishes the freeze handoff for a capture-only host (no reason table)", () => {
+    // Without `reasons` there is no classified headline and no __appFatal,
+    // but __appReady still exists: the freeze rides the ready handoff.
+    const run = runScript(bootRecoveryScript(CTX_OPTION));
+    const ready = run.window[BOOT_RECOVERY_READY_GLOBAL] as () => void;
+    expect(typeof ready).toBe("function");
+    expect(() => ready()).not.toThrow();
+  });
+
+  it("reports the captured fatal's class in the payload without a reason table", async () => {
+    // No reasons: the HEADLINE is the host's generic copy, but a paste that
+    // says reason:"timeout" beside lastError:"it threw" would contradict
+    // itself -- the payload reason follows the capture.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.window.dispatch("error", {
+      message: "Failed to fetch dynamically imported module: /x.js",
+    });
+    paintedCard(run);
+    await clickCopy(run);
+    const payload = pastedPayload(run);
+    expect(payload.reason).toBe("chunk");
+    expect((payload.lastError as Record<string, unknown>).message).toContain(
+      "Failed to fetch dynamically imported module",
+    );
+  });
+
   it("does not cross-contaminate the console between runs", () => {
     // A fresh fake per run: the wrap assigns onto the console object the
     // script was GIVEN, so a host page's console is wrapped exactly once.
@@ -551,29 +630,6 @@ describe("the capture (real listeners, real console wrap)", () => {
     // BOTH sheets (the landing sheet and the details sheet), not just the
     // one adjacent to the panel.
     expect(document.getElementById("loading-screen")).toBe(run.loader);
-    expect(run.loader.querySelectorAll("style").length).toBe(0);
-  });
-
-  it("stops recording after __appReady, but keeps the pass-through", () => {
-    // A healthy mount leaves the wrappers installed (unwinding could clobber
-    // a later wrapper in a chained console), but every call after the ready
-    // handoff costs one boolean check -- no format, no append.
-    const run = runScript(bootRecoveryScript(CTX_REASONS_OPTION));
-    run.console.error("during boot");
-    paintedCard(run);
-    const ready = run.window[BOOT_RECOVERY_READY_GLOBAL] as () => void;
-    ready();
-    run.console.error("after mount");
-    run.window.dispatch("error", { message: "Uncaught TypeError: late" });
-    // Pass-through continues: the page's console behaviour is unchanged.
-    expect(run.calls.map((call) => call.args[0])).toEqual([
-      "during boot",
-      "after mount",
-    ]);
-    // The panel is down, so the ring is not observable here -- but a fatal
-    // after ready would not have set bootFatal: repaint through a second
-    // panel is impossible, so assert the only observable surface instead:
-    // the loaders' styles are gone and no error was thrown.
     expect(run.loader.querySelectorAll("style").length).toBe(0);
   });
 });
@@ -613,6 +669,87 @@ describe("the classification upgrade (watchdog + capture)", () => {
     expect((payload.lastError as Record<string, unknown>).message).toContain(
       "Failed to fetch dynamically imported module",
     );
+    // ONE ring entry, labelled as the rejection it is: the fatal record rides
+    // the same entry instead of appending a second, mislabelled "uncaught".
+    const log = payload.console as Array<{ level: string; text: string }>;
+    expect(log).toHaveLength(1);
+    expect(log[0].level).toBe("rejection");
+  });
+
+  it("masks credentials inside double-serialized console JSON", async () => {
+    // THE DOMINANT console shape: a printed JSON body reaches the ring as a
+    // STRING, so the quotes arrive backslash-escaped and the plain key mask
+    // cannot see them. The copy text is what an operator pastes into an
+    // issue, so the escaped form is masked with the same three discs.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.console.log('login body sent: {"username":"bob","password":"hunter2"}');
+    run.console.error('{"nested":{"token":"abc123"}}');
+    paintedCard(run);
+    await clickCopy(run);
+    const text = run.written[0];
+    expect(text).not.toContain("hunter2");
+    expect(text).not.toContain("abc123");
+    expect(text).toContain("password\\\":\\\"\u25CF\u25CF\u25CF");
+    expect(text).toContain("token\\\":\\\"\u25CF\u25CF\u25CF");
+    // The username is NOT a credential key: it must survive untouched.
+    expect(text).toContain("bob");
+  });
+
+  it("forwards this and the original's return value through the wrapper", async () => {
+    // The wrapper is a transparent middleman: a shim installed BEFORE the
+    // script runs keeps its return value AND its this-binding through the
+    // wrap (a page logging through a detached alias must not change either).
+    let seenThis: unknown = "untouched";
+    const shim = function (this: unknown) {
+      seenThis = this;
+      return "RET";
+    };
+    const consoleObject: Record<string, unknown> = {
+      error: shim,
+      warn: () => {},
+      log: () => {},
+      info: () => {},
+    };
+    const run = runScript(bootRecoveryScript(CTX_OPTION), {
+      consoleObject,
+      withClipboard: true,
+    });
+    const returned = (consoleObject.error as (...args: unknown[]) => unknown)(
+      "through the wrapper",
+    );
+    expect(returned).toBe("RET");
+    expect(seenThis).toBe(consoleObject);
+    // ...and the capture still recorded the call.
+    paintedCard(run);
+    await clickCopy(run);
+    const log = pastedPayload(run).console as Array<{ text: string }>;
+    expect(log.map((entry) => entry.text)).toEqual(["through the wrapper"]);
+  });
+
+  it("keeps wrapping the other levels when one accessor is hostile", () => {
+    // A throwing getter on console.error must not stop warn/log/info from
+    // being wrapped -- exactly what a single guard around the loop would do.
+    const calls: Array<{ level: string; args: unknown[] }> = [];
+    const consoleObject: Record<string, unknown> = {
+      warn: (...args: unknown[]) => {
+        calls.push({ level: "warn", args });
+      },
+      log: () => {},
+      info: () => {},
+    };
+    Object.defineProperty(consoleObject, "error", {
+      get() {
+        throw new Error("hostile accessor");
+      },
+      configurable: true,
+    });
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { consoleObject });
+    // The install survived the hostile accessor...
+    expect(() =>
+      (consoleObject.warn as (...args: unknown[]) => void)("still here"),
+    ).not.toThrow();
+    // ...and warn (NOT error) was wrapped: calling it recorded the line.
+    expect(calls.map((call) => call.args[0])).toEqual(["still here"]);
   });
 
   it("keeps the resource-timing chunk signal ahead of the fatal", () => {
@@ -710,7 +847,9 @@ describe("the copy action", () => {
     expect(text).not.toContain("SECRETVALUE");
     expect(text).toContain("token=\u25CF\u25CF\u25CF");
     const payload = pastedPayload(run);
-    expect(payload.reason).toBe("timeout");
+    // The dispatched fatal upgrades the pane-only shape's payload reason too
+    // (no reason table needed for the FIELD to tell the truth).
+    expect(payload.reason).toBe("error");
     expect(Array.isArray(payload.console)).toBe(true);
     // The capture's fields are the payload's LAST keys, after the pane's own
     // contract fields — key order is part of the paste's shape.
@@ -832,6 +971,29 @@ describe("the copy action", () => {
     // The partial zh row translated only the button label; the copied/failed
     // feedback keeps the English defaults, and the retry label is the row's.
     expect(actionLabels(run)).toEqual(["复制", "r"]);
+  });
+
+  it("resolves a translated label through subtag stripping", () => {
+    // A compound request with only a bare-tag entry: zh-Hant-TW strips to
+    // zh-hant (absent), then to the primary zh (present) -- the same
+    // subtag-stripping matrix the reason/block copy resolves through. A
+    // mutation in that stripping loop makes this exact case fail.
+    const run = runScript(
+      bootRecoveryScript({
+        copy: {
+          locales: {
+            en: { message: "m", retry: "r" },
+            "zh-cn": { message: "m", retry: "r" },
+            zh: { message: "m", retry: "r" },
+          },
+          rawDetailsLabel: "Raw",
+          errorContext: { locales: { zh: { copy: "複製" } } },
+        },
+      }),
+      { navigator: { languages: ["zh-Hant-TW"], language: "zh-Hant-TW" } },
+    );
+    paintedCard(run);
+    expect(actionLabels(run)).toContain("複製");
   });
 
   it("keeps the pane working when the copy machinery is never touched", () => {

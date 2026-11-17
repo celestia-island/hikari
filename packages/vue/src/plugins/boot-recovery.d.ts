@@ -363,14 +363,17 @@ export interface BootRecoveryCopyOptions {
  * OFF; leaving a slot out keeps the family default.
  *
  * The defaults are published only alongside the feature that needs them:
- * `block` with `copy.browserBlock`, `fatal` / `ready` with `copy.reasons`.
+ * `block` with `copy.browserBlock`, `fatal` with `copy.reasons`, and `ready`
+ * with `copy.reasons` OR `copy.errorContext` (the capture's recording freeze
+ * rides the same mount handoff).
  */
 export interface BootRecoveryGlobalsOptions {
   /** Unsupported-browser entry (default `"__appBlock"`). */
   block?: string | { global?: string | false } | false;
   /** Pre-mount error report entry (default `"__appFatal"`). */
   fatal?: string | { global?: string | false } | false;
-  /** Mount-succeeded handoff entry (default `"__appReady"`). */
+  /** Mount-succeeded handoff entry (default `"__appReady"`; published with
+   *  `copy.reasons` or `copy.errorContext`). */
   ready?: string | { global?: string | false } | false;
 }
 

@@ -50,6 +50,67 @@ impl Color {
         self.name
     }
 
+    /// sRGB channel -> linear light (IEC 61966-2-1 / WCAG 2.x toe).
+    fn channel_linear(v: u8) -> f64 {
+        let c = f64::from(v) / 255.0;
+        if c <= 0.04045 {
+            c / 12.92
+        } else {
+            ((c + 0.055) / 1.055).powf(2.4)
+        }
+    }
+
+    /// WCAG 2.x relative luminance (D65). Range `0.0..=1.0`.
+    #[must_use]
+    pub fn relative_luminance(&self) -> f64 {
+        let r = Self::channel_linear(self.rgb.0);
+        let g = Self::channel_linear(self.rgb.1);
+        let b = Self::channel_linear(self.rgb.2);
+        0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+
+    /// WCAG 2.x contrast ratio against `other`. Range `1.0..=21.0`.
+    #[must_use]
+    pub fn contrast_ratio(&self, other: &Self) -> f64 {
+        let a = self.relative_luminance();
+        let b = other.relative_luminance();
+        let (hi, lo) = if a >= b { (a, b) } else { (b, a) };
+        (hi + 0.05) / (lo + 0.05)
+    }
+
+    /// OKLCH of this colour: `(L, C, H_degrees)` using Ottosson's OKLab
+    /// matrices. Hue is `0.0..360.0`; a grey has `C == 0.0` and an arbitrary
+    /// hue, so callers must treat near-zero chroma as hue-less.
+    #[must_use]
+    pub fn oklch(&self) -> (f64, f64, f64) {
+        let r = Self::channel_linear(self.rgb.0);
+        let g = Self::channel_linear(self.rgb.1);
+        let b = Self::channel_linear(self.rgb.2);
+        let l = 0.412_221_470_8 * r + 0.536_332_536_3 * g + 0.051_445_992_9 * b;
+        let m = 0.211_903_498_2 * r + 0.680_699_545_1 * g + 0.107_396_956_6 * b;
+        let s = 0.088_302_461_9 * r + 0.281_718_837_6 * g + 0.629_978_700_5 * b;
+        let (l_, m_, s_) = (l.cbrt(), m.cbrt(), s.cbrt());
+        let ok_l = 0.210_454_255_3 * l_ + 0.793_617_785_0 * m_ - 0.004_072_046_8 * s_;
+        let ok_a = 1.977_998_495_1 * l_ - 2.428_592_205_0 * m_ + 0.450_593_709_9 * s_;
+        let ok_b = 0.025_904_037_1 * l_ + 0.782_771_766_2 * m_ - 0.808_675_766_0 * s_;
+        let chroma = ok_a.hypot(ok_b);
+        let hue = ok_b.atan2(ok_a).to_degrees().rem_euclid(360.0);
+        (ok_l, chroma, hue)
+    }
+
+    /// The ink (black or white) that reads best on this fill — the perceptual
+    /// max-contrast rule. Ties go to white (the house white-first default).
+    #[must_use]
+    pub fn readable_ink(&self) -> Self {
+        let white = Self::from_rgb_hex(0xff, 0xff, 0xff);
+        let black = Self::from_rgb_hex(0x00, 0x00, 0x00);
+        if white.contrast_ratio(self) >= black.contrast_ratio(self) {
+            white
+        } else {
+            black
+        }
+    }
+
     #[must_use]
     pub fn hex(&self) -> String {
         format!("#{:02X}{:02X}{:02X}", self.rgb.0, self.rgb.1, self.rgb.2)

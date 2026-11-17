@@ -29,6 +29,9 @@ import {
 // module-init order decides whether the table exists yet. Theme-internal
 // modules never import components, so this edge cannot loop.
 import { stockDefaultPreset, themePresets } from "../theme";
+// The ONE contrast implementation lives in the derivation module; the editor
+// must not grow a second copy of it.
+import { contrastRatio } from "../theme/semanticPalette";
 
 import "./HkColorSchemeDialog.scss";
 
@@ -80,6 +83,30 @@ const toneInkTokens: Array<"onDanger" | "onSuccess" | "onWarning" | "onInfo"> = 
   "onInfo",
 ];
 const WHITE: ThemeTokenRGB = { r: 255, g: 255, b: 255 };
+
+/** Each per-tone ink follows the tone fill it reads on. */
+const toneFillOf: Record<(typeof toneInkTokens)[number], RequiredTokenKey> = {
+  onDanger: "error",
+  onSuccess: "success",
+  onWarning: "warning",
+  onInfo: "info",
+};
+
+const BLACK: ThemeTokenRGB = { r: 0, g: 0, b: 0 };
+
+/**
+ * The ink that READS on a tone fill — black or white, whichever the WCAG
+ * ratio favours (the perceptual rule, same one the consumer's derivation
+ * uses). White wins ties, keeping the house default stable.
+ */
+export function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
+  return contrastRatio(WHITE, fill) >= contrastRatio(BLACK, fill) ? { ...WHITE } : { ...BLACK };
+}
+
+function sameBytes(a: ThemeTokenRGB | undefined, b: ThemeTokenRGB | undefined): boolean {
+  if (!a || !b) return false;
+  return a.r === b.r && a.g === b.g && a.b === b.b;
+}
 
 function clamp(v: number): number {
   return Math.max(0, Math.min(255, v));
@@ -202,12 +229,43 @@ export const HkColorSchemeEditor = defineComponent({
       }
     }
 
+    // Previous tone fills, per mode: a stored ink that still equals the ink
+    // derived from the PREVIOUS fill is the derived value, not a designer
+    // choice — so it follows the new fill. An ink the designer picked
+    // (anything else) is left alone.
+    const prevToneFills: Record<"dark" | "light", Partial<Record<RequiredTokenKey, ThemeTokenRGB>>> = {
+      dark: {},
+      light: {},
+    };
+
+    function rederiveToneInks(mode: "dark" | "light"): void {
+      const target = mode === "dark" ? dark : light;
+      const prev = prevToneFills[mode];
+      for (const inkKey of toneInkTokens) {
+        const fillKey = toneFillOf[inkKey];
+        const fill = target[fillKey];
+        if (!fill) continue;
+        const prevFill = prev[fillKey];
+        const stored = target[inkKey];
+        const wasDerived =
+          stored == null || (prevFill != null && sameBytes(stored, toneInkOn(prevFill)));
+        if (wasDerived) target[inkKey] = toneInkOn(fill);
+        prev[fillKey] = { ...fill };
+      }
+    }
+
     function rederiveSurface() {
       const target = modeTab.value === "dark" ? dark : light;
       const derived = deriveSurface(target, modeTab.value === "dark");
       derivedTokens.forEach((k) => {
         target[k] = { ...derived[k] };
       });
+    }
+
+    function rederiveAllDerived(): void {
+      rederiveToneInks("dark");
+      rederiveToneInks("light");
+      rederiveSurface();
     }
 
     function reset(): void {
@@ -230,6 +288,19 @@ export const HkColorSchemeEditor = defineComponent({
       }
       seedGroups(groupDark, "dark", props.initialGroups?.dark);
       seedGroups(groupLight, "light", props.initialGroups?.light);
+      // Seed the tone-fill baseline BEFORE the first re-derivation: a prefill
+      // that already carries the derived inks (the consumer's seam does) must
+      // still re-derive when the designer moves that fill, instead of looking
+      // like a hand-picked override.
+      for (const mode of ["dark", "light"] as const) {
+        const target = mode === "dark" ? dark : light;
+        prevToneFills[mode] = {};
+        for (const fillKey of Object.values(toneFillOf)) {
+          const fill = target[fillKey];
+          if (fill) prevToneFills[mode][fillKey] = { ...fill };
+        }
+        rederiveToneInks(mode);
+      }
       rederiveSurface();
     }
 
@@ -246,7 +317,7 @@ export const HkColorSchemeEditor = defineComponent({
         dark.primary, dark.secondary, dark.accent, dark.success, dark.error, dark.warning, dark.info,
         light.primary, light.secondary, light.accent, light.success, light.error, light.warning, light.info,
       ],
-      () => rederiveSurface(),
+      () => rederiveAllDerived(),
       { deep: true },
     );
 

@@ -95,9 +95,12 @@ impl Hikari {
             primary: Color::from_rgb_hex(0xee, 0xa2, 0xa4), // 牡丹粉红
             secondary: Color::from_rgb_hex(0x51, 0x9a, 0x73), // 苍翠
             accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
-            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
-            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
+            // Semantic trio — canonical OKLCH hues (success 148°, warning 58°,
+            // danger 20°), lightness derived so the house WHITE ink clears 7:1
+            // (at that level the perceptual algorithm picks white unambiguously).
+            success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
+            warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
+            danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
             background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
             surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9), // 素
             border: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),  // 素
@@ -128,9 +131,11 @@ impl Tairitsu {
             primary: Color::from_rgb_hex(0x14, 0x4a, 0x74), // 鷃蓝
             secondary: Color::from_rgb_hex(0xff, 0xc7, 0x73), // 姜黄
             accent: Color::from_rgb_hex(0xff, 0xc7, 0x73),  // 姜黄
-            success: Color::from_rgb_hex(0x0e, 0xb8, 0x40), // 葱倩
-            warning: Color::from_rgb_hex(0xff, 0xf1, 0x43), // 鹅黄
-            danger: Color::from_rgb_hex(0xff, 0x4c, 0x00),  // 朱红
+            // Same canonical semantic trio as the light theme: the ink rule is
+            // a property of the fill, not of the mode.
+            success: Color::from_rgb_hex(0x1f, 0x65, 0x30), // white 7.09:1
+            warning: Color::from_rgb_hex(0x89, 0x48, 0x00), // white 7.02:1
+            danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),  // white 7.01:1
             background: Color::from_rgb_hex(0x50, 0x61, 0x6d), // 墨色
             surface: Color::from_rgb_hex(0x4a, 0x42, 0x66), // 黛
             border: Color::from_rgb_hex(0x4a, 0x42, 0x66),  // 黛
@@ -351,5 +356,79 @@ mod tests {
         assert_eq!(tairitsu.ghost_text_color(0.9), "rgba(255, 255, 255, 0.9)");
         assert_eq!(hikari.ghost_glow_color(0.2), "rgba(0, 0, 0, 0.2)");
         assert_eq!(tairitsu.ghost_glow_color(0.8), "rgba(255, 255, 255, 0.8)");
+    }
+}
+
+#[cfg(test)]
+mod semantic_tests {
+    use super::*;
+
+    /// Canonical semantic hues (the OKLCH family the derivation targets).
+    const CANONICAL: [(f64, f64); 3] = [(148.0, 0.11), (58.0, 0.13), (20.0, 0.16)];
+
+    fn semantic_trio(p: &Palette) -> [Color; 3] {
+        [p.success.clone(), p.warning.clone(), p.danger.clone()]
+    }
+
+    /// Every semantic fill sits on its canonical hue — the derivation must not
+    /// drift, and a brand-value edit that ignores the family fails here.
+    #[test]
+    fn semantic_colors_keep_canonical_hues() {
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for (color, (canon_hue, _)) in semantic_trio(&palette).iter().zip(CANONICAL) {
+                let (_, chroma, hue) = color.oklch();
+                assert!(
+                    chroma > 0.02,
+                    "{name}: {} is achromatic (C={chroma:.4}) — a semantic slot must carry hue",
+                    color.hex()
+                );
+                let delta = (hue - canon_hue).abs().min(360.0 - (hue - canon_hue).abs());
+                assert!(
+                    delta <= 5.0,
+                    "{name}: {} hue {hue:.1}° is {delta:.1}° off canonical {canon_hue}°",
+                    color.hex()
+                );
+            }
+        }
+    }
+
+    /// The house WHITE ink must clear 7:1 on every semantic fill — that is the
+    /// level at which the perceptual rule picks white unambiguously.
+    #[test]
+    fn semantic_fills_carry_readable_white_ink() {
+        let white = Color::from_rgb_hex(0xff, 0xff, 0xff);
+        for (name, palette) in [
+            ("hikari", Hikari::palette()),
+            ("tairitsu", Tairitsu::palette()),
+        ] {
+            for color in semantic_trio(&palette) {
+                let ratio = white.contrast_ratio(&color);
+                assert!(
+                    ratio >= 7.0,
+                    "{name}: white on {} is only {ratio:.2}:1 (need >= 7.0)",
+                    color.hex()
+                );
+                assert_eq!(
+                    color.readable_ink().hex(),
+                    "#FFFFFF",
+                    "{name}: {} must read white by the perceptual rule",
+                    color.hex()
+                );
+            }
+        }
+    }
+
+    /// The two bundled themes share one semantic family (the ink rule belongs
+    /// to the fill, not to the mode).
+    #[test]
+    fn both_themes_share_the_semantic_family() {
+        let light = semantic_trio(&Hikari::palette());
+        let dark = semantic_trio(&Tairitsu::palette());
+        for (l, d) in light.iter().zip(dark.iter()) {
+            assert_eq!(l.hex(), d.hex(), "light/dark semantic fills diverged");
+        }
     }
 }

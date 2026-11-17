@@ -21,16 +21,18 @@ impl Color {
     /// This is the workhorse constructor used by the generated collection
     /// modules. The inferred category is a best-effort hue classification; it is
     /// a UX hint (e.g. for grouping in docs/pickers), not a source of truth.
-    /// Parse `#RRGGBB` / `RRGGBB` (the shape every emitted var carries).
+    /// Parse `#RRGGBB` / `RRGGBB` (the shape every emitted CSS var carries).
+    /// Non-hex or non-ASCII input is `None`, never a panic.
     #[must_use]
     pub fn from_hex(value: &str) -> Option<Self> {
-        let s = value.trim().trim_start_matches('#');
-        if s.len() != 6 {
+        let s = value.trim().strip_prefix('#').unwrap_or(value.trim());
+        let bytes = s.as_bytes();
+        if bytes.len() != 6 || !bytes.iter().all(u8::is_ascii_hexdigit) {
             return None;
         }
-        let r = u8::from_str_radix(&s[0..2], 16).ok()?;
-        let g = u8::from_str_radix(&s[2..4], 16).ok()?;
-        let b = u8::from_str_radix(&s[4..6], 16).ok()?;
+        let r = u8::from_str_radix(std::str::from_utf8(&bytes[0..2]).ok()?, 16).ok()?;
+        let g = u8::from_str_radix(std::str::from_utf8(&bytes[2..4]).ok()?, 16).ok()?;
+        let b = u8::from_str_radix(std::str::from_utf8(&bytes[4..6]).ok()?, 16).ok()?;
         Some(Self::from_rgb_hex(r, g, b))
     }
 
@@ -111,44 +113,6 @@ impl Color {
         (ok_l, chroma, hue)
     }
 
-    /// OKLCH -> sRGB, chroma-reducing into gamut (the same trade the TS
-    /// derivation makes: keep the HUE, give up chroma).
-    #[must_use]
-    pub fn from_oklch(l: f64, chroma: f64, hue_deg: f64) -> Self {
-        let l = l.clamp(0.0, 1.0);
-        let mut lo = 0.0_f64;
-        let mut hi = chroma.max(0.0).min(0.4);
-        // Gamut map by chroma reduction (a linear prescan then a bisection).
-        let in_gamut = |c: f64| {
-            let (r, g, b) = Self::oklch_raw(l, c, hue_deg);
-            (-1e-4..=1.0 + 1e-4).contains(&r)
-                && (-1e-4..=1.0 + 1e-4).contains(&g)
-                && (-1e-4..=1.0 + 1e-4).contains(&b)
-        };
-        if !in_gamut(hi) {
-            for _ in 0..48 {
-                let mid = (lo + hi) / 2.0;
-                if in_gamut(mid) {
-                    lo = mid;
-                } else {
-                    hi = mid;
-                }
-            }
-            hi = lo;
-        }
-        let (r, g, b) = Self::oklch_raw(l, hi, hue_deg);
-        let enc = |v: f64| {
-            let v = v.clamp(0.0, 1.0);
-            let s = if v <= 0.003_130_8 {
-                12.92 * v
-            } else {
-                1.055 * v.powf(1.0 / 2.4) - 0.055
-            };
-            (s * 255.0).round() as u8
-        };
-        Self::from_rgb_hex(enc(r), enc(g), enc(b))
-    }
-
     /// Raw (non-encoded) sRGB for an OKLCH triple — may be out of gamut.
     fn oklch_raw(l: f64, chroma: f64, hue_deg: f64) -> (f64, f64, f64) {
         let a = chroma * hue_deg.to_radians().cos();
@@ -161,6 +125,55 @@ impl Color {
             -1.268_438_004_6 * l_ + 2.609_757_401_1 * m_ - 0.341_319_396_5 * s_,
             -0.004_196_086_3 * l_ - 0.703_418_614_7 * m_ + 1.707_614_701_0 * s_,
         )
+    }
+
+    fn in_gamut_raw(l: f64, chroma: f64, hue_deg: f64) -> bool {
+        let (r, g, b) = Self::oklch_raw(l, chroma, hue_deg);
+        (-1e-4..=1.0 + 1e-4).contains(&r)
+            && (-1e-4..=1.0 + 1e-4).contains(&g)
+            && (-1e-4..=1.0 + 1e-4).contains(&b)
+    }
+
+    /// The largest chroma the sRGB gamut allows at `(l, hue)`. The ceiling a
+    /// gamut-mapped colour can carry — hue is preserved, chroma is clipped.
+    #[must_use]
+    pub fn gamut_chroma(l: f64, hue_deg: f64) -> f64 {
+        if !Self::in_gamut_raw(l, 0.0, hue_deg) {
+            return 0.0;
+        }
+        let mut lo = 0.0_f64;
+        let mut hi = 0.4_f64;
+        if Self::in_gamut_raw(l, hi, hue_deg) {
+            return hi;
+        }
+        for _ in 0..48 {
+            let mid = (lo + hi) / 2.0;
+            if Self::in_gamut_raw(l, mid, hue_deg) {
+                lo = mid;
+            } else {
+                hi = mid;
+            }
+        }
+        lo
+    }
+
+    /// OKLCH -> sRGB, chroma-reducing into gamut (the same trade the TS
+    /// derivation makes: keep the HUE, give up chroma).
+    #[must_use]
+    pub fn from_oklch(l: f64, chroma: f64, hue_deg: f64) -> Self {
+        let l = l.clamp(0.0, 1.0);
+        let chroma = chroma.min(Self::gamut_chroma(l, hue_deg));
+        let (r, g, b) = Self::oklch_raw(l, chroma, hue_deg);
+        let enc = |v: f64| {
+            let v = v.clamp(0.0, 1.0);
+            let s = if v <= 0.003_130_8 {
+                12.92 * v
+            } else {
+                1.055 * v.powf(1.0 / 2.4) - 0.055
+            };
+            (s * 255.0).round() as u8
+        };
+        Self::from_rgb_hex(enc(r), enc(g), enc(b))
     }
 
     /// This colour as TEXT on `bg`: itself when it already clears `target`,

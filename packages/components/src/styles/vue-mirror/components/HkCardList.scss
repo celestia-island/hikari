@@ -179,11 +179,11 @@
   }
 
   &[data-danger] {
-    color: rgb(var(--color-error, 247 118 142) / 90%);
+    color: rgb(var(--color-error, 166 41 55) / 90%);
 
     &:hover:not(:disabled) {
-      background: rgb(var(--color-error, 247 118 142) / 10%);
-      color: rgb(var(--color-error, 247 118 142));
+      background: rgb(var(--color-error, 166 41 55) / 10%);
+      color: rgb(var(--color-error, 166 41 55));
     }
   }
 }

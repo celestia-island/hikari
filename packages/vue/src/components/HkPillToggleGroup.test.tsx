@@ -221,12 +221,13 @@ describe("HkPillToggleGroup tone channel", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const css = compile(join(here, "HkPillToggleGroup.scss"), { style: "expanded" }).css;
     const tones = ["success", "secondary", "warning", "error", "muted"] as const;
-    // Same triplets styles/theme/channels.scss defines (light base).
+    // Same triplets styles/theme/channels.scss defines (light base) — the
+    // semantic trio is the shared canonical family now.
     const FALLBACKS: Record<(typeof tones)[number], string> = {
-      success: "14 184 64",
+      success: "31 101 48",
       secondary: "81 154 115",
-      warning: "238 214 119",
-      error: "247 118 142",
+      warning: "137 72 0",
+      error: "166 41 55",
       muted: "108 108 108",
     };
     const plainActive = css.indexOf(".hk-pill-group-pill[data-active]");

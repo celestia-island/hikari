@@ -40,15 +40,15 @@
   --c-primary-medium: rgb(var(--color-primary, 122 162 247) / 25%);
   --c-primary-strong: rgb(var(--color-primary, 122 162 247) / 40%);
   --c-primary-intense: rgb(var(--color-primary, 122 162 247) / 40%);
-  --c-error-dim: rgb(var(--color-error, 247 118 142) / 10%);
-  --c-error-overlay: rgb(var(--color-error, 247 118 142) / 20%);
-  --c-error-strong: rgb(var(--color-error, 247 118 142) / 50%);
+  --c-error-dim: rgb(var(--color-error, 166 41 55) / 10%);
+  --c-error-overlay: rgb(var(--color-error, 166 41 55) / 20%);
+  --c-error-strong: rgb(var(--color-error, 166 41 55) / 50%);
   --shadow-elevated: 0 8px 32px rgb(0 0 0 / 15%);
   --shadow-dropdown: 0 4px 24px rgb(0 0 0 / 12%), 0 0 0 1px rgb(255 255 255 / 4%);
   --shadow-button: 0 4px 14px rgb(var(--color-primary, 122 162 247) / 35%);
-  --shadow-button-danger: 0 4px 14px rgb(var(--color-error, 247 118 142) / 35%);
+  --shadow-button-danger: 0 4px 14px rgb(var(--color-error, 166 41 55) / 35%);
   --shadow-focus: 0 0 0 3px rgb(var(--color-primary, 122 162 247) / 12%);
-  --shadow-focus-error: 0 0 0 3px rgb(var(--color-error, 247 118 142) / 12%);
+  --shadow-focus-error: 0 0 0 3px rgb(var(--color-error, 166 41 55) / 12%);
   --border-input: rgb(var(--color-border, 100 100 100) / 15%);
   --border-faint: rgb(var(--color-border, 100 100 100) / 10%);
   --border-subtle: rgb(var(--color-border, 100 100 100) / 12%);
@@ -72,8 +72,8 @@
   --hi-bg-surface-dark: rgb(var(--color-muted, 108 108 108) / 12%);
   --hi-color-primary-dark: color-mix(in srgb, rgb(var(--color-primary, 122 162 247)) 82%, #000);
   --hi-color-secondary-dark: color-mix(in srgb, rgb(var(--color-secondary, 81 154 115)) 82%, #000);
-  --hi-color-danger-dark: color-mix(in srgb, rgb(var(--color-error, 247 118 142)) 82%, #000);
-  --hi-color-success-dark: color-mix(in srgb, rgb(var(--color-success, 14 184 64)) 82%, #000);
+  --hi-color-danger-dark: color-mix(in srgb, rgb(var(--color-error, 166 41 55)) 82%, #000);
+  --hi-color-success-dark: color-mix(in srgb, rgb(var(--color-success, 31 101 48)) 82%, #000);
   --hi-color-text-on-secondary: rgb(var(--color-on-solid, 255 255 255));
   --hi-color-text-on-danger: rgb(var(--color-on-solid, 255 255 255));
   --hi-color-text-on-success: rgb(var(--color-on-solid, 255 255 255));
@@ -95,8 +95,14 @@
    * re-derives these per tone from its own fills (see tokensToCSSVars). */
   --color-on-danger: 255 255 255;
   --color-on-success: 255 255 255;
-  --color-on-warning: 0 0 0;
-  --color-on-info: 0 0 0;
+  --color-on-warning: 255 255 255;
+  --color-on-info: 255 255 255;
+  /* Per-tone page-readable fills (readable_on vs the page): the canonical
+   * fills themselves — they read on the light page as-is. */
+  --color-success-fg: 31 101 48;
+  --color-error-fg: 166 41 55;
+  --color-warning-fg: 137 72 0;
+  --color-info-fg: 0 98 116;
   --color-secondary: 81 154 115;
   --color-accent: 247 181 0;
   --color-text: 30 30 30;
@@ -119,10 +125,10 @@
   --color-selected-bg: 191 218 242;
   --color-selected-text: 30 30 30;
   --color-status-bar-bg: 240 244 248;
-  --color-success: 14 184 64;
-  --color-error: 247 118 142;
-  --color-warning: 238 214 119;
-  --color-info: 106 190 214;
+  --color-success: 31 101 48;
+  --color-error: 166 41 55;
+  --color-warning: 137 72 0;
+  --color-info: 0 98 116;
 
   --hi-color-primary: rgb(var(--color-primary));
   --hi-color-secondary: rgb(var(--color-secondary));
@@ -149,6 +155,10 @@
   --hi-color-text-on-success: rgb(var(--color-on-success));
   --hi-color-text-on-warning: rgb(var(--color-on-warning));
   --hi-color-text-on-info: rgb(var(--color-on-info));
+  --hi-color-success-fg: rgb(var(--color-success-fg));
+  --hi-color-danger-fg: rgb(var(--color-error-fg));
+  --hi-color-warning-fg: rgb(var(--color-warning-fg));
+  --hi-color-info-fg: rgb(var(--color-info-fg));
   /* Surface-layer aliases the runtime writes on every apply — seeded so
    * no-JS consumers resolve them instead of invalid var(). */
   --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);

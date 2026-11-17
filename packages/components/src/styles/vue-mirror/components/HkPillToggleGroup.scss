@@ -115,8 +115,8 @@
    * independent; they are also written after the plain rule so the source
    * order agrees with what specificity already decides. */
   &[data-tone="success"][data-active] {
-    color: rgb(var(--color-success, 14 184 64));
-    background: rgb(var(--color-success, 14 184 64) / 16%);
+    color: rgb(var(--color-success, 31 101 48));
+    background: rgb(var(--color-success, 31 101 48) / 16%);
   }
 
   &[data-tone="secondary"][data-active] {
@@ -125,13 +125,13 @@
   }
 
   &[data-tone="warning"][data-active] {
-    color: rgb(var(--color-warning, 238 214 119));
-    background: rgb(var(--color-warning, 238 214 119) / 16%);
+    color: rgb(var(--color-warning, 137 72 0));
+    background: rgb(var(--color-warning, 137 72 0) / 16%);
   }
 
   &[data-tone="error"][data-active] {
-    color: rgb(var(--color-error, 247 118 142));
-    background: rgb(var(--color-error, 247 118 142) / 16%);
+    color: rgb(var(--color-error, 166 41 55));
+    background: rgb(var(--color-error, 166 41 55) / 16%);
   }
 
   &[data-tone="muted"][data-active] {

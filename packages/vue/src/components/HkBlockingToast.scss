@@ -87,12 +87,12 @@
 // itself from its OWN fill via --hi-color-text-on-<tone> (the theme derives
 // it per tone: white on saturated fills, black on the light ones).
 .hk-blocking-toast-info {
-  background: var(--hi-color-info, #6abed6);
+  background: var(--hi-color-info, #006274);
   color: var(--hi-color-text-on-info, #fff);
 }
 
 .hk-blocking-toast-warning {
-  background: var(--hi-color-warning, #eed677);
+  background: var(--hi-color-warning, #894800);
   color: var(--hi-color-text-on-warning, #1c1c1e);
 }
 
@@ -112,11 +112,11 @@
 // cancel quiets to a translucent outline in the card's own ink (the
 // house grammar for quiet controls on tinted toast surfaces).
 .hk-blocking-toast-info {
-  --hk-blocking-toast-ink: var(--hi-color-info, #6abed6);
+  --hk-blocking-toast-ink: var(--hi-color-info, #006274);
 }
 
 .hk-blocking-toast-warning {
-  --hk-blocking-toast-ink: var(--hi-color-warning, #eed677);
+  --hk-blocking-toast-ink: var(--hi-color-warning, #894800);
 }
 
 .hk-blocking-toast-danger {
@@ -132,7 +132,7 @@
 .hk-blocking-toast-actions .hk-btn-danger {
   background: #fff;
   border-color: transparent;
-  color: color-mix(in srgb, var(--hk-blocking-toast-ink, #6abed6) 55%, #000);
+  color: color-mix(in srgb, var(--hk-blocking-toast-ink, #006274) 55%, #000);
 
   svg {
     color: inherit;

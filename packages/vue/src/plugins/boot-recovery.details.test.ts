@@ -39,7 +39,7 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
 
 /** The default script's bytes, pinned so an accidental default change fails. */
 const DEFAULT_SCRIPT_SHA256 =
-  "bc5d894de22ad8d5a262e5c5a222613bfcc5075807170ccd0027e11a8e8e556d";
+  "11b7c17fe1da2bf92506075c431f423a388a00feb1c7319ac9b84b6074e38cb9";
 /** The heal-only script's bytes (the other shape a host may hash). */
 const HEAL_ONLY_SCRIPT_SHA256 =
   "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";

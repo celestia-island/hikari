@@ -104,18 +104,6 @@ function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
   return solidInk(fill);
 }
 
-/**
- * The ink to WRITE when healing — the HOUSE rule, and nothing else. The
- * editor must not invent a second rule: on the fills where `solidInk` itself
- * falls under AA (mid greys, some saturated greens) the answer is to fix the
- * FILL, not to override the house decision. `tokensToCSSVars` derives the
- * same fill through `solidInk`, so this keeps the stored and derived paths
- * identical.
- */
-function readableInkFor(fill: ThemeTokenRGB): ThemeTokenRGB {
-  return toneInkOn(fill);
-}
-
 
 
 function clamp(v: number): number {
@@ -254,7 +242,7 @@ export const HkColorSchemeEditor = defineComponent({
         // does not (a retune moved the fill, or the theme was saved while the
         // stale-ink bug was live), it is not a design choice — it is an
         // unreadable label — so readableInkFor takes over.
-        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = readableInkFor(fill);
+        if (contrastRatio(stored, fill) < 4.5) target[inkKey] = toneInkOn(fill);
       }
     }
 

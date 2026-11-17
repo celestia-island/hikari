@@ -514,15 +514,51 @@ mod semantic_tests {
         ] {
             for (fill, canon) in semantic_trio(&palette).iter().zip(CANONICAL_HUES) {
                 let fg = fill.readable_on(&palette.background, 4.5);
-                let (_, chroma, hue) = fg.oklch();
+                let (fg_l, chroma, hue) = fg.oklch();
                 let delta = (hue - canon).abs().min(360.0 - (hue - canon).abs());
+                // Δh ≤ 8°: a lightness move keeps the family hue (the HSL-based
+                // search this replaced drifted 11.2°).
                 assert!(
-                    delta <= 15.0 && chroma > 0.02,
-                    "{name}: text variant {} is {delta:.1}° off {canon}° (C={chroma:.3})",
+                    delta <= 8.0,
+                    "{name}: text variant {} is {delta:.1}° off {canon}°",
+                    fg.hex()
+                );
+                // Chroma: the variant must carry as much as the sRGB gamut
+                // allows at its own lightness/hue (the perceptual rule keeps
+                // the hue signal; only the gamut may clip it).
+                // Expected chroma = min(what the fill had, what the gamut
+                // allows at the fg's lightness) — the move must not clip
+                // beyond the gamut's own forcing.
+                let (_, fill_chroma, _) = fill.oklch();
+                let max_c = Color::gamut_chroma(fg_l, hue);
+                let expected = fill_chroma.min(max_c);
+                assert!(
+                    chroma >= expected * 0.95,
+                    "{name}: text variant {} carries C={chroma:.4} but the gamut allows {max_c:.4} at its lightness",
                     fg.hex()
                 );
             }
         }
+    }
+
+    /// The house ink rule must NOT be the WCAG winner: on mid greys the two
+    /// disagree (white 3.95 / black 5.32 on #808080), and the contract is that
+    /// the FILL is fixed, not the ink rule swapped. `solid_ink` (the ported
+    /// house rule) says white there; `readable_ink` (the rejected utility)
+    /// says black. This test pins the house answer against that discriminator.
+    #[test]
+    fn solid_ink_is_the_house_rule_not_the_ratio_winner() {
+        let grey = Color::from_rgb_hex(0x80, 0x80, 0x80);
+        assert_eq!(
+            grey.solid_ink().hex(),
+            "#FFFFFF",
+            "solid_ink on mid-grey must stay white (the house rule)"
+        );
+        assert_ne!(
+            grey.readable_ink().hex(),
+            grey.solid_ink().hex(),
+            "the discriminator fill must actually separate the two rules"
+        );
     }
 
     /// The two bundled themes share one semantic family (the ink rule belongs

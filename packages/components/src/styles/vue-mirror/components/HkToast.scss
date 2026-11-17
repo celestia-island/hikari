@@ -105,24 +105,24 @@
 }
 
 .hk-toast-success {
-  background: var(--hi-color-success, #0eb840);
+  background: var(--hi-color-success, #1f6530);
   color: var(--hi-color-text-on-success, #ffffff);
 }
 
 /* Warning fills are light by design, so their ink is dark; the theme still
  * decides it (a custom amber can be dark enough for white). */
 .hk-toast-warning {
-  background: var(--hi-color-warning, #eed677);
+  background: var(--hi-color-warning, #894800);
   color: var(--hi-color-text-on-warning, #1c1c1e);
 }
 
 .hk-toast-info {
-  background: var(--hi-color-info, #6abed6);
+  background: var(--hi-color-info, #006274);
   color: var(--hi-color-text-on-info, #ffffff);
 }
 
 .hk-toast-loading {
-  background: var(--hi-color-info, #6abed6);
+  background: var(--hi-color-info, #006274);
   color: var(--hi-color-text-on-info, #ffffff);
 }
 

@@ -116,47 +116,47 @@ impl StyledComponent for TagComponent {
 }
 
 .hk-tag-success {
-    background-color: color-mix(in srgb, var(--hi-success, #10b981) 10%, transparent);
-    color: var(--hi-success-fg, #10b981);
-    border-color: color-mix(in srgb, var(--hi-success, #10b981) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-success, #1f6530) 10%, transparent);
+    color: var(--hi-success-fg, #1f6530);
+    border-color: color-mix(in srgb, var(--hi-success, #1f6530) 30%, transparent);
 }
 
 .hk-tag-success:hover {
-    background-color: color-mix(in srgb, var(--hi-success, #10b981) 20%, transparent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-success, #10b981) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-success, #1f6530) 20%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-success, #1f6530) 30%, transparent);
 }
 
 .hk-tag-warning {
-    background-color: color-mix(in srgb, var(--hi-warning, #f59e0b) 10%, transparent);
-    color: var(--hi-warning-fg, #f59e0b);
-    border-color: color-mix(in srgb, var(--hi-warning, #f59e0b) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-warning, #894800) 10%, transparent);
+    color: var(--hi-warning-fg, #894800);
+    border-color: color-mix(in srgb, var(--hi-warning, #894800) 30%, transparent);
 }
 
 .hk-tag-warning:hover {
-    background-color: color-mix(in srgb, var(--hi-warning, #f59e0b) 20%, transparent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-warning, #f59e0b) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-warning, #894800) 20%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-warning, #894800) 30%, transparent);
 }
 
 .hk-tag-danger {
-    background-color: color-mix(in srgb, var(--hi-danger, #ff4c00) 10%, transparent);
-    color: var(--hi-danger-fg, #ff4c00);
-    border-color: color-mix(in srgb, var(--hi-danger, #ff4c00) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-danger, #a62937) 10%, transparent);
+    color: var(--hi-danger-fg, #a62937);
+    border-color: color-mix(in srgb, var(--hi-danger, #a62937) 30%, transparent);
 }
 
 .hk-tag-danger:hover {
-    background-color: color-mix(in srgb, var(--hi-danger, #ff4c00) 20%, transparent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-danger, #ff4c00) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-danger, #a62937) 20%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-danger, #a62937) 30%, transparent);
 }
 
 .hk-tag-info {
-    background-color: color-mix(in srgb, var(--hi-accent, #06b6d4) 10%, transparent);
-    color: var(--hi-accent, #06b6d4);
-    border-color: color-mix(in srgb, var(--hi-accent, #06b6d4) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-accent, #006274) 10%, transparent);
+    color: var(--hi-accent, #006274);
+    border-color: color-mix(in srgb, var(--hi-accent, #006274) 30%, transparent);
 }
 
 .hk-tag-info:hover {
-    background-color: color-mix(in srgb, var(--hi-accent, #06b6d4) 20%, transparent);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-accent, #06b6d4) 30%, transparent);
+    background-color: color-mix(in srgb, var(--hi-accent, #006274) 20%, transparent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--hi-accent, #006274) 30%, transparent);
 }
 
 .hk-tag-close {

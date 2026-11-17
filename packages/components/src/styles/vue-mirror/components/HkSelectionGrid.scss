@@ -281,17 +281,20 @@
 }
 
 /* ── Optional selected edge ──────────────────────────────────────────────
-   A thickened primary bar on the item's LEADING side, drawn inside the
-   border box (a pseudo element, so nothing shifts) — the "this is the
-   chosen one" cue some hosts want on top of the ring + check. */
+   A primary accent TAB on the item's LEADING side, DETACHED from the
+   selected frame: the 2px ring stays uniform on all four sides and this
+   3px pill floats 4px inside it (inset from top and bottom too). The
+   earlier flush full-height bar sat directly against the border + inset
+   ring, and the three same-color layers merged into one ~5px slab — the
+   frame read as lopsided/fattened on the leading edge (fleet admission
+   card, user report 2026-11-17). A pseudo element, so nothing shifts. */
 .hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before {
   content: "";
   position: absolute;
-  inset-inline-start: 0;
-  top: 0;
-  bottom: 0;
+  inset-inline-start: var(--space-4, 0.25rem);
+  top: var(--space-4, 0.25rem);
+  bottom: var(--space-4, 0.25rem);
   width: 3px;
-  border-start-start-radius: var(--radius-sm, 4px);
-  border-end-start-radius: var(--radius-sm, 4px);
+  border-radius: var(--radius-full);
   background: var(--hi-color-primary, #7aa2f7);
 }

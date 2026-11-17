@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
+import { compile } from "sass";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import HkSelectionGrid, { type SelectionGridItem } from "./HkSelectionGrid";
 
@@ -16,6 +19,10 @@ import HkSelectionGrid, { type SelectionGridItem } from "./HkSelectionGrid";
  *   the floor as a CSS var, and NO `data-cols` hook (the narrow-viewport
  *   overrides key off data-cols and must not fight the fluid template)
  * - without `minItemWidth` the fixed `columns` contract is unchanged
+ * - `selectedEdge`'s accent tab stays DETACHED from the selected frame
+ *   (stylesheet contract below): flush against border + inset ring it
+ *   merged into one fattened leading edge (fleet admission card, user
+ *   report 2026-11-17)
  *
  * House style: raw createApp mounts on a shared container list torn down
  * after each case; DOM assertions via document queries.
@@ -233,4 +240,34 @@ describe("HkSelectionGrid list layout, actions and edge", () => {
     expect(seen).toEqual([]);
   });
 });
+});
+
+describe("HkSelectionGrid selected-edge stylesheet contract", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const css = compile(resolve(here, "HkSelectionGrid.scss"), { style: "expanded" }).css;
+  const tab = /\.hk-selection-grid\[data-edge\] \.hk-selection-grid-item\[data-selected\]::before\s*\{/;
+
+  it("detaches the accent tab from the selected frame", () => {
+    // The tab must NOT sit flush at the leading edge: flush, it merged with
+    // the border + inset ring into one ~5px slab (the fattened frame).
+    expect(css.match(tab)?.[0]).toBeTruthy();
+    expect(css.match(/::before\s*\{[^}]*\}/)?.[0]).toMatch(
+      /inset-inline-start:\s*var\(--space-4/,
+    );
+  });
+
+  it("insets the tab vertically so it reads as a tab, not a frame side", () => {
+    const rule = css.match(/::before\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(rule).toMatch(/top:\s*var\(--space-4/);
+    expect(rule).toMatch(/bottom:\s*var\(--space-4/);
+    expect(rule).toMatch(/border-radius:\s*var\(--radius-full/);
+  });
+
+  it("keeps the selected emphasis a uniform inset ring on every side", () => {
+    // The ring is the frame; the tab is the accent. Neither may thicken a
+    // single side of the frame (that asymmetry was the reported defect).
+    expect(css).toMatch(
+      /\.hk-selection-grid-item\[data-selected\]\s*\{[^}]*box-shadow:\s*inset 0 0 0 1px/,
+    );
+  });
 });

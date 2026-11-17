@@ -311,6 +311,23 @@ describe("usageFlowLayout", () => {
     expect(layout.legend[1].value).toBe(60);
   });
 
+  it("treats a real model labelled like the fold bucket as a real row", () => {
+    const rows = [
+      { source: "k", middle: "up", target: "Others", value: 50 },
+      { source: "k", middle: "up", target: "m1", value: 30 },
+      { source: "k", middle: "up", target: "m2", value: 10 },
+      { source: "k", middle: "up", target: "m3", value: 5 },
+    ];
+    const layout = usageFlowLayout(rows, { maxNodes: 3, othersLabel: "Others" });
+    const bucket = layout.legend.find((row) => row.label === "Others")!;
+    // "Others" is kept by rank here, so it is a REAL model row — the
+    // folded tail merges into it by label, and the synthetic flag must
+    // stay false (a mutation dropping the kept guard flips this).
+    expect(bucket.others).toBe(false);
+    expect(bucket.value).toBe(65);
+    expect(layout.total).toBe(95);
+  });
+
   it("appends models with traffic that the roster does not know", () => {
     const layout = usageFlowLayout(
       [

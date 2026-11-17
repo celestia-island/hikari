@@ -103,8 +103,9 @@ export interface HkUsageFlowLink {
 export interface HkUsageFlowLegendRow {
   label: string;
   value: number;
-  /** Share of the window total, 0–100 (one decimal precision kept in the
-   *  number; the component formats the visible string). */
+  /** Share of the window total, 0–100 — the UNROUNDED ratio (callers
+   *  round it for display; `percent` itself is never rounded, so
+   *  consumers can re-derive sums without drift). */
   percent: number;
   color: string;
   /** No measured usage: the registered-but-unused row (greyed by CSS). */
@@ -137,8 +138,9 @@ export interface HkUsageFlowLayoutOptions {
   /** The complete registered roster. Roster order fixes the model colours
    *  (idle rows included), so a model's swatch is stable across windows. */
   models?: HkUsageFlowRosterEntry[];
-  /** Colour ladder; defaults to the theme-token palette below. */
-  colors?: string[];
+  /** Colour ladder; defaults to the theme-token palette below. Readonly so
+   *  a consumer can pass the exported `USAGE_FLOW_PALETTE` directly. */
+  colors?: readonly string[];
   /** Label truncation budget in character units (CJK counts 2). */
   labelMaxChars?: number;
 }
@@ -153,6 +155,11 @@ const MIN_NODE_HEIGHT = 2;
    with its neighbours: the label is omitted (the hint and the legend still
    name the node), so a dense tail never stacks unreadable text. */
 const MIN_LABEL_HEIGHT = 12;
+/* The per-node proportional band the cap must leave in the frame: a cap
+   that only "fits with floors" would paint every bar at the 2-unit
+   visibility minimum and lose every magnitude (found by an independent
+   round at 30+ flat nodes with `maxNodes: 0`). */
+const MIN_PROPORTIONAL_HEIGHT = 6;
 
 /** The default categorical ladder — every entry a theme-token expression, so
  *  light/dark/brand-preset flips repaint the chart without JS. The five
@@ -254,6 +261,14 @@ function px(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
+/** Whether a bar of this (layout-unit) height carries its label. Reads the
+ *  ROUNDED height — the DOM's `height` attribute — so the label decision
+ *  can never disagree with the rendered bar (a height rounded UP to 12
+ *  still gets its label). */
+export function flowLabelVisible(height: number): boolean {
+  return px(height) >= MIN_LABEL_HEIGHT;
+}
+
 /** The ribbon outline: right edge of the source bar → left edge of the
  *  target bar, thick end caps and two mirrored cubic edges. */
 function ribbonPath(x0: number, y0: number, x1: number, y1: number, thickness: number): string {
@@ -348,10 +363,14 @@ export function usageFlowLayout(
   //    costs `MIN_NODE_HEIGHT` plus a `NODE_GAP`, and the usable band is
   //    `height - 2 × PAD_Y` — a cap beyond that would leave `scale` at 0
   //    (every bar at the floor) and paint below the viewBox. ──
-  const fitCount = Math.max(
-    2,
-    Math.floor((height - PAD_Y * 2 + NODE_GAP) / (MIN_NODE_HEIGHT + NODE_GAP)),
+  const fitsWithFloors = Math.floor(
+    (height - PAD_Y * 2 + NODE_GAP) / (MIN_NODE_HEIGHT + NODE_GAP),
   );
+  const fitsProportionally = Math.floor(
+    (height - PAD_Y * 2 + NODE_GAP) /
+      (MIN_NODE_HEIGHT + NODE_GAP + MIN_PROPORTIONAL_HEIGHT),
+  );
+  const fitCount = Math.max(2, Math.min(fitsWithFloors, fitsProportionally));
   const maxNodes =
     requestedMax > 0 ? Math.max(2, Math.min(Math.floor(requestedMax), fitCount)) : fitCount;
   const collapsed = columnValues.map((values) => collapseColumn(values, maxNodes, othersLabel));
@@ -480,7 +499,7 @@ export function usageFlowLayout(
               ? (sourceColor.get(label) ?? palette[0])
               : (middleColor.get(label) ?? palette[0]),
         others: label === othersLabel && !collapsed[column].kept.has(label),
-        labelVisible: nodeHeight >= MIN_LABEL_HEIGHT,
+        labelVisible: flowLabelVisible(nodeHeight),
       };
       nodes.push(node);
       nodeByColumn[column].set(label, node);

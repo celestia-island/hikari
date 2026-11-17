@@ -37,10 +37,6 @@
     stroke: none;
   }
 
-  &__node {
-    // no pointer cursor: the chart is a read surface, not a control
-  }
-
   &__bar {
     shape-rendering: geometricPrecision;
   }
@@ -119,10 +115,15 @@
   }
 
   &--empty {
-    height: 120px;
+    /* Auto height: the empty face may also carry the registered roster,
+       and a fixed 120px box would clip a long one. */
+    min-height: 120px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
+    padding: 12px 0;
   }
 
   &__empty {

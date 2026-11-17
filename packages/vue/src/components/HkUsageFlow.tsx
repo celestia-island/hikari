@@ -84,7 +84,7 @@ export default defineComponent({
     labelMaxChars: { type: Number, default: 28 },
     /** Colour ladder override (theme-token expressions); absent = the
      *  built-in semantic ladder. */
-    colors: { type: asPropType<string[] | null>(Array), default: null },
+    colors: { type: asPropType<readonly string[] | null>(Array), default: null },
     showLegend: { type: Boolean, default: true },
     emptyText: { type: String, default: "No data" },
     /** Accessible summary; absent = the legend's own share summary. */

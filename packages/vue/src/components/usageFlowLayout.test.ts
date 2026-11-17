@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  flowLabelVisible,
   formatFlowPercent,
   truncateFlowLabel,
   usageFlowLayout,
@@ -76,10 +77,12 @@ describe("usageFlowLayout", () => {
       }
     }
     // The last column's bars sit at the right edge, the first column's at
-    // the left edge.
+    // the left edge, and the middle column is centred on the frame.
     const first = columnNodes(layout, 0)[0];
+    const middle = columnNodes(layout, 1)[0];
     const last = columnNodes(layout, 2)[0];
     expect(first.x).toBe(8);
+    expect(middle.x).toBe(Math.round((900 - 14) / 2));
     expect(last.x + last.width).toBe(900 - 8);
   });
 
@@ -209,6 +212,36 @@ describe("usageFlowLayout", () => {
     expect(layout.links.every((link) => !link.path.includes("NaN"))).toBe(true);
   });
 
+  it("keeps proportional bars at capacity (the cap is not just a fit check)", () => {
+    const many = Array.from({ length: 30 }, (_, i) => ({
+      source: `s${String(i).padStart(2, "0")}`,
+      middle: "up",
+      target: "m1",
+      value: 10,
+    }));
+    const layout = usageFlowLayout(many, { height: 420, maxNodes: 0 });
+    const sources = columnNodes(layout, 0);
+    // The cap shrinks below the raw fit count so every kept bar keeps a
+    // proportional band — none sits on the 2-unit visibility floor.
+    for (const node of sources) {
+      if (node.others) continue;
+      expect(node.height, `${node.fullLabel} must not be flattened`).toBeGreaterThan(2);
+    }
+    // ...and the folded bucket still carries the tail.
+    expect(sources.some((node) => node.others)).toBe(true);
+    expect(sources.reduce((acc, node) => acc + node.value, 0)).toBe(300);
+  });
+
+  it("pins the label-visibility boundary against the ROUNDED bar height", () => {
+    // The DOM height is rounded to two decimals; the label decision must
+    // follow the rounded value, or a bar rendered at 12 could ship bare.
+    expect(flowLabelVisible(11.994)).toBe(false);
+    expect(flowLabelVisible(11.995)).toBe(true); // rounds to 12.00
+    expect(flowLabelVisible(12)).toBe(true);
+    expect(flowLabelVisible(11.99)).toBe(false);
+    expect(flowLabelVisible(40)).toBe(true);
+  });
+
   it("drops a duplicate sum that overflows instead of poisoning the column", () => {
     const layout = usageFlowLayout([
       { source: "a", middle: "up", target: "m1", value: 1e308 },
@@ -273,7 +306,7 @@ describe("usageFlowLayout", () => {
     const layout = usageFlowLayout(many, { maxNodes: 3, othersLabel: "Other callers" });
     const sources = columnNodes(layout, 0);
     // The folded bucket outranks the retained tail nodes (it carries
-    // c + d + e = 150), so it stacks first — columns rank AFTER folding.
+    // a + b + c = 60), so it stacks first — columns rank AFTER folding.
     expect(sources.map((node) => node.fullLabel)).toEqual(["Other callers", "e", "d"]);
     const others = sources[0];
     expect(others.others).toBe(true);
@@ -390,6 +423,9 @@ describe("usageFlowLayout", () => {
       (candidate) => candidate.column === 2 && candidate.fullLabel === "Others",
     )!;
     expect(node.value).toBe(65);
+    // The NODE-side kept-guard too: this label is a kept real model, not
+    // the synthetic bucket, so it must not wear the bucket styling.
+    expect(node.others).toBe(false);
     expect(layout.total).toBe(95);
   });
 

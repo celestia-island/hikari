@@ -18,7 +18,7 @@ describe("the public barrel", () => {
     expect(barrel.HUsageFlow).toBe(barrel.HkUsageFlow);
   });
 
-  it("exports the pure layout surface and its types' constructors' helpers", () => {
+  it("exports the pure layout helpers", () => {
     expect(typeof barrel.usageFlowLayout).toBe("function");
     expect(typeof barrel.truncateFlowLabel).toBe("function");
     expect(typeof barrel.formatFlowPercent).toBe("function");

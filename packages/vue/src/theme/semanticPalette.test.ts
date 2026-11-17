@@ -503,12 +503,12 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
   });
 
   it("the retake differs from EVERY tone's bytes (the all-tone guard)", () => {
-    // r22 adversarial M33: bg(0,0,0)/sf(118,118,118) — the partner-only
-    // check lands warning on error's byte.
+    // r23 adversarial M03: the partner-only check collapses warning
+    // onto success's byte on this fixture.
     const p = deriveSemanticPalette({
-      primary: rgb(0, 0, 0),
-      background: rgb(0, 0, 0),
-      surface: rgb(118, 118, 118),
+      primary: rgb(133, 84, 104),
+      background: rgb(23, 127, 149),
+      surface: rgb(96, 201, 47),
     });
     const bytes = (["success", "error", "warning", "info"] as const).map(
       (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
@@ -524,9 +524,10 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       background: rgb(0, 0, 0),
       surface: rgb(128, 128, 128),
     });
-    // The success tone should stay in the near-green band (the wider
-    // window allows more chroma): pin a mid-range byte.
-    expect(p.success.g, "the window admits chroma (green channel mid-range)").toBeGreaterThan(200);
+    // The success tone with the WIDE window keeps chroma (213,255,218);
+    // a narrow 0.05 window drops to near-white (250,255,250). Pin the
+    // exact byte.
+    expect(`${p.success.r},${p.success.g},${p.success.b}`, "the window keeps the chromatic pick").toBe("213,255,218");
   });
 
   it("hueDistance wraps at 360° (the public helper)", () => {
@@ -534,6 +535,22 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(hueDistance(350, 10), "wraps to the short arc").toBe(20);
     expect(hueDistance(10, 350), "symmetric").toBe(20);
     expect(hueDistance(-720, -400), "wraps past zero").toBe(40);
+  });
+
+  it("the accent split maximises the worst anchor (not chroma)", () => {
+    // r23 adversarial M06/M20: the chroma-max pick returned
+    // 159,132,214@1.44; the worst-anchor maximisation returns
+    // 255,254,255@4.46 (a +3.02 gain).
+    const p = deriveSemanticPalette({
+      primary: rgb(254, 162, 228),
+      background: rgb(98, 41, 180),
+      surface: rgb(181, 97, 3),
+    });
+    const accWorst = Math.min(
+      contrastRatio(p.accent, { r: 98, g: 41, b: 180 }),
+      contrastRatio(p.accent, { r: 181, g: 97, b: 3 }),
+    );
+    expect(accWorst, "the accent's worst anchor is maximised").toBeGreaterThan(3);
   });
 
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {

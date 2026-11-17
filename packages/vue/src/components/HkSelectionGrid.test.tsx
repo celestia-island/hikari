@@ -246,53 +246,252 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const css = compile(resolve(here, "HkSelectionGrid.scss"), { style: "expanded" }).css;
 
-  const TAB_SELECTOR =
-    ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
-  const SELECTED_SELECTOR = ".hk-selection-grid-item[data-selected] {";
+  // ── A dependency-free CSS reader ──────────────────────────────────────
+  // Text scraping cannot answer the questions these contracts ask (which
+  // RULE wins the cascade, whether a SHORTHAND set a width, whether a
+  // later rule overrides the base one), so the compiled sheet is walked
+  // into rules + declarations in DOCUMENT order. Quotes, comments and
+  // parentheses are tracked while scanning, so a comma inside `var(...)`
+  // or `color-mix(...)` never splits a value.
 
-  /** One rule's declaration block, looked up by its own SELECTOR — grading
-   *  the sheet's first `::before` or first `{` would silently follow a
-   *  foreign rule in. */
-  function ruleBody(selector: string, what: string): string {
-    const at = css.indexOf(selector);
-    if (at < 0) throw new Error(`the sheet declares no ${what}`);
-    const open = css.indexOf("{", at);
-    return css.slice(open + 1, css.indexOf("}", open));
+  interface CssRule {
+    selector: string;
+    declarations: Array<[string, string]>;
   }
+
+  /** Split a declaration list on `;` outside quotes/parentheses. */
+  function splitDeclarations(body: string): Array<[string, string]> {
+    const out: Array<[string, string]> = [];
+    let current = "";
+    let quote = "";
+    let depth = 0;
+    for (let i = 0; i < body.length; i += 1) {
+      const ch = body[i];
+      if (ch === "/" && body[i + 1] === "*") {
+        const end = body.indexOf("*/", i + 2);
+        i = end < 0 ? body.length : end + 2;
+        continue;
+      }
+      if (quote) {
+        current += ch;
+        if (ch === "\\") {
+          current += body[i + 1] ?? "";
+          i += 1;
+        } else if (ch === quote) {
+          quote = "";
+        }
+        continue;
+      }
+      if (ch === '"' || ch === "'") {
+        quote = ch;
+        current += ch;
+        continue;
+      }
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth -= 1;
+      if (ch === ";" && depth === 0) {
+        const at = current.indexOf(":");
+        if (at > 0) {
+          out.push([
+            current.slice(0, at).trim().toLowerCase(),
+            current.slice(at + 1).trim(),
+          ]);
+        }
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    const at = current.indexOf(":");
+    if (at > 0) {
+      out.push([current.slice(0, at).trim().toLowerCase(), current.slice(at + 1).trim()]);
+    }
+    return out;
+  }
+
+  /** Every style rule in the sheet, in document order (at-rule bodies are
+   *  walked too, so a media override is graded like any other rule). */
+  function parseRules(source: string): CssRule[] {
+    const rules: CssRule[] = [];
+    let i = 0;
+    while (i < source.length) {
+      if (/\s/.test(source[i])) {
+        i += 1;
+        continue;
+      }
+      if (source[i] === "/" && source[i + 1] === "*") {
+        const end = source.indexOf("*/", i + 2);
+        i = end < 0 ? source.length : end + 2;
+        continue;
+      }
+      // Prelude: up to the `{` that opens this block — or up to a `;`, which
+      // means this is a statement at-rule (`@charset "UTF-8";` opens the
+      // sheet) and has no body to read.
+      let j = i;
+      let quote = "";
+      let paren = 0;
+      let statement = false;
+      while (j < source.length) {
+        const ch = source[j];
+        if (quote) {
+          if (ch === "\\") j += 1;
+          else if (ch === quote) quote = "";
+          j += 1;
+          continue;
+        }
+        // Comments are skipped HERE too: prose like "the item's leading
+        // side" is an apostrophe to a naive scanner, which then swallows the
+        // rest of the sheet as a string.
+        if (ch === "/" && source[j + 1] === "*") {
+          const end = source.indexOf("*/", j + 2);
+          j = end < 0 ? source.length : end + 2;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          quote = ch;
+          j += 1;
+          continue;
+        }
+        if (ch === "(") paren += 1;
+        else if (ch === ")") paren -= 1;
+        else if (ch === "{" && paren === 0) break;
+        else if (ch === ";" && paren === 0) {
+          statement = true;
+          break;
+        } else if (ch === "}" && paren === 0) {
+          j += 1;
+          statement = true;
+          break;
+        }
+        j += 1;
+      }
+      if (j >= source.length) break;
+      if (statement) {
+        i = j + 1;
+        continue;
+      }
+      const prelude = source.slice(i, j).trim();
+      // Body: balanced braces.
+      let k = j + 1;
+      let depth = 1;
+      let bodyQuote = "";
+      let bodyParen = 0;
+      while (k < source.length && depth > 0) {
+        const ch = source[k];
+        if (ch === "/" && source[k + 1] === "*") {
+          const end = source.indexOf("*/", k + 2);
+          k = end < 0 ? source.length : end + 2;
+          continue;
+        }
+        if (bodyQuote) {
+          if (ch === "\\") k += 1;
+          else if (ch === bodyQuote) bodyQuote = "";
+          k += 1;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          bodyQuote = ch;
+          k += 1;
+          continue;
+        }
+        if (ch === "(") bodyParen += 1;
+        else if (ch === ")") bodyParen -= 1;
+        else if (ch === "{" && bodyParen === 0) depth += 1;
+        else if (ch === "}" && bodyParen === 0) depth -= 1;
+        if (depth === 0) break;
+        k += 1;
+      }
+      const body = source.slice(j + 1, k);
+      if (prelude.startsWith("@")) {
+        rules.push(...parseRules(body));
+      } else if (prelude) {
+        rules.push({ selector: prelude, declarations: splitDeclarations(body) });
+      }
+      i = k + 1;
+    }
+    return rules;
+  }
+
+  const rules = parseRules(css);
+
+  /** The declarations that apply to an exact selector, in cascade order. */
+  function declarationsFor(selector: string): Array<[string, string]> {
+    return rules
+      .filter((r) => r.selector.split(",").some((one) => one.trim() === selector))
+      .flatMap((r) => r.declarations);
+  }
+
+  /** Property → the LAST value declared for it (what the cascade uses). */
+  function computedFor(selector: string): Map<string, string> {
+    const map = new Map<string, string>();
+    for (const [prop, value] of declarationsFor(selector)) map.set(prop, value);
+    return map;
+  }
+
+  const TAB = ".hk-selection-grid[data-edge] .hk-selection-grid-item[data-selected]::before";
+  const ITEM = ".hk-selection-grid-item";
+  const SELECTED = ".hk-selection-grid-item[data-selected]";
 
   it("detaches the accent tab from the selected frame", () => {
     // Flush (`0`), the bar merged with the 1px border and the 1px inset ring
     // into one unbroken primary slab on the leading edge — the reported
-    // defect. Exact declarations, so a zeroed FALLBACK cannot pass either.
-    const tab = ruleBody(TAB_SELECTOR, "selected-edge accent tab");
-    expect(tab).toContain("inset-inline-start: var(--space-4, 0.25rem)");
-    expect(tab).toContain("top: var(--space-4, 0.25rem)");
-    expect(tab).toContain("bottom: var(--space-4, 0.25rem)");
+    // defect. Exact values, so a zeroed FALLBACK cannot pass either.
+    const tab = computedFor(TAB);
+    expect(tab.get("position")).toBe("absolute");
+    expect(tab.get("inset-inline-start")).toBe("var(--space-4, 0.25rem)");
+    expect(tab.get("top")).toBe("var(--space-4, 0.25rem)");
+    expect(tab.get("bottom")).toBe("var(--space-4, 0.25rem)");
   });
 
   it("draws the tab 3px wide with pill ends", () => {
-    // The width IS the clearance budget: the leading-side padding is 12px
-    // (10px dense), so a wider bar eats into the label. A zero width would
-    // render the feature away entirely; both were unguarded before.
-    const tab = ruleBody(TAB_SELECTOR, "selected-edge accent tab");
-    expect(tab).toContain("width: 3px");
-    expect(tab).toContain("border-radius: var(--radius-full, 9999px)");
+    // The width IS the clearance budget: the leading padding is 12px (10px
+    // dense), so a wider bar eats into the label and a zero width renders
+    // the feature away. `width` is read as a PROPERTY, so `max-width: 3px`
+    // (which computes to nothing) cannot satisfy it.
+    const tab = computedFor(TAB);
+    expect(tab.get("width")).toBe("3px");
+    expect(tab.get("border-radius")).toBe("var(--radius-full, 9999px)");
   });
 
-  it("keeps the selected frame a uniform ring and no thicker on any side", () => {
-    // The ring is the frame's ONLY emphasis; the tab is the accent. A
-    // single-side thickening reintroduces the exact lopsidedness this
-    // component was fixed for, so it is pinned two ways:
-    //  (a) the selected rule's shadow is ONE inset ring, never a layer list;
-    const shadow = ruleBody(SELECTED_SELECTOR, "selected item rule")
-      .match(/box-shadow:\s*([^;]+);/)?.[1] ?? "";
-    const layers = shadow.split(/,(?![^(]*\))/).map((l) => l.trim()).filter(Boolean);
+  it("keeps the selected frame a uniform ring, never thicker on one side", () => {
+    // The ring is the frame's ONLY emphasis; the tab is the accent. The
+    // reported lopsidedness came from a SINGLE side getting thicker, so it
+    // is pinned from three directions:
+    //  (a) no declaration anywhere in the sheet targets one border side —
+    //      shorthand or `-width`, logical or physical, all of them;
+    const sideTargeted = rules
+      .flatMap((r) => r.declarations)
+      .map(([prop]) => prop)
+      .filter((prop) => /^border(-(inline|block))?-(start|end|left|right|top|bottom)(-|$)/.test(prop));
+    expect(sideTargeted).toEqual([]);
+    //  (b) the frame's thickness is the one shorthand, and any explicit
+    //      `border-width` (item or state) is UNIFORM across the four sides;
+    expect(computedFor(ITEM).get("border")).toMatch(/^1px solid /);
+    for (const rule of rules) {
+      for (const [prop, value] of rule.declarations) {
+        if (prop !== "border-width") continue;
+        const sides = value.split(/\s+/);
+        expect(new Set(sides).size, `uniform border-width in ${rule.selector}: ${value}`).toBe(1);
+      }
+    }
+    //  (c) the selected state's emphasis is ONE inset ring, never a layer
+    //      list that could add a second shadow on one side.
+    const shadow = computedFor(SELECTED).get("box-shadow") ?? "";
+    const layers: string[] = [];
+    let current = "";
+    let depth = 0;
+    for (const ch of shadow) {
+      if (ch === "(") depth += 1;
+      if (ch === ")") depth -= 1;
+      if (ch === "," && depth === 0) {
+        layers.push(current.trim());
+        current = "";
+        continue;
+      }
+      current += ch;
+    }
+    if (current.trim()) layers.push(current.trim());
     expect(layers).toHaveLength(1);
     expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
-    //  (b) nothing in the sheet widens one border side (or sets a per-side
-    //      width at all) — the frame thickness comes from the one shorthand.
-    expect(css).not.toMatch(/border-(?:inline-|block-)?(?:start|end|left|right|top|bottom)-width/);
-    expect(css).not.toMatch(/border-(?:inline|block)-width/);
-    expect(css.match(/border-width/g) ?? []).toHaveLength(0);
   });
 });

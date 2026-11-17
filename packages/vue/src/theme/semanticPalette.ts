@@ -453,11 +453,6 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   };
   const result: SemanticPalette = {
     secondary: secondarySlot,
-    // A LOWER rung for the achromatic accent — TWO-PASS: 4.55 first
-    // (an achromatic primary must not cost an AA-reachable accent its
-    // readability), the 3.5 rung only when 4.55 is unreachable (at
-    // no-win the bias rounds both slots to the same grey — a different
-    // rung is the only guaranteed differentiator).
     accent: (() => {
       const hue = (primary.h + 320) % 360;
       // The accent at the SAME 4.55 target but the OPPOSITE pick bias

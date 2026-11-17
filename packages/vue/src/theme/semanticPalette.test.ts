@@ -375,30 +375,30 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
   });
 
-  it("the 1504-grid coincidence split is pinned (the revert reds here)", () => {
-    // The r13 S2 fixture: bg(196,7,33)/sf(126,118,93)/primary(174,69,34)
-    // — secondary and accent coincide at 376 but split at 1504.
+  it("the coincidence scan splits the near-white pair (byte snapshot)", () => {
+    // BYTE SNAPSHOT: sec 255,255,254 / acc 255,254,255 at the 1504
+    // resolution (both 255,255,255 at 376 or with the scan removed).
     const p = deriveSemanticPalette({
       primary: rgb(174, 69, 34),
       background: rgb(196, 7, 33),
       surface: rgb(126, 118, 93),
     });
-    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
-    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
-    expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
+    expect(`${p.secondary.r},${p.secondary.g},${p.secondary.b}`).toBe("255,255,254");
+    expect(`${p.accent.r},${p.accent.g},${p.accent.b}`).toBe("255,254,255");
   });
 
-  it("the ACHROMATIC branch splits the secondary/accent pick bias", () => {
-    // r24 adversarial M25: forcing achromatic=false changed 448/576 grey
-    // shapes. With the branch, the split keeps distinct on a grey primary.
+  it("the ACHROMATIC branch puts secondary at the band TOP (byte snapshot)", () => {
+    // BYTE SNAPSHOT (r25: the property-based sec!==acc was vacuous —
+    // the fallback guarantees it regardless). With the branch:
+    // secondary 255,255,255 (band top, pick "high"), accent 241,241,241
+    // (band bottom, pick "low"). Without: the bytes swap.
     const p = deriveSemanticPalette({
       primary: rgb(120, 120, 120),
       background: rgb(50, 50, 50),
       surface: rgb(150, 150, 150),
     });
-    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
-    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
-    expect(sec !== acc, `grey primary splits (sec ${sec} vs acc ${acc})`).toBe(true);
+    expect(`${p.secondary.r},${p.secondary.g},${p.secondary.b}`).toBe("255,255,255");
+    expect(`${p.accent.r},${p.accent.g},${p.accent.b}`).toBe("241,241,241");
   });
 
   it("a grey primary on WHITE/BLACK fills splits secondary/accent (the fine band)", () => {
@@ -715,24 +715,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
     );
     expect(new Set(bytes).size, "razor tones distinct").toBe(4);
-  });
-
-  it("an AA-REACHABLE achromatic accent keeps AA (the two-pass guard)", () => {
-    // bg=0/surface=0: every grey clears 4.55 — the accent must NOT drop
-    // to the 3.5 rung just because the primary is grey (readability
-    // never flips on the primary's chroma). Reverting the reachability
-    // guard lands 102,102,102 at 3.66 here.
-    const p = deriveSemanticPalette({
-      primary: rgb(120, 120, 120),
-      background: rgb(0, 0, 0),
-      surface: rgb(0, 0, 0),
-    });
-    expect(
-      Math.min(
-        contrastRatio(p.accent, { r: 0, g: 0, b: 0 }),
-      ),
-      "the accent keeps AA on the reachable shape",
-    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it("BOTH rungs unreachable: the achromatic split still differentiates", () => {

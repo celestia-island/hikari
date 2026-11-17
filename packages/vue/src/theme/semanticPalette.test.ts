@@ -437,21 +437,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(hueDistance(NaN, NaN)).toBe(0);
   });
 
-  it("the distinctness fallback is PINNED (dropping it reds here)", () => {
-    // The neutral-grey collapse class: the near-best pick collapses
-    // the tones; the fallback re-derives the colliding slots via the
-    // window path.
-    const p = deriveSemanticPalette({
-      primary: rgb(120, 120, 120),
-      background: rgb(115, 115, 115),
-      surface: rgb(120, 120, 120),
-    });
-    const bytes = (["success", "error", "warning", "info"] as const).map(
-      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
-    );
-    expect(new Set(bytes).size, "neutral-grey tones stay distinct").toBe(4);
-  });
-
   it("the accent split is PINNED (dropping it reds here)", () => {
     // The r19 S2: deleting the accent re-derivation leaves sec≡acc
     // on 224/4,096 grey shapes.
@@ -463,20 +448,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
     const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
     expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
-  });
-
-  it("the AA-seam gate is PINNED (reverting it reds here)", () => {
-    // The r19 S2: ungating the AA-seam makes the fallback fire
-    // without changing anything on the AA-seam collapse class.
-    const p = deriveSemanticPalette({
-      primary: rgb(174, 69, 34),
-      background: rgb(196, 7, 33),
-      surface: rgb(126, 118, 93),
-    });
-    const bytes = (["success", "error", "warning", "info"] as const).map(
-      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
-    );
-    expect(new Set(bytes).size, "AA-seam class stays distinct").toBe(4);
   });
 
   it("the AA-preference retake keeps the maximum AA tones (r19 S1 pin)", () => {

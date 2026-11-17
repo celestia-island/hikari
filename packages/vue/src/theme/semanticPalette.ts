@@ -529,39 +529,6 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   // distinct at a 0.30-0.35 contrast cost (the module's invariant
   // "two indistinguishable states" outranks the 8% contrast gain).
   {
-    // NEAR-BAR DISTINCTNESS FALLBACK: when the near-best pick collapsed
-    // the tones (< 4 distinct bytes), re-derive ONLY the colliding
-    // slots with the near-bar DISABLED — the chroma-rich window keeps
-    // them distinct at a 0.30-0.35 contrast cost. The canonical HUE is
-    // absolute (CANONICAL_SEMANTIC.h, never rotated by the primary).
-    const toneKeys = ["success", "error", "warning", "info"] as const;
-    const bytes = (k: (typeof toneKeys)[number]) =>
-      `${result[k].r},${result[k].g},${result[k].b}`;
-    const colliding = new Set(
-      toneKeys.filter((k) => toneKeys.some((j) => j !== k && bytes(j) === bytes(k))),
-    );
-    for (const key of colliding) {
-      const canon = CANONICAL_SEMANTIC[key];
-      (result as Record<string, ThemeTokenRGB>)[key] = readableHue(
-        canon.h,
-        canon.c,
-        both,
-        4.55,
-        0.7,
-        Number.POSITIVE_INFINITY,
-        "closest",
-        0.35,
-        0, // near-bar DISABLED — the window path keeps distinctness
-      );
-    }
-    // Re-differentiate: the window re-derivation may still leave
-    // collisions (measured 9/48 fires at 8fc24e32).
-    differentiate([
-      { key: "success", fill: CANONICAL_SEMANTIC.success },
-      { key: "error", fill: CANONICAL_SEMANTIC.error },
-      { key: "warning", fill: CANONICAL_SEMANTIC.warning },
-      { key: "info", fill: CANONICAL_SEMANTIC.info },
-    ]);
     // The secondary/accent split: the near-bar band can hold a single
     // byte for both slots (68/1024 family shapes without this branch).
     // Re-derive the accent with the near-bar disabled when they

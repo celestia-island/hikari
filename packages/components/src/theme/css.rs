@@ -518,6 +518,12 @@ impl ThemePalette {
             format!("--hi-danger-fg: {};", self.danger_fg),
             format!("--hi-info: {};", self.info),
             format!("--hi-info-fg: {};", self.info_fg),
+            // Vue-namespace fg aliases so mirrored sheets (which read
+            // --hi-color-*-fg) resolve against the runtime, not the light seed.
+            format!("--hi-color-success-fg: {};", self.success_fg),
+            format!("--hi-color-danger-fg: {};", self.danger_fg),
+            format!("--hi-color-warning-fg: {};", self.warning_fg),
+            format!("--hi-color-info-fg: {};", self.info_fg),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface),
             format!("--hi-border: {};", self.border),

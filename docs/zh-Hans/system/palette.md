@@ -302,18 +302,22 @@ let classes = ClassesBuilder::new()
 
 ```rust
 pub struct Palette {
+    /// 主题模式（亮色 / 暗色）
+    pub mode: ThemeMode,
     /// 主色
     pub primary: Color,
     /// 次色
     pub secondary: Color,
     /// 强调色
     pub accent: Color,
-    /// 成功色
+    /// 成功色（canonical 感知族）
     pub success: Color,
     /// 警告色
     pub warning: Color,
     /// 危险色
     pub danger: Color,
+    /// 信息色
+    pub info: Color,
     /// 背景色
     pub background: Color,
     /// 表面色
@@ -499,12 +503,14 @@ pub struct Color {
 
 ```rust
 pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
     pub background: Color,
     pub surface: Color,
     pub border: Color,

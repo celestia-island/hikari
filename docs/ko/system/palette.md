@@ -295,33 +295,39 @@ println!("Surface: {}", tairitsu.surface.hex());   // rgb(32,35,54)
 ```rust
 use hikari_palette::{ThemePalette, Color};
 
-let custom = ThemePalette {
+let custom = Palette {
+    mode: ThemeMode::Light,
     primary: Color::Crimson,
     secondary: Color::姜黄,
     accent: Color::粉红,
+    // The semantic trio shares the canonical perceptual family (2026-11-17);
+    // the ink rule (white by default) is `solid_ink()`.
+    success: Color::from_rgb_hex(0x1f, 0x65, 0x30),
+    warning: Color::from_rgb_hex(0x89, 0x48, 0x00),
+    danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),
+    info: Color::from_rgb_hex(0x00, 0x62, 0x74),
     background: Color::InkBlack,
     surface: Color::MoonWhite,
-    success: Color::ScallionGreen,
-    warning: Color::姜黄,
-    danger: Color::苍翠,
 };
 ```
 
 ### 테마 구조
 
 ```rust
-pub struct ThemePalette {
+pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
     pub text_primary: Color,
     pub text_secondary: Color,
-    pub border: Color,
 }
 ```
 
@@ -490,18 +496,20 @@ impl ClassesBuilder {
 ### ThemePalette
 
 ```rust
-pub struct ThemePalette {
+pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
     pub text_primary: Color,
     pub text_secondary: Color,
-    pub border: Color,
 }
 ```
 

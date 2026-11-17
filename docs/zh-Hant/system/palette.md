@@ -310,18 +310,20 @@ let custom = ThemePalette {
 ### 主題結構
 
 ```rust
-pub struct ThemePalette {
+pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
     pub text_primary: Color,
     pub text_secondary: Color,
-    pub border: Color,
 }
 ```
 
@@ -490,18 +492,20 @@ impl ClassesBuilder {
 ### ThemePalette
 
 ```rust
-pub struct ThemePalette {
+pub struct Palette {
+    pub mode: ThemeMode,
     pub primary: Color,
     pub secondary: Color,
     pub accent: Color,
-    pub background: Color,
-    pub surface: Color,
     pub success: Color,
     pub warning: Color,
     pub danger: Color,
+    pub info: Color,
+    pub background: Color,
+    pub surface: Color,
+    pub border: Color,
     pub text_primary: Color,
     pub text_secondary: Color,
-    pub border: Color,
 }
 ```
 

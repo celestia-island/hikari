@@ -672,7 +672,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
     let retry_row = if show_retry_row {
         Some(rsx! {
             div {
-                style: "display:flex;align-items:center;gap:4px;color:rgb(var(--color-warning));font-size:0.6875rem;margin-bottom:4px",
+                style: "display:flex;align-items:center;gap:4px;color:var(--hi-warning-fg, rgb(var(--color-warning)));font-size:0.6875rem;margin-bottom:4px",
                 span { {status_bar_retry_text(attempt, props.max_retries)} }
                 if countdown > 0.0 {
                     span {
@@ -743,7 +743,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
         // The probing row owns the warning tint; the settled row inherits the
         // card's ink (Vue writes no colour at all in that arm).
         let probe_style = if connecting {
-            "color:rgb(var(--color-warning))".to_string()
+            "var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
         } else {
             String::new()
         };
@@ -1262,7 +1262,7 @@ mod tests {
             "role=\"button\"",
             "tabindex=\"0\"",
             "class=\"s-status-bar-dot\"",
-            "background:rgb(var(--color-error))",
+            "background:var(--hi-danger-fg, rgb(var(--color-error)))",
             "class=\"s-status-bar-tag-value\"",
             "Panel",
             "s-status-bar-version",

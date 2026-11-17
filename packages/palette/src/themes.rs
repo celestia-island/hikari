@@ -430,9 +430,9 @@ mod semantic_tests {
                     color.hex()
                 );
                 assert_eq!(
-                    color.readable_ink().hex(),
+                    color.solid_ink().hex(),
                     "#FFFFFF",
-                    "{name}: {} must read white by the perceptual rule",
+                    "{name}: {} must take the house white ink",
                     color.hex()
                 );
             }

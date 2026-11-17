@@ -21,6 +21,19 @@ impl Color {
     /// This is the workhorse constructor used by the generated collection
     /// modules. The inferred category is a best-effort hue classification; it is
     /// a UX hint (e.g. for grouping in docs/pickers), not a source of truth.
+    /// Parse `#RRGGBB` / `RRGGBB` (the shape every emitted var carries).
+    #[must_use]
+    pub fn from_hex(value: &str) -> Option<Self> {
+        let s = value.trim().trim_start_matches('#');
+        if s.len() != 6 {
+            return None;
+        }
+        let r = u8::from_str_radix(&s[0..2], 16).ok()?;
+        let g = u8::from_str_radix(&s[2..4], 16).ok()?;
+        let b = u8::from_str_radix(&s[4..6], 16).ok()?;
+        Some(Self::from_rgb_hex(r, g, b))
+    }
+
     #[must_use]
     pub const fn from_rgb_hex(r: u8, g: u8, b: u8) -> Self {
         Self::new(r, g, b, ColorCategory::infer(r, g, b))
@@ -98,31 +111,80 @@ impl Color {
         (ok_l, chroma, hue)
     }
 
+    /// OKLCH -> sRGB, chroma-reducing into gamut (the same trade the TS
+    /// derivation makes: keep the HUE, give up chroma).
+    #[must_use]
+    pub fn from_oklch(l: f64, chroma: f64, hue_deg: f64) -> Self {
+        let l = l.clamp(0.0, 1.0);
+        let mut lo = 0.0_f64;
+        let mut hi = chroma.max(0.0).min(0.4);
+        // Gamut map by chroma reduction (a linear prescan then a bisection).
+        let in_gamut = |c: f64| {
+            let (r, g, b) = Self::oklch_raw(l, c, hue_deg);
+            (-1e-4..=1.0 + 1e-4).contains(&r)
+                && (-1e-4..=1.0 + 1e-4).contains(&g)
+                && (-1e-4..=1.0 + 1e-4).contains(&b)
+        };
+        if !in_gamut(hi) {
+            for _ in 0..48 {
+                let mid = (lo + hi) / 2.0;
+                if in_gamut(mid) {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            hi = lo;
+        }
+        let (r, g, b) = Self::oklch_raw(l, hi, hue_deg);
+        let enc = |v: f64| {
+            let v = v.clamp(0.0, 1.0);
+            let s = if v <= 0.003_130_8 {
+                12.92 * v
+            } else {
+                1.055 * v.powf(1.0 / 2.4) - 0.055
+            };
+            (s * 255.0).round() as u8
+        };
+        Self::from_rgb_hex(enc(r), enc(g), enc(b))
+    }
+
+    /// Raw (non-encoded) sRGB for an OKLCH triple — may be out of gamut.
+    fn oklch_raw(l: f64, chroma: f64, hue_deg: f64) -> (f64, f64, f64) {
+        let a = chroma * hue_deg.to_radians().cos();
+        let b = chroma * hue_deg.to_radians().sin();
+        let l_ = (l + 0.396_337_777_4 * a + 0.215_803_757_3 * b).powi(3);
+        let m_ = (l - 0.105_561_345_8 * a - 0.063_854_172_8 * b).powi(3);
+        let s_ = (l - 0.089_484_177_5 * a - 1.291_485_548_0 * b).powi(3);
+        (
+            4.076_741_662_1 * l_ - 3.307_711_591_3 * m_ + 0.230_969_929_2 * s_,
+            -1.268_438_004_6 * l_ + 2.609_757_401_1 * m_ - 0.341_319_396_5 * s_,
+            -0.004_196_086_3 * l_ - 0.703_418_614_7 * m_ + 1.707_614_701_0 * s_,
+        )
+    }
+
     /// This colour as TEXT on `bg`: itself when it already clears `target`,
-    /// otherwise the nearest lightness step that does, with hue and saturation
-    /// preserved. A semantic slot is a FILL (mode-independent per the user's
-    /// direction); painting it as text needs this variant, not the fill.
+    /// otherwise the nearest OKLCH-lightness step that does. Hue is preserved
+    /// and chroma is only given up where the sRGB gamut forces it — the same
+    /// trade the fill derivation makes.
+    ///
+    /// A semantic slot is a FILL (mode-independent per the user's direction);
+    /// painting it as text needs this variant, not the fill.
     #[must_use]
     pub fn readable_on(&self, bg: &Self, target: f64) -> Self {
         if self.contrast_ratio(bg) >= target {
             return self.clone();
         }
-        let hsl = self.to_hsl();
+        let (l0, c0, h0) = self.oklch();
         let mut best: Option<(f64, Self)> = None;
-        // One pass over every lightness step; keep the hit nearest the original.
-        for step in 0..=200 {
-            let l = f64::from(step) / 200.0;
-            let (r, g, b) = crate::color_math::Hsl::new(hsl.h, hsl.s, l).to_rgb();
-            let candidate = Self::from_rgb_hex(r, g, b);
+        for step in 0..=400 {
+            let l = f64::from(step) / 400.0;
+            let candidate = Self::from_oklch(l, c0.max(0.02), h0);
             if candidate.contrast_ratio(bg) < target {
                 continue;
             }
-            let dist = (l - hsl.l).abs();
-            let closer = match best.as_ref() {
-                Some((d, _)) => dist < *d,
-                None => true,
-            };
-            if closer {
+            let dist = (l - l0).abs();
+            if best.as_ref().is_none_or(|(d, _)| dist < *d) {
                 best = Some((dist, candidate));
             }
         }
@@ -140,8 +202,28 @@ impl Color {
         }
     }
 
-    /// The ink (black or white) that reads best on this fill — the perceptual
-    /// max-contrast rule. Ties go to white (the house white-first default).
+    /// The HOUSE ink for this fill (user direction 2026-11-12): WHITE by
+    /// default, BLACK only when the fill is light enough to need it. This is
+    /// deliberately NOT the WCAG ratio winner — see the contract in the Vue
+    /// package's `solidInk`. Ported here so the Rust side can state the same
+    /// rule instead of borrowing the rejected one.
+    #[must_use]
+    pub fn solid_ink(&self) -> Self {
+        // Rec.601 gamma-space luminance, the exact metric the TS rule uses.
+        let r = f64::from(self.rgb.0) / 255.0;
+        let g = f64::from(self.rgb.1) / 255.0;
+        let b = f64::from(self.rgb.2) / 255.0;
+        let luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+        if luminance > 0.65 {
+            Self::from_rgb_hex(0x00, 0x00, 0x00)
+        } else {
+            Self::from_rgb_hex(0xff, 0xff, 0xff)
+        }
+    }
+
+    /// The ink that wins the WCAG ratio — a UTILITY, not the house rule. Kept
+    /// for callers that genuinely want the maximum-contrast side (the house
+    /// rule is [`Color::solid_ink`]).
     #[must_use]
     pub fn readable_ink(&self) -> Self {
         let white = Self::from_rgb_hex(0xff, 0xff, 0xff);

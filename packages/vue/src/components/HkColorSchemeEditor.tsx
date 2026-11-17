@@ -92,7 +92,6 @@ const toneFillOf: Record<(typeof toneInkTokens)[number], RequiredTokenKey> = {
   onInfo: "info",
 };
 
-const BLACK: ThemeTokenRGB = { r: 0, g: 0, b: 0 };
 
 /**
  * The ink for a tone fill — the HOUSE rule (`solidInk`, user direction
@@ -106,17 +105,15 @@ function toneInkOn(fill: ThemeTokenRGB): ThemeTokenRGB {
 }
 
 /**
- * The ink to WRITE when healing. The house rule first; if its answer cannot
- * reach AA on the fill (real for mid greys — `solidInk` is white there while
- * white measures 3.95:1), the perceptually readable side wins: an unreadable
- * label is a defect, not a house preference.
+ * The ink to WRITE when healing — the HOUSE rule, and nothing else. The
+ * editor must not invent a second rule: on the fills where `solidInk` itself
+ * falls under AA (mid greys, some saturated greens) the answer is to fix the
+ * FILL, not to override the house decision. `tokensToCSSVars` derives the
+ * same fill through `solidInk`, so this keeps the stored and derived paths
+ * identical.
  */
 function readableInkFor(fill: ThemeTokenRGB): ThemeTokenRGB {
-  const house = toneInkOn(fill);
-  if (contrastRatio(house, fill) >= 4.5) return house;
-  return contrastRatio(WHITE, fill) >= contrastRatio(BLACK, fill)
-    ? { ...WHITE }
-    : { ...BLACK };
+  return toneInkOn(fill);
 }
 
 
@@ -256,7 +253,7 @@ export const HkColorSchemeEditor = defineComponent({
         // A stored ink survives as long as it still READS on its fill. Once it
         // does not (a retune moved the fill, or the theme was saved while the
         // stale-ink bug was live), it is not a design choice — it is an
-        // unreadable label — so the house rule takes over.
+        // unreadable label — so readableInkFor takes over.
         if (contrastRatio(stored, fill) < 4.5) target[inkKey] = readableInkFor(fill);
       }
     }

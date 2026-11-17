@@ -178,6 +178,35 @@ describe("static seed matches the solidInk rule", () => {
     return [Number(m![1]), Number(m![2]), Number(m![3])];
   };
 
+  // The tag/link components paint the semantic slots as TEXT; their sheets
+  // must read the per-tone on-ink (never the fill itself — a fill used as
+  // text on a dark page measures ~1.1:1). Both stacks are pinned: the Vue
+  // sheet (HkTag.scss) and the components crate sheet (tag.rs / link.scss).
+  it("tag/link text uses the per-tone on-ink, not the fill", () => {
+    const hkTag = readFileSync(join(here, "..", "components", "HkTag.scss"), "utf-8");
+    const linkScss = readFileSync(
+      join(here, "../../../../packages/components/src/styles/components/link.scss"),
+      "utf-8",
+    );
+    for (const tone of ["danger", "success", "warning"] as const) {
+      const onInk = `--hi-color-text-on-${tone}`;
+      expect(
+        hkTag.includes(`.hk-tag-${tone}`) && hkTag.includes(onInk),
+        `HkTag.scss .hk-tag-${tone} must paint --hi-color-text-on-${tone}`,
+      ).toBe(true);
+      expect(hkTag.includes(onInk), `HkTag.scss carries ${onInk}`).toBe(true);
+    }
+    expect(
+      linkScss.includes("--hi-danger-fg"),
+      "link.scss .hk-link-danger paints --hi-danger-fg (the palette-derived text variant)",
+    ).toBe(true);
+    // The fill itself must not be the link text (the dual-role defect).
+    expect(
+      /\.hk-link-danger\s*\{[^}]*--hi-danger,/.test(linkScss),
+      "link.scss .hk-link-danger must not paint the raw fill",
+    ).toBe(false);
+  });
+
   for (const path of ["tokens.scss", join("styles", "theme", "channels.scss")]) {
     it(`seeds each on-tone ink to what solidInk derives from the ${path} fills`, () => {
       const file = readFileSync(join(here, "..", ...path.split("/")), "utf-8");

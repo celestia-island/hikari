@@ -647,11 +647,12 @@ describe("HkColorSchemeEditor keeps the ONE ink rule (2026-11-12)", () => {
     expect(draft.dark.onSuccess).toEqual({ r: 0, g: 0, b: 0 });
   });
 
-  it("heals to the READABLE side when the house rule itself is unreadable", async () => {
-    // Mid greys are the hole: solidInk says white, but white measures 3.95:1
-    // on #808080 while black measures 5.32:1. Healing to the house answer
-    // would rewrite white→white and ship an unreadable label, so the
-    // readability floor wins.
+  it("heals to the HOUSE answer even where it is under AA", async () => {
+    // Mid greys are the known gap: solidInk says white (3.95:1 on #808080)
+    // while black measures 5.32:1. The editor does NOT override the house
+    // rule here — `tokensToCSSVars` derives the same fill through solidInk, so
+    // a second rule would make the stored and derived paths disagree. Fixing
+    // this band means fixing the FILL, not the ink rule.
     const { ref } = mountEditor({
       initialDark: {
         ...basePrefill,
@@ -665,7 +666,7 @@ describe("HkColorSchemeEditor keeps the ONE ink rule (2026-11-12)", () => {
     await settle();
 
     const draft = ref.value!.getDraft();
-    expect(draft.dark.onDanger).toEqual({ r: 0, g: 0, b: 0 });
+    expect(draft.dark.onDanger).toEqual({ r: 255, g: 255, b: 255 });
   });
 
   it("leaves an ABSENT ink absent (never materialises the house rule)", async () => {

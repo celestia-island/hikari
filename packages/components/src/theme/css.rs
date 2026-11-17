@@ -479,6 +479,22 @@ impl ThemePalette {
             self.text_secondary = color;
         }
 
+        // The semantic TEXT variants are a function of the FINAL fill and
+        // background, so they are recomputed here: an override that moves
+        // either one would otherwise keep the fg of the un-overridden palette
+        // (the unreadable ~1.1:1 case).
+        if let Some(bg) = Color::from_hex(&self.background) {
+            for (fill_hex, fg) in [
+                (&self.success, &mut self.success_fg),
+                (&self.warning, &mut self.warning_fg),
+                (&self.danger, &mut self.danger_fg),
+            ] {
+                if let Some(fill) = Color::from_hex(fill_hex) {
+                    *fg = fill.readable_on(&bg, 4.5).hex();
+                }
+            }
+        }
+
         self
     }
 

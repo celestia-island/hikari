@@ -460,6 +460,9 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
     // rung is the only guaranteed differentiator).
     accent: (() => {
       const hue = (primary.h + 320) % 360;
+      // The accent at the SAME 4.55 target but the OPPOSITE pick bias
+      // (the achromatic split: secondary "high" = band top, accent
+      // "low" = band bottom — the rungs differ by pick, not target).
       const pickBase = achromatic ? "low" : "closest";
       const high = readableHue(
         hue,
@@ -474,8 +477,9 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
       const highWorst = Math.min(...both.map((f) => contrastRatio(high, f)));
       const sameAsSecondary =
         high.r === secondarySlot.r && high.g === secondarySlot.g && high.b === secondarySlot.b;
-      // Distinct and (for the achromatic split, whose rungs sit lower)
-      // AA-clearing: take it.
+      // The achromatic split: when the pick is distinct AND
+      // (non-achromatic, or AA-clearing) take it; otherwise fall
+      // through to the coincidence scan below.
       if (!sameAsSecondary && (!achromatic || highWorst >= 4.5)) return high;
       // Coincidence: scan the FULL AA band (the same fix the tone
       // differentiation received — the pick flip only probes the two

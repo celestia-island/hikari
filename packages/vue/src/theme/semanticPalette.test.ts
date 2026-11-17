@@ -388,6 +388,19 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(sec !== acc, `sec ${sec} vs acc ${acc}`).toBe(true);
   });
 
+  it("the ACHROMATIC branch splits the secondary/accent pick bias", () => {
+    // r24 adversarial M25: forcing achromatic=false changed 448/576 grey
+    // shapes. With the branch, the split keeps distinct on a grey primary.
+    const p = deriveSemanticPalette({
+      primary: rgb(120, 120, 120),
+      background: rgb(50, 50, 50),
+      surface: rgb(150, 150, 150),
+    });
+    const sec = `${p.secondary.r},${p.secondary.g},${p.secondary.b}`;
+    const acc = `${p.accent.r},${p.accent.g},${p.accent.b}`;
+    expect(sec !== acc, `grey primary splits (sec ${sec} vs acc ${acc})`).toBe(true);
+  });
+
   it("a grey primary on WHITE/BLACK fills splits secondary/accent (the fine band)", () => {
     // The 4.55 target band holds ONE byte (117) but the AA band holds
     // two (117@4.5578, 118@4.5422): the retake flips the pick and takes
@@ -550,7 +563,21 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
       contrastRatio(p.accent, { r: 98, g: 41, b: 180 }),
       contrastRatio(p.accent, { r: 181, g: 97, b: 3 }),
     );
-    expect(accWorst, "the accent's worst anchor is maximised").toBeGreaterThan(3);
+    expect(accWorst, "the accent's worst anchor is maximised (near the 4.4 bar)").toBeGreaterThanOrEqual(4.4);
+  });
+
+  it("the resting border chroma is 0.25× the focused (subdued, not equal)", () => {
+    // r24 adversarial M13: the 0.25 factor had no pin. With 0.95 the
+    // resting border would match the focused border's intensity.
+    const p = deriveSemanticPalette({
+      primary: rgb(100, 50, 150),
+      background: rgb(20, 20, 30),
+      surface: rgb(40, 40, 55),
+    });
+    const bc = rgbToOklch(p.border).c;
+    const fc = rgbToOklch(p.focusedBorder).c;
+    // The resting border's chroma should be distinctly below the focused.
+    expect(bc, "resting chroma < focused").toBeLessThan(fc * 0.6);
   });
 
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {

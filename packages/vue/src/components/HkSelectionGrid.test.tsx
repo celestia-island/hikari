@@ -557,21 +557,37 @@ describe("HkSelectionGrid selected-edge stylesheet contract", () => {
     const layers = splitLayers(computedFor(SELECTED).get("box-shadow") ?? "");
     expect(layers).toHaveLength(1);
     expect(layers[0]).toMatch(/^inset 0 0 0 1px/);
-    // No OTHER rule that can match the item may add an inset shadow: a
-    // one-sided `inset 3px 0 0 3px` under a higher-specificity selector
-    // reinstates the reported lopsidedness in the browser. The selected
-    // rule and its `:hover` sibling are the only two allowed places.
-    const shadowed = rulesNaming(".hk-selection-grid-item")
-      .filter((r) => r.declarations.some(([prop]) => prop === "box-shadow"))
+    // EVERY shadow layer of EVERY rule that names the item is inspected, not
+    // just the base selected rule: the reported state is a HOVERED selected
+    // row, so a one-sided `inset 3px 0 0 3px` in `[data-selected]:hover`
+    // reproduces the lopsidedness with the base rule untouched. Allowed
+    // layers are exactly the two shapes the sheet really uses: the even 1px
+    // inset ring, and non-inset elevation shadows.
+    const offenders: string[] = [];
+    for (const rule of rulesNaming(".hk-selection-grid-item")) {
+      for (const [prop, value] of rule.declarations) {
+        if (prop !== "box-shadow") continue;
+        for (const layer of splitLayers(value)) {
+          const inset = /^inset\b/.test(layer);
+          if (inset && !/^inset 0 0 0 1px /.test(layer)) {
+            offenders.push(`${rule.selector} → ${layer}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+    // The selected state and its `:hover` sibling are the only two rules that
+    // may carry an inset ring at all.
+    const ringed = rulesNaming(".hk-selection-grid-item")
+      .filter((r) =>
+        r.declarations.some(
+          ([prop, value]) => prop === "box-shadow" && /inset\b/.test(value),
+        ),
+      )
       .map((r) => normalized(r.selector))
       .sort();
-    expect(shadowed).toEqual(
-      [
-        normalized(`${ITEM}:hover`),
-        normalized(`${ITEM}:active`),
-        normalized(SELECTED),
-        normalized(`${SELECTED}:hover`),
-      ].sort(),
+    expect(ringed).toEqual(
+      [normalized(SELECTED), normalized(`${SELECTED}:hover`)].sort(),
     );
   });
 });

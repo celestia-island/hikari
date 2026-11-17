@@ -543,7 +543,13 @@ describe("the capture (real listeners, real console wrap)", () => {
     paintedCard(run);
     const ready = run.window[BOOT_RECOVERY_READY_GLOBAL] as () => void;
     ready();
+    // THREE post-mount signals, one per guard layer: the console wrapper's
+    // own freeze check, captureEntry's (the rejection listeners bypass the
+    // wrapper), and captureFatal's (the error-event listener's fatal record).
+    // Each guard's removal is caught by exactly this one assertion -- they
+    // are not interchangeable defence in depth.
     run.console.error("after mount");
+    run.window.dispatch("unhandledrejection", { reason: "late rejection" });
     run.window.dispatch("error", { message: "Uncaught TypeError: late" });
     const fatal = run.window[BOOT_RECOVERY_FATAL_GLOBAL] as (
       message?: string,
@@ -552,11 +558,11 @@ describe("the capture (real listeners, real console wrap)", () => {
     fatal("host report after mount", { name: "HostError" });
     await clickCopy(run);
     const payload = pastedPayload(run);
-    const log = payload.console as Array<{ text: string }>;
+    const log = payload.console as Array<{ level: string; text: string }>;
     expect(log.map((entry) => entry.text)).toEqual(["during boot"]);
     // The post-ready error event is not the fatal either.
     expect(payload.lastError).toBeUndefined();
-    // Pass-through continued for both post-mount calls.
+    // Pass-through continued for the post-mount console call.
     expect(run.calls.map((call) => call.args[0])).toEqual([
       "during boot",
       "after mount",
@@ -729,11 +735,11 @@ describe("the classification upgrade (watchdog + capture)", () => {
   it("keeps wrapping the other levels when one accessor is hostile", () => {
     // A throwing getter on console.error must not stop warn/log/info from
     // being wrapped -- exactly what a single guard around the loop would do.
-    const calls: Array<{ level: string; args: unknown[] }> = [];
+    const warnShim = (...args: unknown[]) => {
+      void args;
+    };
     const consoleObject: Record<string, unknown> = {
-      warn: (...args: unknown[]) => {
-        calls.push({ level: "warn", args });
-      },
+      warn: warnShim,
       log: () => {},
       info: () => {},
     };
@@ -744,12 +750,15 @@ describe("the classification upgrade (watchdog + capture)", () => {
       configurable: true,
     });
     const run = runScript(bootRecoveryScript(CTX_OPTION), { consoleObject });
-    // The install survived the hostile accessor...
+    // The install survived the hostile accessor -- and warn was WRAPPED: the
+    // property no longer holds the raw spy (this identity check is the
+    // mutation killer; the spy alone fills whether or not the wrap ran).
+    const warn = consoleObject.warn as unknown;
+    expect(warn).not.toBe(warnShim);
+    expect(typeof warn).toBe("function");
     expect(() =>
-      (consoleObject.warn as (...args: unknown[]) => void)("still here"),
+      (warn as (...args: unknown[]) => void)("still here"),
     ).not.toThrow();
-    // ...and warn (NOT error) was wrapped: calling it recorded the line.
-    expect(calls.map((call) => call.args[0])).toEqual(["still here"]);
   });
 
   it("keeps the resource-timing chunk signal ahead of the fatal", () => {

@@ -2004,10 +2004,12 @@ const CONTEXT_RUNTIME = String.raw`
   var CONSOLE_CLIP = 500;
   var bootLog = [];
   var bootFatal = null;
-  /* Set by __appReady: the app mounted, so the capture stops RECORDING (the
+  /* Set by __appReady: the app mounted, so the capture stops RECORDING. The
      wrappers stay installed -- unwinding them could clobber a later wrapper
-     and a chained console is hostile territory -- but the format/append cost
-     per call drops to one boolean check on a healthy page). */
+     and a chained console is hostile territory -- but the console wrapper
+     checks this flag BEFORE formatting, so a healthy page's post-mount call
+     costs the pass-through plus one boolean check. The event listeners
+     carry their own checks inside captureEntry / captureFatal. */
   var bootDone = false;
   function formatLogValue(value) {
     if (typeof value === "string") return clipText(value, CONSOLE_CLIP);
@@ -2093,13 +2095,20 @@ const CONTEXT_RUNTIME = String.raw`
       safeCall(function () {
         result = original.apply(self, args);
       }, undefined);
-      safeCall(function () {
-        var parts = [];
-        for (var i = 0; i < args.length && parts.length < 8; i++) {
-          parts.push(formatLogValue(args[i]));
-        }
-        captureEntry(level, parts.join(" "));
-      }, null);
+      /* The freeze check sits BEFORE the formatting, not inside
+         captureEntry: a healthy page's post-mount console call then costs
+         the pass-through plus one boolean check -- no arg formatting at all.
+         The event listeners keep their own checks inside captureEntry /
+         captureFatal, because they bypass this wrapper. */
+      if (!bootDone) {
+        safeCall(function () {
+          var parts = [];
+          for (var i = 0; i < args.length && parts.length < 8; i++) {
+            parts.push(formatLogValue(args[i]));
+          }
+          captureEntry(level, parts.join(" "));
+        }, null);
+      }
       return result;
     };
     try {
@@ -2294,9 +2303,10 @@ export function bootRecoveryScript(options = {}) {
    * form would leave the details sheet behind on a recovered mount); a
    * reasons-only shape has no details sheet and keeps the byte-exact
    * previous-sibling body it always emitted. The freeze line rides only the
-   * shapes that configured `copy.errorContext` (without it the flag would be
-   * an unwritable reference). Kept as ONE emitter so the reasons-only,
-   * pane+reasons and capture-only shapes cannot drift apart.
+   * pane branch, and only for the shapes that configured
+   * `copy.errorContext` (the capture only exists beside the pane, so the
+   * no-pane branch never needs the flag). Kept as ONE emitter so the
+   * pane-bearing shapes cannot drift apart.
    */
   function pushStandDown() {
     lines.push(
@@ -2328,11 +2338,10 @@ export function bootRecoveryScript(options = {}) {
       lines.push("    } catch (e) {}");
       lines.push("  }");
     } else {
+      // The no-pane branch is reasons-only by construction (errorContext
+      // requires the pane), so it carries no freeze line: the capture does
+      // not exist in this shape.
       lines.push("  function standDown() {");
-      if (resolved.errorContext) {
-        // See the pane-shape body: the capture's recording flag.
-        lines.push("    bootDone = true;");
-      }
       lines.push("    try {");
       lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
       lines.push("      if (!loading) return;");

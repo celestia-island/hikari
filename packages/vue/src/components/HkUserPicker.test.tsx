@@ -1,3 +1,12 @@
+// HkUserPicker — the search-first anchored panel (HkSelectPanel surface).
+//
+// The contract these tests pin (2026-11 user direction): the panel opens
+// EMPTY — no candidates and no request for an empty query — typing is
+// debounced into ONE query, single mode emits + closes on a row, multi
+// mode only commits from its in-panel Confirm, a rejection renders a retry
+// affordance (never a throw), and a slow older answer can never clobber
+// the newer one. The keyboard lives on the search field (combobox
+// activedescendant) and the surface owns Escape.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
@@ -25,8 +34,52 @@ const alice: HkUserOption = { uid: "u-1", username: "alice", email: "alice@examp
 const bob: HkUserOption = { uid: "u-2", username: "bob", email: "bob@example.com" };
 const carol: HkUserOption = { uid: "u-3", username: "carol", email: "carol@example.com", displayName: "Carol" };
 
-function rows() {
-  return [...document.body.querySelectorAll<HTMLElement>(".hk-user-picker-row")];
+/** The generated debounce interval (+ slack) — the component's own 250ms
+ *  pause; tests wait it out on real timers instead of fighting fake ones. */
+const DEBOUNCE_WAIT = 320;
+/** Long enough for the surface's leave transition to unmount its content. */
+const CLOSE_WAIT = 420;
+
+const field = () => document.body.querySelector<HTMLElement>(".hk-user-picker-field")!;
+const rows = () => [...document.body.querySelectorAll<HTMLElement>(".hk-user-picker-row")];
+const names = () => rows().map((row) => row.querySelector(".hk-user-picker-row-name")!.textContent);
+const rowsBand = () => document.body.querySelector<HTMLElement>(".hk-user-picker-rows");
+const searchField = () => document.body.querySelector<HTMLInputElement>(".hk-user-picker-search input");
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function settle() {
+  await nextTick();
+  await nextTick();
+}
+
+/** Open the panel from the field and let the surface render its content. */
+async function openPanel() {
+  field().click();
+  await settle();
+  await nextTick();
+}
+
+/** Type into the panel's search field (the input event the field listens
+ *  to), leaving the debounce pending. */
+async function type(text: string) {
+  const input = searchField()!;
+  input.value = text;
+  input.dispatchEvent(new Event("input"));
+  await nextTick();
+}
+
+/** Type and wait out the debounce, so exactly one query has run. */
+async function searchFor(text: string) {
+  await type(text);
+  await wait(DEBOUNCE_WAIT);
+  await settle();
+}
+
+function key(target: HTMLElement, name: string) {
+  target.dispatchEvent(new KeyboardEvent("keydown", { key: name, bubbles: true, cancelable: true }));
 }
 
 describe("HkUserPicker", () => {
@@ -53,156 +106,243 @@ describe("HkUserPicker", () => {
     expect(onUpdate).toHaveBeenCalledWith([bob]);
   });
 
-  it("opening the dialog runs the injected search with the empty query", async () => {
+  // ── The hard requirement: empty query ⇒ empty candidates ────────────
+  it("opens with an empty query: no request, no candidates, only the hint", async () => {
     const search = vi.fn(async () => [alice, bob]);
     mount(() => h(HkUserPicker, { modelValue: [], search }));
-    document.body.querySelector<HTMLElement>(".hk-user-picker-field")!.click();
-    await nextTick();
-    await nextTick();
-    expect(search).toHaveBeenCalledWith("");
-    expect(rows()).toHaveLength(2);
+    await openPanel();
+    // Well past the debounce window: an empty query must never fire.
+    await wait(DEBOUNCE_WAIT);
+    await settle();
+    expect(search).not.toHaveBeenCalled();
+    expect(rows()).toHaveLength(0);
+    expect(rowsBand()!.getAttribute("data-state")).toBe("empty");
+    expect(rowsBand()!.textContent).toContain("Type a nickname, username or email to search.");
   });
 
-  it("single mode emits one user on pick", async () => {
+  it("clearing the query drops the candidates without a request", async () => {
+    const search = vi.fn(async () => [alice, bob]);
+    mount(() => h(HkUserPicker, { modelValue: [], search }));
+    await openPanel();
+    await searchFor("bo");
+    expect(rows()).toHaveLength(2);
+    await type("   ");
+    await wait(DEBOUNCE_WAIT);
+    await settle();
+    // Only the real query ran; the whitespace-only one never did.
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(rows()).toHaveLength(0);
+    expect(rowsBand()!.getAttribute("data-state")).toBe("empty");
+  });
+
+  // ── Debounce ────────────────────────────────────────────────────────
+  it("debounces typing into exactly one request with the final query", async () => {
+    const search = vi.fn(async () => [alice]);
+    mount(() => h(HkUserPicker, { modelValue: [], search }));
+    await openPanel();
+    await type("a");
+    await type("al");
+    await type("ali");
+    expect(search).not.toHaveBeenCalled();
+    await wait(120);
+    expect(search, "still inside the debounce window").not.toHaveBeenCalled();
+    await wait(DEBOUNCE_WAIT);
+    await settle();
+    expect(search).toHaveBeenCalledTimes(1);
+    expect(search).toHaveBeenCalledWith("ali");
+  });
+
+  // ── Single mode ─────────────────────────────────────────────────────
+  it("single mode emits one user and closes the panel on a row pick", async () => {
     const onUpdate = vi.fn();
+    const search = vi.fn(async () => [alice, bob]);
     mount(() => h(HkUserPicker, {
       modelValue: [],
-      search: async () => [alice, bob],
+      search,
       "onUpdate:modelValue": (users: HkUserOption[]) => onUpdate(users),
     }));
-    document.body.querySelector<HTMLElement>(".hk-user-picker-field")!.click();
-    await nextTick();
-    await nextTick();
+    await openPanel();
+    await searchFor("bo");
+    expect(names()).toEqual(["Alice", "bob"]);
     rows()[1].click();
     await nextTick();
     expect(onUpdate).toHaveBeenCalledWith([bob]);
+    await wait(CLOSE_WAIT);
+    expect(document.body.querySelector(".hk-user-picker-panel"), "panel closed").toBeNull();
   });
 
-  it("multi mode accumulates picks and commits on confirm", async () => {
+  // ── Multi mode: draft + in-panel confirm ────────────────────────────
+  it("multi mode toggles a draft and emits only on the in-panel confirm", async () => {
     const onUpdate = vi.fn();
+    const search = vi.fn(async () => [alice, bob, carol]);
     mount(() => h(HkUserPicker, {
       modelValue: [],
       mode: "multi",
-      search: async () => [alice, bob, carol],
+      search,
       "onUpdate:modelValue": (users: HkUserOption[]) => onUpdate(users),
     }));
-    document.body.querySelector<HTMLElement>(".hk-user-picker-field")!.click();
-    await nextTick();
-    await nextTick();
+    await openPanel();
+    await searchFor("a");
+    // Nothing drafted yet → the confirm is inert.
+    const disabledConfirm = document.body.querySelector<HTMLButtonElement>(".hk-user-picker-confirm")!;
+    expect(disabledConfirm.disabled).toBe(true);
+
     rows()[0].click();
     rows()[2].click();
-    // Re-picking a drafted row toggles it OUT again — the de-dup half of
-    // pickRow (pinned after the R2 mutation round caught it untested).
+    // Re-picking a drafted row toggles it OUT again (the de-dup half).
     rows()[0].click();
     await nextTick();
     expect(onUpdate).not.toHaveBeenCalled();
-    const confirm = [...document.body.querySelectorAll<HTMLButtonElement>(".hk-modal-footer button")]
-      .find((b) => b.textContent === "Confirm")!;
+    expect(rows()[2].getAttribute("aria-selected")).toBe("true");
+    expect(rows()[0].getAttribute("aria-selected")).toBe("false");
+    expect(document.body.querySelector(".hk-user-picker-count")!.textContent).toContain("1 selected");
+
+    const confirm = document.body.querySelector<HTMLButtonElement>(".hk-user-picker-confirm")!;
+    expect(confirm.disabled).toBe(false);
     confirm.click();
     await nextTick();
     expect(onUpdate).toHaveBeenCalledWith([carol]);
+    await wait(CLOSE_WAIT);
+    expect(document.body.querySelector(".hk-user-picker-panel"), "panel closed").toBeNull();
   });
 
-  it("a stale search resolving late cannot clobber the newer results", async () => {
-    let releaseFirst: ((value: HkUserOption[]) => void) | null = null;
-    const first = new Promise<HkUserOption[]>((resolve) => { releaseFirst = resolve; });
+  // ── Failure + retry ─────────────────────────────────────────────────
+  it("a rejecting search renders the retry note and retries without throwing", async () => {
+    let attempts = 0;
+    const search = vi.fn(async () => {
+      attempts += 1;
+      if (attempts === 1) throw new Error("down");
+      return [bob];
+    });
+    mount(() => h(HkUserPicker, { modelValue: [], search }));
+    await openPanel();
+    await searchFor("bob");
+    expect(rowsBand()!.getAttribute("data-state")).toBe("failed");
+    expect(rows()).toHaveLength(0);
+    const retry = document.body.querySelector<HTMLButtonElement>(".hk-user-picker-retry");
+    expect(retry, "retry affordance").toBeTruthy();
+    retry!.click();
+    await settle();
+    await nextTick();
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(names()).toEqual(["bob"]);
+    expect(rowsBand()!.getAttribute("data-state")).toBe("ready");
+  });
+
+  // ── Race guard ──────────────────────────────────────────────────────
+  it("a stale answer resolving late cannot clobber the newer results", async () => {
+    let releaseSlow: ((value: HkUserOption[]) => void) | null = null;
+    const slow = new Promise<HkUserOption[]>((resolve) => { releaseSlow = resolve; });
     const search = vi.fn()
-      .mockImplementationOnce(() => first)
-      .mockImplementationOnce(async () => [bob]);
+      .mockImplementationOnce(() => slow)
+      .mockImplementationOnce(async () => [carol]);
     mount(() => h(HkUserPicker, { modelValue: [], search }));
-    document.body.querySelector<HTMLElement>(".hk-user-picker-field")!.click();
-    await nextTick();
-    // Second query (the component's race token advances)…
-    // Reach runSearch directly through the input's search event wiring:
-    // HkSearchInput debounces at 250ms; fake timers advance past it.
-    vi.useFakeTimers();
-    const input = document.body.querySelector<HTMLInputElement>(".hk-user-picker-dialog input");
-    input!.value = "bob";
-    input!.dispatchEvent(new Event("input"));
-    // Flush the modelValue watch so HkSearchInput schedules its debounce
-    // timer on the fake clock BEFORE time advances past it.
-    await nextTick();
-    vi.advanceTimersByTime(300);
-    await Promise.resolve();
-    await Promise.resolve();
-    await nextTick();
+    await openPanel();
+    await searchFor("bo");
+    await searchFor("carol");
+    expect(names()).toEqual(["Carol"]);
     // …then the stale first answer lands LAST — it must not win.
-    releaseFirst!([alice]);
-    await Promise.resolve();
-    await Promise.resolve();
-    await nextTick();
-    vi.useRealTimers();
-    const names = rows().map((r) => r.querySelector(".hk-user-picker-row-name")!.textContent);
-    expect(names).toEqual(["bob"]);
+    releaseSlow!([alice]);
+    await settle();
+    expect(names()).toEqual(["Carol"]);
   });
 
-  it("searches again on reopen after a full close (non-empty prior query)", async () => {
-    const search = vi.fn(async (q: string) => (q ? [bob] : [alice, bob]));
-    mount(() => h(HkUserPicker, { modelValue: [], search }));
-    const field = () => document.body.querySelector<HTMLElement>(".hk-user-picker-field")!;
-
-    // Session 1: open (search #1, ""), type "bob" (search #2), pick — single
-    // mode closes the dialog.
-    field().click();
-    await nextTick(); await nextTick();
-    const input = document.body.querySelector<HTMLInputElement>(".hk-user-picker-dialog input")!;
-    input.value = "bob";
-    input.dispatchEvent(new Event("input"));
-    await new Promise((r) => setTimeout(r, 300));
+  // ── Keyboard ────────────────────────────────────────────────────────
+  it("arrows walk the rows, publish the activedescendant and Enter picks", async () => {
+    const onUpdate = vi.fn();
+    const search = vi.fn(async () => [alice, bob, carol]);
+    mount(() => h(HkUserPicker, {
+      modelValue: [],
+      search,
+      "onUpdate:modelValue": (users: HkUserOption[]) => onUpdate(users),
+    }));
+    await openPanel();
+    await searchFor("a");
+    const input = searchField()!;
+    expect(input.getAttribute("aria-activedescendant"), "nothing active initially").toBeNull();
+    key(input, "ArrowDown");
     await nextTick();
-    rows()[0].click();
+    expect(input.getAttribute("aria-activedescendant")).toBe(rows()[0].id);
+    key(input, "ArrowDown");
     await nextTick();
+    expect(input.getAttribute("aria-activedescendant")).toBe(rows()[1].id);
+    key(input, "ArrowUp");
+    await nextTick();
+    expect(input.getAttribute("aria-activedescendant")).toBe(rows()[0].id);
+    key(input, "Enter");
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledWith([alice]);
+  });
 
-    // FULL close: wait past HkModal's leave window so the dialog content
-    // actually unmounts (the precondition of the R3 finding — while still
-    // mounted, the input's watcher masked the bug).
-    await new Promise((r) => setTimeout(r, 700));
-    expect(document.body.querySelector(".hk-user-picker-dialog")).toBeNull();
+  it("Escape pressed in the search field closes the panel", async () => {
+    mount(() => h(HkUserPicker, { modelValue: [], search: async () => [alice] }));
+    await openPanel();
+    expect(document.body.querySelector(".hk-user-picker-panel")).toBeTruthy();
+    key(searchField()!, "Escape");
+    await nextTick();
+    await wait(CLOSE_WAIT);
+    expect(document.body.querySelector(".hk-user-picker-panel")).toBeNull();
+  });
 
-    // Session 2: reopen MUST fire the initial-batch search("") again.
-    field().click();
-    await nextTick(); await nextTick();
-    expect(search).toHaveBeenLastCalledWith("");
-    expect(search.mock.calls.filter((c) => c[0] === "").length).toBe(2);
+  // ── A11y wiring ─────────────────────────────────────────────────────
+  it("wires the search field as the combobox of the option listbox", async () => {
+    const search = vi.fn(async () => [alice, bob]);
+    mount(() => h(HkUserPicker, { modelValue: [], mode: "multi", search }));
+    await openPanel();
+    await searchFor("a");
+    const input = searchField()!;
+    const listbox = rowsBand()!;
+    expect(input.getAttribute("role")).toBe("combobox");
+    expect(input.getAttribute("aria-controls")).toBe(listbox.getAttribute("id"));
+    expect(input.getAttribute("aria-label")).toBe("Nickname, username or email");
+    expect(listbox.getAttribute("role")).toBe("listbox");
+    expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
+    const options = rows();
+    for (const option of options) {
+      expect(option.getAttribute("role")).toBe("option");
+      expect(option.getAttribute("aria-selected")).toBe("false");
+      expect(option.getAttribute("tabindex")).toBe("-1");
+    }
+  });
+
+  it("focuses the search field when the panel opens", async () => {
+    mount(() => h(HkUserPicker, { modelValue: [], search: async () => [alice] }));
+    await openPanel();
+    await nextTick();
+    expect(document.activeElement).toBe(searchField());
+  });
+
+  // ── Caps + session reset ────────────────────────────────────────────
+  it("caps the rendered rows at maxResults", async () => {
+    mount(() => h(HkUserPicker, {
+      modelValue: [],
+      maxResults: 2,
+      search: async () => [alice, bob, carol],
+    }));
+    await openPanel();
+    await searchFor("a");
     expect(rows()).toHaveLength(2);
   });
 
-  it("fires exactly one search per open within the modal leave window", async () => {
-    const search = vi.fn(async (q: string) => (q ? [bob] : [alice, bob]));
-    mount(() => h(HkUserPicker, { modelValue: [], mode: "multi", search }));
-    const field = () => document.body.querySelector<HTMLElement>(".hk-user-picker-field")!;
+  it("reopening starts a fresh session: query cleared, no stale candidates", async () => {
+    const search = vi.fn(async (q: string) => (q === "bo" ? [bob] : [alice, bob]));
+    mount(() => h(HkUserPicker, { modelValue: [], search }));
+    await openPanel();
+    await searchFor("bo");
+    expect(names()).toEqual(["bob"]);
+    key(searchField()!, "Escape");
+    await nextTick();
+    await wait(CLOSE_WAIT);
+    expect(document.body.querySelector(".hk-user-picker-panel")).toBeNull();
 
-    // Session 1: open + type.
-    field().click();
-    await nextTick(); await nextTick();
-    const input = document.body.querySelector<HTMLInputElement>(".hk-user-picker-dialog input")!;
-    input.value = "bob";
-    input.dispatchEvent(new Event("input"));
-    await new Promise((r) => setTimeout(r, 300));
-    await nextTick();
-
-    // Close WITHOUT picking: the modal header's own × button.
-    const closeBtn = document.body.querySelector<HTMLButtonElement>(".hk-modal-close");
-    expect(closeBtn, "modal close button").toBeDefined();
-    closeBtn!.click();
-    await nextTick();
-    // Reopen IMMEDIATELY (inside the leave window — the input may still be
-    // mounted): the session-key remount + explicit search("") must yield
-    // exactly ONE new empty-query search, no watcher-originated duplicate.
-    field().click();
-    await nextTick(); await nextTick();
-    await new Promise((r) => setTimeout(r, 320));
-    const empties = search.mock.calls.filter((c) => c[0] === "");
-    expect(empties.length).toBe(2);
-    expect(search.mock.calls.filter((c) => c[0] === "bob").length).toBe(1);
-  });
-
-  it("a rejecting search renders the failure note instead of throwing", async () => {
-    mount(() => h(HkUserPicker, { modelValue: [], search: async () => { throw new Error("down"); } }));
-    document.body.querySelector<HTMLElement>(".hk-user-picker-field")!.click();
-    await nextTick();
-    await nextTick();
-    expect(document.body.querySelector(".hk-user-picker-rows")!.getAttribute("data-state")).toBe("failed");
+    await openPanel();
+    await wait(DEBOUNCE_WAIT);
+    await settle();
+    // Exactly one search ran across both sessions — the empty reopen
+    // queries nothing, and the panel is blank with its hint back.
+    expect(search).toHaveBeenCalledTimes(1);
     expect(rows()).toHaveLength(0);
+    expect(searchField()!.value).toBe("");
+    expect(rowsBand()!.textContent).toContain("Type a nickname, username or email to search.");
   });
 });

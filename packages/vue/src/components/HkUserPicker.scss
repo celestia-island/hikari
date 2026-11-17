@@ -1,6 +1,14 @@
-// HkUserPicker (components/HkUserPicker.tsx) — the tag field + search
-// dialog pair. Tokens follow the house scale (--space-*, --radius-*,
-// rgb(var(--color-*)) — the HkKeywordSearchModal.scss conventions).
+// HkUserPicker (components/HkUserPicker.tsx) — the tag field plus the
+// anchored search panel it opens. The surface itself (desktop popout,
+// phone bottom sheet, Escape / outside-click dismissal, the back-gesture
+// layer) is HkSelectPanel's; this sheet only carries the content column
+// that lives inside it. Tokens follow the house scale (--space-*,
+// --radius-*, rgb(var(--color-*)), --hi-color-*).
+//
+// ONE SCROLLBAR: the panel content mounts NO scroll region of its own —
+// the surface owns THE scrollbar and scrolls the search field together
+// with the rows as one band (the HkAffixPicker / HkTagInput contract).
+// Every rule below is geometry for that single content column.
 
 @use "./menu-item" as mi;
 
@@ -37,6 +45,12 @@
     outline: none;
     border-color: var(--hi-color-primary, #7aa2f7);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
+  }
+
+  /* The field wearing the open panel's state — the HkSelect trigger's
+   * data-state face, expressed on the field's own class. */
+  &.is-open {
+    border-color: var(--hi-color-primary, #7aa2f7);
   }
 }
 
@@ -91,18 +105,50 @@
   }
 }
 
+/* ── Panel content ──────────────────────────────────────────────────── */
+
+/* The content column inside HkSelectPanel. `.hk-user-picker-dialog` is the
+ * SAME column as the mirror renders it (the Rust UserPickerComponent still
+ * draws the modal form of this component) — one shared rule so the
+ * vendored sheet cannot style one form and drop the other. */
+.hk-user-picker-panel,
 .hk-user-picker-dialog {
   display: flex;
   flex-direction: column;
+}
+
+.hk-user-picker-panel {
+  gap: var(--space-8, 0.5rem);
+  /* The surface's own 8px inset is the ONE horizontal inset (no padding
+   * here), and the popout host already owns the width contract: its
+   * `min-width` tracks the field (matchAnchorWidth) and its own
+   * `max-width` tracks the viewport gutter. The panel therefore just
+   * fills the host and lets its TEXT cells carry the width cap below —
+   * an un-capped email column would otherwise push `width: max-content`
+   * past the field it hangs from. */
+  min-width: 0;
+}
+
+.hk-user-picker-dialog {
+  /* Legacy modal body rhythm + inset (see above). */
   gap: var(--space-12, 0.75rem);
   padding: var(--space-4, 0.25rem) 0;
+}
+
+.hk-user-picker-search {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .hk-user-picker-rows {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 0.25rem);
-  min-height: 6rem;
+  /* HkSelect's option rhythm (the popout's own gap token). */
+  gap: var(--space-2, 0.125rem);
+  /* The opening state is a single hint line — this floor keeps the panel
+   * from collapsing to a sliver between queries. */
+  min-height: 2.25rem;
 }
 
 .hk-user-picker-note {
@@ -113,18 +159,48 @@
   text-align: center;
 }
 
+/* The failed state's retry affordance — the note IS the button (the
+ * historic failed/retry semantics: click re-runs the same query). */
+.hk-user-picker-retry {
+  width: 100%;
+  margin: 0;
+  padding: var(--space-12, 0.75rem) 0;
+  border: none;
+  border-radius: var(--radius-md, 0.5rem);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--hi-color-primary, #7aa2f7);
+  text-align: center;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 12%, transparent);
+  }
+}
+
 .hk-user-picker-row {
   /* Unified menu-item spec (_menu-item.scss): metrics, reserved border,
-   * guarded hover, checked face, focus ring; the sheet reach comes from
-   * the modal registration list (this picker lives in an HkModal, whose
-   * docked phone sheet is the .hk-modal-content media block). The tsx
-   * emits the grammar's `data-checked` for the multi-mode draft pick
-   * beside the legacy `.is-selected` class (tests/hosts key on it). */
+   * guarded hover, checked/active face, focus ring; the mobile sheet reach
+   * comes from the panel registration list (this picker rides the
+   * HkSelectPanel surface, whose phone form is .hk-select-sheet-panel).
+   * The tsx emits the grammar's `data-checked` for the multi-mode draft
+   * pick beside the legacy `.is-selected` class (tests/hosts key on it)
+   * and `data-active` for the keyboard cursor. */
   @include mi.item;
   /* The picker's row carries trailing state controls, so the content
    * spreads edge-to-edge instead of hugging the start. */
   justify-content: space-between;
   text-align: left;
+  /* Layout axis only: the row is a flex child of the content column and
+   * must be able to shrink under the capped measure (the long-email
+   * ellipsis below depends on it). */
+  min-width: 0;
 }
 
 .hk-user-picker-row-main {
@@ -140,6 +216,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* The width cap lives on the TEXT cells (not on the panel): the popout
+   * host sizes to `max-content`, so a long email/name is what decides how
+   * wide the panel grows — capped here, ellipsized above. */
+  max-width: 28rem;
 }
 
 .hk-user-picker-row-email {
@@ -148,6 +228,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 28rem;
 }
 
 .hk-user-picker-row-check {
@@ -156,9 +237,27 @@
   font-weight: 700;
 }
 
+/* ── Multi-mode footer (draft count + Cancel / Confirm) ─────────────── */
+
+.hk-user-picker-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  padding-top: var(--space-8, 0.5rem);
+  border-top: 1px solid rgb(var(--color-border) / 25%);
+}
+
+.hk-user-picker-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  /* Pinned to the trailing edge; the count takes whatever room is left. */
+  margin-inline-start: auto;
+}
+
 .hk-user-picker-count {
   margin: 0;
   font-size: 0.6875rem;
   color: rgb(var(--color-text) / 55%);
-  text-align: right;
 }

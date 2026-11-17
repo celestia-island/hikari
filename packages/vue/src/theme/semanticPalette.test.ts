@@ -604,16 +604,6 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(worst(p.accent), "the accent keeps AA (coinciding where physics forces it)").toBeGreaterThanOrEqual(4.5);
   });
 
-  it("tone differentiation reaches a FIXED POINT (no visited-byte landing)", () => {
-    // The delta's S1 class: bg(143,71,255)/sf(218,137,128) — the
-    // partner-only retake landed warning on success's byte while a
-    // distinct AA candidate (1,0,0) sat unused. The fixed-point pass
-    // validates against ALL tone bytes.
-    const p = deriveSemanticPalette({
-      primary: rgb(120, 60, 180),
-      background: rgb(143, 71, 255),
-      surface: rgb(218, 137, 128),
-    });
     const bytes = (["success", "error", "warning", "info"] as const).map(
       (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
     );

@@ -154,6 +154,10 @@ pub struct ThemePalette {
     pub info_fg: String,
     pub background: String,
     pub surface: String,
+    /// The 70 %-alpha paint for `--hi-surface` (the chrome backdrops). Kept
+    /// separate from `surface` (the hex used by `--color-surface` and the
+    /// `readable_on` target) because the two need different formats.
+    pub surface_rgba: String,
     pub border: String,
 
     pub text_primary: String,
@@ -280,7 +284,8 @@ impl ThemePalette {
             info: palette.info.hex(),
             info_fg: palette.info.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
             background: palette.background.hex(),
-            surface: palette.surface.rgba(0.7),
+            surface: palette.surface.hex(),
+            surface_rgba: palette.surface.rgba(0.7),
             border: palette.border.hex(),
             text_primary: palette.text_primary.hex(),
             text_secondary: palette.text_secondary.hex(),
@@ -484,7 +489,10 @@ impl ThemePalette {
             self.background = color;
         }
         if let Some(color) = overrides.surface {
-            self.surface = color;
+            self.surface = color.clone();
+            if let Some(c) = Color::from_hex(&color) {
+                self.surface_rgba = c.rgba(0.7);
+            }
         }
         if let Some(color) = overrides.border {
             self.border = color;
@@ -547,8 +555,12 @@ impl ThemePalette {
             format!("--color-error: {};", Self::hex_triplet(&self.danger)),
             format!("--color-warning: {};", Self::hex_triplet(&self.warning)),
             format!("--color-info: {};", Self::hex_triplet(&self.info)),
+            format!("--color-text: {};", Self::hex_triplet(&self.text_primary)),
+            format!("--color-muted: {};", Self::hex_triplet(&self.text_secondary)),
+            format!("--color-border: {};", Self::hex_triplet(&self.border)),
+            format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
             format!("--hi-background: {};", self.background),
-            format!("--hi-surface: {};", self.surface),
+            format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
             format!("--hi-text-primary: {};", self.text_primary),
             format!("--hi-text-secondary: {};", self.text_secondary),
@@ -741,6 +753,20 @@ mod interaction_alias_tests {
             "--hi-dropdown-border:",
             "--hi-panel-header-bg:",
             "--hi-input-border-hover:",
+            "--hi-success-fg:",
+            "--hi-warning-fg:",
+            "--hi-danger-fg:",
+            "--hi-info-fg:",
+            "--hi-color-success-fg:",
+            "--hi-color-danger-fg:",
+            "--hi-color-warning-fg:",
+            "--hi-color-info-fg:",
+            "--color-surface:",
+            "--color-background:",
+            "--color-text:",
+            "--color-muted:",
+            "--color-border:",
+            "--color-primary:",
         ] {
             assert!(
                 css.contains(name),

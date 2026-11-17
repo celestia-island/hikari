@@ -261,9 +261,20 @@ pub fn status_bar_status_text(mode: StatusBarConnection) -> String {
     }
 }
 
+/// The inline `style` for the probe value row. When connecting, the value
+/// still owns the warning tint — painted through the readable fg variant, not
+/// the raw fill. Returns `""` when settled (the row inherits the card ink).
+fn status_bar_probe_style(connecting: bool) -> String {
+    if connecting {
+        "color:var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
+    } else {
+        String::new()
+    }
+}
+
 /// Vue's `latencyColor`: `< 30ms` good, `< 100ms` fair, else poor; `None` is
 /// the muted ink.
-pub fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
+fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
     match ms {
         None => "var(--color-muted)",
         Some(ms) if ms < 30.0 => "var(--hi-success-fg, rgb(var(--color-success)))",
@@ -742,11 +753,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
         let protocol_text = status_bar_protocol_text(mode, &tier);
         // The probing row owns the warning tint; the settled row inherits the
         // card's ink (Vue writes no colour at all in that arm).
-        let probe_style = if connecting {
-            "color:var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
-        } else {
-            String::new()
-        };
+        let probe_style = status_bar_probe_style(connecting);
         let network_text = status_bar_network_text(
             props.region.as_deref().unwrap_or_default(),
             props.asn,
@@ -1132,11 +1139,13 @@ mod tests {
     fn probe_row_paints_the_readable_fg_variant_when_connecting() {
         // The probe_style must carry the `color:` property prefix (a bare
         // value is not a declaration list — Dioxus drops the whole style).
-        let style = "color:var(--hi-warning-fg, rgb(var(--color-warning)))";
+        let style = status_bar_probe_style(true);
         assert!(style.starts_with("color:"), "{style} is not a declaration");
         // And the value must be the fg variant, not the raw fill.
         assert!(style.contains("--hi-warning-fg"), "{style}");
         assert!(!style.ends_with("rgb(var(--color-warning))"), "{style} is the raw fill");
+        // Settled: the row inherits the card ink (no colour at all).
+        assert_eq!(status_bar_probe_style(false), "");
     }
 
     #[test]

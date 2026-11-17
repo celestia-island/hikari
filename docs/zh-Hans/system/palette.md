@@ -374,7 +374,7 @@ println!("强调色: {}", theme.accent.hex());
 创建自定义主题配置：
 
 ```rust
-use hikari_palette::{Color, Palette};
+use hikari_palette::{Color, Palette, ThemeMode};
 
 let custom_theme = Palette {
     mode: ThemeMode::Light,

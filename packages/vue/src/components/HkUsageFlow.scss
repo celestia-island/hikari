@@ -1,0 +1,130 @@
+// HkUsageFlow anatomy — self-sufficient styling (the component
+// self-sufficiency guard): every class lives here, no host atomic or
+// utility layer. Ribbon/node fills are inline theme-token expressions the
+// layout computes; ink here comes from theme tokens, so light/dark/brand
+// flips repaint without a re-render.
+//
+// AI-generated (DeepSeek V4.1 via DeepSeek Harness), 2026-11-17 — SySL-1.0 §2.3.
+
+@use "../styles/polyfill" as *;
+
+.hk-usage-flow {
+  width: 100%;
+
+  &__body {
+    width: 100%;
+  }
+
+  &__chart {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+
+  // Ribbons read as "flow into the target": translucent so stacked paths
+  // never turn opaque where two lanes overlap, and the node/label ink stays
+  // legible on top.
+  &__ribbon {
+    fill-opacity: 0.42;
+    transition: fill-opacity 0.16s ease;
+    stroke: none;
+  }
+
+  &__node {
+    // no pointer cursor: the chart is a read surface, not a control
+  }
+
+  &__bar {
+    shape-rendering: geometricPrecision;
+  }
+
+  // Labels sit over ribbons: a background-coloured halo keeps them legible
+  // without a second layout pass (SVG2 paint-order; the halo is the same
+  // frame colour the chart sits on).
+  &__label {
+    font-size: var(--text-xs, 12px);
+    fill: rgb(var(--color-text) / 0.9);
+    paint-order: stroke;
+    stroke: rgb(var(--color-background) / 0.92);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+    pointer-events: none;
+    @include user-select(none);
+  }
+
+  &__label--others {
+    font-style: italic;
+    fill: rgb(var(--color-text-secondary) / 0.9);
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__legend-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: var(--text-sm, 13px);
+    min-width: 0;
+  }
+
+  // A registered model with no measured usage keeps its slot but recedes.
+  &__legend-row--idle {
+    opacity: 0.45;
+  }
+
+  &__legend-row--others &__legend-label {
+    font-style: italic;
+  }
+
+  &__legend-swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex: none;
+    align-self: center;
+  }
+
+  &__legend-label {
+    color: rgb(var(--color-text) / 0.88);
+    max-width: 22em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    /* The --others row italicizes this box; the inline-end cushion keeps a
+       synthetic-oblique trailing stroke from being shaved (textClip
+       contract, HkAffixPicker precedent). */
+    padding-inline-end: 0.2em;
+  }
+
+  &__legend-value {
+    color: var(--hi-color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__legend-pct {
+    color: var(--hi-color-muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 3.2em;
+    text-align: end;
+  }
+
+  &--empty {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__empty {
+    font-size: var(--text-sm, 13px);
+    color: var(--hi-color-muted);
+  }
+}

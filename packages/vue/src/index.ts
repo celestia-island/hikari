@@ -834,6 +834,25 @@ export {
   shiftIso,
 } from "./components/calendarHeatmap";
 export type { CalendarCell, HkCalendarHeatmapDay } from "./components/calendarHeatmap";
+export { default as HkUsageFlow } from "./components/HkUsageFlow";
+// The H- alias rides the HCard/HkCard family convention: consumers import
+// either name, one component underneath.
+export { default as HUsageFlow } from "./components/HkUsageFlow";
+export {
+  usageFlowLayout,
+  truncateFlowLabel,
+  formatFlowPercent,
+  USAGE_FLOW_PALETTE,
+} from "./components/usageFlowLayout";
+export type {
+  HkUsageFlowLayout,
+  HkUsageFlowLayoutOptions,
+  HkUsageFlowLegendRow,
+  HkUsageFlowLink,
+  HkUsageFlowNode,
+  HkUsageFlowRosterEntry,
+  HkUsageFlowRow,
+} from "./components/usageFlowLayout";
 export { default as HkDonutChart } from "./components/HkDonutChart";
 // The H- alias rides the HCard/HkCard family convention: consumers
 // import either name, one component underneath.

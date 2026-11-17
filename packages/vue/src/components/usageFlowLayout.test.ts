@@ -1,0 +1,284 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  formatFlowPercent,
+  truncateFlowLabel,
+  usageFlowLayout,
+  USAGE_FLOW_PALETTE,
+  type HkUsageFlowRow,
+} from "./usageFlowLayout";
+
+/** Three callers → two upstreams → three models, comfortably above the
+ *  node-visibility floor so no geometry is clamped. */
+const ROWS: HkUsageFlowRow[] = [
+  { source: "k1", middle: "up-a", target: "m1", value: 500 },
+  { source: "k1", middle: "up-b", target: "m2", value: 300 },
+  { source: "k2", middle: "up-a", target: "m1", value: 200 },
+  { source: "k2", middle: "up-b", target: "m3", value: 100 },
+  { source: "k3", middle: "up-a", target: "m3", value: 50 },
+];
+
+function columnNodes(layout: ReturnType<typeof usageFlowLayout>, column: number) {
+  return layout.nodes.filter((node) => node.column === column);
+}
+
+function linksFrom(layout: ReturnType<typeof usageFlowLayout>, key: string) {
+  return layout.links.filter((link) => link.sourceKey === key);
+}
+
+describe("usageFlowLayout", () => {
+  it("returns an empty layout when no row carries a positive value", () => {
+    const layout = usageFlowLayout([
+      { source: "a", middle: "b", target: "c", value: 0 },
+      { source: "a", middle: "b", target: "d", value: -3 },
+      { source: "a", middle: "b", target: "e", value: Number.NaN },
+    ]);
+    expect(layout.empty).toBe(true);
+    expect(layout.total).toBe(0);
+    expect(layout.nodes).toHaveLength(0);
+    expect(layout.legend).toHaveLength(0);
+  });
+
+  it("sums duplicate triples and keeps the three columns conserved", () => {
+    const layout = usageFlowLayout([
+      ...ROWS,
+      { source: "k1", middle: "up-a", target: "m1", value: 500 },
+    ]);
+    // 500+300+200+100+50 plus the duplicated 500 triple.
+    expect(layout.total).toBe(1650);
+    for (const column of [0, 1, 2]) {
+      const sum = columnNodes(layout, column).reduce((acc, node) => acc + node.value, 0);
+      expect(sum, `column ${column} total`).toBe(1650);
+    }
+    const k1 = layout.nodes.find((node) => node.fullLabel === "k1" && node.column === 0);
+    expect(k1?.value).toBe(1300);
+  });
+
+  it("orders each column by value descending and keeps geometry inside the frame", () => {
+    const layout = usageFlowLayout(ROWS, { width: 900, height: 400 });
+    for (const column of [0, 1, 2]) {
+      const nodes = columnNodes(layout, column);
+      const values = nodes.map((node) => node.value);
+      expect(values, `column ${column} order`).toEqual([...values].sort((a, b) => b - a));
+      for (const node of nodes) {
+        expect(node.x).toBeGreaterThanOrEqual(0);
+        expect(node.x + node.width).toBeLessThanOrEqual(900);
+        expect(node.y).toBeGreaterThanOrEqual(0);
+        expect(node.y + node.height).toBeLessThanOrEqual(400);
+      }
+    }
+    // The last column's bars sit at the right edge, the first column's at
+    // the left edge.
+    const first = columnNodes(layout, 0)[0];
+    const last = columnNodes(layout, 2)[0];
+    expect(first.x).toBe(8);
+    expect(last.x + last.width).toBe(900 - 8);
+  });
+
+  it("uses one shared scale: node heights are proportional to their values", () => {
+    const layout = usageFlowLayout(ROWS, { height: 480 });
+    const k1 = layout.nodes.find((node) => node.fullLabel === "k1" && node.column === 0)!;
+    const k2 = layout.nodes.find((node) => node.fullLabel === "k2" && node.column === 0)!;
+    expect(k1.height / k1.value).toBeCloseTo(k2.height / k2.value, 3);
+  });
+
+  it("fills each node's ribbon stack exactly (in and out)", () => {
+    const layout = usageFlowLayout(ROWS, { height: 480 });
+    const scale = layout.nodes[0].height / layout.nodes[0].value;
+    for (const node of layout.nodes) {
+      const out = layout.links
+        .filter((link) => link.sourceKey === node.key)
+        .reduce((acc, link) => acc + link.value, 0);
+      const into = layout.links
+        .filter((link) => link.targetKey === node.key)
+        .reduce((acc, link) => acc + link.value, 0);
+      if (node.column < 2) {
+        expect(out * scale, `outgoing stack of ${node.fullLabel}`).toBeCloseTo(node.height, 1);
+      }
+      if (node.column > 0) {
+        expect(into * scale, `incoming stack of ${node.fullLabel}`).toBeCloseTo(node.height, 1);
+      }
+    }
+  });
+
+  it("draws ribbons with the target node's colour and a closed path", () => {
+    const layout = usageFlowLayout(ROWS);
+    const byKey = new Map(layout.nodes.map((node) => [node.key, node]));
+    expect(layout.links.length).toBeGreaterThan(0);
+    for (const link of layout.links) {
+      expect(link.color).toBe(byKey.get(link.targetKey)?.color);
+      expect(link.path.startsWith("M ")).toBe(true);
+      expect(link.path.endsWith(" Z")).toBe(true);
+    }
+    // Two stages of links exist: caller→upstream and upstream→model.
+    const stages = new Set(layout.links.map((link) => (link.sourceKey.startsWith("0:") ? 0 : 1)));
+    expect([...stages].sort()).toEqual([0, 1]);
+  });
+
+  it("collapses the tail of a column into one others bucket without losing value", () => {
+    const many = ["a", "b", "c", "d", "e"].map((source, index) => ({
+      source,
+      middle: "up",
+      target: "m1",
+      value: (index + 1) * 10,
+    }));
+    const layout = usageFlowLayout(many, { maxNodes: 3, othersLabel: "Other callers" });
+    const sources = columnNodes(layout, 0);
+    // The folded bucket outranks the retained tail nodes (it carries
+    // c + d + e = 150), so it stacks first — columns rank AFTER folding.
+    expect(sources.map((node) => node.fullLabel)).toEqual(["Other callers", "e", "d"]);
+    const others = sources[0];
+    expect(others.others).toBe(true);
+    expect(others.value).toBe(10 + 20 + 30);
+    expect(layout.total).toBe(150);
+    // The legend covers the MODEL column only: a folded caller bucket is a
+    // node, not a model row.
+    expect(layout.legend.map((row) => row.label)).toEqual(["m1"]);
+  });
+
+  it("folds an overflowing model column into a legend bucket", () => {
+    const rows = ["m1", "m2", "m3", "m4"].map((target) => ({
+      source: "k",
+      middle: "up",
+      target,
+      value: 10,
+    }));
+    const layout = usageFlowLayout(rows, { maxNodes: 3, othersLabel: "Other models" });
+    expect(layout.total).toBe(40);
+    const bucket = layout.legend.find((row) => row.label === "Other models");
+    expect(bucket).toBeTruthy();
+    expect(bucket?.others).toBe(true);
+    expect(bucket?.value).toBe(20);
+    expect(bucket?.idle).toBe(false);
+    // The retained models still carry their own rows and value.
+    expect(layout.legend.map((row) => row.label)).toEqual(
+      expect.arrayContaining(["m1", "m2"]),
+    );
+  });
+
+  it("merges a real label that equals the others bucket into the fold", () => {
+    const rows = [
+      { source: "a", middle: "up", target: "m1", value: 40 },
+      { source: "b", middle: "up", target: "m1", value: 30 },
+      { source: "Others", middle: "up", target: "m1", value: 20 },
+      { source: "c", middle: "up", target: "m1", value: 10 },
+    ];
+    const layout = usageFlowLayout(rows, { maxNodes: 2, othersLabel: "Others" });
+    const sources = columnNodes(layout, 0);
+    // A real label equal to the fold label merges into the bucket by label:
+    // top 1 is "a" (40), so b + Others + c = 60 fold together.
+    expect(sources.map((node) => node.fullLabel).sort()).toEqual(["Others", "a"]);
+    expect(sources.find((node) => node.fullLabel === "Others")?.value).toBe(60);
+  });
+
+  it("lets the registered roster fix colours and lists idle models", () => {
+    const roster = [
+      { label: "model-b" },
+      { label: "model-a" },
+      { label: "model-idle" },
+    ];
+    const rows = [
+      { source: "k", middle: "up", target: "model-a", value: 60 },
+      { source: "k", middle: "up", target: "model-b", value: 40 },
+    ];
+    const layout = usageFlowLayout(rows, { models: roster });
+    const legend = layout.legend;
+    expect(legend.map((row) => row.label)).toEqual(["model-b", "model-a", "model-idle"]);
+    // Colour order follows the roster, not usage: model-b is slot 0 even
+    // though model-a served more.
+    expect(legend[0].color).toBe(USAGE_FLOW_PALETTE[0]);
+    expect(legend[1].color).toBe(USAGE_FLOW_PALETTE[1]);
+    expect(legend[2].idle).toBe(true);
+    expect(legend[2].value).toBe(0);
+    expect(legend[2].color).toBe(USAGE_FLOW_PALETTE[2]);
+    // The node colour matches the legend swatch.
+    const nodeA = layout.nodes.find((node) => node.fullLabel === "model-a")!;
+    expect(nodeA.color).toBe(USAGE_FLOW_PALETTE[1]);
+    expect(layout.legend[0].value).toBe(40);
+    expect(layout.legend[1].value).toBe(60);
+  });
+
+  it("appends models with traffic that the roster does not know", () => {
+    const layout = usageFlowLayout(
+      [
+        { source: "k", middle: "up", target: "registered", value: 70 },
+        { source: "k", middle: "up", target: "unregistered", value: 30 },
+      ],
+      { models: [{ label: "registered" }] },
+    );
+    expect(layout.legend.map((row) => row.label)).toEqual(["registered", "unregistered"]);
+    expect(layout.legend[1].color).toBe(USAGE_FLOW_PALETTE[1]);
+    expect(layout.legend[1].idle).toBe(false);
+  });
+
+  it("honours explicit roster colours and a custom palette", () => {
+    const layout = usageFlowLayout(
+      [{ source: "k", middle: "up", target: "m", value: 1 }],
+      {
+        colors: ["rgb(1 2 3)", "rgb(4 5 6)"],
+        models: [{ label: "m", color: "rgb(9 9 9)" }],
+      },
+    );
+    expect(layout.legend[0].color).toBe("rgb(9 9 9)");
+    const node = layout.nodes.find((candidate) => candidate.fullLabel === "m")!;
+    expect(node.color).toBe("rgb(9 9 9)");
+    // Unrostered models ride the custom ladder.
+    const other = usageFlowLayout(
+      [{ source: "k", middle: "up", target: "x", value: 1 }],
+      { colors: ["rgb(1 2 3)", "rgb(4 5 6)"] },
+    );
+    expect(other.legend[0].color).toBe("rgb(1 2 3)");
+  });
+
+  it("truncates long labels but keeps the full label on the node", () => {
+    const long = "deepseek-v4.1-flash-1017-celestia-edition-very-long";
+    const layout = usageFlowLayout(
+      [{ source: "k", middle: "up", target: long, value: 1 }],
+      { labelMaxChars: 12 },
+    );
+    const node = layout.nodes.find((candidate) => candidate.column === 2)!;
+    expect(node.label.endsWith("…")).toBe(true);
+    expect(node.label.length).toBeLessThanOrEqual(13);
+    expect(node.fullLabel).toBe(long);
+    // The legend keeps the untruncated roster label.
+    expect(layout.legend[0].label).toBe(long);
+  });
+
+  it("counts a CJK label's width as two units when truncating", () => {
+    expect(truncateFlowLabel("模型用量分布信息", 8)).toBe("模型用量…");
+    expect(truncateFlowLabel("模型用量分布信息", 100)).toBe("模型用量分布信息");
+  });
+
+  it("is deterministic: identical input yields identical geometry and colours", () => {
+    const a = usageFlowLayout(ROWS, { height: 420, models: [{ label: "m1" }] });
+    const b = usageFlowLayout(ROWS, { height: 420, models: [{ label: "m1" }] });
+    expect(a).toEqual(b);
+  });
+
+  it("clamps a degenerate frame instead of emitting negative geometry", () => {
+    const layout = usageFlowLayout(ROWS, { width: 1, height: 1 });
+    expect(layout.width).toBe(320);
+    expect(layout.height).toBe(180);
+    for (const node of layout.nodes) {
+      expect(node.height).toBeGreaterThanOrEqual(2);
+      expect(Number.isFinite(node.y)).toBe(true);
+      expect(Number.isFinite(node.height)).toBe(true);
+    }
+  });
+
+  it("formats shares without pretending a sub-percent slice is zero", () => {
+    expect(formatFlowPercent(0)).toBe("0%");
+    expect(formatFlowPercent(0.4)).toBe("<1%");
+    expect(formatFlowPercent(1)).toBe("1%");
+    expect(formatFlowPercent(33.4)).toBe("33%");
+    expect(formatFlowPercent(100)).toBe("100%");
+    expect(formatFlowPercent(Number.NaN)).toBe("0%");
+  });
+
+  it("keeps linksFrom() consistent with the flow values", () => {
+    const layout = usageFlowLayout(ROWS);
+    const k1 = layout.nodes.find((node) => node.fullLabel === "k1" && node.column === 0)!;
+    const outgoing = linksFrom(layout, k1.key);
+    expect(outgoing.map((link) => link.value).sort((a, b) => a - b)).toEqual([300, 500]);
+  });
+});

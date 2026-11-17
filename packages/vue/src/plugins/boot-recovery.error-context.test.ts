@@ -739,7 +739,6 @@ describe("the classification upgrade (watchdog + capture)", () => {
     paintedCard(run);
     await clickCopy(run);
     const text = run.written[0];
-    console.log("QQ:", JSON.stringify(text));
     // NOTHING of the secret's tail survives: the DISTINCTIVE paste form of
     // the value is p + a 3-backslash run + quote + ssword (every stringify
     // round turns N backslashes into 2N+1) -- the mask must cover it whole.

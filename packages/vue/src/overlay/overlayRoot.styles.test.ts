@@ -196,6 +196,12 @@ describe("overlay root document-space elevation contract", () => {
     // factory (inline, pre-stylesheet). Both are allowlisted; a third
     // consumer at 90050 would race the root by DOM order.
     const hudOwners = new Set([hudSheet, resolve(overlayDir, "hudRoot.ts")]);
+    // The above-titlebar rung has the same two-owner shape (sheet + the
+    // inline pre-stylesheet factory); a third consumer would race it.
+    const topLayerOwners = new Set([
+      resolve(overlayDir, "topRoot.scss"),
+      resolve(overlayDir, "topRoot.ts"),
+    ]);
     for (const [name, files] of found) {
       const value = bandValues.get(name);
       expect(
@@ -258,6 +264,23 @@ describe("overlay root document-space elevation contract", () => {
           expect(
             file.endsWith(join("components", "HkEmergencyAlert.scss")),
             `--hk-z-emergency consumed at ${file} — only HkEmergencyAlert.scss may own the band`,
+          ).toBe(true);
+        }
+      } else if (name === "top-layer") {
+        // The ONE rung ABOVE the window titlebar (2026-11-17 user
+        // direction): the caption band's own attachments — the wells its
+        // buttons open and the tooltips explicitly allowed to pin over
+        // the strip. The band stays the page's top owner; only this rung
+        // outranks it, and only its own root may consume it.
+        expect(
+          value!,
+          `--hk-z-top-layer (${value}) must sit strictly ABOVE the window ` +
+            `titlebar (${bandValues.get("titlebar")}) — consumers: ${[...files].join(", ")}`,
+        ).toBeGreaterThan(bandValues.get("titlebar")!);
+        for (const file of files) {
+          expect(
+            topLayerOwners.has(file),
+            `--hk-z-top-layer consumed at ${file} — only ${[...topLayerOwners].join(" / ")} may own the band`,
           ).toBe(true);
         }
       } else {

@@ -38,7 +38,16 @@
 // idempotent: the second install returns the first install's uninstall.
 // Side effect: ensures #hk-overlay-root exists before the install appends
 // the popup (the component tooltip's Teleport target is the same node).
+//
+// Caption-band exemption (2026-11-17): a trigger marked
+// `data-hk-tooltip-band-overlap` (or an overlap-by-default install) is
+// allowed to PIN over the host caption strip — and must therefore PAINT
+// over it too. That bubble relocates to the above-titlebar root
+// (#hk-top-root, overlay/topRoot.ts) for the show, then moves back to the
+// overlay root on hide: the elevation is granted per trigger and only
+// while the bubble is up, exactly like the exemption itself.
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { ensureTopRoot } from "../overlay/topRoot";
 import { applyTooltipPosition, type TooltipPlacement } from "./tooltipPosition";
 import { usePopupManager, type PopupHandle } from "./usePopupManager";
 import { reportHkRuntime, type HkRuntimeHandle } from "./registry";
@@ -62,10 +71,15 @@ export interface HkTooltipBridgeOptions {
    * The caption-band exemption DEFAULT for this install (2026-11-12 user
    * direction): false keeps every bridge tooltip off the host caption
    * strip (the popup frame floors at band + 4px, popupBounds); true lets
-   * them pin over it. A single trigger can opt in either direction with
-   * the data-hk-tooltip-band-overlap attribute — the per-trigger marker
-   * WINS over this install default, which is how the title bar's own
-   * buttons (HkTitleBar) keep their captions readable on the strip.
+   * them pin over it. The data-hk-tooltip-band-overlap attribute opts a
+   * single trigger in or out (the per-trigger marker WINS over this
+   * install default, which is how the title bar's own buttons
+   * (HkTitleBar) keep their captions readable on the strip); since
+   * 2026-11-17 the nearest marked ANCESTOR governs too, so a host-drawn
+   * caption band declares the exemption ONCE on its band row and every
+   * button inside inherits it. An exempted bubble also paints above the
+   * band: the shared popup relocates to the above-titlebar root
+   * (overlay/topRoot.ts) only while it shows.
    */
   allowBandOverlap?: boolean;
 }
@@ -111,6 +125,12 @@ function stopTimer(state: BridgeState) {
 function hidePopup(state: BridgeState) {
   stopTimer(state);
   state.popup.classList.remove("hk-tooltip-visible");
+  // An exempted bubble returned the elevation with its show — park the
+  // shared popup back in the overlay root so the next non-exempt tooltip
+  // starts from its normal home (and the invariant "idle bridge popup
+  // lives in #hk-overlay-root" stays true).
+  const home = ensureOverlayRoot();
+  if (home && state.popup.parentElement !== home) home.appendChild(state.popup);
   if (state.active) {
     // Hand the description relationship back: once the popup is gone the
     // restored title attribute speaks for itself again.
@@ -153,6 +173,28 @@ function showPopup(state: BridgeState, el: Element) {
   const text = state.savedTitle;
   if (!text || !state.popup.isConnected) return;
   state.content.textContent = text;
+  // Resolve the exemption ONCE and let it decide the popup's home too:
+  // an exempted bubble may pin over the caption strip, so it must paint
+  // above it (the above-titlebar root); every other bubble keeps the
+  // overlay root, where popupBounds floors it below the band.
+  //
+  // Resolution order (2026-11-17 extension): the trigger's OWN marker
+  // wins; otherwise the nearest marked ANCESTOR governs — a host that
+  // draws its own caption band can declare the exemption once on the
+  // band row (`data-hk-tooltip-band-overlap="true"`) instead of
+  // sprinkling it on every button; finally the install default applies.
+  // Presence opts IN even on an avoid-by-default install, an explicit
+  // "false" opts OUT even on an overlap-by-default one.
+  const ownMarker = el.getAttribute("data-hk-tooltip-band-overlap");
+  const ancestorMarker = el.closest("[data-hk-tooltip-band-overlap]");
+  const allowBandOverlap =
+    ownMarker !== null
+      ? ownMarker !== "false"
+      : ancestorMarker
+        ? ancestorMarker.getAttribute("data-hk-tooltip-band-overlap") !== "false"
+        : state.allowBandOverlap;
+  const home = allowBandOverlap ? ensureTopRoot() ?? ensureOverlayRoot() : ensureOverlayRoot();
+  if (home && state.popup.parentElement !== home) home.appendChild(state.popup);
   // Same geometry as component tooltips: the fixed popup pins to the
   // trigger rect with the shared placement switch (ancestor zoom aware),
   // then the measured box is clamped into the viewport gutter — a title
@@ -163,14 +205,7 @@ function showPopup(state: BridgeState, el: Element) {
     el.getBoundingClientRect(),
     state.placement,
     state.maxWidth,
-    {
-      // The per-trigger marker WINS over the install default: presence
-      // opts IN even on an avoid-by-default install, an explicit "false"
-      // opts OUT even on an overlap-by-default one.
-      allowBandOverlap: el.hasAttribute("data-hk-tooltip-band-overlap")
-        ? el.getAttribute("data-hk-tooltip-band-overlap") !== "false"
-        : state.allowBandOverlap,
-    },
+    { allowBandOverlap },
   );
   state.popup.classList.add("hk-tooltip-visible");
   el.setAttribute("aria-describedby", state.describedBy);

@@ -33,12 +33,6 @@ export interface TooltipPositionOptions {
   allowBandOverlap?: boolean;
 }
 
-/** The raw window as a popup frame (the band-overlap escape hatch). */
-function rawWindowFrame(): PopupViewportRect {
-  const w = window;
-  return { x: 0, y: 0, width: w.innerWidth, height: w.innerHeight };
-}
-
 /**
  * Build the inline style that pins a `position: fixed` popup to one side
  * of a trigger rect.
@@ -244,7 +238,7 @@ export function applyTooltipPosition(
   // default keeps tooltips off the caption strip entirely. The explicit
   // allowBandOverlap exemption drops back to the raw window: a trigger
   // ON the caption (title bar buttons) pins its bubble over the strip.
-  const frame = options.allowBandOverlap ? rawWindowFrame() : popupViewportRect();
+  const frame = popupViewportRect(window, { rawWindow: options.allowBandOverlap === true });
   const gutter = viewportGutterPx();
   const z = ancestorZoom(popup);
 

@@ -75,7 +75,7 @@
    * than by a component: it lifts #hk-overlay-root above every
    * content-chrome band while keeping the pre-isolation order (floating
    * layers < ambient HUD < error landing < emergency alert < window
-   * titlebar). --hk-z-hud
+   * titlebar < the caption band's own attachments). --hk-z-hud
    * is the ONE band consumed by the ambient-HUD root
    * (overlay/hudRoot.ts): always-visible, non-interactive annotations
    * (screen-identify cards, recording marks) that must paint above the
@@ -117,6 +117,13 @@
                                 direction 2026-11-13); body-mounted, not in
                                 #hk-overlay-root */
   --hk-z-titlebar: 100001;   /* window titlebar (Tauri shell) */
+  --hk-z-top-layer: 100002;  /* #hk-top-root — the caption band's OWN
+                                attachments (notification center, top-bar
+                                menus, band-pinned tooltips). The band is
+                                the PAGE's top owner; the wells it opens
+                                must not be buried under the row they hang
+                                from (user direction 2026-11-17;
+                                overlay/topRoot.ts) */
 
   /* Viewport gutter — the minimum distance every floating layer (tooltip,
    * popover, menu, select popout, modal frame, toasts) keeps from the

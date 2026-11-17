@@ -202,6 +202,17 @@ export default defineComponent({
      * false again while a peek is open, so the peek renders full rows).
      */
     collapsed: { type: Boolean, default: false },
+    /**
+     * Caption-band attachment opt-in (2026-11-17 user direction),
+     * forwarded to EVERY HkSelectPanel this menu renders (root popout,
+     * every cascade level, each mobile sheet): the trigger lives on the
+     * host's window caption band (chest's workspace picker / account
+     * menu / console avatar), so the panels teleport to #hk-top-root and
+     * position against the raw window — they paint ABOVE the band row
+     * they hang from instead of being buried under it (see
+     * overlay/topRoot.ts). Hosts pass `isNative()`.
+     */
+    aboveChrome: { type: Boolean, default: false },
   },
   emits: ["update:open", "select"],
   setup(props, { emit, slots }) {
@@ -651,6 +662,7 @@ export default defineComponent({
           matchAnchorWidth={cfg.match}
           maxHeight={props.maxHeight}
           autoFlip={props.autoFlip}
+          aboveChrome={props.aboveChrome}
           onUpdate:open={(v: boolean) => {
             if (!v) onRootCloseRequest();
           }}
@@ -678,6 +690,7 @@ export default defineComponent({
               offset={0}
               maxHeight={props.maxHeight}
               autoFlip={props.autoFlip}
+              aboveChrome={props.aboveChrome}
               onUpdate:open={(v: boolean) => {
                 if (!v) onSubCloseRequest(level);
               }}
@@ -701,6 +714,7 @@ export default defineComponent({
           anchorRef={props.anchorRef}
           title={props.title}
           maxHeight={props.maxHeight}
+          aboveChrome={props.aboveChrome}
           onUpdate:open={(v: boolean) => {
             if (!v) onRootCloseRequest();
           }}
@@ -720,6 +734,7 @@ export default defineComponent({
             // label names the sheet.
             title={entry.item.label}
             maxHeight={props.maxHeight}
+            aboveChrome={props.aboveChrome}
             onUpdate:open={(v: boolean) => {
               if (!v) onStackCloseRequest(i);
             }}

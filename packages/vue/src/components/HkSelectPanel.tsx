@@ -26,6 +26,7 @@ import HIcon from "./HkIcon";
 import "./window-close.scss";
 import "./HkSelect.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { ensureTopRoot } from "../overlay/topRoot";
 
 /**
  * The dropdown panel of HkSelect, detached from the select's trigger so it
@@ -145,6 +146,17 @@ export default defineComponent({
     maxHeight: { type: String, default: undefined },
     /** Dock as a bottom sheet on phone-width viewports. */
     sheetOnMobile: { type: Boolean, default: true },
+    /**
+     * The caption-band attachment opt-in (2026-11-17 user direction):
+     * this panel's TRIGGER lives on the host's window caption band (the
+     * chrome-band row — chest's workspace picker / account menu and the
+     * console face's avatar), so the popout must paint ABOVE that band
+     * instead of being buried under the row it hangs from. Teleports to
+     * #hk-top-root (the band above the titlebar, overlay/topRoot.ts) and
+     * positions against the RAW window, so it may hug/overlap the band.
+     * Hosts pass `isNative()` — a browser face keeps the overlay root.
+     */
+    aboveChrome: { type: Boolean, default: false },
   },
   emits: {
     "update:open": (_v: boolean) => true,
@@ -582,7 +594,7 @@ export default defineComponent({
       // The popup viewport: the window minus the app-chrome band the host
       // configured (popupBounds) — full-window when none, in which case
       // every flip and clamp below is the raw-window math.
-      const frame = popupViewportRect();
+      const frame = popupViewportRect(window, { rawWindow: props.aboveChrome });
       let side: "top" | "bottom" = props.placement.startsWith("top-") ? "top" : "bottom";
       let top =
         side === "top"
@@ -673,9 +685,14 @@ export default defineComponent({
       // runs — `closed` unmounts it (the same reason the pre-machine
       // code kept its Transitions alive through the leave).
       if (!machine.mounted.value) return null;
+      // Caption-band attachments (aboveChrome) paint from the
+      // above-titlebar root in BOTH form factors: the band row is the
+      // PAGE's top owner, but the wells it opens must stay visible over
+      // it (overlay/topRoot.ts).
+      const portalHost = props.aboveChrome ? ensureTopRoot() : ensureOverlayRoot();
       if (activeBranch.value === "sheet") {
         return (
-          <Teleport to={ensureOverlayRoot()}>
+          <Teleport to={portalHost}>
             {/* Window-layer contract (./_scrim-fade.scss): the scrim fades
                 in place under its OWN transition name. It once shared the
                 panel's `hk-select-sheet` name, so the panel's
@@ -747,12 +764,13 @@ export default defineComponent({
       // pop grows out of the edge the panel actually sits on (including
       // after an auto-flip).
       return (
-        <Teleport to={ensureOverlayRoot()}>
+        <Teleport to={portalHost}>
           <div
                 ref={popoutHostRef}
                 class={["hk-select-popout-host", ...machine.classesFor("hk-select-popout")]}
                 data-side={resolved.value.side}
                 data-align={resolved.value.align}
+                data-hk-top-layer={props.aboveChrome ? "" : undefined}
                 style={{ ...coords.value, zIndex: popoutZ.value }}
               >
                 <div

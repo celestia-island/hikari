@@ -45,6 +45,15 @@ export default defineComponent({
     /** Accessible name / sheet title. Defaults to the localized "Filters". */
     label: { type: String, default: undefined },
     placement: { type: String as PropType<PopupPlacement>, default: "bottom-end" },
+    /**
+     * Caption-band attachment opt-in (2026-11-17 user direction),
+     * forwarded to the panel: the trigger lives on the host's window
+     * caption band (the page action bar inside the chrome-band header),
+     * so the filter panel must paint ABOVE the band row instead of
+     * being buried under it (overlay/topRoot.ts). Hosts pass
+     * `isNative()`.
+     */
+    aboveChrome: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_state: HkFilterState) => true,
@@ -92,6 +101,7 @@ export default defineComponent({
             offset={6}
             sheetOnMobile
             title={label}
+            aboveChrome={props.aboveChrome}
           >
             <div class="hk-filter-trigger-body">
               <HkFilterPanel

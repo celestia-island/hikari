@@ -743,7 +743,7 @@ pub fn StatusBar(props: StatusBarProps) -> Element {
         // The probing row owns the warning tint; the settled row inherits the
         // card's ink (Vue writes no colour at all in that arm).
         let probe_style = if connecting {
-            "var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
+            "color:var(--hi-warning-fg, rgb(var(--color-warning)))".to_string()
         } else {
             String::new()
         };
@@ -1126,6 +1126,17 @@ mod tests {
             .as_deref(),
             Some("Ready · 0.1.0 770f625 · 1.2.3 aaa1111")
         );
+    }
+
+    #[test]
+    fn probe_row_paints_the_readable_fg_variant_when_connecting() {
+        // The probe_style must carry the `color:` property prefix (a bare
+        // value is not a declaration list — Dioxus drops the whole style).
+        let style = "color:var(--hi-warning-fg, rgb(var(--color-warning)))";
+        assert!(style.starts_with("color:"), "{style} is not a declaration");
+        // And the value must be the fg variant, not the raw fill.
+        assert!(style.contains("--hi-warning-fg"), "{style}");
+        assert!(!style.ends_with("rgb(var(--color-warning))"), "{style} is the raw fill");
     }
 
     #[test]

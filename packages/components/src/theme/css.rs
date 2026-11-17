@@ -253,6 +253,19 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
+    /// `#RRGGBB` → `R G B` (the channel-triplet form `rgb(var(--color-X))`
+    /// needs; the static seeds use the same shape).
+    fn hex_triplet(hex: &str) -> String {
+        let s = hex.trim().trim_start_matches('#');
+        if s.len() != 6 {
+            return hex.to_string();
+        }
+        let r = u8::from_str_radix(&s[0..2], 16).unwrap_or(0);
+        let g = u8::from_str_radix(&s[2..4], 16).unwrap_or(0);
+        let b = u8::from_str_radix(&s[4..6], 16).unwrap_or(0);
+        format!("{r} {g} {b}")
+    }
+
     pub fn from_palette(palette: &Palette) -> Self {
         ThemePalette {
             primary: palette.primary.hex(),
@@ -524,6 +537,16 @@ impl ThemePalette {
             format!("--hi-color-danger-fg: {};", self.danger_fg),
             format!("--hi-color-warning-fg: {};", self.warning_fg),
             format!("--hi-color-info-fg: {};", self.info_fg),
+            // Core --color-* channels: the components sheets paint backdrops
+            // with --color-surface / --color-background (admin-tokens.scss:110,
+            // HkPopover.scss:82); without these a pure-Rust host leaves the
+            // static light seed in place and the fg variant misses its target.
+            format!("--color-background: {};", Self::hex_triplet(&self.background)),
+            format!("--color-surface: {};", Self::hex_triplet(&self.surface)),
+            format!("--color-success: {};", Self::hex_triplet(&self.success)),
+            format!("--color-error: {};", Self::hex_triplet(&self.danger)),
+            format!("--color-warning: {};", Self::hex_triplet(&self.warning)),
+            format!("--color-info: {};", Self::hex_triplet(&self.info)),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface),
             format!("--hi-border: {};", self.border),

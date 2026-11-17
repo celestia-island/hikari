@@ -293,21 +293,23 @@ println!("Superficie: {}", tairitsu.surface.hex());   // rgb(32,35,54)
 ### Tema Personalizado
 
 ```rust
-use hikari_palette::{ThemePalette, Color};
+use hikari_palette::{Palette, ThemeMode, Color};
 
 let custom = Palette {
     mode: ThemeMode::Light,
-    primary: Color::Crimson,
-    secondary: Color::姜黄,
-    accent: Color::粉红,
-    // The semantic trio shares the canonical perceptual family (2026-11-17);
-    // the ink rule (white by default) is `solid_ink()`.
+    primary: Color::from_rgb_hex(0xEE, 0xA2, 0xA4),   // 牡丹粉红
+    secondary: Color::from_rgb_hex(0x51, 0x9A, 0x73), // 苍翠
+    accent: Color::from_rgb_hex(0xF5, 0x9E, 0x0B),    // 姜黄
+    // The semantic trio shares the canonical perceptual family.
     success: Color::from_rgb_hex(0x1f, 0x65, 0x30),
     warning: Color::from_rgb_hex(0x89, 0x48, 0x00),
     danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),
     info: Color::from_rgb_hex(0x00, 0x62, 0x74),
-    background: Color::InkBlack,
-    surface: Color::MoonWhite,
+    background: Color::from_rgb_hex(0xd6, 0xec, 0xf0), // 月白
+    surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),    // 素
+    border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
+    text_primary: Color::from_rgb_hex(0x2d, 0x2d, 0x2d),
+    text_secondary: Color::from_rgb_hex(0x6b, 0x72, 0x80),
 };
 ```
 
@@ -493,7 +495,7 @@ impl ClassesBuilder {
 }
 ```
 
-### ThemePalette
+### Palette
 
 ```rust
 pub struct Palette {

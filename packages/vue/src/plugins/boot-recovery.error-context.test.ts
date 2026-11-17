@@ -735,40 +735,69 @@ describe("the classification upgrade (watchdog + capture)", () => {
     // closes at the structural quote (exactly one backslash + quote), so the
     // embedded quote is INSIDE the mask.
     const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
-        run.console.error(JSON.stringify({ password: 'p"ssword', user: "bob" }));
+    run.console.error(JSON.stringify({ password: 'p"ssword', user: "bob" }));
     paintedCard(run);
     await clickCopy(run);
     const text = run.written[0];
-    // NOTHING of the secret's tail survives. (The secret's head `p` is not
-    // a usable needle: the logged JSON's own key `password` legitimately
-    // contains quote-then-p after masking.) The DISTINCTIVE paste form of
-    // the value: p + a 3-backslash run + quote + ssword (2N+1 with N=1) --
-    // the needle is that value-with-embedded-quote, not the bare tail.
-    expect(text).not.toMatch(/p\\\\{3,}\"/);
-        expect(text).not.toContain("hunter2");
-    // The width-matched close (R10 pin): the mask covers the WHOLE value
-    // and the value's own structural close (1 backslash + quote at this
-    // depth) survives, then the sibling -- the older close-width mutants
-    // left `●●● + close + ssword` beside the mask instead. (BS/DQ are built
-    // via fromCharCode -- string-escape layers have burned this file twice;
-    // never hand-write backslash needles.)
+    console.log("QQ:", JSON.stringify(text));
+    // NOTHING of the secret's tail survives: the DISTINCTIVE paste form of
+    // the value is p + a 3-backslash run + quote + ssword (every stringify
+    // round turns N backslashes into 2N+1) -- the mask must cover it whole.
+    // (The bare `ssword` needle is unusable: the logged JSON's own key
+    // `password` legitimately contains it.)
     const BS = String.fromCharCode(92);
     const DQ = String.fromCharCode(34);
-    // The WRITTEN text is the payload's SERIALIZED form: the paste's own
-    // backslash-quote pair arrives doubled (N backslashes -> N in the paste,
-    // N+1 in the payload serialization).
-    const fullNeedle =
-      "password" + BS + '":' + BS + '"' + "●●●" + BS + DQ + "," + BS + '"user"';
-        // The width-matched close (R10 pin): the mask covers the WHOLE value.
-    // The close-width mutants (R8/R10) put the secret's tail DIRECTLY after
-    // the mask (`●●●ssword` compact, `●●●<bs>"ssword` escaped) -- that
-    // mask-adjacent-tail signature is the kill needle. The logged JSON's
-    // own key `password` legitimately contains `ssword`, so the needle is
-    // the mask-adjacency, not the bare substring. The SIBLING pair must
-    // survive at the paste's escaped form.
+    expect(text).not.toMatch(new RegExp("p" + BS.repeat(3) + '"'));
+    expect(text).not.toContain("hunter2");
+    // The width-matched close (R10 pin): the mask covers the WHOLE value,
+    // the value's own structural close (one backslash + quote at this depth)
+    // survives, and the escaped sibling pair follows it.
+    // The WRITTEN text is the payload's SERIALIZED form: the entry's own
+    // bare quotes arrive with 1 backslash in the paste, doubled to 2 plus
+    // the quote-escape backslash = 3 backslashes per structural position
+    // (2N+1 per stringify round).
+    expect(text).toContain(
+      "password" + BS + DQ + ":" + BS + DQ + "●●●" + BS + DQ + "," + BS + DQ + "user",
+    );
+    // ...and no secret tail sits directly beside the mask (the close-width
+    // mutants put `●●● + close + ssword` there instead).
     expect(text).not.toMatch(/●●●.{0,4}?ssword/);
-    expect(text).toContain(BS + '"user' + BS + '":' + BS + '"bob' + BS);
-    expect(text).toContain("password" + BS + '":' + BS + '"' + "●●●");
+  });
+
+  it("masks a header line AND an escaped body on the same entry (scanner-first)", async () => {
+    // THE R9 S0 pin: HEADER/QUERY's value classes accept backslashes -- run
+    // them BEFORE the scanner and they eat the escaping backslash of the
+    // following escaped credential head, leaving hunter2/tok-LEAKME in
+    // cleartext. The scanner must run FIRST, on the pristine serialized text.
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    run.console.error(
+      "Authorization: Bearer abc123, " +
+        JSON.stringify({ password: "hunter2" }),
+    );
+    paintedCard(run);
+    await clickCopy(run);
+    const text = run.written[0];
+    expect(text).not.toContain("hunter2");
+    expect(text).not.toContain("abc123");
+    const BS2 = String.fromCharCode(92);
+    expect(text).toContain("Authorization" + ": " + "\u25cf\u25cf\u25cf");
+    expect(text).toContain('"password' + BS2 + '":' + BS2 + '"' + "\u25cf\u25cf\u25cf");
+  });
+
+  it("keeps an escaped EMPTY value empty (the family maskSecret rule)", async () => {
+    // maskSecret("") stays "": an escaped empty token must not become three
+    // discs just because its shape reached the scanner (R10/M3 pin).
+    const run = runScript(bootRecoveryScript(CTX_OPTION), { withClipboard: true });
+    const BS2 = String.fromCharCode(92);
+    const DQ2 = String.fromCharCode(34);
+    run.console.error("t1 " + BS2 + DQ2 + "token" + BS2 + DQ2 + ":" + BS2 + DQ2 + BS2 + DQ2);
+    paintedCard(run);
+    await clickCopy(run);
+    const text = run.written[0];
+    // The entry's own backslash doubles in the payload serialization: the
+    // escaped-empty pair arrives as THREE backslashes per quote (2N+1).
+    expect(text).toContain("token" + BS2 + BS2 + BS2 + DQ2 + ":" + BS2 + BS2 + BS2 + DQ2);
+    expect(text).not.toContain("token" + BS2 + BS2 + BS2 + DQ2 + ":" + BS2 + BS2 + BS2 + DQ2 + "●●●");
   });
 
   it("masks credentials through three stringify levels (7-backslash runs)", async () => {

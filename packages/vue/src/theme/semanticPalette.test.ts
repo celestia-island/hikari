@@ -496,6 +496,20 @@ describe("deriveSemanticPalette — the documented 3-anchor shapes", () => {
     expect(aaCount, "at least 3 of 4 tones keep AA (the retake's gain)").toBeGreaterThanOrEqual(3);
   });
 
+  it("the window-band differentiate is PINNED (dropping it reds here)", () => {
+    // The r20 class: on no-win fills the AA band is empty; the
+    // window-band fallback splits the pair (3/22,814 shapes fixed).
+    const p = deriveSemanticPalette({
+      primary: rgb(121, 109, 121),
+      background: rgb(113, 121, 113),
+      surface: rgb(117, 109, 109),
+    });
+    const bytes = (["success", "error", "warning", "info"] as const).map(
+      (slot) => `${p[slot].r},${p[slot].g},${p[slot].b}`,
+    );
+    expect(new Set(bytes).size, "no-win tones stay distinct").toBe(4);
+  });
+
   it("the near-bar bound: one rounding step short of AA keeps the near-best", () => {
     // The r14/r15 S1 class: bg(0,0,0)/sf(252,252,234) — bestWorst
     // 4.4995 was returned at 4.15 (the window took a 0.35 drop); the

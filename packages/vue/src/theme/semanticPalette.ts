@@ -530,24 +530,29 @@ export function deriveSemanticPalette(fills: SemanticFills): SemanticPalette {
   // "two indistinguishable states" outranks the 8% contrast gain).
   {
     // The secondary/accent split: the near-bar band can hold a single
-    // byte for both slots (68/1024 family shapes without this branch).
-    // Re-derive the accent with the near-bar disabled when they
-    // coincide (r18 journeys S1).
+    // byte for both slots. Among the distinct in-window candidates,
+    // take the one with the HIGHEST worst-anchor (closest to AA) —
+    // not the highest chroma (r22 journeys S2: maximising chroma
+    // dropped the accent 0.33 below attainable AA on 128/103,467
+    // shapes where a distinct near-AA byte was free).
     const secKey2 = `${result.secondary.r},${result.secondary.g},${result.secondary.b}`;
     const accKey = `${result.accent.r},${result.accent.g},${result.accent.b}`;
     if (secKey2 === accKey) {
       const hue = (primary.h + 320) % 360;
-      (result as Record<string, ThemeTokenRGB>)["accent"] = readableHue(
-        hue,
-        brandChroma,
-        both,
-        4.55,
-        0.7,
-        Number.POSITIVE_INFINITY,
-        "closest",
-        0.35,
-        0,
-      );
+      let bestAccent: { rgb: ThemeTokenRGB; worst: number } | null = null;
+      for (let step = 0; step <= 1504; step++) {
+        const l = step / 1504;
+        const rgb = oklchToRgb({ l, c: brandChroma, h: hue });
+        const worst = Math.min(...both.map((f) => contrastRatio(rgb, f)));
+        const key = `${rgb.r},${rgb.g},${rgb.b}`;
+        if (key === secKey2) continue;
+        if (bestAccent === null || worst > bestAccent.worst) {
+          bestAccent = { rgb, worst };
+        }
+      }
+      if (bestAccent) {
+        (result as Record<string, ThemeTokenRGB>)["accent"] = bestAccent.rgb;
+      }
     }
   }
   return result;

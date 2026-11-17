@@ -140,6 +140,8 @@
  *   - `copy.browserBlock` — the unsupported-browser notice, painted in the
  *     landing's `info` tone (a compatibility notice is not a crash) with the
  *     `{browser}` / `{current}` / `{min}` placeholders filled from the call.
+ *   - `copy.errorContext` — the captured boot log and the copy action (see
+ *     ERROR CONTEXT below).
  *   - `globals` — the three page globals a host's own boot code drives. They
  *     are the family's LONG-STANDING contract, and all three are defaults of
  *     the hand-rolled `res/fatal-fallback.js` this plugin replaces:
@@ -150,7 +152,57 @@
  *     browser gate, the error report and the ready handoff with it.
  *     `__appReady` removes only the nodes this script added — never the host's
  *     loader element, its contents or its dismissal class, which belong to the
- *     host's own loader logic.
+ *     host's own loader logic. It is published with `copy.reasons` OR
+ *     `copy.errorContext` — the capture's freeze rides the same handoff, so a
+ *     capture-only host still gets a mount call that stops the recording.
+ *
+ * ERROR CONTEXT (`copy.errorContext`, opt-in like every layer above): the
+ * TIMEOUT panel's blind spot. A boot that hangs paints the watchdog's card
+ * with reason/elapsed/boot-script state — but the browser's own account of
+ * the failure (what the console printed, which script threw, which promise
+ * rejected) never reached the pane, because nothing was LISTENING. The
+ * classic timeout is exactly the case with no captured error: the app's boot
+ * code logs the failing step and hangs, and the operator sees an empty
+ * payload. This half installs the listeners the moment the recovery script
+ * executes — before the app bundle can fail:
+ *
+ *   1. CAPTURE — a bounded ring (`CONSOLE_CAP` newest entries, each clipped)
+ *      fed by four sources, all guarded and all pass-through: wrapped
+ *      `console.error` / `warn` / `log` / `info` (the original still runs
+ *      first — the page's own console behaviour must not change),
+ *      capture-phase `error` events (an `ErrorEvent` is an uncaught script
+ *      exception → also recorded as the fatal; any other error event is a
+ *      failed resource → logged), `unhandledrejection` events (logged; one
+ *      matching the chunk-miss family is ALSO the fatal, because dynamic
+ *      import failures surface as rejections on several browsers), and the
+ *      host's own `__appFatal` report keeps its existing payload.error path.
+ *   2. PAYLOAD — the pane gains `console` (the ring, oldest first, every
+ *      entry `{ t, level, text }` with `t` = ms since boot start) and
+ *      `lastError` (the first captured fatal's message/source/line/column/
+ *      stack) whenever capture saw anything — rendered by the SAME HkJsonTree
+ *      contract, so no second surface exists.
+ *   3. CLASSIFICATION — the watchdog's silent-expiry default upgrades: with a
+ *      captured fatal, `staleReason()` classifies it exactly like an
+ *      `__appFatal` message (chunk-miss family → `chunk`, otherwise
+ *      `error`), so a boot that threw no longer reports a bare timeout.
+ *   4. COPY — a secondary action beside reload that hands the operator the
+ *      REDACTED payload text (the exact bytes the pane renders, through the
+ *      family's credential mask): async Clipboard API first, a guarded
+ *      `execCommand("copy")` textarea fallback second (the API exists only
+ *      in secure contexts, and a dead boot is often served over plain HTTP),
+ *      and the button flips to the copied/failed label for a moment. Labels
+ *      are host copy (`copy` / `copied` / `copyFailed` + per-locale
+ *      overrides), because "Copy error" is product wording in the host's
+ *      language — the retired family script shipped the same three labels.
+ *
+ * Without a reason table the headline stays the host's generic copy, but the
+ * payload's `reason` field still reports the captured fatal's class (chunk /
+ * error) rather than a bare timeout, and `__appReady` is still published --
+ * the freeze rides the ready handoff even without a reason table.
+ *
+ * The capture lives ONLY in scripts that configure `copy.errorContext`, which
+ * requires `copy.rawDetailsLabel` (the ring is reported through the pane) --
+ * a host that configures none of it keeps the byte-identical inert script.
  *
  * Every diagnostics read (`performance`, `document.readyState`, `location.href`,
  * the resource table) sits behind those options: the default script stays
@@ -190,6 +242,22 @@ export const BOOT_RECOVERY_TITLE = "Application failed to load";
 export const BOOT_RECOVERY_MESSAGE =
   "The app did not finish loading. Reloading usually fixes it.";
 export const BOOT_RECOVERY_RETRY = "Reload";
+
+/**
+ * Default copy-action label for the error-context half (English; overridable
+ * through `copy.errorContext.copy`).
+ *
+ * The family's retired hand-rolled fallback shipped a copy button with exactly
+ * these three labels, and hosts carried their translations for them — so the
+ * defaults are the family's own English wording, not a new coinage.
+ */
+export const BOOT_RECOVERY_COPY_ACTION = "Copy details";
+
+/** Default success feedback for the copy action (`copy.errorContext.copied`). */
+export const BOOT_RECOVERY_COPIED = "Copied";
+
+/** Default failure feedback for the copy action (`copy.errorContext.copyFailed`). */
+export const BOOT_RECOVERY_COPY_FAILED = "Copy failed";
 
 /**
  * The injected tag's marker attribute. A host that hashes the inline script
@@ -597,6 +665,127 @@ function normaliseBrowserBlock(input, blockGlobal) {
 }
 
 /**
+ * Normalise the error-context copy action's per-locale override map:
+ * `{ "zh-CN": { copy, copied, copyFailed } }`.
+ *
+ * Unlike the reason/block maps, all three members are OPTIONAL feedback for
+ * one button, so an entry may carry any subset — a host that only translated
+ * the button label keeps the English defaults for the transient feedback
+ * states. Present members must be non-empty strings; keys go through the SAME
+ * normalisation as `copy.locales` (trim, lowercase, `_` → `-`), and two keys
+ * collapsing onto one tag fail the build.
+ *
+ * @param {unknown} input — the `locales` member of an errorContext entry
+ * @param {string} label — config path for the error message
+ * @returns {Record<string, {copy: string, copied: string, copyFailed: string}> | null}
+ */
+function normaliseErrorContextLocales(input, label) {
+  if (input === undefined || input === null) return null;
+  if (typeof input !== "object") {
+    throw new Error(
+      "[hikari boot-recovery] " + label + ".locales must be an object keyed by " +
+        "locale tag (e.g. { \"zh-CN\": { copy, copied, copyFailed } })",
+    );
+  }
+  const out = {};
+  const seen = new Map();
+  for (const rawKey in input) {
+    if (!Object.prototype.hasOwnProperty.call(input, rawKey)) continue;
+    const tag = String(rawKey).trim().replace(/_/g, "-").toLowerCase();
+    if (!tag) {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales key " +
+          JSON.stringify(rawKey) + " normalises to an empty locale tag",
+      );
+    }
+    const previous = seen.get(tag);
+    if (previous !== undefined) {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales keys " +
+          JSON.stringify(previous) + " and " + JSON.stringify(rawKey) +
+          " normalise to the same locale tag " + JSON.stringify(tag),
+      );
+    }
+    const entry = input[rawKey];
+    if (!entry || typeof entry !== "object") {
+      throw new Error(
+        "[hikari boot-recovery] " + label + ".locales[" + JSON.stringify(tag) +
+          "]: entries must be objects carrying copy / copied / copyFailed strings",
+      );
+    }
+    /** @param {unknown} value @param {string} field */
+    function member(value, field) {
+      if (value === undefined || value === null) return "";
+      if (typeof value !== "string" || !value.trim()) {
+        throw new Error(
+          "[hikari boot-recovery] " + label + ".locales[" + JSON.stringify(tag) +
+            "]." + field + ": when present it must be a non-empty string",
+        );
+      }
+      return value;
+    }
+    out[tag] = {
+      copy: member(entry.copy, "copy"),
+      copied: member(entry.copied, "copied"),
+      copyFailed: member(entry.copyFailed, "copyFailed"),
+    };
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * Normalise the opt-in ERROR-CONTEXT half: the captured boot log (see the
+ * module doc) plus the copy action. Its presence is the ON switch — the same
+ * "the option is the label is the switch" shape as `rawDetailsLabel`, because
+ * everything it adds rides inside the pane's shell and the action row.
+ *
+ * An explicit `true` turns it on with the English default labels (a host that
+ * only wants the capture, not the copy button, gets the button too — one
+ * switch, one story, and the pane without a way to take the text away is the
+ * exact gap this half exists to close). `false`, `undefined` and `null` are
+ * all "not configured".
+ *
+ * @param {unknown} input
+ * @returns {{ copy: string, copied: string, copyFailed: string,
+ *   locales: Record<string, {copy: string, copied: string, copyFailed: string}> | null } | null}
+ */
+function normaliseErrorContext(input) {
+  if (input === undefined || input === null || input === false) return null;
+  if (input === true) {
+    return {
+      copy: BOOT_RECOVERY_COPY_ACTION,
+      copied: BOOT_RECOVERY_COPIED,
+      copyFailed: BOOT_RECOVERY_COPY_FAILED,
+      locales: null,
+    };
+  }
+  if (typeof input !== "object") {
+    throw new Error(
+      "[hikari boot-recovery] copy.errorContext must be an object, true, or " +
+        "false to disable the entry",
+    );
+  }
+  const raw = input;
+  /** @param {unknown} value @param {string} field @param {string} fallback */
+  function label(value, field, fallback) {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value !== "string" || !value.trim()) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext." + field +
+          ": when present it must be a non-empty string",
+      );
+    }
+    return value;
+  }
+  return {
+    copy: label(raw.copy, "copy", BOOT_RECOVERY_COPY_ACTION),
+    copied: label(raw.copied, "copied", BOOT_RECOVERY_COPIED),
+    copyFailed: label(raw.copyFailed, "copyFailed", BOOT_RECOVERY_COPY_FAILED),
+    locales: normaliseErrorContextLocales(raw.locales, "copy.errorContext"),
+  };
+}
+
+/**
  * Normalise a per-locale override map: `{ "zh-CN": { title, message } }`.
  *
  * Keys go through the SAME normalisation as `copy.locales` (trim, lowercase,
@@ -747,14 +936,18 @@ function normaliseReasons(input) {
  * `{ global }`) renames that entry, `false` turns it OFF, and leaving it out
  * keeps the family default. The defaults are only published when the host
  * configures the feature that needs them — `block` with `copy.browserBlock`,
- * `fatal`/`ready` with `copy.reasons` — so a host that configures nothing
- * new gets a byte-identical script.
+ * `fatal` with `copy.reasons`, and `ready` with `copy.reasons` OR
+ * `copy.errorContext` (the capture's freeze rides the same handoff: without a
+ * ready entry a captured page would record console calls for the whole life
+ * of the document) — so a host that configures nothing new gets a
+ * byte-identical script.
  *
  * @param {unknown} input
  * @param {boolean} wantsDiagnostics — `copy.reasons` is configured
+ * @param {boolean} wantsFreeze — `copy.errorContext` is configured
  * @returns {{ block: string | null, fatal: string | null, ready: string | null }}
  */
-function normaliseGlobals(input, wantsDiagnostics) {
+function normaliseGlobals(input, wantsDiagnostics, wantsFreeze) {
   const raw = input && typeof input === "object" ? input : {};
   /** @param {unknown} value @param {string} fallback */
   function slot(value, fallback) {
@@ -776,7 +969,7 @@ function normaliseGlobals(input, wantsDiagnostics) {
     fatal: wantsDiagnostics
       ? slot(raw.fatal, BOOT_RECOVERY_FATAL_GLOBAL)
       : null,
-    ready: wantsDiagnostics
+    ready: wantsDiagnostics || wantsFreeze
       ? slot(raw.ready, BOOT_RECOVERY_READY_GLOBAL)
       : null,
   };
@@ -941,6 +1134,8 @@ function normaliseLoadingScreen(input) {
  *   storageKey: string | null,
  *   osPrefsGlobal: string | null,
  *   rawDetailsLabel: string | null,
+ *   errorContext: { copy: string, copied: string, copyFailed: string,
+ *     locales: Record<string, {copy: string, copied: string, copyFailed: string}> | null } | null,
  *   browserBlock: { title: string, message: string, global: string } | null,
  *   reasons: Record<string, { title: string, message: string }> | null,
  *   globals: { block: string | null, fatal: string | null, ready: string | null },
@@ -957,9 +1152,14 @@ function resolveOptions(options) {
     input.copy && typeof input.copy === "object" ? input.copy : {};
   const copyTable = normaliseLocales(copyRaw.locales);
   const rawDetailsLabel = normaliseRawDetailsLabel(copyRaw.rawDetailsLabel);
+  const errorContext = normaliseErrorContext(copyRaw.errorContext);
   const loadingScreen = normaliseLoadingScreen(input.loadingScreen);
   const reasons = normaliseReasons(copyRaw.reasons);
-  const globals = normaliseGlobals(input.globals, reasons !== null);
+  const globals = normaliseGlobals(
+    input.globals,
+    reasons !== null,
+    errorContext !== null,
+  );
   const browserBlock = normaliseBrowserBlock(copyRaw.browserBlock, globals.block);
   // A per-locale override map is only meaningful beside the locale source it
   // overrides: `copy.locales` is what selects the language. Allowing the maps
@@ -1006,6 +1206,25 @@ function resolveOptions(options) {
         "loadingScreen: false (the heal-only mode never shows a panel)",
     );
   }
+  if (errorContext !== null) {
+    // The captured log is reported through the pane's tree and the copy action
+    // hands out the pane's payload text: without the pane there is nothing the
+    // capture could surface into, so configuring it alone is a config error,
+    // not a silent no-op.
+    if (rawDetailsLabel === null) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext requires copy.rawDetailsLabel: " +
+          "the captured boot log is rendered inside the raw-details pane",
+      );
+    }
+    if (errorContext.locales && !copyTable) {
+      throw new Error(
+        "[hikari boot-recovery] copy.errorContext.locales requires copy.locales: " +
+          "the per-locale button copy is selected by the locale table, so without " +
+          "one there is no language to resolve",
+      );
+    }
+  }
   return {
     canonicalOrigin: canonicalOrigin,
     canonicalHostname: canonicalHostname(canonicalOrigin),
@@ -1020,6 +1239,7 @@ function resolveOptions(options) {
     storageKey: normaliseStorageKey(copyRaw.storageKey, copyTable !== null),
     osPrefsGlobal: normaliseOsPrefsGlobal(input.osPrefsGlobal),
     rawDetailsLabel: rawDetailsLabel,
+    errorContext: errorContext,
     browserBlock: browserBlock,
     reasons: reasons,
     globals: globals,
@@ -1270,6 +1490,96 @@ const DETAILS_RUNTIME = String.raw`
   var JT_MAX_DEPTH = 8;
   var CREDENTIAL_QUERY = /(?:token|api_key)=([^&)\]}"' \n\t]*)/gi;
   var CREDENTIAL_KEY = /("(?:token|api_key|apikey|api-key|access_token|refresh_token|password|secret|authorization|cookie)"\s*:\s*")([^"]*)(")/gi;
+  /* ---- escaped-credential scanner: linear, browser-universal ----
+     Double-serialized console bodies cannot be masked by a single regex:
+     on the SERIALIZED paste a BARE structural quote of the console line
+     arrives as one backslash + quote, while a quote INSIDE a secret value
+     arrives with 3, 7, 15 backslashes (every JSON.stringify round turns N
+     backslashes into 2N+1) -- and the widths are what makes the two
+     separable, but a regex value-group cannot bound itself by the width of
+     ITS OWN opening run: the lazy forms stop at the first multi-backslash
+     escape (leaking the tail beside the mask), the greedy forms run past
+     the value's close into sibling pairs, and either shape backtracks
+     exponentially on backslash-heavy lines (measured 43.9s on a 198-char
+     payload through the pane paint path -- a hang the last-resort recovery
+     page cannot catch). This scanner is LINEAR and ES5-safe (charAt walks,
+     no lookbehind -- Safari < 16.4 would throw at script PARSE and kill
+     the whole recovery): one pass over the text; at every backslash run,
+     a quote directly after it opens a candidate credential key (the
+     ESCAPED_CREDENTIAL_KEYS list, compared literally; the key's own
+     closing quote must arrive with the SAME run width, as must the value's
+     opening quote after the colon -- widths are the head's identity); a
+     full head (run + quote + key + run + quote + colon + optional
+     whitespace + run + quote) masks its value with the family's
+     three-disc maskSecret -- an EMPTY value stays empty (the family rule).
+     The value's structural close is a backslash-run of EXACTLY the
+     opening run's width: runs of any other width inside the value are
+     embedded quotes or escaped punctuation and are consumed by the walk.
+     Runs of 2+ backslashes are visited once per character -- no nested
+     quantifiers, no backtracking (the escaped-shape masking is LINEAR;
+     a regex value group for the same job backtracks exponentially on
+     backslash-heavy lines, measured 43.9s on a 198-char payload through
+     the pane paint path). Two documented ambiguities: a head whose value
+     has no structural close (a truncated CONSOLE_CLIP tail) leaves the
+     rest of the text untouched, matching the bare-quote patterns' own
+     unterminated behavior; and a secret ENDING in a raw backslash merges
+     its trailing run with the structural close, so the walk over-runs the
+     close and the mask swallows the following pair's opening (masked, no
+     cleartext -- the safe direction). The scanner runs FIRST, on the
+     pristine serialized text: HEADER/QUERY's value classes accept
+     backslashes and would otherwise eat the escaping backslash of a
+     following escaped head, leaving the credential in cleartext. */
+  var ESCAPED_CREDENTIAL_KEYS = ["token", "api_key", "apikey", "api-key", "access_token", "refresh_token", "password", "secret", "authorization", "cookie"];
+  function maskEscapedCredentialValues(text) {
+    var out = "";
+    var cursor = 0;
+    var i = 0;
+    while (i < text.length) {
+      if (text.charAt(i) !== "\\") { i += 1; continue; }
+      var run = 0;
+      while (i < text.length && text.charAt(i) === "\\") { run += 1; i += 1; }
+      if (i >= text.length || text.charAt(i) !== '"') { continue; }
+      var keyAt = i + 1;
+      var key = "";
+      for (var k = 0; k < ESCAPED_CREDENTIAL_KEYS.length; k++) {
+        var candidate = ESCAPED_CREDENTIAL_KEYS[k];
+        if (text.substr(keyAt, candidate.length) === candidate) { key = candidate; break; }
+      }
+      if (!key) { continue; }
+      var w = run;
+      var j = keyAt + key.length;
+      var run2 = 0;
+      while (j < text.length && text.charAt(j) === "\\") { run2 += 1; j += 1; }
+      if (run2 !== w || text.charAt(j) !== '"') { i = j; continue; }
+      var colon = j + 1;
+      if (text.charAt(colon) !== ":") { i = j; continue; }
+      var ws = colon + 1;
+      while (ws < text.length && (text.charAt(ws) === " " || text.charAt(ws) === "\t")) { ws += 1; }
+      var run3 = 0;
+      while (ws < text.length && text.charAt(ws) === "\\") { run3 += 1; ws += 1; }
+      var valueStart = ws;
+      if (run3 !== w || text.charAt(valueStart) !== '"') { i = j; continue; }
+      var v = valueStart + 1;
+      var closeAt = -1;
+      while (v < text.length) {
+        if (text.charAt(v) !== "\\") { v += 1; continue; }
+        var vrun = 0;
+        while (v < text.length && text.charAt(v) === "\\") { vrun += 1; v += 1; }
+        if (vrun === w && text.charAt(v) === '"') { closeAt = v; break; }
+      }
+      if (closeAt < 0) {
+        break;
+      }
+      /* The mask covers the value BETWEEN the escaped quotes; the value's
+         own structural close (w backslashes + quote) stays in the text, so
+         the redacted JSON keeps re-parsing and a second pass is a no-op. */
+      out += text.slice(cursor, valueStart + 1) + maskSecret(text.slice(valueStart + 1, closeAt - w)) + text.slice(closeAt - w, closeAt + 1);
+      cursor = closeAt + 1;
+      i = cursor;
+    }
+    out += text.slice(cursor);
+    return out;
+  }
   var CREDENTIAL_HEADER = /\b(Authorization|Cookie|Proxy-Authorization)\s*:\s*([^\n"']+)/gi;
   var detailsRefresh = null;
   function safeCall(fn, fallback) {
@@ -1298,7 +1608,11 @@ const DETAILS_RUNTIME = String.raw`
      SERIALIZED text (not field by field) because that is what catches the
      "key": "value" and header shapes as well as a query string. */
   function redact(text) {
-    return String(text)
+    /* The escaped-credential scanner runs FIRST, on the pristine serialized
+       text: HEADER/QUERY's value classes accept backslashes and would
+       otherwise eat the escaping backslash of a following escaped head,
+       leaving the credential in cleartext (measured regression). */
+    return String(maskEscapedCredentialValues(text)
       .replace(CREDENTIAL_QUERY, function (match, value) {
         return value
           ? match.slice(0, match.length - value.length) + maskSecret(value)
@@ -1309,7 +1623,7 @@ const DETAILS_RUNTIME = String.raw`
       })
       .replace(CREDENTIAL_HEADER, function (_match, header, value) {
         return header + ": " + maskSecret(value);
-      });
+      }));
   }
   function errorDetail(error) {
     if (error === null || error === undefined) return null;
@@ -1731,6 +2045,298 @@ const DETAILS_RUNTIME = String.raw`
 `;
 
 /**
+ * The ERROR-CONTEXT capture runtime, emitted VERBATIM into the generated
+ * script only when the host configures `copy.errorContext` (which requires
+ * the raw-details pane — the ring is reported through its tree).
+ *
+ * Like DETAILS_RUNTIME it is one raw block of page JavaScript with no
+ * interpolation, so the output stays byte-deterministic. It exists to answer
+ * the question a timeout payload cannot: what did the BROWSER see while the
+ * app failed to mount? Four capture sources, all guarded, all pass-through:
+ *
+ *   - wrapped console.error/warn/log/info — the original runs FIRST (the
+ *     page's own console behaviour must not change), then the formatted line
+ *     joins the ring;
+ *   - capture-phase `error` events: an ErrorEvent (a `message`) is an
+ *     uncaught script exception — logged AND recorded as the fatal; any other
+ *     error event is a failed resource — logged only;
+ *   - `unhandledrejection` events — logged; one whose text matches the
+ *     chunk-miss family is ALSO the fatal, because dynamic import failures
+ *     surface as rejections on several browsers;
+ *   - the host's own `__appFatal` report is untouched (its error already has
+ *     the payload's `error` field).
+ *
+ * The ring holds the CONSOLE_CAP newest entries (a hung boot floods the
+ * early lines; the ones nearest the hang are the diagnosis), each text
+ * clipped. `bootFatal` keeps the FIRST fatal — the earliest uncaught error is
+ * the root cause, everything after it is likely cascade. Both ride the
+ * payload as `console` / `lastError` (assembled in showFailure, next to
+ * buildPayload's own fields), and `staleReason()` classifies a captured
+ * fatal exactly like an `__appFatal` message when the reason table exists.
+ *
+ * The copy action completes the shell: the button sits BEFORE reload in the
+ * action row (a reload navigates away — the copy must come first), hands the
+ * operator payloadText's REDACTED JSON (the exact bytes the pane renders),
+ * prefers the async Clipboard API and falls back to a guarded
+ * execCommand("copy") textarea, because the API exists only in secure
+ * contexts and a dead boot is frequently served over plain HTTP. Feedback is
+ * the copied/failed label for a moment, then the action label returns.
+ */
+const CONTEXT_RUNTIME = String.raw`
+  var CONSOLE_CAP = 60;
+  var CONSOLE_CLIP = 500;
+  var bootLog = [];
+  var bootFatal = null;
+  /* Set by __appReady: the app mounted, so the capture stops RECORDING. The
+     wrappers stay installed -- unwinding them could clobber a later wrapper
+     and a chained console is hostile territory -- but the console wrapper
+     checks this flag BEFORE formatting, so a healthy page's post-mount call
+     costs the pass-through plus one boolean check. The event listeners
+     carry their own checks inside captureEntry / captureFatal, and the
+     rejection path's chunk-upgrade write is gated at its site too -- every
+     write into the ring and the fatal record honors the freeze. */
+  var bootDone = false;
+  function formatLogValue(value) {
+    if (typeof value === "string") return clipText(value, CONSOLE_CLIP);
+    /* An Error formats as devtools do ("Name: message"): JSON.stringify sees
+       no enumerable own props on an Error, so without this branch a thrown
+       reason would reach the ring as "{}" and lose the one fact it carries. */
+    var text = safeCall(function () {
+      if (value !== null && typeof value === "object" && typeof value.message === "string") {
+        var name = "";
+        safeCall(function () {
+          if (typeof value.name === "string") name = value.name;
+        }, null);
+        return name ? name + ": " + value.message : value.message;
+      }
+      return "";
+    }, "");
+    if (!text) {
+      text = safeCall(function () {
+        return JSON.stringify(value);
+      }, "");
+    }
+    if (!text) {
+      text = safeCall(function () {
+        return String(value);
+      }, "");
+    }
+    return clipText(text, CONSOLE_CLIP);
+  }
+  function captureEntry(level, text) {
+    if (bootDone) return;
+    safeCall(function () {
+      bootLog.push({
+        t: safeCall(function () {
+          return Date.now() - bootStartedAt;
+        }, 0),
+        level: level,
+        text: clipText(text, CONSOLE_CLIP)
+      });
+      if (bootLog.length > CONSOLE_CAP) bootLog.splice(0, bootLog.length - CONSOLE_CAP);
+    }, null);
+  }
+  /* The FIRST fatal wins: the earliest uncaught error is the root cause, and
+     the payload already reports __appFatal's error separately. "level" is
+     the ring entry the caller already knows how to label -- the rejection path
+     passes "rejection" so a chunk-shaped rejection is not logged twice (once
+     as a rejection, once mislabelled as an uncaught error). */
+  function captureFatal(message, extra, level) {
+    if (bootDone) return;
+    captureEntry(level || "uncaught", message);
+    bootFatal = captureFatalRecord(message, extra);
+  }
+  /* The structured record behind bootFatal; returns null when a fatal is
+     already recorded (the FIRST fatal wins -- the earliest uncaught error is
+     the root cause, everything after it is likely cascade). */
+  function captureFatalRecord(message, extra) {
+    if (bootFatal) return bootFatal;
+    var fatal = { message: clipText(message, TEXT_LIMIT) };
+    safeCall(function () {
+      for (var key in extra) {
+        if (!Object.prototype.hasOwnProperty.call(extra, key)) continue;
+        var value = extra[key];
+        if (value === null || value === undefined || value === "") continue;
+        fatal[key] = typeof value === "number" ? value : clipText(String(value), TEXT_LIMIT);
+      }
+    }, null);
+    return fatal;
+  }
+  function wrapConsoleMethod(level) {
+    var owner = console;
+    var original = owner[level];
+    if (typeof original !== "function") return;
+    var wrapped = function () {
+      /* Fidelity first: the wrapper is a transparent middleman, so it
+         forwards BOTH this (a detached alias must not gain a console this)
+         and the original's return value. The call's arguments are captured
+         ONCE here: the safeCall callbacks below are plain function
+         expressions, and their own "arguments" object would shadow the
+         wrapper's -- both the pass-through and the captured line would run
+         on empty arguments. */
+      var args = arguments;
+      var self = this;
+      var result;
+      safeCall(function () {
+        result = original.apply(self, args);
+      }, undefined);
+      /* The freeze check sits BEFORE the formatting, not inside
+         captureEntry: a healthy page's post-mount console call then costs
+         the pass-through plus one boolean check -- no arg formatting at all.
+         The event listeners keep their own checks inside captureEntry /
+         captureFatal, because they bypass this wrapper. */
+      if (!bootDone) {
+        safeCall(function () {
+          var parts = [];
+          for (var i = 0; i < args.length && parts.length < 8; i++) {
+            parts.push(formatLogValue(args[i]));
+          }
+          captureEntry(level, parts.join(" "));
+        }, null);
+      }
+      return result;
+    };
+    try {
+      owner[level] = wrapped;
+    } catch (e) {}
+  }
+  function installContextCapture() {
+    /* Per-level guard: one hostile accessor (a throwing getter on
+       console.error, say) must not stop the other three levels from being
+       wrapped, which is what a single safeCall around the loop would do. */
+    var levels = ["error", "warn", "log", "info"];
+    for (var i = 0; i < levels.length; i++) {
+      safeCall(function () {
+        wrapConsoleMethod(levels[i]);
+      }, null);
+    }
+    /* Capture phase, so a failing <script>/<link> resource (an event without
+       a message) and a throwing script (an ErrorEvent, with one) are both
+       seen; window.onerror is never touched, so a host handler keeps working. */
+    safeCall(function () {
+      window.addEventListener("error", function (event) {
+        safeCall(function () {
+          if (event && typeof event.message === "string") {
+            var detail = {
+              source: event.filename,
+              line: typeof event.lineno === "number" ? event.lineno : null,
+              column: typeof event.colno === "number" ? event.colno : null
+            };
+            safeCall(function () {
+              if (event.error && typeof event.error.stack === "string") {
+                detail.stack = event.error.stack;
+              }
+            }, null);
+            captureFatal(event.message, detail);
+            return;
+          }
+          var target = event && event.target;
+          var url = target && (target.src || target.href);
+          if (url) captureEntry("error", "Failed to load " + String(url));
+        }, null);
+      }, true);
+    }, null);
+    safeCall(function () {
+      window.addEventListener("unhandledrejection", function (event) {
+        safeCall(function () {
+          var reason = event && event.reason;
+          var text = "Unhandled rejection: " + formatLogValue(reason);
+          captureEntry("rejection", text);
+          /* Already ringed as a rejection above; the fatal record rides the
+             same entry rather than a second, mislabelled one. The freeze
+             gates THIS write too: a chunk-shaped lazy-route rejection after
+             a healthy mount must not hand a later panel a lastError with no
+             ring entry to back it. */
+          if (!bootDone && CHUNK_MISS_RE.test(text)) {
+            bootFatal = captureFatalRecord(text);
+          }
+        }, null);
+      }, true);
+    }, null);
+  }
+  /* The copy action's labels, resolved for the locale the panel painted.
+     Without a translation map the host defaults are the whole answer; with
+     one, the current locale's partial entry merges over them, resolving
+     through the same subtag-stripping order as the reason/block matrix.
+     Both the locale pointer and the table exist only in the shapes that
+     configured them, hence the typeof guards -- one verbatim block serves
+     every errorContext shape. */
+  function contextCopy() {
+    var labels = [CTX_COPY_LABEL, CTX_COPIED_LABEL, CTX_FAILED_LABEL];
+    var table = typeof CONTEXT_TRANSLATIONS !== "undefined" ? CONTEXT_TRANSLATIONS : null;
+    if (typeof GENERIC_LOCALE !== "undefined" && GENERIC_LOCALE && table) {
+      var keys = [GENERIC_LOCALE];
+      var parts = GENERIC_LOCALE.split("-");
+      for (var d = 1; d < parts.length; d++) keys.push(parts.slice(0, parts.length - d).join("-"));
+      keys.push(parts[0]);
+      for (var k = 0; k < keys.length; k++) {
+        var hit = table[keys[k]];
+        if (hit) {
+          if (hit[0]) labels[0] = hit[0];
+          if (hit[1]) labels[1] = hit[1];
+          if (hit[2]) labels[2] = hit[2];
+          return labels;
+        }
+      }
+    }
+    return labels;
+  }
+  function copyViaCommand(text) {
+    return safeCall(function () {
+      var box = document.createElement("textarea");
+      box.value = text;
+      box.setAttribute("readonly", "");
+      box.style.position = "fixed";
+      box.style.left = "-9999px";
+      var parent = document.body;
+      if (!parent) return false;
+      parent.appendChild(box);
+      var ok = false;
+      try {
+        box.select();
+        ok = document.execCommand("copy") === true;
+      } catch (e) {
+        ok = false;
+      }
+      if (box.parentNode) box.parentNode.removeChild(box);
+      return ok;
+    }, false);
+  }
+  /* The copied text IS payloadText(payload): what the operator reads in the
+     pane and what they paste can never disagree, and the credential mask has
+     already run over it. */
+  function copyPayload(payload, button, labels) {
+    var text = payloadText(payload);
+    if (!text) return;
+    var finish = function (ok) {
+      safeCall(function () {
+        button.textContent = ok ? labels[1] : labels[2];
+        setTimeout(function () {
+          safeCall(function () {
+            button.textContent = labels[0];
+          }, null);
+        }, 1600);
+      }, null);
+    };
+    var handed = safeCall(function () {
+      if (typeof navigator === "undefined" || !navigator.clipboard ||
+          typeof navigator.clipboard.writeText !== "function") return null;
+      try {
+        navigator.clipboard.writeText(text).then(function () {
+          finish(true);
+        }, function () {
+          finish(copyViaCommand(text));
+        });
+        return true;
+      } catch (e) {
+        return null;
+      }
+    }, null);
+    if (handed !== true) finish(copyViaCommand(text));
+  }
+`;
+
+/**
  * The whole recovery as one compact, dependency-free inline IIFE — the exact
  * text the plugin injects (and the string a non-Tauri host can hash into its
  * own CSP).
@@ -1772,8 +2378,74 @@ export function bootRecoveryScript(options = {}) {
     ? Object.keys(resolved.reasons).some((key) => resolved.reasons[key].locales)
     : false;
   const blockLocales = Boolean(resolved.browserBlock && resolved.browserBlock.locales);
-  const needsLocaleLayers = Boolean(resolved.copyTable && (reasonLocales || blockLocales));
+  const contextLocales = Boolean(resolved.errorContext && resolved.errorContext.locales);
+  const needsLocaleLayers = Boolean(
+    resolved.copyTable && (reasonLocales || blockLocales || contextLocales),
+  );
   const lines = [];
+
+  /**
+   * Emit standDown() — the __appReady handoff — for every shape that has one
+   * (`reasons || errorContext`; the capture's freeze rides the same call).
+   *
+   * TWO bodies, by pane presence: a pane shape adds TWO sheets, so the
+   * teardown is marker-based (`data-hk-boot-recovery-style` — the adjacency
+   * form would leave the details sheet behind on a recovered mount); a
+   * reasons-only shape has no details sheet and keeps the byte-exact
+   * previous-sibling body it always emitted. The freeze line rides only the
+   * pane branch, and only for the shapes that configured
+   * `copy.errorContext` (the capture only exists beside the pane, so the
+   * no-pane branch never needs the flag). Kept as ONE emitter so the
+   * pane-bearing shapes cannot drift apart.
+   */
+  function pushStandDown() {
+    lines.push(
+      "  /* __appReady: the app mounted, so stand the panel down. It removes ONLY",
+    );
+    lines.push(
+      "     the nodes this script added: the host's loader element, its",
+    );
+    lines.push(
+      "     contents and its dismissal class belong to the host's loader logic,",
+    );
+    lines.push("     and a boot-failure surface must never fight it. */");
+    if (resolved.rawDetailsLabel) {
+      lines.push("  function standDown() {");
+      if (resolved.errorContext) {
+        // The capture's recording flag: the wrappers stay, the ring freezes.
+        lines.push("    bootDone = true;");
+      }
+      lines.push("    try {");
+      lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
+      lines.push("      if (!loading) return;");
+      lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
+      lines.push("      if (!panel) return;");
+      lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
+      lines.push('      var styles = loading.querySelectorAll("style[data-hk-boot-recovery-style]");');
+      lines.push("      for (var s = 0; s < styles.length; s++) {");
+      lines.push("        if (styles[s].parentNode) styles[s].parentNode.removeChild(styles[s]);");
+      lines.push("      }");
+      lines.push("    } catch (e) {}");
+      lines.push("  }");
+    } else {
+      // The no-pane branch is reasons-only by construction (errorContext
+      // requires the pane), so it carries no freeze line: the capture does
+      // not exist in this shape.
+      lines.push("  function standDown() {");
+      lines.push("    try {");
+      lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
+      lines.push("      if (!loading) return;");
+      lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
+      lines.push("      if (!panel) return;");
+      lines.push("      var style = panel.previousElementSibling;");
+      lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
+      lines.push('      if (style && style.tagName === "STYLE" && style.parentNode) {');
+      lines.push("        style.parentNode.removeChild(style);");
+      lines.push("      }");
+      lines.push("    } catch (e) {}");
+      lines.push("  }");
+    }
+  }
 
   lines.push("(function () {");
   lines.push('  "use strict";');
@@ -1867,10 +2539,18 @@ export function bootRecoveryScript(options = {}) {
         rows.push(row + "]");
       }
       lines.push("  var REASON_TABLE = [" + rows.join(",") + "];");
+    }
+    if (resolved.reasons || resolved.errorContext) {
+      // The chunk-miss family pattern, shared by TWO consumers that may want
+      // it independently: the reason table's classification (__appFatal and
+      // the watchdog's stale-reason upgrade) and the error-context capture
+      // (a dynamic import failure surfaces as an unhandled REJECTION on
+      // several browsers, and only a pattern match can tell it from an
+      // innocuous one). Emitted exactly once even when both are configured.
       // Source and flags ride as two plain strings and are rebuilt with the
       // RegExp constructor: a serialised regex literal would arrive with its
-      // slashes on (String(/x/i) is "/x/i"), and the rebuilt pattern would then
-      // never match. The trailing "i" is the family's own flag set.
+      // slashes on (String(/x/i) is "/x/i"), and the rebuilt pattern would
+      // then never match. The trailing "i" is the family's own flag set.
       lines.push(
         "  var CHUNK_MISS_RE = new RegExp(" +
           jsonAscii(BOOT_RECOVERY_CHUNK_MISS.source) +
@@ -1937,8 +2617,56 @@ export function bootRecoveryScript(options = {}) {
       lines.push("  var PAYLOAD_TIMEOUT_MS = DEADLINE_MS;");
       lines.push("  var bootStartedAt = Date.now();");
       lines.push(CURRENT_LOCALE_LINE);
-      lines.push(RESOURCE_RUNTIME);
-      lines.push(DETAILS_RUNTIME);
+      if (resolved.errorContext) {
+        // The copy action's labels (host copy, English defaults) and, for a
+        // multilingual host, the partial per-locale triples the current
+        // locale's entry merges over.
+        lines.push(
+          "  var CTX_COPY_LABEL = " + jsonAscii(resolved.errorContext.copy) + ";",
+        );
+        lines.push(
+          "  var CTX_COPIED_LABEL = " + jsonAscii(resolved.errorContext.copied) + ";",
+        );
+        lines.push(
+          "  var CTX_FAILED_LABEL = " + jsonAscii(resolved.errorContext.copyFailed) + ";",
+        );
+        if (contextLocales) {
+          const pairs = [];
+          const map = resolved.errorContext.locales;
+          for (const tag of Object.keys(map)) {
+            const row = map[tag];
+            // A partial triple: "" keeps that slot at the host default, so a
+            // host translating only the button label still localises nothing
+            // else by accident.
+            pairs.push(
+              jsonAscii(tag) +
+                ":[" +
+                jsonAscii(row.copy || "") +
+                "," +
+                jsonAscii(row.copied || "") +
+                "," +
+                jsonAscii(row.copyFailed || "") +
+                "]",
+            );
+          }
+          lines.push("  var CONTEXT_TRANSLATIONS = {" + pairs.join(",") + "};");
+        }
+        // The capture installs at SCRIPT EXECUTION time — before the app
+        // bundle can fail — but AFTER every definition it calls has been
+        // assigned (clipText's TEXT_LIMIT and friends are var-assigned when
+        // DETAILS_RUNTIME lands, so the install call goes last).
+        lines.push(CONTEXT_RUNTIME);
+        lines.push(RESOURCE_RUNTIME);
+        lines.push(DETAILS_RUNTIME);
+        lines.push("  try {");
+        lines.push("    installContextCapture();");
+        lines.push("  } catch (e) {");
+        lines.push("    /* A page that refuses listeners still gets its panel. */");
+        lines.push("  }");
+      } else {
+        lines.push(RESOURCE_RUNTIME);
+        lines.push(DETAILS_RUNTIME);
+      }
     } else if (resolved.reasons) {
       // The reason table's watchdog needs the same diagnosis to tell a chunk
       // miss from a plain timeout, without the pane's renderer.
@@ -2072,25 +2800,56 @@ export function bootRecoveryScript(options = {}) {
       lines.push('    return CHUNK_MISS_RE.test(text) ? "chunk" : "error";');
       lines.push("  }");
       lines.push("");
-      lines.push(
-        "  /* Which class the WATCHDOG reports when nothing was captured: a boot",
-      );
-      lines.push(
-        "     script that fetched and was REFUSED is a chunk miss; otherwise the",
-      );
-      lines.push("     app simply never showed up, which is a timeout. */");
-      lines.push("  function staleReason() {");
-      lines.push("    var stale = 0;");
-      lines.push("    try {");
-      lines.push("      var scripts = bootScripts(resourceIndex());");
-      lines.push("      for (var i = 0; i < scripts.length; i++) {");
-      lines.push('        if (scripts[i].state === "failed") stale++;');
-      lines.push("      }");
-      lines.push("    } catch (e) {");
-      lines.push("      stale = 0;");
-      lines.push("    }");
-      lines.push('    return stale ? "chunk" : "timeout";');
-      lines.push("  }");
+      if (resolved.errorContext) {
+        lines.push(
+          "  /* Which class the WATCHDOG reports when no __appFatal arrived: a boot",
+        );
+        lines.push(
+          "     script that fetched and was REFUSED is a chunk miss; a fatal the",
+        );
+        lines.push(
+          "     capture recorded is classified exactly like an __appFatal message;",
+        );
+        lines.push(
+          "     otherwise the app simply never showed up, which is a timeout. */",
+        );
+        lines.push("  function staleReason() {");
+        lines.push("    var stale = 0;");
+        lines.push("    try {");
+        lines.push("      var scripts = bootScripts(resourceIndex());");
+        lines.push("      for (var i = 0; i < scripts.length; i++) {");
+        lines.push('        if (scripts[i].state === "failed") stale++;');
+        lines.push("      }");
+        lines.push("    } catch (e) {");
+        lines.push("      stale = 0;");
+        lines.push("    }");
+        lines.push('    if (stale) return "chunk";');
+        lines.push("    if (bootFatal) return reasonOf(bootFatal.message);");
+        lines.push('    return "timeout";');
+        lines.push("  }");
+      } else {
+        // The capture-less body is the family's original, byte for byte: a
+        // reasons-only host keeps the script bytes it already knows.
+        lines.push(
+          "  /* Which class the WATCHDOG reports when nothing was captured: a boot",
+        );
+        lines.push(
+          "     script that fetched and was REFUSED is a chunk miss; otherwise the",
+        );
+        lines.push("     app simply never showed up, which is a timeout. */");
+        lines.push("  function staleReason() {");
+        lines.push("    var stale = 0;");
+        lines.push("    try {");
+        lines.push("      var scripts = bootScripts(resourceIndex());");
+        lines.push("      for (var i = 0; i < scripts.length; i++) {");
+        lines.push('        if (scripts[i].state === "failed") stale++;');
+        lines.push("      }");
+        lines.push("    } catch (e) {");
+        lines.push("      stale = 0;");
+        lines.push("    }");
+        lines.push('    return stale ? "chunk" : "timeout";');
+        lines.push("  }");
+      }
       lines.push("");
       lines.push(
         "  /* __appFatal: the host captured a pre-mount error. The panel paints",
@@ -2107,37 +2866,31 @@ export function bootRecoveryScript(options = {}) {
       lines.push("    } catch (e) {}");
       lines.push("  }");
       lines.push("");
-      lines.push(
-        "  /* __appReady: the app mounted, so stand the panel down. It removes ONLY",
-      );
-      lines.push(
-        "     the nodes this script added: the host's loader element, its",
-      );
-      lines.push(
-        "     contents and its dismissal class belong to the host's loader logic,",
-      );
-      lines.push("     and a boot-failure surface must never fight it. */");
-      lines.push("  function standDown() {");
-      lines.push("    try {");
-      lines.push("      var loading = document.querySelector(LOADING_SELECTOR);");
-      lines.push("      if (!loading) return;");
-      lines.push('      var panel = loading.querySelector("[data-hk-boot-recovery-panel]");');
-      lines.push("      if (!panel) return;");
-      lines.push("      var style = panel.previousElementSibling;");
-      lines.push("      if (panel.parentNode) panel.parentNode.removeChild(panel);");
-      lines.push('      if (style && style.tagName === "STYLE" && style.parentNode) {');
-      lines.push("        style.parentNode.removeChild(style);");
-      lines.push("      }");
-      lines.push("    } catch (e) {}");
-      lines.push("  }");
-      // Each entry publishes only when it was actually configured: an absent
-      // global is "off", and referencing the name unconditionally would throw
-      // on the shapes that disabled it.
+      // standDown is emitted for `reasons || errorContext` (ONE shared
+      // emitter, in the family's original order here, so a reasons-only host
+      // keeps the byte-exact script it already has); `raiseFatal` rides
+      // `reasons` alone -- the classified headline is its whole point. Each
+      // entry publishes only when it was actually configured: an absent
+      // global is "off", and referencing the name unconditionally would
+      // throw on the shapes that disabled it.
+      pushStandDown();
       if (resolved.globals.fatal) {
         lines.push("  try {");
         lines.push("    window[" + jsonAscii(resolved.globals.fatal) + "] = raiseFatal;");
         lines.push("  } catch (e) {}");
       }
+      if (resolved.globals.ready) {
+        lines.push("  try {");
+        lines.push("    window[" + jsonAscii(resolved.globals.ready) + "] = standDown;");
+        lines.push("  } catch (e) {}");
+      }
+      lines.push("");
+    }
+    if (!resolved.reasons && resolved.errorContext) {
+      // The capture's freeze handoff without a reason table: __appReady still
+      // exists (the host's mount call is what stops the recording), and the
+      // panel it stands down is the watchdog's generic-copy card.
+      pushStandDown();
       if (resolved.globals.ready) {
         lines.push("  try {");
         lines.push("    window[" + jsonAscii(resolved.globals.ready) + "] = standDown;");
@@ -2490,6 +3243,11 @@ export function bootRecoveryScript(options = {}) {
       // absent from a default host's script entirely (BYTE-COMPAT).
       lines.push('    var detailsStyle = document.createElement("style");');
       lines.push("    detailsStyle.textContent = DETAILS_CSS;");
+      if (resolved.rawDetailsLabel && (resolved.reasons || resolved.errorContext)) {
+        // See the landing sheet's marker above: standDown's pane-shape body
+        // removes the script's own sheets by this marker.
+        lines.push('    detailsStyle.setAttribute("data-hk-boot-recovery-style", "");');
+      }
       if (resolved.copyTable) {
         lines.push(
           "    RAW_DETAILS_LABEL = copy.length > 3 && copy[3] ? copy[3] : RAW_DETAILS_LABEL;",
@@ -2498,6 +3256,18 @@ export function bootRecoveryScript(options = {}) {
     }
     lines.push('    var style = document.createElement("style");');
     lines.push("    style.textContent = PANEL_CSS;");
+    if (resolved.rawDetailsLabel && (resolved.reasons || resolved.errorContext)) {
+      // Marker-based teardown: the pane shapes add TWO sheets (the details
+      // sheet and the landing sheet), and the old previous-sibling removal
+      // only ever took the second one -- __appReady left the details sheet
+      // behind on a recovered mount. Marking the script's own styles makes
+      // "removes ONLY the nodes this script added" an attribute contract
+      // instead of an adjacency guess. Gated on the pane AND the existence
+      // of a standDown (reasons or errorContext) -- its only consumer is
+      // standDown's pane-shape body -- so the pane-only and reasons-only
+      // shapes keep the byte-exact bodies they always emitted.
+      lines.push('    style.setAttribute("data-hk-boot-recovery-style", "");');
+    }
     lines.push('    var landing = document.createElement("div");');
     if (resolved.browserBlock) {
       // An unsupported browser is a compatibility notice, not a crash: the
@@ -2547,16 +3317,57 @@ export function bootRecoveryScript(options = {}) {
       lines.push("    try {");
       if (resolved.reasons) {
         lines.push('      payload = buildPayload(reason || "timeout", message || copy[1], error || null);');
+      } else if (resolved.errorContext) {
+        // No reason table, but the capture may know better: the payload's
+        // reason field reports the captured fatal's class instead of a bare
+        // timeout, so a paste never says "timeout" while lastError says the
+        // boot threw. (The HEADLINE stays the host's generic copy -- without
+        // the reason table there is nothing to resolve it against.)
+        lines.push(
+          '      payload = buildPayload(bootFatal ? (CHUNK_MISS_RE.test(bootFatal.message) ? "chunk" : "error") : "timeout", copy[1], null);',
+        );
       } else {
         lines.push('      payload = buildPayload("timeout", copy[1], null);');
       }
       lines.push("    } catch (e) {");
       lines.push("      payload = null;");
       lines.push("    }");
+      if (resolved.errorContext) {
+        // The captured boot trail rides the payload as two MORE contract
+        // fields, rendered by the same tree: `console` (the ring, oldest
+        // first) and `lastError` (the first captured fatal). Both are
+        // conditional — a quiet boot reports neither, which is itself the
+        // signal that nothing was captured.
+        lines.push("    if (payload) {");
+        lines.push("      try {");
+        lines.push("        if (bootLog.length) payload.console = bootLog.slice();");
+        lines.push("        if (bootFatal) payload.lastError = errorDetail(bootFatal);");
+        lines.push("      } catch (e) {}");
+        lines.push("    }");
+      }
       lines.push("    if (payload) {");
       lines.push("      try {");
       lines.push("        card.appendChild(detailsSection(payload));");
       lines.push("      } catch (e) {}");
+      if (resolved.errorContext) {
+        // The copy action sits BEFORE reload in the row: a reload navigates
+        // away, so the copy must come first. The label resolves for the
+        // locale the panel painted (pickCopy ran earlier in this function);
+        // every failure degrades the button's own label, never the card.
+        lines.push("      try {");
+        lines.push('        var copyButton = document.createElement("button");');
+        lines.push('        copyButton.type = "button";');
+        lines.push('        copyButton.className = "hk-btn hk-btn-secondary hk-btn-sm";');
+        lines.push("        var contextLabels = contextCopy();");
+        lines.push("        copyButton.textContent = contextLabels[0];");
+        lines.push('        copyButton.addEventListener("click", function () {');
+        lines.push("          safeCall(function () {");
+        lines.push("            copyPayload(payload, copyButton, contextLabels);");
+        lines.push("          }, null);");
+        lines.push("        });");
+        lines.push("        actions.insertBefore(copyButton, button);");
+        lines.push("      } catch (e) {}");
+      }
       lines.push("    }");
       if (resolved.browserBlock) {
         lines.push("    }");

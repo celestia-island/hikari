@@ -81,6 +81,7 @@ pub enum MdiIcon {
     // Content
     Account,
     User,
+    AccountGroup,
     Book,
     Star,
     Heart,
@@ -193,6 +194,7 @@ impl std::fmt::Display for MdiIcon {
             MdiIcon::CubeOutline => write!(f, "cube-outline"),
             MdiIcon::Account => write!(f, "account"),
             MdiIcon::User => write!(f, "account"),
+            MdiIcon::AccountGroup => write!(f, "account-group"),
             MdiIcon::Book => write!(f, "book"),
             MdiIcon::Star => write!(f, "star"),
             MdiIcon::Heart => write!(f, "heart"),
@@ -294,6 +296,7 @@ impl std::convert::From<&str> for MdiIcon {
             "cube-outline" => MdiIcon::CubeOutline,
             "account" => MdiIcon::Account,
             "user" => MdiIcon::User,
+            "account-group" => MdiIcon::AccountGroup,
             "book" => MdiIcon::Book,
             "star" => MdiIcon::Star,
             "heart" => MdiIcon::Heart,

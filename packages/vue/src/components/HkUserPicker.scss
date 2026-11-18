@@ -105,6 +105,34 @@
   }
 }
 
+/* Trigger presentation: the host's icon button IS the visible trigger;
+ * this wrapper is only the anchor (click/keydown wiring lives on it in
+ * the tsx) — no field box, no padding of its own. */
+.hk-user-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Off a one-glyph anchor the popout cannot inherit a useful width
+ * (matchAnchorWidth is off in trigger mode) — the panel carries a catalog
+ * width and lets the surface's own viewport clamp absorb overflow. */
+.hk-user-picker-panel.is-trigger-anchor {
+  width: min(24rem, 80vw);
+}
+
+/* Mobile sheet context (#424 pattern, the HkTagInput / HkAffixPicker
+ * spelling): inside the full-width select sheet the popup's designed
+ * measure becomes a centered cap instead of a left-glued clamp — the
+ * trigger panel reads as one designed block inside the viewport-wide
+ * sheet rather than hugging its left edge. */
+.hk-select-sheet-panel .hk-user-picker-panel.is-trigger-anchor {
+  width: 100%;
+  max-width: min(24rem, 100%);
+  margin-inline: auto;
+}
+
 /* ── Panel content ──────────────────────────────────────────────────── */
 
 /* The content column inside HkSelectPanel. `.hk-user-picker-dialog` is the
@@ -204,6 +232,14 @@
 }
 
 .hk-user-picker-row-main {
+  /* Fills the middle lane between a (optional) leading icon cell and the
+   * (multi-mode) trailing check — under the row's
+   * `justify-content: space-between` a content-sized main would let a
+   * leading glyph push the name to the far END of the row instead of
+   * sitting beside it. `flex: 1` keeps the icon leading, the text
+   * mid-row, the check trailing, in BOTH the plain and the group-kind
+   * row shapes. */
+  flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -235,6 +271,16 @@
   flex: none;
   color: var(--hi-color-primary, #7aa2f7);
   font-weight: 700;
+}
+
+/* The group-kind glyph (data-kind="group"): the grammar's leading icon
+ * cell (_menu-item.scss `mi.icon` — fixed square, svg normalized), so a
+ * group row reads exactly like any other menu row's icon column instead
+ * of a bare glyph floating under the row's space-between layout. */
+.hk-user-picker-row-kind {
+  @include mi.icon;
+
+  color: rgb(var(--color-text) / 55%);
 }
 
 /* ── Multi-mode footer (draft count + Cancel / Confirm) ─────────────── */

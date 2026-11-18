@@ -196,6 +196,7 @@ pub mod mdi {
     icon_shortcut!(ChevronUp, MdiIcon::ChevronUp);
     icon_shortcut!(ChevronDown, MdiIcon::ChevronDown);
     icon_shortcut!(User, MdiIcon::Account);
+    icon_shortcut!(AccountGroup, MdiIcon::AccountGroup);
     icon_shortcut!(X, MdiIcon::Close);
     icon_shortcut!(Award, MdiIcon::TrophyAward);
     icon_shortcut!(Book, MdiIcon::Book);

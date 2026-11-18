@@ -19,7 +19,17 @@
 // `src/styles/vue-mirror/`), compiled with `no_hash` so the
 // `.hk-user-picker*` class names are literal and identical in both forms.
 //
-// DOM contract (mirrors the Vue render output one-to-one):
+// FORM DELTA (2026-11-18, the third-pass ruling): the Vue component grew a
+// TRIGGER presentation — the host fills the `trigger` slot with its own
+// icon button and the SAME panel anchors to it (`.hk-user-picker-trigger`
+// wrapper, `.is-trigger-anchor` panel width). The mirror keeps the FIELD
+// form only: a Rust host that wants a trigger anchor composes its own
+// button with the panel helpers — there is no slot concept to mirror, and
+// the panel content column is byte-shared. The GROUP-kind rows ARE
+// mirrored (see `UserOptionKind`): both forms treat users and user groups
+// as the same kind of thing, per the grant-surface ruling.
+//
+// DOM contract (mirrors the Vue FIELD-form render output one-to-one):
 //
 //   ── the field ──
 //   div.hk-user-picker [.is-disabled] (position:relative — the unmeasured
@@ -45,7 +55,11 @@
 //           p.hk-user-picker-note?        (Searching… / the standing hint)
 //           button.hk-user-picker-retry?  (failed; click = re-run the query)
 //           div.hk-user-picker-row [role=option] [aria-selected]
-//               [data-checked?] [.is-selected]           (per hit)
+//               [data-checked?] [.is-selected] [data-kind=group?]
+//               (per hit; kind=group renders a leading
+//                div.hk-icon.hk-user-picker-row-kind glyph — MDI
+//                account-group, the packed twin of Vue's lucide
+//                UsersRound — before the name column)
 //             span.hk-user-picker-row-main
 //               span.hk-user-picker-row-name             {tagTitle}
 //               span.hk-user-picker-row-email?           {email}
@@ -146,7 +160,7 @@
 #![allow(clippy::type_complexity)]
 #![allow(clippy::too_many_arguments)]
 use hikari_i18n::t;
-use hikari_icons::MdiIcon;
+use hikari_icons::{Icon, IconProps, MdiIcon};
 
 use crate::basic::button::{Button, ButtonProps, ButtonSize, ButtonVariant};
 use crate::basic::search_input::{SearchInput, SearchInputProps};
@@ -172,6 +186,18 @@ pub struct HkUserOption {
     pub email: Option<String>,
     pub display_name: Option<String>,
     pub avatar_url: Option<String>,
+    /// Row kind (Vue's `kind`): `Group` marks a user-group row — a batch
+    /// grant, not a person. The row wears the group glyph and
+    /// `data-kind="group"`; identity stays `uid`. Default `User`.
+    pub kind: UserOptionKind,
+}
+
+/// The option's kind (Vue: `kind`, default `"user"`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum UserOptionKind {
+    #[default]
+    User,
+    Group,
 }
 
 impl HkUserOption {
@@ -733,6 +759,7 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
     for (index, user) in results.iter().enumerate() {
         let in_draft =
             props.mode == UserPickerMode::Multi && user_picker_in_draft(&props.draft, &user.uid);
+        let is_group = user.kind == UserOptionKind::Group;
         let mut row = VElement::new("div")
             .class(user_picker_row_classes(props.mode, in_draft))
             .attr("role", "option")
@@ -743,6 +770,23 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         // keys on data-checked — presence-only, multi-draft only.
         if in_draft {
             row = row.attr("data-checked", "true");
+        }
+        if is_group {
+            row = row.attr("data-kind", "group");
+            // The group-kind glyph (Vue's leading `UsersRound`): the
+            // grammar's leading icon cell — `mi.icon` on the Vue side
+            // normalizes to the 16px desktop box, so the mirror pins the
+            // same 16. Delta vs Vue (documented, the toast.rs precedent):
+            // the packed MDI `account-group` twin stands in for the lucide
+            // glyph and carries no text of its own, so Vue's `aria-hidden`
+            // has no mirrored attribute — the row keeps Vue's
+            // `data-kind="group"`.
+            row = row.child(Icon(IconProps {
+                icon: MdiIcon::AccountGroup,
+                size: 16,
+                class: "hk-user-picker-row-kind".to_string(),
+                ..Default::default()
+            }));
         }
         let mut main = VElement::new("span").class("hk-user-picker-row-main");
         main = main.child(VNode::Element(Box::new(
@@ -1005,6 +1049,7 @@ mod tests {
             display_name: display.map(str::to_string),
             email: email.map(str::to_string),
             avatar_url: None,
+            kind: UserOptionKind::User,
         }
     }
 
@@ -1514,5 +1559,71 @@ mod tests {
             "scss compilation failed for the mirrored user-picker sheet"
         );
         assert_eq!(UserPickerComponent::name(), "user-picker");
+    }
+
+    #[test]
+    fn user_picker_group_kind_rows_render_the_glyph_and_data_kind() {
+        // (2026-11-18 third pass) A kind=Group option renders the group
+        // glyph before the name and `data-kind="group"` on the row; a
+        // plain user row carries neither.
+        let team = HkUserOption {
+            uid: "g-1".into(),
+            username: String::new(),
+            display_name: Some("Design team".into()),
+            kind: UserOptionKind::Group,
+            ..Default::default()
+        };
+        let alice = HkUserOption::new("u-1", "alice");
+
+        let element = UserPicker(UserPickerProps {
+            open: true,
+            results: vec![team, alice],
+            query: "a".into(),
+            ..Default::default()
+        });
+        let html = element.render_to_html();
+
+        assert!(
+            html.contains(r#"data-kind="group""#),
+            "the group row must wear data-kind=group: {html}"
+        );
+        assert!(
+            html.contains("hk-user-picker-row-kind"),
+            "the group row must carry the group glyph class: {html}"
+        );
+        // The glyph renders ONCE — on the group row only; a guard mutation
+        // that drops the kind branch must turn this red (the user row
+        // stays plain, pinning glyph-only-on-group).
+        assert_eq!(
+            html.matches("hk-user-picker-row-kind").count(),
+            1,
+            "only the group-kind row carries the glyph"
+        );
+        // The packed account-group path renders (not the build script's
+        // help-circle fallback — get("account-group") must resolve).
+        assert!(
+            html.contains("M12,5.5A3.5,3.5"),
+            "the glyph must be the packed account-group path, not the fallback: {html}"
+        );
+        assert!(
+            !html.contains("M12 2C6.48 2 2 6.48"),
+            "the icon fallback must not render for a packed name: {html}"
+        );
+        // Exactly one kind row: the user row stays plain.
+        assert_eq!(
+            html.matches(r#"data-kind="group""#).count(),
+            1,
+            "only the group-kind row wears the marker"
+        );
+    }
+
+    #[test]
+    fn user_picker_kind_defaults_to_user() {
+        // Default::default() is a plain user row — every existing host
+        // keeps rendering exactly what it rendered before the kind field.
+        let plain = HkUserOption::default();
+        assert_eq!(plain.kind, UserOptionKind::User);
+        let bare = HkUserOption::new("u-1", "ada");
+        assert_eq!(bare.kind, UserOptionKind::User);
     }
 }

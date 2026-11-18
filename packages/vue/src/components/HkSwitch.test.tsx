@@ -133,6 +133,15 @@ describe("HkSwitch rendering", () => {
     // label element — inventing an empty aria-label would shadow it).
     const bare = mount(h(HkSwitch, {}));
     expect(bare.querySelector("input")!.getAttribute("aria-label")).toBeNull();
+
+    // Empty-string label must not fabricate aria-label="" (accname
+    // ignores it; the contract is "no name in, no name out").
+    const empty = mount(h(HkSwitch, { label: "" }));
+    expect(empty.querySelector("input")!.getAttribute("aria-label")).toBeNull();
+
+    // ariaLabel wins over label when both are given.
+    const both = mount(h(HkSwitch, { ariaLabel: "Grid", label: "Dark mode" }));
+    expect(both.querySelector("input")!.getAttribute("aria-label")).toBe("Grid");
   });
 });
 

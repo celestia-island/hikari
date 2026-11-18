@@ -318,7 +318,10 @@ mod tests {
         let mut chars = lane_raw.chars().peekable();
         while let Some(c) = chars.next() {
             if in_comment {
-                if c == '/' {
+                // A comment ends only on the '*'+'/' pair; a bare '/'
+                // inside the text (e.g. "hover/active") must not leak the
+                // rest of the comment into the asserted block.
+                if c == '*' && chars.peek() == Some(&'/') {
                     in_comment = false;
                     chars.next(); // consume the '/'
                 }

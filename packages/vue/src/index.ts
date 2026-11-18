@@ -733,6 +733,14 @@ export {
   type HJsonNode,
 } from "./components/HkJsonTree";
 
+// ── JSON tree pure edit operations (HkJsonTree editable mode) ──
+export {
+  jsonSetAtPath,
+  jsonInsertChildAt,
+  jsonRemoveAtPath,
+  type JsonPath,
+} from "./components/jsonTreeEdit";
+
 export {
   formatNumber,
   formatBytes,

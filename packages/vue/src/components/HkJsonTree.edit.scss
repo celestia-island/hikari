@@ -1,0 +1,109 @@
+// HkJsonTree EDITING surface — loaded only alongside the component (the
+// tsx imports it), deliberately NOT part of HkJsonTree.scss: the boot
+// error landing compiles that file into its checked-in sheet, and the
+// editing chrome must never ride (or re-bloat) the boot-critical payload.
+// Every rule here targets classes that only exist after a host opts in
+// (`editable` prop → root class s-jt-editable + the editor DOM), so a
+// read-only tree paints nothing from this sheet.
+
+// Use theme variables with namespace to avoid conflicts
+@use "./hikari-vars" as vars;
+@use "../styles/polyfill" as *;
+
+/* Rows answer right-click / long-press with the row menu: the cursor
+ * states the affordance without moving any spacing (the read-only tree's
+ * pinned geometry in HkJsonTree.scss stays untouched). */
+.s-tool-json-tree.s-jt-editable .s-jt-row {
+  cursor: context-menu;
+}
+
+.s-jt-empty-row {
+  /* The open-empty container's inline affordance row. */
+  cursor: pointer;
+}
+
+.s-jt-empty-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  font: inherit;
+  color: rgb(var(--color-muted));
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.s-jt-empty-add:hover {
+  color: rgb(var(--color-primary));
+}
+
+/* Inline editor row: baseline-aligned like every row, but allowed to
+ * wrap — chips plus two inputs must degrade gracefully in a narrow pane
+ * instead of blowing past the tree's scroll edge. */
+.s-jt-edit {
+  flex-wrap: wrap;
+  column-gap: var(--space-4, 0.25rem);
+  row-gap: var(--space-2, 0.125rem);
+}
+
+.s-jt-edit-value {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-4, 0.25rem);
+  min-width: 0;
+}
+
+.s-jt-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 0.125rem);
+  flex-shrink: 0;
+}
+
+.s-jt-chip {
+  font: inherit;
+  font-size: var(--text-3xs, 0.5rem);
+  line-height: 1.4;
+  color: rgb(var(--color-muted));
+  background: rgb(var(--color-surface) / 0.6);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-sm, 4px);
+  padding: 0 var(--space-4, 0.25rem);
+  cursor: pointer;
+}
+
+.s-jt-chip[data-on] {
+  color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-primary) / 40%);
+}
+
+.s-jt-input {
+  font: inherit;
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-surface) / 0.6);
+  border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
+  border-radius: var(--radius-xs, 2px);
+  padding: 0 var(--space-4, 0.25rem);
+  min-width: 4ch;
+  width: 10em;
+  max-width: 100%;
+}
+
+.s-jt-input:focus {
+  outline: none;
+  border-color: rgb(var(--color-primary) / 60%);
+}
+
+/* Invalid number: the field carries the state visually and the hint names
+ * it; submission is blocked at the TS layer until the text parses. */
+.s-jt-input[data-invalid] {
+  border-color: rgb(var(--color-error) / 60%);
+}
+
+.s-jt-invalid {
+  color: rgb(var(--color-error, 166 41 55));
+  font-size: var(--text-3xs, 0.5rem);
+  font-style: italic;
+}

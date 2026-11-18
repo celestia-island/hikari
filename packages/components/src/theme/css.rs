@@ -580,9 +580,11 @@ impl ThemePalette {
             format!("--color-on-info: {};", Self::on_ink_triplet(&self.info)),
             // on-solid is the ink for SEMANTIC fills (all γlum < 0.65 → white).
             // Using self.primary here would paint `.hk-btn-danger` black.
-            format!("--color-on-solid: {};", Self::on_ink_triplet(&self.danger)),
-            format!("--color-on-solid-text: {};", Self::on_ink_triplet(&self.danger)),
-            format!("--color-on-solid-icon: {};", Self::on_ink_triplet(&self.danger)),
+            // on-solid is the ink for the BRAND fill (primary). The semantic
+            // fills use their own --color-on-{danger,success,…} channels.
+            format!("--color-on-solid: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-solid-text: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-solid-icon: {};", Self::on_ink_triplet(&self.primary)),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
@@ -803,12 +805,6 @@ mod interaction_alias_tests {
             "--color-on-solid:",
             "--color-on-solid-text:",
             "--color-on-solid-icon:",
-            "--color-on-primary:",
-            "--color-on-danger:",
-            "--color-on-success:",
-            "--color-on-warning:",
-            "--color-on-info:",
-            "--color-on-solid:",
         ] {
             assert!(
                 css.contains(name),
@@ -827,10 +823,19 @@ mod interaction_alias_tests {
         let palette = ThemePalette::from_palette(&default_theme());
         let css = palette.css_variables();
         for name in [
+            "--color-background:",
+            "--color-surface:",
             "--color-success:",
             "--color-error:",
             "--color-warning:",
             "--color-info:",
+            "--color-text:",
+            "--color-muted:",
+            "--color-text-secondary:",
+            "--color-border:",
+            "--color-primary:",
+            "--color-secondary:",
+            "--color-accent:",
         ] {
             // css_variables() joins with SPACE, not newline — split on `;`.
             let value = css

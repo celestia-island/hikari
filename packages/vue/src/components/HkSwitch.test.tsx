@@ -118,6 +118,22 @@ describe("HkSwitch rendering", () => {
     const c = mount(h(HkSwitch, { label: "Dark mode" }));
     expect(c.querySelector(".hk-label")!.textContent).toBe("Dark mode");
   });
+
+  it("names the checkbox for assistive tech (aria-label contract)", () => {
+    // The visible caption is a sibling span inside the wrapping label —
+    // it does NOT name the checkbox. The input must carry an explicit
+    // accessible name, or the switch is announced unnamed.
+    const labelled = mount(h(HkSwitch, { label: "Dark mode" }));
+    expect(labelled.querySelector("input")!.getAttribute("aria-label")).toBe("Dark mode");
+
+    const aria = mount(h(HkSwitch, { ariaLabel: "Grid" }));
+    expect(aria.querySelector("input")!.getAttribute("aria-label")).toBe("Grid");
+
+    // No name in, no fabricated name out (consumers may wire their own
+    // label element — inventing an empty aria-label would shadow it).
+    const bare = mount(h(HkSwitch, {}));
+    expect(bare.querySelector("input")!.getAttribute("aria-label")).toBeNull();
+  });
 });
 
 describe("HkSwitch toggling", () => {

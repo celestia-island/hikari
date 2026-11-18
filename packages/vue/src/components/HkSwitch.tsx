@@ -16,6 +16,10 @@ export default defineComponent({
       default: "primary",
     },
     label: { type: String, default: undefined },
+    /** Explicit accessible name for callers that render no visible
+     *  caption (switches driven by an external label element or pure
+     *  icon rows). Falls back to `label`. */
+    ariaLabel: { type: String, default: undefined },
     checkedContent: { type: String, default: undefined },
     uncheckedContent: { type: String, default: undefined },
   },
@@ -43,6 +47,14 @@ export default defineComponent({
           type="checkbox"
           checked={props.modelValue}
           disabled={props.disabled}
+          // Accessible name (2026-11-18): the visible caption renders as a
+          // SIBLING span inside the label, but a wrapping label does not
+          // name its checkbox on its own — without an explicit
+          // aria-label the switch is announced unnamed (screen readers
+          // and the platform a11y tree both). `label` doubles as that
+          // name; `aria-label` is the escape hatch for callers that
+          // neither pass `label` nor slot a caption.
+          aria-label={props.ariaLabel ?? props.label}
           onChange={toggle}
         />
         <span

@@ -124,7 +124,7 @@ cargo add hikari-palette@^0.5 hikari-theme@^0.5 hikari-animation@^0.5 hikari-ico
 cargo add hikari-components@^0.5
 ```
 
-Component features are organized in groups — `basic`, `feedback`, `navigation`, `layout`, `data`, `display`, `entry`, `production` — each enabling a set of individual component features (e.g. `button`, `table`, `tree`, `toast`). The default feature set covers all groups.
+Component features are organized in groups — `basic`, `feedback`, `navigation`, `layout`, `data`, `display`, `entry`, `overlay`, `auth`, `scene`, `theme` — each enabling a set of individual component features (e.g. `button`, `table`, `tree`, `toast`). The default feature set covers all groups.
 
 Basic usage:
 

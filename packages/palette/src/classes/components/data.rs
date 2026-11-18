@@ -348,18 +348,6 @@ impl UtilityClass for TreeClassNew {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub enum TreeLabelClass {
-    TreeNodeLabel,
-}
-
-impl UtilityClass for TreeLabelClass {
-    fn as_suffix(&self) -> &'static str {
-        "tree-node-label"
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum DragDropTreeClass {
     DragDropTree,
     DragNode,

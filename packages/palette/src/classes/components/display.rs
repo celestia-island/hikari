@@ -173,24 +173,6 @@ impl UtilityClass for TagClass {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[allow(dead_code)]
-pub enum DescriptionListClass {
-    List,
-    Term,
-    Detail,
-}
-
-impl UtilityClass for DescriptionListClass {
-    fn as_suffix(&self) -> &'static str {
-        match self {
-            DescriptionListClass::List => "description-list",
-            DescriptionListClass::Term => "description-list-term",
-            DescriptionListClass::Detail => "description-list-detail",
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EmptyClass {
     Container,
     Image,

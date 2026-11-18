@@ -34,9 +34,6 @@ tairitsu-vdom = { version = "^0.5", optional = true }
 tairitsu-hooks = { version = "^0.5", optional = true }
 tairitsu-macros = { version = "^0.5", optional = true }
 
-# Hikari design system
-hikari-animation = { version = "^0.5", path = "../animation", default-features = false }
-
 # Data serialization
 serde.workspace = true
 ron.workspace = true

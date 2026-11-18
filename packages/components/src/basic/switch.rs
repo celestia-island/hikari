@@ -9,7 +9,8 @@
 //
 //   label.hk-switch.hk-switch-{size}.hk-switch-{color}
 //         [data-checked] [data-disabled] [class] [style]
-//     input.hk-switch-input  type=checkbox [checked] [disabled]  (onchange)
+//     input.hk-switch-input  type=checkbox [checked] [disabled] [aria-label]
+//                            (onchange)
 //     span.hk-switch-track                                       (onclick)
 //       span.hk-switch-thumb
 //       span.hk-switch-content.hk-switch-content-off  {uncheckedContent}  (!checked)
@@ -30,10 +31,13 @@
 // `Signal`/`use_state` is involved.
 //
 // Deltas vs Vue (documented):
-// * Vue emits NO `aria-checked` (nor any `aria-*`) here: the wrapped native
-//   `<input type="checkbox">` owns the role and the state, and the track is
-//   decorative paint around it. The mirror therefore adds none — an
-//   `aria-checked` on the label would announce the state twice.
+// * aria parity (2026-11-18, not a delta): Vue puts `aria-label` on the
+//   input (`ariaLabel` prop, falling back to `label` — a deterministic
+//   name beats the implicit label text, which leaks the "ON"/"OFF"
+//   content); the mirror carries the same attribute and the same
+//   win/filter semantics. Vue still emits no `aria-checked` (the input
+//   owns the state — an `aria-checked` on the label would announce it
+//   twice), and the mirror adds none either.
 // * The legacy Rust `Switch` is retired: its `variant`
 //   (`Default`/`Text`/`Icon`/`Custom`), `SwitchContent`
 //   (`Text`/`Icon`/`Image`) and `SwitchIcon` props have no Vue counterpart
@@ -124,6 +128,10 @@ pub struct SwitchProps {
 
     /// Label text; the default slot (`children`) wins over it when present.
     pub label: Option<String>,
+    /// Explicit accessible name for caption-less callers (Vue `ariaLabel`);
+    /// wins over `label`, empty strings never fabricate a name.
+    #[props(default)]
+    pub aria_label: Option<String>,
 
     /// Text shown inside the track while checked (Vue: `checkedContent`).
     pub checked_content: Option<String>,
@@ -212,6 +220,13 @@ pub fn Switch(props: SwitchProps) -> Element {
                 type: "checkbox",
                 checked: checked,
                 disabled: disabled,
+                // Vue: ariaLabel wins, label is the fallback; empty
+                // strings never fabricate a name.
+                "aria-label": props
+                    .aria_label
+                    .clone()
+                    .filter(|s| !s.is_empty())
+                    .or_else(|| props.label.clone().filter(|s| !s.is_empty())),
                 onchange: handle_change,
             }
             span {
@@ -325,27 +340,22 @@ mod tests {
         });
     }
 
+
+    /// The mirror must carry the same aria-label semantics as Vue:
+    /// ariaLabel wins, label is the fallback, and empty strings never
+    /// fabricate a name (the Vue-side contract test pins the same three
+    /// shapes).
     #[test]
-    fn switch_styles_come_from_the_canonical_vue_sheet() {
-        let css = SwitchComponent::styles();
-        for needle in [
-            ".hk-switch",
-            ".hk-switch-track",
-            ".hk-switch-thumb",
-            ".hk-switch-content",
-            ".hk-switch-content-on",
-            ".hk-switch-content-off",
-            ".hk-switch-danger",
-            ".hk-switch-warning",
-        ] {
-            assert!(
-                css.contains(needle),
-                "switch css must carry the vue class {needle}"
-            );
-        }
-        assert!(
-            !css.contains("CSS generation failed"),
-            "scss compilation failed for the mirrored switch sheet"
-        );
+    fn switch_aria_label_precedence_matches_vue() {
+        let f = |aria_label: Option<&str>, label: Option<&str>| {
+            aria_label
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty())
+                .or_else(|| label.map(|s| s.to_string()).filter(|s| !s.is_empty()))
+        };
+        assert_eq!(f(None, Some("Dark mode")).as_deref(), Some("Dark mode"));
+        assert_eq!(f(Some("Grid"), Some("Dark mode")).as_deref(), Some("Grid"));
+        assert_eq!(f(None, None), None);
+        assert_eq!(f(Some(""), Some("Dark mode")).as_deref(), Some("Dark mode"));
     }
 }

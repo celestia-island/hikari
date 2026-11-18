@@ -16,6 +16,11 @@ export default defineComponent({
       default: "primary",
     },
     label: { type: String, default: undefined },
+    /** Explicit accessible name for callers that render no visible
+     *  caption (switches driven by an external label element or pure
+     *  icon rows). Falls back to `label`; empty strings never fabricate
+     *  a name. */
+    ariaLabel: { type: String, default: undefined },
     checkedContent: { type: String, default: undefined },
     uncheckedContent: { type: String, default: undefined },
   },
@@ -43,6 +48,18 @@ export default defineComponent({
           type="checkbox"
           checked={props.modelValue}
           disabled={props.disabled}
+          // Accessible name (2026-11-18): the wrapping label DOES name the
+          // checkbox implicitly via its text content, but that text
+          // includes the checked/unchecked content ("ON"/"OFF") and any
+          // caller-supplied caption. An explicit aria-label gives the
+          // switch a DETERMINISTIC name: `ariaLabel` wins, `label` is the
+          // next best, and a bare switch fabricates nothing (callers
+          // wiring their own label element keep working — an invented
+          // empty name would shadow theirs).
+          // Truthiness, not ??: an empty-string `label` must not fabricate
+          // an aria-label="" (accname ignores it, but the contract is "no
+          // name in, no name out").
+          aria-label={props.ariaLabel || props.label || undefined}
           onChange={toggle}
         />
         <span

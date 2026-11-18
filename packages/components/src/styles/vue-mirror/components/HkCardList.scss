@@ -71,10 +71,24 @@
 
 .hk-list-row-trailing {
   margin-left: auto;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: var(--space-8, 0.5rem);
+
+  /* The lane must be able to SHRINK when the row runs out of room (chip
+     overflow, 2026-11-18): the old `flex-shrink: 0` plus the default
+     `min-width: auto` pinned the lane at its content width, so a wide
+     trailing cluster — chips, a picker, widget buttons — pushed PAST the
+     row's right edge. With `min-width: 0; flex-shrink: 1` a roomy row is
+     pixel-identical (zero deficit ⇒ none of this applies); an overfull
+     row distributes the deficit PRO RATA, so the lane starts shrinking
+     immediately and wraps the cluster (flex-wrap below) — chips stack
+     inside the card and the row may grow taller, instead of the cluster
+     spilling out of it. */
+  min-width: 0;
+  flex-shrink: 1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 /* The touch action lane parks in the same flex line and owns the auto

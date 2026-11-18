@@ -28,7 +28,7 @@ import { bootRecoveryScript } from "./boot-recovery.js";
  */
 
 const GOLDEN_DEFAULT_SHA256 =
-  "9079c838358d3acfa177389d2f830660569c7bd120d1aa97e1eaf2fcafcb4771";
+  "891195157a5869b90b3c1411c1d45b46ec2c90f313c7c16a874e28bf090aa256";
 const GOLDEN_HEAL_ONLY_SHA256 =
   "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";
 

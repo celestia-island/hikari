@@ -302,7 +302,7 @@
 
 .hk-btn-primary {
   background: rgb(var(--color-primary));
-  color: rgb(var(--color-on-solid));
+  color: rgb(var(--color-on-danger, var(--color-on-solid)));
 
   /* Glyphs follow the icon slot so custom themes can split text/icon ink
      (mirrors the legacy button-vars primary block). */
@@ -386,7 +386,7 @@
 
 .hk-btn-danger {
   background: rgb(var(--color-error));
-  color: rgb(var(--color-on-solid));
+  color: rgb(var(--color-on-danger, var(--color-on-solid)));
 }
 
 .hk-btn-danger:hover:not(:disabled):not(:focus-visible) {

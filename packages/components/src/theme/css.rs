@@ -578,8 +578,8 @@ impl ThemePalette {
             format!("--color-on-success: {};", Self::on_ink_triplet(&self.success)),
             format!("--color-on-warning: {};", Self::on_ink_triplet(&self.warning)),
             format!("--color-on-info: {};", Self::on_ink_triplet(&self.info)),
-            // on-solid is the ink for SEMANTIC fills (all γlum < 0.65 → white).
-            // Using self.primary here would paint `.hk-btn-danger` black.
+            // on-solid is the ink for the BRAND fill (primary). The semantic
+            // fills carry their own --color-on-{danger,success,…} channels.
             // on-solid is the ink for the BRAND fill (primary). The semantic
             // fills use their own --color-on-{danger,success,…} channels.
             format!("--color-on-solid: {};", Self::on_ink_triplet(&self.primary)),
@@ -825,6 +825,14 @@ mod interaction_alias_tests {
         for name in [
             "--color-background:",
             "--color-surface:",
+            "--color-on-primary:",
+            "--color-on-danger:",
+            "--color-on-success:",
+            "--color-on-warning:",
+            "--color-on-info:",
+            "--color-on-solid:",
+            "--color-on-solid-text:",
+            "--color-on-solid-icon:",
             "--color-success:",
             "--color-error:",
             "--color-warning:",

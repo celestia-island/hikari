@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "Passwort anzeigen",
     "hikari::jsonTree.addChild": "Unterelement hinzufügen",
     "hikari::jsonTree.delete": "Löschen",
+    "hikari::jsonTree.duplicateKey": "Schlüssel bereits vergeben",
     "hikari::jsonTree.editValue": "Wert bearbeiten",
     "hikari::jsonTree.invalidNumber": "Ungültige Zahl",
     "hikari::jsonTree.keyLabel": "Schlüssel",

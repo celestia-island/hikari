@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "顯示密碼",
     "hikari::jsonTree.addChild": "新增子節點",
     "hikari::jsonTree.delete": "刪除",
+    "hikari::jsonTree.duplicateKey": "該鍵已被佔用",
     "hikari::jsonTree.editValue": "編輯值",
     "hikari::jsonTree.invalidNumber": "無效數字",
     "hikari::jsonTree.keyLabel": "鍵",

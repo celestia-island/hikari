@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "显示密码",
     "hikari::jsonTree.addChild": "新建子节点",
     "hikari::jsonTree.delete": "删除",
+    "hikari::jsonTree.duplicateKey": "该键已被占用",
     "hikari::jsonTree.editValue": "编辑值",
     "hikari::jsonTree.invalidNumber": "非法数字",
     "hikari::jsonTree.keyLabel": "键",

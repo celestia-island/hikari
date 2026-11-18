@@ -365,6 +365,38 @@ describe("HkJsonTree inline editor", () => {
     expect(rowByPath(container, ["name"])).toBeNull();
   });
 
+  it("refuses a rename that would overwrite an existing sibling key", async () => {
+    const { container, emitted } = mountEditableHost({ name: "chest", tries: 3 });
+    await settle();
+    contextMenu(rowByPath(container, ["name"])!);
+    await settle();
+    menuRow("Rename key")!.click();
+    await settle();
+    const keyInput = editorInput(container, "Key")!;
+    // Typing an existing sibling's name raises the invalid state BEFORE
+    // any commit attempt…
+    typeInto(keyInput, "tries");
+    await nextTick();
+    expect(keyInput.hasAttribute("data-invalid")).toBe(true);
+    expect(container.querySelector(".s-jt-invalid")?.textContent).toBe("Key already in use");
+    // …and Enter is refused: no emit, editor stays open, sibling intact.
+    pressKey(keyInput, "Enter");
+    await settle();
+    expect(emitted).toHaveLength(0);
+    expect(editorRow(container)).not.toBeNull();
+    expect(rowByPath(container, ["tries"])).not.toBeNull(); // sibling survived
+    expect(container.querySelector(".s-jv-num")!.textContent).toBe("3");
+    // Switching to a unique key unblocks the commit.
+    typeInto(keyInput, "title");
+    await nextTick();
+    expect(keyInput.hasAttribute("data-invalid")).toBe(false);
+    pressKey(keyInput, "Enter");
+    await settle();
+    expect(emitted.at(-1)).toEqual({ tries: 3, title: "chest" });
+    expect(editorRow(container)).toBeNull();
+    expect(rowByPath(container, ["title"])).not.toBeNull();
+  });
+
   it("suppresses the emit for a no-op commit (byte-identical rename)", async () => {
     const { container, emitted } = mountEditableHost({ cfg: { retries: 2 } });
     await settle();

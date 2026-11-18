@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "إظهار كلمة المرور",
     "hikari::jsonTree.addChild": "إضافة عنصر فرعي",
     "hikari::jsonTree.delete": "حذف",
+    "hikari::jsonTree.duplicateKey": "المفتاح قيد الاستخدام بالفعل",
     "hikari::jsonTree.editValue": "تحرير القيمة",
     "hikari::jsonTree.invalidNumber": "رقم غير صالح",
     "hikari::jsonTree.keyLabel": "المفتاح",

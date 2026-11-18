@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "パスワードを表示",
     "hikari::jsonTree.addChild": "子要素を追加",
     "hikari::jsonTree.delete": "削除",
+    "hikari::jsonTree.duplicateKey": "そのキーは既に使用されています",
     "hikari::jsonTree.editValue": "値を編集",
     "hikari::jsonTree.invalidNumber": "数値が不正です",
     "hikari::jsonTree.keyLabel": "キー",

@@ -110,6 +110,7 @@
     "hikari::input.showPassword": "비밀번호 표시",
     "hikari::jsonTree.addChild": "하위 항목 추가",
     "hikari::jsonTree.delete": "삭제",
+    "hikari::jsonTree.duplicateKey": "이 키는 이미 사용 중입니다",
     "hikari::jsonTree.editValue": "값 편집",
     "hikari::jsonTree.invalidNumber": "잘못된 숫자",
     "hikari::jsonTree.keyLabel": "키",

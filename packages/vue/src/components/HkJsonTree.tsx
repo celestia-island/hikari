@@ -16,6 +16,7 @@ import {
   jsonPathKey,
   jsonRemoveAtPath,
   jsonSetAtPath,
+  jsonValueAtPath,
   type JsonPath,
 } from "./jsonTreeEdit";
 
@@ -735,11 +736,32 @@ export const HkJsonTree = defineComponent({
     function nextChildKey(obj: Record<string, unknown>): string {
       let n = 1;
       let key = "key";
-      while (key in obj) {
+      // Own keys only — same prototype hygiene as the edit ops.
+      while (Object.prototype.hasOwnProperty.call(obj, key)) {
         n += 1;
         key = `key${n}`;
       }
       return key;
+    }
+
+    /** Whether a sibling already claims `key` among the object members at
+     *  `parentPath` (own keys only — the prototype chain never answers).
+     *  The rename composite's insert is overwrite semantics, so a collision
+     *  would silently EAT the sibling — commits must refuse instead. */
+    function siblingHasKey(parentPath: JsonPath, key: string): boolean {
+      const parent = jsonValueAtPath(props.value, parentPath);
+      return parent !== null
+        && typeof parent === "object"
+        && !Array.isArray(parent)
+        && Object.prototype.hasOwnProperty.call(parent, key);
+    }
+
+    /** The editor's rename collides with an existing sibling key — the
+     *  invalid state the key input shows until the text is unique again. */
+    function renameCollision(node: HJsonNode, keyText: string): boolean {
+      return isObjectMember(node)
+        && keyText !== node.key
+        && siblingHasKey(node.path.slice(0, -1), keyText);
     }
 
     /** Commit the open editor through the pure ops and hand the new root
@@ -747,17 +769,22 @@ export const HkJsonTree = defineComponent({
      *  remove(oldKey) — the exported op set stays exactly the three
      *  primitives. Order caveat (see jsonTreeEdit's header): the composite
      *  MOVES the renamed member to the end of its object; content is
-     *  preserved, key order inside that object is not. */
+     *  preserved, key order inside that object is not. Renaming ONTO an
+     *  existing sibling key is REFUSED (the insert overwrite would delete
+     *  the sibling with no undo): the key input shows the invalid state
+     *  and the editor stays open, exactly like a bad number. */
     function commitEdit() {
       const target = editing.value;
       const d = draft.value;
       if (!target || !d) return;
-      if (d.type === "number" && !isNumberText(d.text)) return; // blocked; invalid state shows
       const node = nodeIndex.value.get(jsonPathKey(target.path));
       if (!node) {
         closeEditor();
         return;
       }
+      const numberBad = d.type === "number" && !isNumberText(d.text);
+      const keyCollides = renameCollision(node, d.keyText);
+      if (numberBad || keyCollides) return; // blocked; invalid state shows
       let next = props.value;
       let finalPath = node.path;
       if (isObjectMember(node) && d.keyText !== node.key) {
@@ -844,7 +871,9 @@ export const HkJsonTree = defineComponent({
       if (!expandedPaths.value.has(node.pathKey)) {
         expandedPaths.value = new Set([...expandedPaths.value, node.pathKey]);
       }
-      emit("update:value", next);
+      // Same guard as commitEdit: a guard-fired op returns the input
+      // untouched, and re-emitting that is a no-op for the host.
+      if (next !== props.value) emit("update:value", next);
       // Inline-refine the fresh child: name it (object member) or fix the
       // value (leaf inside an array). A container inside an array has
       // nothing to type — no editor.
@@ -1014,6 +1043,7 @@ export const HkJsonTree = defineComponent({
       if (!d) return null;
       const numBad = d.type === "number" && !isNumberText(d.text);
       const named = isObjectMember(node);
+      const keyBad = renameCollision(node, d.keyText);
       return (
         <div
           class="s-jt-row s-jt-edit"
@@ -1030,12 +1060,15 @@ export const HkJsonTree = defineComponent({
               <input
                 ref={editKeyEl}
                 class="s-jt-input"
+                data-invalid={keyBad || undefined}
+                aria-invalid={keyBad || undefined}
                 value={d.keyText}
                 aria-label={t("hikari::jsonTree.keyLabel", "Key")}
                 spellcheck={false}
                 onInput={(e) => { d.keyText = (e.target as HTMLInputElement).value; }}
                 onKeydown={onEditorKeydown}
               />
+              {keyBad && <span class="s-jt-invalid">{t("hikari::jsonTree.duplicateKey", "Key already in use")}</span>}
               <span class="s-jt-colon">: </span>
             </>
           )}
@@ -1191,12 +1224,16 @@ export const HkJsonTree = defineComponent({
                     <input
                       ref={editKeyEl}
                       class="s-jt-input"
+                      data-invalid={renameCollision(node, draft.value?.keyText ?? "") || undefined}
+                      aria-invalid={renameCollision(node, draft.value?.keyText ?? "") || undefined}
                       value={draft.value?.keyText ?? ""}
                       aria-label={t("hikari::jsonTree.keyLabel", "Key")}
                       spellcheck={false}
                       onInput={(e) => { if (draft.value) draft.value.keyText = (e.target as HTMLInputElement).value; }}
                       onKeydown={onEditorKeydown}
                     />
+                    {renameCollision(node, draft.value?.keyText ?? "")
+                      && <span class="s-jt-invalid">{t("hikari::jsonTree.duplicateKey", "Key already in use")}</span>}
                     <span class="s-jt-colon">: </span>
                   </>
                 )

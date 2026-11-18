@@ -292,28 +292,55 @@ mod tests {
         assert!(!css.contains("CSS generation failed"), "scss failed");
     }
 
-    /// Chip-lane shrink (2026-11-18 overflow): the trailing lane must carry
-    /// `min-width: 0` (opt in to shrinking below content width) and wrap,
-    /// so a wide trailing cluster clips inside the card instead of pushing
-    /// past the row's right edge. Without this a re-added `flex-shrink: 0`
-    /// would keep the lane at its content width and the overflow back.
+    /// Chip-lane shrink (2026-11-18 overflow): the trailing lane must opt
+    /// in to shrinking (`min-width: 0` + `flex-shrink: 1`) and wrap, so a
+    /// wide trailing cluster stacks inside the card instead of pushing
+    /// past the row's right edge.
+    ///
+    /// grass KEEPS comments in its output, and this block's own comment
+    /// mentions the same tokens the assertions look for — so the probe
+    /// runs on a COMMENT-STRIPPED copy of the block, otherwise a reverted
+    /// declaration survives on comment text alone (found by R2 mutation
+    /// replay: all three original asserts passed on a deleted
+    /// `min-width: 0`).
     #[test]
     fn trailing_lane_opt_in_to_shrinking_and_wrapping() {
         let css = CardListComponent::styles();
-        let lane = css
+        let lane_raw = css
             .split(".hk-list-row-trailing {")
             .nth(1)
             .expect("trailing lane block present")
             .split('}')
             .next()
             .expect("trailing lane block closes");
-        assert!(lane.contains("min-width: 0"), "lane lacks min-width: 0: {lane}");
-        assert!(lane.contains("flex-wrap: wrap"), "lane lacks flex-wrap: wrap: {lane}");
-        // The opt-in only matters while shrinking is allowed; if someone
-        // flips shrink off entirely, the two declarations above go inert.
+        let mut lane = String::with_capacity(lane_raw.len());
+        let mut in_comment = false;
+        let mut chars = lane_raw.chars().peekable();
+        while let Some(c) = chars.next() {
+            if in_comment {
+                if c == '/' {
+                    in_comment = false;
+                    chars.next(); // consume the '/'
+                }
+            } else if c == '/' && chars.peek() == Some(&'*') {
+                in_comment = true;
+                chars.next(); // consume the '*'
+            } else {
+                lane.push(c);
+            }
+
+        }
         assert!(
-            !lane.contains("flex-shrink: 0") || lane.contains("flex-shrink: 1"),
-            "lane must remain shrinkable (flex-shrink: 0 with min-width: 0 is inert): {lane}"
+            lane.contains("min-width: 0"),
+            "lane lacks min-width: 0 (comment-stripped): {lane}"
+        );
+        assert!(
+            lane.contains("flex-wrap: wrap"),
+            "lane lacks flex-wrap: wrap (comment-stripped): {lane}"
+        );
+        assert!(
+            lane.contains("flex-shrink: 1"),
+            "lane must carry flex-shrink: 1 (0 + min-width: 0 is inert): {lane}"
         );
     }
 }

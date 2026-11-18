@@ -47,13 +47,14 @@ export default defineComponent({
           type="checkbox"
           checked={props.modelValue}
           disabled={props.disabled}
-          // Accessible name (2026-11-18): the visible caption renders as a
-          // SIBLING span inside the label, but a wrapping label does not
-          // name its checkbox on its own — without an explicit
-          // aria-label the switch is announced unnamed (screen readers
-          // and the platform a11y tree both). `label` doubles as that
-          // name; `aria-label` is the escape hatch for callers that
-          // neither pass `label` nor slot a caption.
+          // Accessible name (2026-11-18): the wrapping label DOES name the
+          // checkbox implicitly via its text content, but that text
+          // includes the checked/unchecked content ("ON"/"OFF") and any
+          // caller-supplied caption. An explicit aria-label gives the
+          // switch a DETERMINISTIC name: `ariaLabel` wins, `label` is the
+          // next best, and a bare switch fabricates nothing (callers
+          // wiring their own label element keep working — an invented
+          // empty name would shadow theirs).
           aria-label={props.ariaLabel ?? props.label}
           onChange={toggle}
         />

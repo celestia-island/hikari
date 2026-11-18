@@ -30,10 +30,12 @@
 // `Signal`/`use_state` is involved.
 //
 // Deltas vs Vue (documented):
-// * Vue emits NO `aria-checked` (nor any `aria-*`) here: the wrapped native
-//   `<input type="checkbox">` owns the role and the state, and the track is
-//   decorative paint around it. The mirror therefore adds none — an
-//   `aria-checked` on the label would announce the state twice.
+// * aria: as of 2026-11-18 Vue puts `aria-label` on the input
+//   (`ariaLabel` prop, falling back to `label` — a deterministic name
+//   beats the implicit label text, which leaks the "ON"/"OFF" content).
+//   The mirror carries the same attribute; Vue still emits no
+//   `aria-checked` (the input owns the state — an `aria-checked` on the
+//   label would announce it twice).
 // * The legacy Rust `Switch` is retired: its `variant`
 //   (`Default`/`Text`/`Icon`/`Custom`), `SwitchContent`
 //   (`Text`/`Icon`/`Image`) and `SwitchIcon` props have no Vue counterpart
@@ -212,6 +214,7 @@ pub fn Switch(props: SwitchProps) -> Element {
                 type: "checkbox",
                 checked: checked,
                 disabled: disabled,
+                "aria-label": props.label.clone(),
                 onchange: handle_change,
             }
             span {

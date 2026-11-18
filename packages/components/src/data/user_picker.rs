@@ -1589,6 +1589,14 @@ mod tests {
             html.contains("hk-user-picker-row-kind"),
             "the group row must carry the group glyph class: {html}"
         );
+        // The glyph renders ONCE — on the group row only; a guard mutation
+        // that drops the kind branch must turn this red (the user row
+        // stays plain, pinning glyph-only-on-group).
+        assert_eq!(
+            html.matches("hk-user-picker-row-kind").count(),
+            1,
+            "only the group-kind row carries the glyph"
+        );
         // The packed account-group path renders (not the build script's
         // help-circle fallback — get("account-group") must resolve).
         assert!(

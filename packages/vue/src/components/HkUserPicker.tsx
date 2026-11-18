@@ -10,8 +10,14 @@
 //    icon button by filling the `trigger` slot; the component anchors the
 //    SAME panel to that button (desktop popout under it, phone bottom
 //    sheet) and grows no second kind of window. The slot receives
-//    `{ open, toggle }` so the host button can mirror the a11y state;
-//    the click/keydown wiring stays here, on the anchor wrapper.
+//    `{ open }` (the HkDateTimePicker / HkAffixPicker trigger precedent:
+//    the toggle wiring stays ON the wrapper and is NOT handed out, so a
+//    host cannot double-toggle); the host button owns its own a11y
+//    (aria-label / aria-expanded from the `open` prop) and, being a
+//    native button, gets Enter/Space for free through click bubbling.
+//    Escape closes via the surface (focus moves into the panel's search
+//    field on open). A disabled picker no-ops the wrapper's toggle; the
+//    host mirrors its own disabled face onto the button.
 //  · GROUP-kind rows — grant surfaces treat users and user groups as the
 //    same kind of thing (a group IS a batch of users), so an option may
 //    carry `kind: "group"`: the row renders the group glyph beside the
@@ -376,9 +382,11 @@ export default defineComponent({
       const multi = props.mode === "multi";
       // Trigger presentation: the host's slot content replaces the tag
       // field as the visible chrome; this wrapper stays the ANCHOR and the
-      // sole toggle wiring (click bubbles from the host's button; the
-      // surface owns Escape), so the host cannot double-toggle. The slot
-      // receives the state it needs to mirror a11y onto its own button.
+      // sole toggle wiring. The slot payload is `{ open }` ONLY — the
+      // toggle is deliberately NOT handed out (the HkDateTimePicker /
+      // HkAffixPicker precedent): a host that wired it onto a button
+      // inside this wrapper would run open→close in one event and the
+      // panel could never open. The host button mirrors a11y from `open`.
       const triggerSlot = slots.trigger;
       const anchor = triggerSlot ? (
         <div
@@ -386,7 +394,7 @@ export default defineComponent({
           class={{ "hk-user-picker-trigger": true, "is-open": open.value }}
           onClick={togglePanel}
         >
-          {triggerSlot({ open: open.value, toggle: togglePanel })}
+          {triggerSlot({ open: open.value })}
         </div>
       ) : (
         <div
@@ -543,7 +551,9 @@ export default defineComponent({
                       onClick={() => pickRow(user)}
                     >
                       {isGroup && (
-                        <UsersRound size={14} class="hk-user-picker-row-kind" aria-hidden="true" />
+                        <span class="hk-user-picker-row-kind" aria-hidden="true">
+                          <UsersRound size={14} />
+                        </span>
                       )}
                       <span class="hk-user-picker-row-main">
                         <span class="hk-user-picker-row-name">{tagTitle(user)}</span>

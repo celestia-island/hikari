@@ -350,9 +350,12 @@ describe("HkUserPicker", () => {
   // The host collapses the field into its own icon button via the
   // `trigger` slot; the SAME panel anchors to that button.
   it("trigger mode renders the slot instead of the tag field", () => {
+    let slotKeys: string[] | null = null;
     mount(() => h(HkUserPicker, { modelValue: [alice], search: async () => [] }, {
-      trigger: ({ open }: { open: boolean }) =>
-        h("button", { class: "test-trigger", "data-open": String(open) }, "Add member"),
+      trigger: (slotProps: { open: boolean }) => {
+        slotKeys = Object.keys(slotProps);
+        return h("button", { class: "test-trigger", "data-open": String(slotProps.open) }, "Add member");
+      },
     }));
     // No tag field: the slot content IS the visible chrome.
     expect(document.body.querySelector(".hk-user-picker-field")).toBeNull();
@@ -361,6 +364,11 @@ describe("HkUserPicker", () => {
     const button = anchor.querySelector<HTMLButtonElement>("button.test-trigger")!;
     expect(button.textContent).toBe("Add member");
     expect(button.getAttribute("data-open")).toBe("false");
+    // The slot payload is `{ open }` ONLY (the HkDateTimePicker /
+    // HkAffixPicker precedent): `toggle` is deliberately not handed out —
+    // a host that wired it onto the button inside the wrapper would
+    // double-toggle the panel shut in one event.
+    expect(slotKeys).toEqual(["open"]);
   });
 
   it("clicking the trigger opens the same search-first panel and mirrors the open state", async () => {
@@ -379,7 +387,11 @@ describe("HkUserPicker", () => {
     // slot saw the open flip.
     expect(button().getAttribute("data-open")).toBe("true");
     expect(document.body.querySelector(".hk-user-picker-rows")).not.toBeNull();
-    expect(document.body.querySelector<HTMLInputElement>(".hk-user-picker-search input")).not.toBeNull();
+    const input = document.body.querySelector<HTMLInputElement>(".hk-user-picker-search input");
+    expect(input).not.toBeNull();
+    // The trigger form keeps the search-first contract on BOTH halves:
+    // focus lands in the panel's search field, exactly like the field form.
+    expect(document.activeElement).toBe(input);
     await wait(DEBOUNCE_WAIT);
     await settle();
     // The empty-query contract survives the trigger form.

@@ -773,15 +773,17 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         }
         if is_group {
             row = row.attr("data-kind", "group");
-            // The group-kind glyph (Vue's leading `UsersRound`): one quiet
-            // glyph that says "this row grants a batch", before the name.
-            // Delta vs Vue (documented, the toast.rs precedent): the packed
-            // MDI `account-group` twin stands in for the lucide glyph and
-            // carries no text of its own, so Vue's `aria-hidden` has no
-            // mirrored attribute — the row keeps Vue's `data-kind="group"`.
+            // The group-kind glyph (Vue's leading `UsersRound`): the
+            // grammar's leading icon cell — `mi.icon` on the Vue side
+            // normalizes to the 16px desktop box, so the mirror pins the
+            // same 16. Delta vs Vue (documented, the toast.rs precedent):
+            // the packed MDI `account-group` twin stands in for the lucide
+            // glyph and carries no text of its own, so Vue's `aria-hidden`
+            // has no mirrored attribute — the row keeps Vue's
+            // `data-kind="group"`.
             row = row.child(Icon(IconProps {
                 icon: MdiIcon::AccountGroup,
-                size: 14,
+                size: 16,
                 class: "hk-user-picker-row-kind".to_string(),
                 ..Default::default()
             }));

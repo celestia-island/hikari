@@ -391,7 +391,7 @@ export default defineComponent({
       const anchor = triggerSlot ? (
         <div
           ref={fieldRef}
-          class={{ "hk-user-picker-trigger": true, "is-open": open.value }}
+          class="hk-user-picker-trigger"
           onClick={togglePanel}
         >
           {triggerSlot({ open: open.value })}

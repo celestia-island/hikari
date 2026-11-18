@@ -132,6 +132,17 @@
   width: min(24rem, 80vw);
 }
 
+/* Mobile sheet context (#424 pattern, the HkTagInput / HkAffixPicker
+ * spelling): inside the full-width select sheet the popup's designed
+ * measure becomes a centered cap instead of a left-glued clamp — the
+ * trigger panel reads as one designed block inside the viewport-wide
+ * sheet rather than hugging its left edge. */
+.hk-select-sheet-panel .hk-user-picker-panel.is-trigger-anchor {
+  width: 100%;
+  max-width: min(24rem, 100%);
+  margin-inline: auto;
+}
+
 /* ── Panel content ──────────────────────────────────────────────────── */
 
 /* The content column inside HkSelectPanel. `.hk-user-picker-dialog` is the

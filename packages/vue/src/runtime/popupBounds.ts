@@ -158,16 +158,37 @@ export function popupInsets(): Readonly<ResolvedPopupInsets> {
   return current;
 }
 
+/** Options for {@link popupViewportRect}. */
+export interface PopupViewportOptions {
+  /**
+   * Return the RAW window (0/0/innerWidth/innerHeight), ignoring every
+   * configured inset AND the chrome-band floor. The explicit escape
+   * hatch for surfaces that intentionally pin over the host caption
+   * strip: the tooltip `allowBandOverlap` exemption and the
+   * `aboveChrome` caption attachments (they live in #hk-top-root and
+   * are allowed to hug/overlap the band row they hang from).
+   */
+  rawWindow?: boolean;
+}
+
 /**
  * The region popups may occupy: the window inset by the configured band.
  * Width and height floor at 0 — an over-wide band collapses the frame,
  * and every clamp then pins to its leading edge, the honest answer to
  * an impossible configuration.
  */
-export function popupViewportRect(win?: Window | null): PopupViewportRect {
+export function popupViewportRect(
+  win?: Window | null,
+  options: PopupViewportOptions = {},
+): PopupViewportRect {
   reportOnce();
   if (typeof window === "undefined") return { x: 0, y: 0, width: 0, height: 0 };
   const w = win ?? window;
+  // The escape hatch: the raw window, byte-identical to the pre-band
+  // frame a browser face (no declared band) always sees.
+  if (options.rawWindow) {
+    return { x: 0, y: 0, width: w.innerWidth, height: w.innerHeight };
+  }
   // The chrome-band floor: with the caption-band token declared (native
   // shells), popups occupy the window BELOW band + gap even when the host
   // configured no explicit top inset — the "generally never cover the

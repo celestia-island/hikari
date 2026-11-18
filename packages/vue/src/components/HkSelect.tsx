@@ -60,6 +60,14 @@ export default defineComponent({
       type: String as PropType<SelectPanelPlacement>,
       default: "bottom-start",
     },
+    /**
+     * Caption-band attachment opt-in (2026-11-17 user direction),
+     * forwarded to the panel: the trigger lives on the host's window
+     * caption band, so the popout teleports to #hk-top-root and paints
+     * ABOVE the band row instead of under it (overlay/topRoot.ts).
+     * Hosts pass `isNative()`.
+     */
+    aboveChrome: { type: Boolean, default: false },
   },
   emits: {
     "update:modelValue": (_value: string) => true,
@@ -219,6 +227,7 @@ export default defineComponent({
           title={props.panelTitle ?? props.label ?? ""}
           placement={props.placement}
           offset={4}
+          aboveChrome={props.aboveChrome}
           onKeydown={onPopoutKeydown}
         >
           {slots.default

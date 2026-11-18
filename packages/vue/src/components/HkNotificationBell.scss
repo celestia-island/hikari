@@ -132,6 +132,18 @@
 .hk-notification-row__body {
   flex: 1 1 auto;
   min-width: 0;
+  /* Optical centering (user report 2026-11-17: every row's TEXT read a
+     hair LOW against the tone glyph and the dismiss button, which both
+     center exactly). Row-level `align-items: center` centers the line
+     BOX, and with the house YaHei-led CJK stack the font's ascent/descent
+     asymmetry parks the ink ~1px below that geometric center (measured on
+     the 13px title in a 200% DPI capture: cap-ink center 154.5 vs the
+     row's 152.5). Lift the text block by the measured offset so the
+     cap/x-height line lands on the row's center line; the 1px integer
+     keeps glyph rasterization on the pixel grid. Applies to both the
+     desktop flyout and the mobile sheet, which share this renderer. */
+  position: relative;
+  top: -1px;
 }
 
 .hk-notification-row__top {

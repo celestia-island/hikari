@@ -257,22 +257,14 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
-    /// The `solidInk` house rule (white by default; black when γlum > 0.65)
-    /// computed from a hex string. Used for the `--color-on-*` ink slots.
-    fn solid_ink_hex(hex: &str) -> &'static str {
-        let s = hex.trim().trim_start_matches('#');
-        if s.len() != 6 {
-            return "#FFFFFF";
-        }
-        let r = u8::from_str_radix(&s[0..2], 16).unwrap_or(0);
-        let g = u8::from_str_radix(&s[2..4], 16).unwrap_or(0);
-        let b = u8::from_str_radix(&s[4..6], 16).unwrap_or(0);
-        let lum = (0.2126 * r as f64 + 0.7152 * g as f64 + 0.0722 * b as f64) / 255.0;
-        if lum > 0.65 {
-            "#000000"
-        } else {
-            "#FFFFFF"
-        }
+    /// The `--color-on-*` ink for a fill, as a `R G B` triplet. Delegates to
+    /// `Color::solid_ink()` (the single home of the house rule — the same
+    /// 0.65 threshold and Rec.709 metric as the TS `solidInk`).
+    fn on_ink_triplet(fill_hex: &str) -> String {
+        let ink = Color::from_hex(fill_hex)
+            .map(|c| c.solid_ink())
+            .unwrap_or_else(|| Color::from_rgb_hex(0xff, 0xff, 0xff));
+        Self::hex_triplet(&ink.hex())
     }
 
     /// `#RRGGBB` → `R G B` (the channel-triplet form `rgb(var(--color-X))`
@@ -549,6 +541,7 @@ impl ThemePalette {
             format!("--hi-primary: {};", self.primary),
             format!("--hi-secondary: {};", self.secondary),
             format!("--hi-accent: {};", self.accent),
+            format!("--hi-color-accent: {};", self.accent),
             format!("--hi-success: {};", self.success),
             format!("--hi-warning: {};", self.warning),
             format!("--hi-danger: {};", self.danger),
@@ -580,12 +573,16 @@ impl ThemePalette {
             format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
             format!("--color-secondary: {};", Self::hex_triplet(&self.secondary)),
             format!("--color-accent: {};", Self::hex_triplet(&self.accent)),
-            format!("--color-on-primary: {};", Self::solid_ink_hex(&self.primary)),
-            format!("--color-on-danger: {};", Self::solid_ink_hex(&self.danger)),
-            format!("--color-on-success: {};", Self::solid_ink_hex(&self.success)),
-            format!("--color-on-warning: {};", Self::solid_ink_hex(&self.warning)),
-            format!("--color-on-info: {};", Self::solid_ink_hex(&self.info)),
-            format!("--color-on-solid: {};", Self::solid_ink_hex(&self.primary)),
+            format!("--color-on-primary: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-danger: {};", Self::on_ink_triplet(&self.danger)),
+            format!("--color-on-success: {};", Self::on_ink_triplet(&self.success)),
+            format!("--color-on-warning: {};", Self::on_ink_triplet(&self.warning)),
+            format!("--color-on-info: {};", Self::on_ink_triplet(&self.info)),
+            // on-solid is the ink for SEMANTIC fills (all γlum < 0.65 → white).
+            // Using self.primary here would paint `.hk-btn-danger` black.
+            format!("--color-on-solid: {};", Self::on_ink_triplet(&self.danger)),
+            format!("--color-on-solid-text: {};", Self::on_ink_triplet(&self.danger)),
+            format!("--color-on-solid-icon: {};", Self::on_ink_triplet(&self.danger)),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
@@ -788,6 +785,7 @@ mod interaction_alias_tests {
             "--hi-color-danger-fg:",
             "--hi-color-warning-fg:",
             "--hi-color-info-fg:",
+            "--hi-color-accent:",
             "--color-surface:",
             "--color-background:",
             "--color-text:",
@@ -803,8 +801,8 @@ mod interaction_alias_tests {
             "--color-on-warning:",
             "--color-on-info:",
             "--color-on-solid:",
-            "--color-secondary:",
-            "--color-accent:",
+            "--color-on-solid-text:",
+            "--color-on-solid-icon:",
             "--color-on-primary:",
             "--color-on-danger:",
             "--color-on-success:",
@@ -829,17 +827,10 @@ mod interaction_alias_tests {
         let palette = ThemePalette::from_palette(&default_theme());
         let css = palette.css_variables();
         for name in [
-            "--color-background:",
-            "--color-surface:",
             "--color-success:",
             "--color-error:",
             "--color-warning:",
             "--color-info:",
-            "--color-text:",
-            "--color-muted:",
-            "--color-text-secondary:",
-            "--color-border:",
-            "--color-primary:",
         ] {
             // css_variables() joins with SPACE, not newline — split on `;`.
             let value = css

@@ -355,7 +355,7 @@ impl StyledComponent for MyComponent {
 ### Добавление пользовательских тем
 
 ```rust
-use hikari_palette::Palette;
+use hikari_palette::{Palette, ThemeMode, Color};
 
 struct CustomTheme;
 

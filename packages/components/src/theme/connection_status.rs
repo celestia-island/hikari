@@ -230,7 +230,7 @@ impl ConnectionBackendState {
             ConnectionBackendState::Ok => "rgb(var(--color-success))",
             ConnectionBackendState::Warn => "rgb(var(--color-warning))",
             ConnectionBackendState::Error => "rgb(var(--color-error))",
-            ConnectionBackendState::Unknown => "var(--color-muted)",
+            ConnectionBackendState::Unknown => "var(--hi-color-muted, rgb(var(--color-muted)))",
         }
     }
 }
@@ -760,7 +760,7 @@ mod tests {
         );
         assert_eq!(
             ConnectionBackendState::Unknown.color(),
-            "var(--color-muted)"
+            "var(--hi-color-muted, rgb(var(--color-muted)))"
         );
         assert_eq!(ConnectionBackendState::Warn.as_str(), "warn");
         // The Rust bundle does not carry the four keys yet — the English

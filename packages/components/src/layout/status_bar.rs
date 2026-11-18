@@ -276,7 +276,7 @@ fn status_bar_probe_style(connecting: bool) -> String {
 /// the muted ink.
 pub fn status_bar_latency_color(ms: Option<f64>) -> &'static str {
     match ms {
-        None => "var(--color-muted)",
+        None => "var(--hi-color-muted, rgb(var(--color-muted)))",
         Some(ms) if ms < 30.0 => "var(--hi-success-fg, rgb(var(--color-success)))",
         Some(ms) if ms < 100.0 => "var(--hi-warning-fg, rgb(var(--color-warning)))",
         Some(_) => "var(--hi-danger-fg, rgb(var(--color-error)))",
@@ -1048,7 +1048,7 @@ mod tests {
                 .contains("--color-text-tertiary")
         );
 
-        assert_eq!(status_bar_latency_color(None), "var(--color-muted)");
+        assert_eq!(status_bar_latency_color(None), "var(--hi-color-muted, rgb(var(--color-muted)))");
         assert_eq!(
             status_bar_latency_color(Some(0.0)),
             "var(--hi-success-fg, rgb(var(--color-success)))"

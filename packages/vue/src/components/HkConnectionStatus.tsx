@@ -53,7 +53,7 @@ const backendStateColor: Record<HkBackendStatus["state"], string> = {
   ok: "rgb(var(--color-success))",
   warn: "rgb(var(--color-warning))",
   error: "rgb(var(--color-error))",
-  unknown: "var(--color-muted)",
+  unknown: "var(--hi-color-muted, rgb(var(--color-muted)))",
 };
 
 /**

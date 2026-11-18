@@ -208,9 +208,12 @@ describe("normalizeIndex hardening", () => {
   it("rejects non-canonical string forms from smuggling an index", () => {
     // Number("") === 0 would make an empty segment into index 0; "1.0"
     // and friends coerce to valid integers but are nobody's stored path.
+    // All three ops share the CANONICAL_INDEX gate — set, insert AND
+    // remove must each answer the original root, same reference.
     for (const hostile of ["", "1.0", "01", " 1", "+1", "-0", "1e0"]) {
       expect(jsonSetAtPath(root, ["list", hostile], "z"), JSON.stringify(hostile)).toBe(root);
       expect(jsonInsertChildAt(root, ["list"], hostile, "z")).toBe(root);
+      expect(jsonRemoveAtPath(root, ["list", hostile]), JSON.stringify(hostile)).toBe(root);
     }
   });
 

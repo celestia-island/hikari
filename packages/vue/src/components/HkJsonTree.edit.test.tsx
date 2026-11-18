@@ -365,6 +365,23 @@ describe("HkJsonTree inline editor", () => {
     expect(rowByPath(container, ["name"])).toBeNull();
   });
 
+  it("suppresses the emit for a no-op commit (byte-identical rename)", async () => {
+    const { container, emitted } = mountEditableHost({ cfg: { retries: 2 } });
+    await settle();
+    contextMenu(rowByPath(container, ["cfg"])!);
+    await settle();
+    menuRow("Rename key")!.click();
+    await settle();
+    // Commit with the key text BYTE-IDENTICAL: the rename composite is
+    // skipped (keyText === node.key), a container sets no value, so
+    // commitEdit's `next !== props.value` guard (reference identity) sees
+    // the untouched root and suppresses the emit entirely.
+    pressKey(editorInput(container, "Key")!, "Enter");
+    await settle();
+    expect(emitted).toHaveLength(0);
+    expect(editorRow(container)).toBeNull();
+  });
+
   it("cancels on Escape without emitting", async () => {
     const { container, emitted } = mountEditableHost({ name: "chest" });
     await settle();

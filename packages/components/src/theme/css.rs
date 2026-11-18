@@ -257,6 +257,16 @@ pub struct ThemePalette {
 }
 
 impl ThemePalette {
+    /// The `--color-on-*` ink for a fill, as a `R G B` triplet. Delegates to
+    /// `Color::solid_ink()` (the single home of the house rule — the same
+    /// 0.65 threshold and Rec.709 metric as the TS `solidInk`).
+    fn on_ink_triplet(fill_hex: &str) -> String {
+        let ink = Color::from_hex(fill_hex)
+            .map(|c| c.solid_ink())
+            .unwrap_or_else(|| Color::from_rgb_hex(0xff, 0xff, 0xff));
+        Self::hex_triplet(&ink.hex())
+    }
+
     /// `#RRGGBB` → `R G B` (the channel-triplet form `rgb(var(--color-X))`
     /// needs; the static seeds use the same shape).
     fn hex_triplet(hex: &str) -> String {
@@ -531,6 +541,7 @@ impl ThemePalette {
             format!("--hi-primary: {};", self.primary),
             format!("--hi-secondary: {};", self.secondary),
             format!("--hi-accent: {};", self.accent),
+            format!("--hi-color-accent: {};", self.accent),
             format!("--hi-success: {};", self.success),
             format!("--hi-warning: {};", self.warning),
             format!("--hi-danger: {};", self.danger),
@@ -560,6 +571,20 @@ impl ThemePalette {
             format!("--color-text-secondary: {};", Self::hex_triplet(&self.text_secondary)),
             format!("--color-border: {};", Self::hex_triplet(&self.border)),
             format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
+            format!("--color-secondary: {};", Self::hex_triplet(&self.secondary)),
+            format!("--color-accent: {};", Self::hex_triplet(&self.accent)),
+            format!("--color-on-primary: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-danger: {};", Self::on_ink_triplet(&self.danger)),
+            format!("--color-on-success: {};", Self::on_ink_triplet(&self.success)),
+            format!("--color-on-warning: {};", Self::on_ink_triplet(&self.warning)),
+            format!("--color-on-info: {};", Self::on_ink_triplet(&self.info)),
+            // on-solid is the ink for the BRAND fill (primary). The semantic
+            // fills carry their own --color-on-{danger,success,…} channels.
+            // on-solid is the ink for the BRAND fill (primary). The semantic
+            // fills use their own --color-on-{danger,success,…} channels.
+            format!("--color-on-solid: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-solid-text: {};", Self::on_ink_triplet(&self.primary)),
+            format!("--color-on-solid-icon: {};", Self::on_ink_triplet(&self.primary)),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
@@ -762,6 +787,7 @@ mod interaction_alias_tests {
             "--hi-color-danger-fg:",
             "--hi-color-warning-fg:",
             "--hi-color-info-fg:",
+            "--hi-color-accent:",
             "--color-surface:",
             "--color-background:",
             "--color-text:",
@@ -769,6 +795,16 @@ mod interaction_alias_tests {
             "--color-text-secondary:",
             "--color-border:",
             "--color-primary:",
+            "--color-secondary:",
+            "--color-accent:",
+            "--color-on-primary:",
+            "--color-on-danger:",
+            "--color-on-success:",
+            "--color-on-warning:",
+            "--color-on-info:",
+            "--color-on-solid:",
+            "--color-on-solid-text:",
+            "--color-on-solid-icon:",
         ] {
             assert!(
                 css.contains(name),
@@ -789,6 +825,14 @@ mod interaction_alias_tests {
         for name in [
             "--color-background:",
             "--color-surface:",
+            "--color-on-primary:",
+            "--color-on-danger:",
+            "--color-on-success:",
+            "--color-on-warning:",
+            "--color-on-info:",
+            "--color-on-solid:",
+            "--color-on-solid-text:",
+            "--color-on-solid-icon:",
             "--color-success:",
             "--color-error:",
             "--color-warning:",
@@ -798,6 +842,8 @@ mod interaction_alias_tests {
             "--color-text-secondary:",
             "--color-border:",
             "--color-primary:",
+            "--color-secondary:",
+            "--color-accent:",
         ] {
             // css_variables() joins with SPACE, not newline — split on `;`.
             let value = css

@@ -64,7 +64,7 @@ function regionDisplayName(
 }
 
 function latencyColor(ms: number | null): string {
-  if (ms === null) return "var(--color-muted)";
+  if (ms === null) return "var(--hi-color-muted, rgb(var(--color-muted)))";
   if (ms < 30) return "var(--hi-color-success-fg, rgb(var(--color-success)))";
   if (ms < 100) return "var(--hi-color-warning-fg, rgb(var(--color-warning)))";
   return "var(--hi-color-danger-fg, rgb(var(--color-error)))";

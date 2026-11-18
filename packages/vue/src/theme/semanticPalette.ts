@@ -152,7 +152,7 @@ export function rgbToOklch(input: ThemeTokenRGB): OKLCH {
 }
 
 // ── WCAG contrast — deliberately NOT the package's other ink metric ────
-// contrastColor/solidInk use the raw weighted average (gamma-encoded
+// solidInk uses the raw weighted average (gamma-encoded
 // luminance/255); this module uses WCAG RELATIVE luminance. The
 // divergence is load-bearing: readability targets here are WCAG ratios,
 // while the solidInk seam keeps its own perception-first metric.

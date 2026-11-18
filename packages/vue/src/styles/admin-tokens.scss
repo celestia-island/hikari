@@ -1337,15 +1337,15 @@
 
 /* ── Arona app utility classes ── */
 .a-text-primary {
-  color: var(--color-text);
+  color: rgb(var(--color-text));
 }
 
 .a-text-secondary {
-  color: var(--color-text-secondary);
+  color: rgb(var(--color-text-secondary));
 }
 
 .a-text-tertiary {
-  color: var(--color-text-tertiary);
+  color: rgb(var(--color-text-tertiary, 140 140 140));
 }
 
 .a-text-danger {
@@ -1357,11 +1357,11 @@
 }
 
 .a-icon-success {
-  color: var(--color-success, rgb(31 101 48));
+  color: var(--hi-color-success-fg, rgb(var(--color-success)));
 }
 
 .a-icon-warning {
-  color: var(--color-warning, rgb(137 72 0));
+  color: var(--hi-color-warning-fg, rgb(var(--color-warning)));
 }
 
 .a-bg-secondary {
@@ -1374,7 +1374,7 @@
 
 .a-latency-text {
   font-size: 0.8rem;
-  color: var(--color-text-tertiary);
+  color: rgb(var(--color-text-tertiary, 140 140 140));
 }
 
 .a-error-banner {

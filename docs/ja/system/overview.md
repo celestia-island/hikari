@@ -354,16 +354,26 @@ impl StyledComponent for MyComponent {
 ### カスタムテーマの追加
 
 ```rust
-use hikari_palette::Palette;
+use hikari_palette::{Palette, ThemeMode, Color};
 
 struct CustomTheme;
 
 impl CustomTheme {
     pub fn palette() -> Palette {
         Palette {
-            primary: "#FF0000",
-            secondary: "#00FF00",
-            // ...
+            mode: ThemeMode::Light,
+            primary: Color::from_rgb_hex(0xEE, 0xA2, 0xA4),
+            secondary: Color::from_rgb_hex(0x51, 0x9A, 0x73),
+            accent: Color::from_rgb_hex(0xF5, 0x9E, 0x0B),
+            success: Color::from_rgb_hex(0x1f, 0x65, 0x30),
+            warning: Color::from_rgb_hex(0x89, 0x48, 0x00),
+            danger: Color::from_rgb_hex(0xa6, 0x29, 0x37),
+            info: Color::from_rgb_hex(0x00, 0x62, 0x74),
+            background: Color::from_rgb_hex(0xd6, 0xec, 0xf0),
+            surface: Color::from_rgb_hex(0xe0, 0xf0, 0xe9),
+            border: Color::from_rgb_hex(0xc4, 0xd8, 0xda),
+            text_primary: Color::from_rgb_hex(0x2d, 0x2d, 0x2d),
+            text_secondary: Color::from_rgb_hex(0x6b, 0x72, 0x80),
         }
     }
 }

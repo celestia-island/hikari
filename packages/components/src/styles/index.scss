@@ -390,7 +390,7 @@
   --hi-color-border: var(--hi-border);
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
-  --hi-color-surface: var(--hi-surface);
+  --hi-color-surface: rgb(var(--color-surface));
   // Widely used by component styles (code blocks, tables, markdown
   // renderer, demo blocks) but previously never defined here.
   --hi-color-surface-secondary: rgba(248, 250, 252, 0.5);
@@ -532,7 +532,8 @@
   --hi-color-border: var(--hi-border);
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
-  --hi-color-surface: var(--hi-surface);
+  --color-surface: 74 66 102;  /* 黛 — the palette surface, triplet */
+  --hi-color-surface: rgb(var(--color-surface));
 
   // Scrollbar Colors
   --hi-scrollbar-track-dark: rgba(255,255, 255, 0.25);  // White with 25% opacity

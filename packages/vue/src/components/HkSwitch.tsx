@@ -18,7 +18,8 @@ export default defineComponent({
     label: { type: String, default: undefined },
     /** Explicit accessible name for callers that render no visible
      *  caption (switches driven by an external label element or pure
-     *  icon rows). Falls back to `label`. */
+     *  icon rows). Falls back to `label`; empty strings never fabricate
+     *  a name. */
     ariaLabel: { type: String, default: undefined },
     checkedContent: { type: String, default: undefined },
     uncheckedContent: { type: String, default: undefined },
@@ -55,7 +56,10 @@ export default defineComponent({
           // next best, and a bare switch fabricates nothing (callers
           // wiring their own label element keep working — an invented
           // empty name would shadow theirs).
-          aria-label={props.ariaLabel ?? props.label}
+          // Truthiness, not ??: an empty-string `label` must not fabricate
+          // an aria-label="" (accname ignores it, but the contract is "no
+          // name in, no name out").
+          aria-label={props.ariaLabel || props.label || undefined}
           onChange={toggle}
         />
         <span

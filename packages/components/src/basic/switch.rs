@@ -126,6 +126,10 @@ pub struct SwitchProps {
 
     /// Label text; the default slot (`children`) wins over it when present.
     pub label: Option<String>,
+    /// Explicit accessible name for caption-less callers (Vue `ariaLabel`);
+    /// wins over `label`, empty strings never fabricate a name.
+    #[props(default)]
+    pub aria_label: Option<String>,
 
     /// Text shown inside the track while checked (Vue: `checkedContent`).
     pub checked_content: Option<String>,
@@ -214,7 +218,13 @@ pub fn Switch(props: SwitchProps) -> Element {
                 type: "checkbox",
                 checked: checked,
                 disabled: disabled,
-                "aria-label": props.label.clone(),
+                // Vue: ariaLabel wins, label is the fallback; empty
+                // strings never fabricate a name.
+                "aria-label": props
+                    .aria_label
+                    .clone()
+                    .filter(|s| !s.is_empty())
+                    .or_else(|| props.label.clone().filter(|s| !s.is_empty())),
                 onchange: handle_change,
             }
             span {

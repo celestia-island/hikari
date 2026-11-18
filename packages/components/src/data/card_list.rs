@@ -342,5 +342,11 @@ mod tests {
             lane.contains("flex-shrink: 1"),
             "lane must carry flex-shrink: 1 (0 + min-width: 0 is inert): {lane}"
         );
+        // Right-flush after a wrap: without it a stacked cluster sits left
+        // with a gap to the row edge.
+        assert!(
+            lane.contains("justify-content: flex-end"),
+            "lane lacks justify-content: flex-end (comment-stripped): {lane}"
+        );
     }
 }

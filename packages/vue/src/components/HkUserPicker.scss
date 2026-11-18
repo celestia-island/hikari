@@ -105,6 +105,23 @@
   }
 }
 
+/* Trigger presentation: the host's icon button IS the visible trigger;
+ * this wrapper is only the anchor (click/keydown wiring lives on it in
+ * the tsx) — no field box, no padding of its own. */
+.hk-user-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Off a one-glyph anchor the popout cannot inherit a useful width
+ * (matchAnchorWidth is off in trigger mode) — the panel carries the
+ * family width instead of hugging its shortest text. */
+.hk-user-picker-panel.is-trigger-anchor {
+  width: min(24rem, calc(100vw - 2 * var(--space-16, 1rem)));
+}
+
 /* ── Panel content ──────────────────────────────────────────────────── */
 
 /* The content column inside HkSelectPanel. `.hk-user-picker-dialog` is the
@@ -235,6 +252,13 @@
   flex: none;
   color: var(--hi-color-primary, #7aa2f7);
   font-weight: 700;
+}
+
+/* The group-kind glyph (data-kind="group"): one quiet leading glyph that
+ * says "this row grants a batch", beside the row's name column. */
+.hk-user-picker-row-kind {
+  flex: none;
+  color: rgb(var(--color-text) / 55%);
 }
 
 /* ── Multi-mode footer (draft count + Cancel / Confirm) ─────────────── */

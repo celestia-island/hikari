@@ -5,6 +5,20 @@
 // it, and with an empty search bar the candidates must be EMPTY (listing
 // everything would be absurd)".
 //
+// 2026-11-18 user direction, third pass (chest's workspace member list):
+//  · TRIGGER presentation — the host may collapse the field into its own
+//    icon button by filling the `trigger` slot; the component anchors the
+//    SAME panel to that button (desktop popout under it, phone bottom
+//    sheet) and grows no second kind of window. The slot receives
+//    `{ open, toggle }` so the host button can mirror the a11y state;
+//    the click/keydown wiring stays here, on the anchor wrapper.
+//  · GROUP-kind rows — grant surfaces treat users and user groups as the
+//    same kind of thing (a group IS a batch of users), so an option may
+//    carry `kind: "group"`: the row renders the group glyph beside the
+//    name and `data-kind="group"` for hosts/tests. Identity is still
+//    `uid`; the search contract is unchanged — the injected feed decides
+//    whether a query answers users, groups, or both.
+//
 // Every surface that needs "pick one or more users" renders this field:
 // selected members travel as tags (display name + email), and picking
 // happens in the ONE anchored panel the library already owns for this —
@@ -25,7 +39,7 @@
 // replaces the selection; "multi" toggles rows in a working copy, counts
 // them in the panel footer and commits on Confirm. The field's tag ×
 // removes directly — no panel involved.
-import { X } from "lucide-vue-next";
+import { UsersRound, X } from "lucide-vue-next";
 
 import HkIconButton from "./HkIconButton";
 
@@ -48,13 +62,16 @@ import "./HkUserPicker.scss";
 
 /** One pickable user. `uid` is the stable identity (what the host stores);
  *  `username`/`email`/`displayName`/`avatarUrl` are display baggage the
- *  field keeps inside its value so hosts never re-fetch to re-render. */
+ *  field keeps inside its value so hosts never re-fetch to re-render.
+ *  `kind: "group"` marks a user-group row (a batch grant, not a person):
+ *  the row wears the group glyph; the default is "user". */
 export interface HkUserOption {
   uid: string;
   username: string;
   email?: string;
   displayName?: string;
   avatarUrl?: string;
+  kind?: "user" | "group";
 }
 
 /** Primary tag label: the display name when the deployment has one, the
@@ -93,7 +110,7 @@ export default defineComponent({
   emits: {
     "update:modelValue": (_users: HkUserOption[]) => true,
   },
-  setup(props, { emit }) {
+  setup(props, { emit, slots }) {
     const { t } = useI18n();
 
     const fieldRef = ref<HTMLElement | null>(null);
@@ -357,60 +374,80 @@ export default defineComponent({
           : undefined;
       const hasQuery = query.value.trim().length > 0;
       const multi = props.mode === "multi";
+      // Trigger presentation: the host's slot content replaces the tag
+      // field as the visible chrome; this wrapper stays the ANCHOR and the
+      // sole toggle wiring (click bubbles from the host's button; the
+      // surface owns Escape), so the host cannot double-toggle. The slot
+      // receives the state it needs to mirror a11y onto its own button.
+      const triggerSlot = slots.trigger;
+      const anchor = triggerSlot ? (
+        <div
+          ref={fieldRef}
+          class={{ "hk-user-picker-trigger": true, "is-open": open.value }}
+          onClick={togglePanel}
+        >
+          {triggerSlot({ open: open.value, toggle: togglePanel })}
+        </div>
+      ) : (
+        <div
+          ref={fieldRef}
+          class={{ "hk-user-picker-field": true, "is-open": open.value }}
+          role="button"
+          tabindex={props.disabled ? -1 : 0}
+          aria-disabled={props.disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open.value}
+          aria-label={panelTitle.value}
+          onClick={togglePanel}
+          onKeydown={onFieldKeydown}
+        >
+          {props.modelValue.map((user) => (
+            <span key={user.uid} class="hk-user-picker-tag" title={`${tagTitle(user)} ${user.email ?? ""}`.trim()}>
+              <span class="hk-user-picker-tag-body">
+                <span class="hk-user-picker-tag-name">{tagTitle(user)}</span>
+                {user.email && <span class="hk-user-picker-tag-email">{user.email}</span>}
+              </span>
+              {!props.disabled && (
+                <HkIconButton
+                  class="hk-user-picker-tag-x"
+                  size={16}
+                  variant="ghost"
+                  aria-label={`${t("hikari::userPicker.remove", "Remove")} ${tagTitle(user)}`}
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    removeTag(user.uid);
+                  }}
+                >
+                  {{ icon: () => <X aria-hidden="true" /> }}
+                </HkIconButton>
+              )}
+            </span>
+          ))}
+          <span class={{ "hk-user-picker-add": true, "is-placeholder": props.modelValue.length === 0 }}>
+            {props.modelValue.length === 0
+              ? (props.placeholder ?? t("hikari::userPicker.add", "Select users…"))
+              : t("hikari::userPicker.add", "Select users…")}
+          </span>
+        </div>
+      );
+
       return (
         <div class={{ "hk-user-picker": true, "is-disabled": props.disabled }}>
-          {props.label && <div class="hk-user-picker-label">{props.label}</div>}
-          <div
-            ref={fieldRef}
-            class={{ "hk-user-picker-field": true, "is-open": open.value }}
-            role="button"
-            tabindex={props.disabled ? -1 : 0}
-            aria-disabled={props.disabled}
-            aria-haspopup="listbox"
-            aria-expanded={open.value}
-            aria-label={panelTitle.value}
-            onClick={togglePanel}
-            onKeydown={onFieldKeydown}
-          >
-            {props.modelValue.map((user) => (
-              <span key={user.uid} class="hk-user-picker-tag" title={`${tagTitle(user)} ${user.email ?? ""}`.trim()}>
-                <span class="hk-user-picker-tag-body">
-                  <span class="hk-user-picker-tag-name">{tagTitle(user)}</span>
-                  {user.email && <span class="hk-user-picker-tag-email">{user.email}</span>}
-                </span>
-                {!props.disabled && (
-                  <HkIconButton
-                    class="hk-user-picker-tag-x"
-                    size={16}
-                    variant="ghost"
-                    aria-label={`${t("hikari::userPicker.remove", "Remove")} ${tagTitle(user)}`}
-                    onClick={(e: MouseEvent) => {
-                      e.stopPropagation();
-                      removeTag(user.uid);
-                    }}
-                  >
-                    {{ icon: () => <X aria-hidden="true" /> }}
-                  </HkIconButton>
-                )}
-              </span>
-            ))}
-            <span class={{ "hk-user-picker-add": true, "is-placeholder": props.modelValue.length === 0 }}>
-              {props.modelValue.length === 0
-                ? (props.placeholder ?? t("hikari::userPicker.add", "Select users…"))
-                : t("hikari::userPicker.add", "Select users…")}
-            </span>
-          </div>
+          {props.label && !triggerSlot && <div class="hk-user-picker-label">{props.label}</div>}
+          {anchor}
 
           {/*
             The ONE anchored surface (desktop popout / phone bottom sheet).
-            `matchAnchorWidth` is the surface's own default and stays on: the
-            panel reads as this field's drop-down, not as a floating window.
-            `maxHeight` bounds the surface that scrolls — the popout itself,
-            or the sheet's list band — so the panel keeps exactly ONE
-            scrollbar (the HkAffixPicker / HkTagInput rule). The measure is
-            the family's catalog cap with a little more room, because this
-            panel carries a search line AND (multi) a draft footer around the
-            rows.
+            Field mode keeps the surface's own `matchAnchorWidth` default:
+            the panel reads as this field's drop-down, not as a floating
+            window. Trigger mode turns it off — an icon-button anchor is
+            one glyph wide, so the panel carries the family width instead
+            and opens bottom-end from its corner anchor. `maxHeight` bounds
+            the surface that scrolls — the popout itself, or the sheet's
+            list band — so the panel keeps exactly ONE scrollbar (the
+            HkAffixPicker / HkTagInput rule). The measure is the family's
+            catalog cap with a little more room, because this panel carries
+            a search line AND (multi) a draft footer around the rows.
           */}
           <HkSelectPanel
             ref={panelExpose}
@@ -418,11 +455,16 @@ export default defineComponent({
             onUpdate:open={(v: boolean) => { open.value = v; }}
             anchorRef={fieldRef.value ?? null}
             title={panelTitle.value}
-            placement="bottom-start"
+            // An icon-button anchor sits at a corner: open toward the
+            // panel's reading direction and do NOT inherit the anchor's
+            // one-glyph width — the panel carries its own width instead
+            // (`.is-trigger-anchor`).
+            placement={Boolean(triggerSlot) ? "bottom-end" : "bottom-start"}
+            matchAnchorWidth={!triggerSlot}
             maxHeight="min(22rem, 50dvh)"
             onKeydown={onPanelKeydown}
           >
-            <div class="hk-user-picker-panel">
+            <div class={{ "hk-user-picker-panel": true, "is-trigger-anchor": Boolean(triggerSlot) }}>
               <div class="hk-user-picker-search" role="search">
                 <HkSearchInput
                   role="combobox"
@@ -481,6 +523,7 @@ export default defineComponent({
                 )}
                 {results.value.map((user, index) => {
                   const selected = multi && inDraft(user.uid);
+                  const isGroup = user.kind === "group";
                   return (
                     <div
                       key={user.uid}
@@ -491,6 +534,7 @@ export default defineComponent({
                       aria-selected={selected}
                       data-user-index={index}
                       data-active={activeIndex.value === index || undefined}
+                      data-kind={isGroup ? "group" : undefined}
                       // Grammar face attribute (_menu-item.scss): mi.item's
                       // checked face and its hover guard key on data-checked —
                       // emitted beside the legacy .is-selected class so the
@@ -498,6 +542,9 @@ export default defineComponent({
                       data-checked={props.mode === "multi" && inDraft(user.uid) || undefined}
                       onClick={() => pickRow(user)}
                     >
+                      {isGroup && (
+                        <UsersRound size={14} class="hk-user-picker-row-kind" aria-hidden="true" />
+                      )}
                       <span class="hk-user-picker-row-main">
                         <span class="hk-user-picker-row-name">{tagTitle(user)}</span>
                         {user.email && <span class="hk-user-picker-row-email">{user.email}</span>}

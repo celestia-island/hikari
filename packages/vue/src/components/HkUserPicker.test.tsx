@@ -345,4 +345,100 @@ describe("HkUserPicker", () => {
     expect(searchField()!.value).toBe("");
     expect(rowsBand()!.textContent).toContain("Type a nickname, username or email to search.");
   });
+
+  // ── Trigger presentation (2026-11-18 third pass) ────────────────────
+  // The host collapses the field into its own icon button via the
+  // `trigger` slot; the SAME panel anchors to that button.
+  it("trigger mode renders the slot instead of the tag field", () => {
+    mount(() => h(HkUserPicker, { modelValue: [alice], search: async () => [] }, {
+      trigger: ({ open }: { open: boolean }) =>
+        h("button", { class: "test-trigger", "data-open": String(open) }, "Add member"),
+    }));
+    // No tag field: the slot content IS the visible chrome.
+    expect(document.body.querySelector(".hk-user-picker-field")).toBeNull();
+    const anchor = document.body.querySelector<HTMLElement>(".hk-user-picker-trigger")!;
+    expect(anchor).not.toBeNull();
+    const button = anchor.querySelector<HTMLButtonElement>("button.test-trigger")!;
+    expect(button.textContent).toBe("Add member");
+    expect(button.getAttribute("data-open")).toBe("false");
+  });
+
+  it("clicking the trigger opens the same search-first panel and mirrors the open state", async () => {
+    const search = vi.fn(async () => [bob]);
+    mount(() => h(HkUserPicker, { modelValue: [], search }, {
+      trigger: ({ open }: { open: boolean }) =>
+        h("button", { class: "test-trigger", "data-open": String(open) }, "Add member"),
+    }));
+    const button = () =>
+      document.body.querySelector<HTMLButtonElement>("button.test-trigger")!;
+    expect(button().getAttribute("data-open")).toBe("false");
+    button().click();
+    await settle();
+    await nextTick();
+    // The panel content mounted (anchored to the trigger wrapper) and the
+    // slot saw the open flip.
+    expect(button().getAttribute("data-open")).toBe("true");
+    expect(document.body.querySelector(".hk-user-picker-rows")).not.toBeNull();
+    expect(document.body.querySelector<HTMLInputElement>(".hk-user-picker-search input")).not.toBeNull();
+    await wait(DEBOUNCE_WAIT);
+    await settle();
+    // The empty-query contract survives the trigger form.
+    expect(search).not.toHaveBeenCalled();
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("single-mode pick from the trigger panel emits and closes", async () => {
+    const onUpdate = vi.fn();
+    mount(() => h(HkUserPicker, {
+      modelValue: [],
+      search: async () => [bob],
+      "onUpdate:modelValue": (users: HkUserOption[]) => onUpdate(users),
+    }, {
+      trigger: () => h("button", { class: "test-trigger" }, "Add member"),
+    }));
+    document.body.querySelector<HTMLButtonElement>("button.test-trigger")!.click();
+    await settle();
+    await searchFor("bo");
+    rows()[0].click();
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledWith([bob]);
+    await wait(CLOSE_WAIT);
+    expect(document.body.querySelector(".hk-user-picker-panel"), "panel closed").toBeNull();
+  });
+
+  // ── Group-kind rows (2026-11-18 third pass) ─────────────────────────
+  it("group-kind rows render the group glyph and data-kind, user rows stay plain", async () => {
+    const team: HkUserOption = { uid: "g-1", username: "", displayName: "Design team", kind: "group" };
+    mount(() => h(HkUserPicker, { modelValue: [], search: async () => [team, alice] }));
+    await openPanel();
+    await searchFor("a");
+    expect(rows()).toHaveLength(2);
+    const groupRow = rows()[0];
+    expect(groupRow.getAttribute("data-kind")).toBe("group");
+    expect(groupRow.querySelector(".hk-user-picker-row-kind")).not.toBeNull();
+    expect(groupRow.textContent).toContain("Design team");
+    const userRow = rows()[1];
+    expect(userRow.getAttribute("data-kind")).toBeNull();
+    expect(userRow.querySelector(".hk-user-picker-row-kind")).toBeNull();
+  });
+
+  it("a group-kind row picks like any other row", async () => {
+    const onUpdate = vi.fn();
+    const team: HkUserOption = { uid: "g-1", username: "", displayName: "Design team", kind: "group" };
+    mount(() => h(HkUserPicker, {
+      modelValue: [],
+      mode: "multi",
+      search: async () => [team, alice],
+      "onUpdate:modelValue": (users: HkUserOption[]) => onUpdate(users),
+    }));
+    await openPanel();
+    await searchFor("a");
+    rows()[0].click();
+    rows()[1].click();
+    await nextTick();
+    const confirm = document.body.querySelector<HTMLButtonElement>(".hk-user-picker-confirm")!;
+    confirm.click();
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledWith([team, alice]);
+  });
 });

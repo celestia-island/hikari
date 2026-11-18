@@ -14,6 +14,22 @@
  * a leaf, removing the root) returns the input root untouched. A guard
  * failure must never corrupt the host's value — the caller just re-renders
  * the same tree.
+ *
+ * Prototype hygiene: object members resolve through OWN keys only
+ * (hasOwnProperty — `constructor` / `toString` / an inherited
+ * `__proto__` never masquerade as members), and every object-key write
+ * uses define semantics, never assignment — `obj[k] = v` with `k ===
+ * "__proto__"` would hit the inherited setter and silently REPLACE the
+ * clone's prototype (or no-op for primitives) instead of creating an own
+ * key. Hostile keys behave exactly like JSON.parse produces them: as
+ * opaque own data properties.
+ *
+ * Object-key ordering note: this op set has no positional rename — the
+ * editor's rename flow is the composite insert(newKey, value) +
+ * remove(oldKey), which MOVES the member to the end of its object. Key
+ * order inside the edited object is therefore not preserved across
+ * renames (content is). Consumers that need order-preserving renames
+ * must add a dedicated op rather than reimplementing the composite.
  */
 
 /** A location inside a JSON tree: object keys and array indices,
@@ -46,16 +62,41 @@ export function jsonIsArrayAt(root: unknown, path: JsonPath): boolean {
   return Array.isArray(jsonValueAtPath(root, path));
 }
 
+/** Canonical non-negative integer text (`String(i)` shape — what the tree
+ *  builder stores). Anything else must not coerce into an index: `""`
+ *  would smuggle through `Number("") === 0`, and `"01"` / `"1.0"` /
+ *  `" 1"` are not index text anyone writes. */
+const CANONICAL_INDEX = /^(0|[1-9]\d*)$/;
+
 /** Array-index view of a path segment: `null` when the segment is not a
- *  whole in-bounds index for the given array. */
+ *  whole in-bounds index for the given array. String segments must be
+ *  CANONICAL integer text (see CANONICAL_INDEX). */
 function normalizeIndex(arr: unknown[], seg: string | number): number | null {
+  if (typeof seg === "string" && !CANONICAL_INDEX.test(seg)) return null;
   const idx = typeof seg === "number" ? seg : Number(seg);
   if (!Number.isInteger(idx) || idx < 0 || idx >= arr.length) return null;
   return idx;
 }
 
+/** Define one object key with own-property semantics. NEVER use
+ *  assignment here: `obj[k] = v` with `k === "__proto__"` invokes the
+ *  inherited setter — the clone's prototype gets replaced (object
+ *  value) or the write silently vanishes (primitive value), and the own
+ *  key never exists. `Object.defineProperty` creates the opaque own
+ *  data property JSON.parse would have produced. */
+function defineChild(obj: Record<string, unknown>, key: string, value: unknown): void {
+  Object.defineProperty(obj, key, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
 /** The child of `node` at `seg`, or `undefined` when the segment does not
- *  resolve (missing key / dead index / `node` is not a container). */
+ *  resolve (missing key / dead index / `node` is not a container). Object
+ *  members resolve through OWN keys only — the prototype chain must not
+ *  answer for `constructor` or `toString`. */
 function childOf(node: unknown, seg: string | number): unknown {
   if (node === null || typeof node !== "object") return undefined;
   if (Array.isArray(node)) {
@@ -64,11 +105,13 @@ function childOf(node: unknown, seg: string | number): unknown {
   }
   const key = String(seg);
   const obj = node as Record<string, unknown>;
-  return key in obj ? obj[key] : undefined;
+  return Object.prototype.hasOwnProperty.call(obj, key) ? obj[key] : undefined;
 }
 
 /** Write `value` into the cloned container at `seg`. The caller has
- *  already verified the slot exists, so this cannot fail silently. */
+ *  already verified the slot exists, so this cannot fail silently.
+ *  Object writes go through defineChild (assignment would be unsafe for
+ *  an own `__proto__` slot's creation cousins — define states intent). */
 function writeChild(
   copy: Record<string, unknown> | unknown[],
   seg: string | number,
@@ -79,7 +122,7 @@ function writeChild(
     if (idx !== null) copy[idx] = value;
     return;
   }
-  copy[String(seg)] = value;
+  defineChild(copy, String(seg), value);
 }
 
 /**
@@ -181,11 +224,14 @@ export function jsonSetAtPath(root: unknown, path: JsonPath, value: unknown): un
 
 /**
  * Insert `value` as a child of the container at `path`:
- *  - object → under `keyOrIndex` (String()'d). An existing key is
- *    REPLACED — the editor's rename/insert flows depend on overwrite
- *    semantics, and a JSON object cannot hold duplicate keys anyway.
+ *  - object → under `keyOrIndex` (String()'d, define semantics). An
+ *    existing key is REPLACED — the editor's rename/insert flows depend
+ *    on overwrite semantics, and a JSON object cannot hold duplicate
+ *    keys anyway.
  *  - array → at `keyOrIndex` clamped to `[0, length]`, so passing the
  *    array's length appends (the tree's insert menu always does).
+ *    String indexes must be canonical integer text (`"1"`, not `"1.0"`
+ *    or `""` — see CANONICAL_INDEX).
  * The container must exist and BE a container; otherwise unchanged.
  */
 export function jsonInsertChildAt(
@@ -196,12 +242,18 @@ export function jsonInsertChildAt(
 ): unknown {
   const { root: next, ok } = applyAtContainer(root, path, (container) => {
     if (Array.isArray(container)) {
+      // Same canonical-text gate as normalizeIndex: Number("") === 0
+      // would turn an empty index into "insert at the head".
+      if (typeof keyOrIndex === "string" && !CANONICAL_INDEX.test(keyOrIndex)) return false;
       const idx = typeof keyOrIndex === "number" ? keyOrIndex : Number(keyOrIndex);
       if (!Number.isInteger(idx) || idx < 0) return false;
       container.splice(Math.min(idx, container.length), 0, value);
       return true;
     }
-    container[String(keyOrIndex)] = value;
+    // CREATE site — the one place an object key comes into existence:
+    // define semantics or `__proto__` would silently retarget the
+    // clone's prototype instead of adding a member.
+    defineChild(container, String(keyOrIndex), value);
     return true;
   });
   return ok ? next : root;

@@ -137,6 +137,90 @@ describe("jsonRemoveAtPath", () => {
   });
 });
 
+describe("hostile keys (prototype hygiene)", () => {
+  it("inserts __proto__ as an opaque OWN key (object value form)", () => {
+    const root = deepFreeze({ a: 1 });
+    const payload = { polluted: true };
+    const next = jsonInsertChildAt(root, [], "__proto__", payload) as Record<string, unknown>;
+    // The own key exists (assignment semantics would have produced none)…
+    expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    expect(next["__proto__"]).toBe(payload);
+    // …and the clone's prototype must be untouched: assignment would have
+    // silently swapped it to `payload`.
+    expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+    expect(next.a).toBe(1);
+  });
+
+  it("inserts __proto__ as an opaque OWN key (primitive value form)", () => {
+    const next = jsonInsertChildAt({ a: 1 }, [], "__proto__", 42) as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    // Primitive assignment through the setter is a silent no-op — define
+    // semantics must still land the own key.
+    expect(next["__proto__"]).toBe(42);
+    expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+  });
+
+  it("keeps rename composite content when the new key is __proto__", () => {
+    // The editor's rename flow is insert(newKey, value) + remove(oldKey);
+    // `a` must not vanish just because its new name is __proto__.
+    const root = deepFreeze({ a: { deep: true }, b: 2 });
+    let next = jsonInsertChildAt(root, [], "__proto__", { deep: true }) as Record<string, unknown>;
+    next = jsonRemoveAtPath(next, ["a"]) as Record<string, unknown>;
+    expect(Object.prototype.hasOwnProperty.call(next, "__proto__")).toBe(true);
+    expect(next["__proto__"]).toEqual({ deep: true });
+    expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+    expect(next.b).toBe(2);
+    expect(Object.keys(next)).toEqual(["b", "__proto__"]); // a is gone
+  });
+
+  it("resolves through an own __proto__ created by JSON.parse", () => {
+    // JSON.parse is the one producer that makes __proto__ an own data
+    // property; ops must treat it like any opaque member, including
+    // navigating INTO it.
+    const root = deepFreeze(JSON.parse('{"__proto__":{"x":1},"keep":true}') as object);
+    const next = jsonSetAtPath(root, ["__proto__", "x"], 2) as Record<string, unknown>;
+    expect((next["__proto__"] as Record<string, unknown>).x).toBe(2);
+    expect(next.keep).toBe(true);
+    expect(Object.getPrototypeOf(next)).toBe(Object.prototype);
+    const replaced = jsonSetAtPath(root, ["__proto__"], "flat") as Record<string, unknown>;
+    expect(replaced["__proto__"]).toBe("flat");
+    expect(Object.getPrototypeOf(replaced)).toBe(Object.prototype);
+  });
+
+  it("treats inherited names (constructor, toString) as missing members", () => {
+    const root = deepFreeze({ a: 1 });
+    // `in` would answer true for both; own-key resolution must reject
+    // them like any other missing key — unchanged root, same reference.
+    expect(jsonSetAtPath(root, ["constructor"], 1)).toBe(root);
+    expect(jsonSetAtPath(root, ["toString"], "x")).toBe(root);
+    expect(jsonRemoveAtPath(root, ["toString"])).toBe(root);
+    expect(jsonInsertChildAt(root, ["toString"], "k", 1)).toBe(root);
+  });
+});
+
+describe("normalizeIndex hardening", () => {
+  const root = deepFreeze({ list: ["a", "b"] });
+
+  it("accepts canonical integer segments only", () => {
+    expect((jsonSetAtPath(root, ["list", "1"], "z") as typeof root).list).toEqual(["a", "z"]);
+  });
+
+  it("rejects non-canonical string forms from smuggling an index", () => {
+    // Number("") === 0 would make an empty segment into index 0; "1.0"
+    // and friends coerce to valid integers but are nobody's stored path.
+    for (const hostile of ["", "1.0", "01", " 1", "+1", "-0", "1e0"]) {
+      expect(jsonSetAtPath(root, ["list", hostile], "z"), JSON.stringify(hostile)).toBe(root);
+      expect(jsonInsertChildAt(root, ["list"], hostile, "z")).toBe(root);
+    }
+  });
+
+  it("still rejects plain dead numeric indexes", () => {
+    expect(jsonSetAtPath(root, ["list", 5], "z")).toBe(root);
+    expect(jsonSetAtPath(root, ["list", -1], "z")).toBe(root);
+    expect(jsonSetAtPath(root, ["list", 1.5], "z")).toBe(root);
+  });
+});
+
 describe("immutability", () => {
   it("never writes into a deep-frozen input on any op", () => {
     // A strict-mode mutation of a frozen object throws — so running all

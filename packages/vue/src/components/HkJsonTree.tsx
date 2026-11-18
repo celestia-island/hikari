@@ -453,7 +453,10 @@ function selectionTouches(el: HTMLElement): boolean {
  * Picking edit or rename flips that row into an inline editor (key input
  * for object members, value input with string/number/boolean/null chips,
  * invalid numbers block submission and show an invalid state); Enter or
- * a blur outside the editor commits, Escape cancels. New children land
+ * a blur outside the editor commits, Escape cancels. A rename is the
+ * three-op composite insert(newKey, value) + remove(oldKey), which moves
+ * the member to the END of its object — content survives, key order in
+ * that object does not. New children land
  * their default value (`""`/`0`/`false`/`null`/`{}`/`[]`) immediately and
  * the fresh row opens inline so the default is refined, not imagined.
  * Every commit flows through the pure `jsonTreeEdit` operations
@@ -611,9 +614,6 @@ export const HkJsonTree = defineComponent({
      *  "value" for value edits and array-leaf inserts). Cleared once it
      *  lands; retried after a rebuild when the row mounts late. */
     let editFocusWanted: "key" | "value" | null = null;
-    /** Escape already cancelled: the focusout that unmounting the row
-     *  fires must not turn the cancel into a commit. */
-    let swallowNextBlur = false;
 
     interface JsonEditDraft {
       keyText: string;
@@ -692,7 +692,6 @@ export const HkJsonTree = defineComponent({
 
     function beginEdit(node: HJsonNode, focus: "key" | "value") {
       if (!canEdit.value) return;
-      swallowNextBlur = false;
       editing.value = { path: node.path };
       draft.value = draftForValue(node.key, node.value);
       focusEditorSoon(focus);
@@ -702,12 +701,12 @@ export const HkJsonTree = defineComponent({
       editing.value = null;
       draft.value = null;
       editFocusWanted = null;
-      swallowNextBlur = false;
     }
 
     function cancelEdit() {
+      // Synchronous tear-down: `editing` is null BEFORE the row unmounts,
+      // so the trailing focusout is a no-op — no flag dance needed.
       if (!editing.value) return;
-      swallowNextBlur = true;
       closeEditor();
     }
 
@@ -722,9 +721,10 @@ export const HkJsonTree = defineComponent({
     }
 
     /** Focus leaving the editor row (relatedTarget outside it) commits —
-     *  chip/button hops INSIDE the row never do. */
+     *  chip/button hops INSIDE the row never do, and a cancelled editor
+     *  never commits (its row is already gone when the focusout lands). */
     function maybeBlurCommit(event: FocusEvent) {
-      if (!editing.value || !draft.value || swallowNextBlur) return;
+      if (!editing.value || !draft.value) return;
       const row = event.currentTarget as HTMLElement | null;
       const to = event.relatedTarget as Node | null;
       if (row && to && row.contains(to)) return;
@@ -745,7 +745,9 @@ export const HkJsonTree = defineComponent({
     /** Commit the open editor through the pure ops and hand the new root
      *  to the host. A rename is the composite insert(newKey, value) +
      *  remove(oldKey) — the exported op set stays exactly the three
-     *  primitives. */
+     *  primitives. Order caveat (see jsonTreeEdit's header): the composite
+     *  MOVES the renamed member to the end of its object; content is
+     *  preserved, key order inside that object is not. */
     function commitEdit() {
       const target = editing.value;
       const d = draft.value;
@@ -795,8 +797,14 @@ export const HkJsonTree = defineComponent({
     }
 
     /** Drop expansion keys under a deleted node (and the node itself).
-     *  Array siblings after the deleted index keep stale keys — harmless:
-     *  they simply never match again and render collapsed by default. */
+     *  Object members are exact. ARRAY members are approximate by index:
+     *  a splice shifts later siblings down while their stored path keys
+     *  stay put, so a fold intended for a shifted element can land on its
+     *  new neighbor (the expansion of old [2] decorates new [2], which is
+     *  the element formerly at [3]) — wrong-fold drift confined to the
+     *  edited array's subtree, never lost data. A faithful fix needs a
+     *  parallel old→new index migration through every commit; not worth
+     *  the machinery for a fold state. */
     function pruneExpansion(deletedPath: JsonPath) {
       const next = new Set<string>();
       for (const k of expandedPaths.value) {
@@ -842,7 +850,6 @@ export const HkJsonTree = defineComponent({
       // nothing to type — no editor.
       const isLeaf = type !== "object" && type !== "array";
       if (childKey !== null || isLeaf) {
-        swallowNextBlur = false;
         editing.value = { path: childPath };
         draft.value = draftForValue(childKey, value);
         focusEditorSoon(childKey !== null ? "key" : "value");

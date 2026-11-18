@@ -291,4 +291,29 @@ mod tests {
         );
         assert!(!css.contains("CSS generation failed"), "scss failed");
     }
+
+    /// Chip-lane shrink (2026-11-18 overflow): the trailing lane must carry
+    /// `min-width: 0` (opt in to shrinking below content width) and wrap,
+    /// so a wide trailing cluster clips inside the card instead of pushing
+    /// past the row's right edge. Without this a re-added `flex-shrink: 0`
+    /// would keep the lane at its content width and the overflow back.
+    #[test]
+    fn trailing_lane_opt_in_to_shrinking_and_wrapping() {
+        let css = CardListComponent::styles();
+        let lane = css
+            .split(".hk-list-row-trailing {")
+            .nth(1)
+            .expect("trailing lane block present")
+            .split('}')
+            .next()
+            .expect("trailing lane block closes");
+        assert!(lane.contains("min-width: 0"), "lane lacks min-width: 0: {lane}");
+        assert!(lane.contains("flex-wrap: wrap"), "lane lacks flex-wrap: wrap: {lane}");
+        // The opt-in only matters while shrinking is allowed; if someone
+        // flips shrink off entirely, the two declarations above go inert.
+        assert!(
+            !lane.contains("flex-shrink: 0") || lane.contains("flex-shrink: 1"),
+            "lane must remain shrinkable (flex-shrink: 0 with min-width: 0 is inert): {lane}"
+        );
+    }
 }

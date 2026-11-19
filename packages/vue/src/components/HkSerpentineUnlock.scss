@@ -1,3 +1,5 @@
+@use "../styles/polyfill" as *;
+
 // Serpentine deliberate-action gate. The lane aliases the theme's tokens;
 // all paint values wrap the triplet in rgb(...) (see WorkspaceGitWindow's
 // palette pin for why the bare form paints nothing).
@@ -10,7 +12,7 @@
   background: rgb(var(--color-surface) / 40%);
   cursor: grab;
   touch-action: none;
-  user-select: none;
+  @include user-select(none);
 
   &:focus-visible {
     outline: 2px solid rgb(var(--color-info));

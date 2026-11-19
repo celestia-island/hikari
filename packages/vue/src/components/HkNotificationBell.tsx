@@ -117,6 +117,30 @@ export default defineComponent({
       listScrollbar?.detach();
       listScrollbar = null;
     }
+    /** One sync point for the list's overlay chrome: attach when the
+     *  viewport exists under an open panel, detach when it does not,
+     *  update when only the content moved. Re-checks `open` INSIDE the
+     *  nextTick so a same-flush open→close cannot attach onto a panel
+     *  that is already on its way out (round-2 flap note). The sheet
+     *  branch never scrolls the list (overflow: visible — the engine
+     *  self-hides when content fits), so one unconditional path serves
+     *  both modalities. */
+    function syncListScrollbar() {
+      nextTick(() => {
+        if (!open.value || !listRef.value) {
+          detachListScrollbar();
+          return;
+        }
+        if (!listScrollbar) {
+          listScrollbar = attachOverlayScrollbars(listRef.value, {
+            axis: "vertical",
+            host: listWrapRef.value ?? undefined,
+          });
+        } else {
+          listScrollbar.update();
+        }
+      });
+    }
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
@@ -128,34 +152,59 @@ export default defineComponent({
         (a, b) => b.updatedAt - a.updatedAt || entries.indexOf(b) - entries.indexOf(a),
       ),
     );
+    // Content consolidation (user direction 2026-11-19) lives in the VIEW,
+    // deliberately not in the journal: ids are the key every lifecycle op
+    // speaks (a source's own re-record, setNotificationState, forget), and
+    // a record-time merge would discard the incoming id — a folded source's
+    // re-records then count as recurrences forever and its state/forget
+    // calls no-op (the round-1 review's S1, proven by probe). Grouping the
+    // sorted rows keeps the journal 1:1 with its sources while the reader
+    // sees ONE row per distinct message with a tally badge. Newest member
+    // is the group's face (time/state/actions); the tally is the member
+    // count; dismiss forgets every DISMISSABLE member of the group.
+    interface HkNotificationGroup {
+      members: HkNotificationEntry[];
+      head: HkNotificationEntry;
+    }
+    const groups = computed<HkNotificationGroup[]>(() => {
+      const out: HkNotificationGroup[] = [];
+      const byKey = new Map<string, HkNotificationGroup>();
+      for (const e of sorted.value) {
+        const key = `${e.tone}\u0000${e.title}\u0000${e.code ?? ""}\u0000${e.detail ?? ""}`;
+        const hit = byKey.get(key);
+        if (hit) {
+          hit.members.push(e);
+        } else {
+          const group: HkNotificationGroup = { members: [e], head: e };
+          byKey.set(key, group);
+          out.push(group);
+        }
+      }
+      return out;
+    });
+    // A signature of everything the rendered rows depend on — drives the
+    // scrollbar sync (rows appearing/vanishing/changing height all move
+    // scrollHeight, which the engine's box ResizeObserver cannot see).
+    const rowSignature = computed(() =>
+      groups.value
+        .map((g) =>
+          g.members
+            .map((m) => `${m.id}:${m.updatedAt}:${m.state}:${m.read ? 1 : 0}`)
+            .join("+"),
+        )
+        .join("|"),
+    );
 
     // Open = read receipt. Watching the flag (not wiring it into the
     // toggle) keeps the receipt honest for sheet-scrim closes too.
     watch(open, (v) => {
       if (v) markAllRead();
-      if (v) {
-        nextTick(() => {
-          // The sheet branch never scrolls the list (overflow: visible —
-          // the engine self-hides when content fits), so attaching
-          // unconditionally is correct for both modalities.
-          if (!listRef.value) return;
-          detachListScrollbar();
-          listScrollbar = attachOverlayScrollbars(listRef.value, {
-            axis: "vertical",
-            host: listWrapRef.value ?? undefined,
-          });
-        });
-      } else {
-        detachListScrollbar();
-      }
+      syncListScrollbar();
     });
-    // Content growth while open (a new record lands) changes scrollHeight
-    // without resizing the viewport box, so the engine's ResizeObserver
-    // cannot see it — re-derive the thumb on journal mutations.
-    watch(
-      () => entries.length,
-      () => listScrollbar?.update(),
-    );
+    // Rows mount/unmount/change while open too (empty↔list swaps, new
+    // records, tallies) — every such transition moves scrollHeight, which
+    // the engine's box ResizeObserver cannot see.
+    watch(rowSignature, () => syncListScrollbar());
     onUnmounted(detachListScrollbar);
 
     /** The toast's copy affordance, carried over: same clipboard write
@@ -170,28 +219,35 @@ export default defineComponent({
       void clipboard.copy(parts.join("\n"));
     }
 
-    function renderRow(entry: HkNotificationEntry) {
+    function renderRow(group: HkNotificationGroup) {
+      // The NEWEST member is the group's face — time, state chip and the
+      // actions lane all answer "what happened most recently".
+      const entry = group.head;
       const Icon = TONE_ICONS[entry.tone] ?? Info;
       const isLive = entry.kind === "emergency" && entry.state !== "cleared";
       const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
+      const tally = group.members.length;
       return (
         <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
           {/* The row glyph renders through h(Icon, …): Vue's Component
               union is not a valid JSX element type, so `<Icon />` is
               not available here — both this tone glyph and the row
               actions' RotateCcw go through the render function. */}
-          <span class="hk-notification-row__icon" aria-hidden="true">
-            {h(Icon, { size: 14 })}
-            {(entry.count ?? 1) > 1 && (
-              // The consolidation tally (user direction 2026-11-19) — a
-              // corner badge on the tone glyph. Real text content (screen
-              // readers hear the number before the title); the toast
-              // family's own msgs unit names it on hover.
+          <span class="hk-notification-row__icon-box">
+            <span class="hk-notification-row__icon" aria-hidden="true">
+              {h(Icon, { size: 14 })}
+            </span>
+            {tally > 1 && (
+              // The consolidation tally (user direction 2026-11-19): a
+              // corner badge on the tone glyph. It sits OUTSIDE the
+              // glyph's aria-hidden box (round-2 a11y note) as real text —
+              // screen readers hear the number — and keeps pointer events
+              // so the hover naming works.
               <span
                 class="hk-notification-row__icon-count"
-                title={`${entry.count} ${t("hikari::toast.msgs", "msgs")}`}
+                title={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
               >
-                {entry.count! > 99 ? "99+" : entry.count}
+                {tally > 99 ? "99+" : tally}
               </span>
             )}
           </span>
@@ -250,7 +306,16 @@ export default defineComponent({
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
-                onClick={() => forget(entry.id)}
+                onClick={() => {
+                  // X on a consolidated row dismisses the WHOLE line —
+                  // every member whose surface allows dismissal (a live
+                  // emergency episode is never user-dismissable).
+                  for (const m of group.members) {
+                    if (!(m.kind === "emergency" && m.state !== "cleared")) {
+                      forget(m.id);
+                    }
+                  }
+                }}
               >
                 {{ icon: () => <X size={14} /> }}
               </HkIconButton>
@@ -310,7 +375,7 @@ export default defineComponent({
                 <>
                   <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
                     <ul class="hk-notification-center__list" role="list" ref={listRef}>
-                      {sorted.value.map(renderRow)}
+                      {groups.value.map(renderRow)}
                     </ul>
                   </div>
                   <div class="hk-notification-center__foot">

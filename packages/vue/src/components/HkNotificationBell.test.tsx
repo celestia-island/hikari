@@ -341,18 +341,25 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
-  it("a consolidated record renders ONE row with a corner tally badge", async () => {
-    // User direction 2026-11-19: identical messages fold into one row;
-    // the tone glyph's bottom-end corner carries the count.
+  it("identical messages render ONE row with a corner tally badge", async () => {
+    // User direction 2026-11-19: identical messages consolidate into one
+    // row; the tone glyph's corner carries the count. The JOURNAL stays
+    // 1:1 with its sources (ids are lifecycle keys) — the grouping is a
+    // view concern (the record-time merge design was rejected in review:
+    // folding discards the incoming id and breaks every id-keyed op).
     await setLocale("en");
     for (const id of ["t:1", "t:2", "t:3"]) {
       recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
     }
     recordNotification({ id: "s:1", kind: "toast", tone: "warning", title: "other" });
+    const { entries } = useNotificationCenter();
+    // The journal keeps full fidelity — three separate records.
+    expect(entries).toHaveLength(4);
     mountBell();
     await settle();
     bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
+    // …but the reader sees ONE row per distinct message.
     expect(rows()).toHaveLength(2);
     const boomRow = rows().find((r) => r.textContent?.includes("boom"))!;
     const badge = boomRow.querySelector<HTMLElement>(".hk-notification-row__icon-count");
@@ -362,6 +369,27 @@ describe("panel rows", () => {
     // A single-occurrence record carries NO badge.
     const otherRow = rows().find((r) => r.textContent?.includes("other"))!;
     expect(otherRow.querySelector(".hk-notification-row__icon-count")).toBeNull();
+  });
+
+  it("dismiss on a consolidated row forgets EVERY member of the group", async () => {
+    await setLocale("en");
+    for (const id of ["t:1", "t:2", "t:3"]) {
+      recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
+    }
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    const boomRow = rows()[0]!;
+    const dismiss = boomRow.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+    )!;
+    dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    // The whole line goes — not just the newest member.
+    expect(useNotificationCenter().entries).toHaveLength(0);
+    expect(rows()).toHaveLength(0);
   });
 
   it("the open panel carries the overlay scrollbar tracks; closing detaches them", async () => {
@@ -385,6 +413,20 @@ describe("panel rows", () => {
     bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     expect(document.querySelector(".hk-notification-center__list-wrap")).toBeNull();
+
+    // Round-2 hole: with the panel OPEN on the empty state the list is
+    // not mounted — a record landing NOW mounts it fresh. The signature
+    // watcher must attach the engine to the NEW viewport (an update() on
+    // a stale handle would leave it scrolling invisibly).
+    resetNotifications();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    recordNotification({ id: "late", kind: "toast", tone: "error", title: "late arrival" });
+    await settle();
+    const wrap2 = document.querySelector(".hk-notification-center__list-wrap");
+    expect(wrap2, "the list mounts under the open panel").toBeTruthy();
+    expect(wrap2!.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
   });
 
   it("rows sort newest-first and Clear all empties the journal", async () => {

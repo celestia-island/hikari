@@ -113,14 +113,19 @@
   }
 }
 
-.hk-notification-row__icon {
+.hk-notification-row__icon-box {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  /* The consolidation badge anchors to this box's corner. */
+  position: relative;
+}
+
+.hk-notification-row__icon {
   display: inline-flex;
   align-items: center;
   /* Tone ink follows the row's tone class (rules below). */
   color: rgb(var(--color-text) / 65%);
-  /* The consolidation badge anchors to this box's corner. */
-  position: relative;
 }
 
 /* Corner tally for consolidated records (2026-11-19): the unread dot's
@@ -141,7 +146,6 @@
   font-weight: 600;
   text-align: center;
   font-variant-numeric: tabular-nums;
-  pointer-events: none;
 }
 
 /* Tone ink on the glyph (the toast family's own --hi-color-<tone>

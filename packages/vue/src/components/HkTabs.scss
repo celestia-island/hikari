@@ -132,16 +132,18 @@
   flex: none;
 }
 
-.hk-tabs-cell > .hk-tabs-trigger {
-  /* Fill the cell wherever the cell's width is definite (block flex
-     growth, slot-unit grid tracks); in a shrink-to-fit inline strip the
+.hk-tabs-cell > .hk-supplement-inset {
+  /* The inset fills the cell and owns the reveal: at rest its supplement
+     takes no space, so the option's own content stays exactly centred (a
+     reserved lane here was what pushed the auto option off-centre). */
+  width: 100%;
+}
+
+.hk-supplement-inset-main > .hk-tabs-trigger {
+  /* Fill the main region so the option's own content shifts left when the
+     supplement opens (the push); in a shrink-to-fit inline strip the
      percentage resolves to the content size, so nothing changes there. */
   width: 100%;
-  /* RESERVE the action lane. The overlay is absolutely positioned at the
-     inline end, so without this the revealed buttons sit ON the label's
-     last ~20px in a shrink-to-fit pill (clicks there would select the
-     option's own text and fire the action instead). */
-  padding-inline-end: calc(var(--space-12) + 18px);
 }
 
 /* block (row-filling) strips: the cell takes the growth its trigger
@@ -155,48 +157,8 @@
   flex: 1 0 auto;
 }
 
-.hk-tabs-trigger-actions {
-  /* Overlaid at the trigger's inline-end edge — a hover reveal that
-     never shifts layout (the pill's width is the option's track, not
-     the content's). Hidden until hover/focus-within; on touch there is
-     no hover, so the reachable path is the option's contextMenu
-     long-press binding (pair the two when touch matters). */
-  position: absolute;
-  inset-inline-end: var(--space-4);
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  /* `visibility: hidden` (not just opacity) keeps the unrevealed action
-     buttons OUT of the page tab order: an opacity-only hide leaves every
-     action focusable while invisible, which both leaks Tab stops and
-     contradicts the strip's roving-tabindex contract. `:focus-within`
-     reveals them, so a keyboard user tabs trigger → actions. */
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-  /* PAINT ORDER: the trigger above carries z-index 1, so an auto-z
-     sibling would lose hit-testing everywhere the two overlap (which is
-     everywhere — the trigger fills the cell and the buttons sit inside
-     its box). One layer above the trigger puts the buttons back on top. */
-  z-index: 2;
-  transition: opacity var(--duration-short) ease,
-              visibility 0s linear var(--duration-short);
-}
-
-.hk-tabs-cell:hover > .hk-tabs-trigger-actions,
-.hk-tabs-cell:focus-within > .hk-tabs-trigger-actions {
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
-  transition: opacity var(--duration-short) ease,
-              visibility 0s linear 0s;
-}
-
-/* A whole-strip disabled render has no live actions to reveal. */
-.hk-tabs-cell[data-disabled] > .hk-tabs-trigger-actions {
-  display: none;
-}
+/* The supplement inset lives in the cell; its action buttons keep the
+   ghost-square grammar below (position-independent). */
 
 .hk-tabs-trigger-action {
   display: inline-flex;
@@ -415,7 +377,7 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-tabs-trigger,
   .hk-tabs-indicator,
-  .hk-tabs-trigger-actions,
+  .hk-supplement-inset-supplement,
   .hk-tabs-swap-enter-active,
   .hk-tabs-swap-leave-active {
     transition: none;

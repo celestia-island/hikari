@@ -1,0 +1,83 @@
+/* HkSupplementInset — the supplementary slot of a button surface.
+ *
+ * At rest the supplement takes NO space (the surface's own content stays
+ * exactly centred where the host put it). On reveal the supplement's
+ * column animates open — pushing the main content left — and the
+ * supplement content fades in. Everything rides the animation context
+ * (duration/ease tokens; reduced-motion users get the instant states).
+ */
+
+.hk-supplement-inset {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hk-supplement-inset-main {
+  /* The main region takes the remaining space; as the supplement column
+     opens, it (and its centred content) is pushed left. */
+  flex: 1 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hk-supplement-inset-supplement {
+  /* The column collapses to 0 and animates to the measured content width
+     (--hk-supplement-w, set from a ResizeObserver on the inner) — the
+     horizontal twin of HkExpansionPanel's 0fr→1fr body trick, minus the
+     magic constant. visibility joins the collapse: an unrevealed
+     supplement is untabbable and out of the a11y tree (an opacity-only
+     hide leaks Tab stops). */
+  max-width: 0px;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+  display: inline-flex;
+  align-items: center;
+  transition: max-width var(--duration-normal) var(--ease-standard),
+              opacity var(--duration-short) ease,
+              visibility 0s linear var(--duration-normal);
+}
+
+.hk-supplement-inset-supplement-inner {
+  /* The inner keeps its max-content width (the measurement target) and
+     overflows the collapsed outer — a shrinkable flex item would measure
+     at min-content and clamp the reveal forever. Hence flex: none. */
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-inline-start: var(--space-4);
+}
+
+/* Reveal: the controlled prop, hovering, or holding focus inside the
+   inset. visibility flips immediately so the controls become focusable
+   the moment the reveal starts. */
+.hk-supplement-inset[data-revealed] .hk-supplement-inset-supplement,
+.hk-supplement-inset[data-hover-reveal]:not([data-closed]):hover .hk-supplement-inset-supplement,
+.hk-supplement-inset[data-hover-reveal]:not([data-closed]):focus-within .hk-supplement-inset-supplement {
+  max-width: var(--hk-supplement-w, 32px);
+  opacity: 1;
+  visibility: visible;
+  transition: max-width var(--duration-normal) var(--ease-standard),
+              opacity var(--duration-short) ease,
+              visibility 0s linear 0s;
+}
+
+/* The host's press-off state: forced closed even under hover/focus-within
+   (touch keeps sticky hover after a tap — without this the press-off would
+   be unobservable there). Hovering again after leaving re-reveals. */
+.hk-supplement-inset[data-closed] .hk-supplement-inset-supplement {
+  max-width: 0px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hk-supplement-inset-supplement {
+    transition: none;
+  }
+}

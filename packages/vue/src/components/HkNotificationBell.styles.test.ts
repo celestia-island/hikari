@@ -28,11 +28,12 @@ describe("HkNotificationBell scss contract", () => {
   it("the clear-all foot carries bottom padding (the glass edge gap)", () => {
     // User direction 2026-11-19: the popover panel's own 4px pad glued
     // the clear-all button to the panel's bottom edge — the foot owns
-    // the extra bottom inset, so a revert that drops padding-bottom
-    // must fail here.
+    // the extra bottom inset. The VALUE is pinned (round-3 review,
+    // mutant M4): a presence-only match let `padding-bottom: 0` — a
+    // no-op revert — stay green.
     const footBlock = scss.match(/^\.hk-notification-center__foot \{([^}]*)\}/m);
     expect(footBlock).toBeTruthy();
-    expect(footBlock![1]).toContain("padding-bottom:");
+    expect(footBlock![1]).toContain("padding-bottom: var(--space-8, 0.5rem)");
   });
 
   it("the row centers its columns against the ROW height (one-line rows included)", () => {

@@ -185,6 +185,9 @@ describe("panel rows", () => {
     await settle();
     expect(writeText).toHaveBeenCalledTimes(2);
     expect(writeText).toHaveBeenLastCalledWith("disk almost full");
+    // The toast seat's hover hint rides along (claim pin — round-3
+    // mutant M3 deleted it green): aria-label AND title, same key.
+    expect(copy!.getAttribute("title")).toBe("Copy");
   });
 
   it("tones the toast family treats as non-copyable get NO copy button", async () => {
@@ -240,6 +243,13 @@ describe("panel rows", () => {
     expect(row.classList.contains("is-active")).toBe(true);
     expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
+    // Emergency records inherit the copy affordance through their tone
+    // (round-3 intent-drift pin): a warning-severity emergency IS a
+    // copyable diagnostic record — its whole action lane is exactly
+    // [Copy] (live episodes carry no dismiss, and an active band has
+    // no restore).
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Copy"]')).toBeTruthy();
+    expect(row.querySelectorAll(".hk-notification-row__actions .hk-icon-button")).toHaveLength(1);
   });
 
   it("an emergency row carries NO dismiss button (live episode is not user-dismissable)", async () => {

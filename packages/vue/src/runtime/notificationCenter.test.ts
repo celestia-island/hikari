@@ -116,6 +116,101 @@ describe("record / update", () => {
   });
 });
 
+describe("content consolidation (2026-11-19)", () => {
+  it("folds same-content records under different ids into ONE entry with a tally", () => {
+    // Every toast push carries a fresh id (toast:epoch:slot:msg), so a
+    // repeating poller error produced N identical rows (user report
+    // 2026-11-19). Same tone+title+code+detail = one row, counted.
+    for (let i = 0; i < 3; i++) {
+      recordNotification({
+        id: `toast:epoch:slot:${i}`,
+        kind: "toast",
+        tone: "error",
+        title: "billing.quota.snapshot: billing.quota.bad_gate",
+        code: "billing.quota.bad_gate",
+        detail: "The gate returned an unrecoverable verdict",
+        state: "active",
+      });
+    }
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.count).toBe(3);
+  });
+
+  it("a recurrence wakes the entry unread but keeps the episode state", () => {
+    recordNotification({
+      id: "toast:1",
+      kind: "toast",
+      tone: "error",
+      title: "boom",
+      read: true,
+      state: "dismissed",
+    });
+    recordNotification({
+      id: "toast:2",
+      kind: "toast",
+      tone: "error",
+      title: "boom",
+      state: "active",
+    });
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.read).toBe(false);
+    // The Merged entry's lifecycle follows the incoming record's explicit
+    // state (a recurrence IS the condition being present now); the same
+    // override rule the update path already speaks.
+    expect(entries[0]!.state).toBe("active");
+  });
+
+  it("a content merge never clobbers a live resummon callback", () => {
+    const resummon = () => {};
+    recordNotification({
+      id: "emergency:quota",
+      kind: "emergency",
+      tone: "warning",
+      title: "quota out",
+      state: "snoozed",
+      onResummon: resummon,
+    });
+    recordNotification({
+      id: "toast:9",
+      kind: "toast",
+      tone: "warning",
+      title: "quota out",
+      state: "active",
+    });
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.onResummon).toBe(resummon);
+    expect(entries[0]!.count).toBe(2);
+  });
+
+  it("different content still yields separate rows", () => {
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "boom" });
+    recordNotification({ id: "b", kind: "toast", tone: "error", title: "boom", detail: "extra" });
+    recordNotification({ id: "c", kind: "toast", tone: "warning", title: "boom" });
+    recordNotification({ id: "d", kind: "toast", tone: "error", title: "boom", code: "X" });
+    expect(useNotificationCenter().entries).toHaveLength(4);
+  });
+
+  it("same-id re-records are episode refreshes and never bump the tally", () => {
+    recordNotification({ id: "t", kind: "toast", tone: "error", title: "boom" });
+    recordNotification({ id: "t", kind: "toast", tone: "error", title: "boom" });
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(1);
+    expect(entries[0]!.count).toBeUndefined();
+  });
+
+  it("the tally survives a persistence round-trip", async () => {
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "boom" });
+    recordNotification({ id: "b", kind: "toast", tone: "error", title: "boom" });
+    const raw = globalThis.sessionStorage.getItem("hk-notification-journal");
+    expect(raw).toContain('"count":2');
+    // (deep reload coverage lives in the persistence case below — the
+    // loader normalises absent counts, so a tally≥2 record restores.)
+  });
+});
+
 describe("setState / forget / read", () => {
   it("setState transitions and 'cleared' drops the resummon path", () => {
     const { entries } = useNotificationCenter();

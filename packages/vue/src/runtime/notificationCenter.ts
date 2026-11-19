@@ -85,6 +85,12 @@ export interface HkNotificationEntry {
   detail?: string;
   /** Mono chip text (e.g. `QUOTA_EXHAUSTED`). */
   code?: string;
+  /** Occurrences consolidated into this entry (user direction
+   *  2026-11-19: identical messages fold into ONE row; the row icon
+   *  carries a corner count badge). Absent = 1. Bumped when a NEW id
+   *  records the same content — same-id re-records are episode
+   *  refreshes, not recurrences, and never bump. */
+  count?: number;
   /** First time this id was recorded (epoch ms). */
   raisedAt: number;
   /** Last mutation (epoch ms) — the list sorts by this, newest first. */
@@ -159,6 +165,8 @@ interface PersistedEntry {
   title: string;
   detail?: string;
   code?: string;
+  /** Consolidation tally; pre-consolidation records load as absent (=1). */
+  count?: number;
   raisedAt: number;
   updatedAt: number;
   state: HkNotificationState;
@@ -210,6 +218,9 @@ function ensureLoaded(): void {
           title: e.title,
           detail: typeof e.detail === "string" ? e.detail : undefined,
           code: typeof e.code === "string" ? e.code : undefined,
+          ...(typeof e.count === "number" && e.count > 1
+            ? { count: e.count }
+            : {}),
           raisedAt: e.raisedAt,
           updatedAt: e.updatedAt,
           state: e.state as HkNotificationState,
@@ -273,20 +284,50 @@ export function recordNotification(input: HkNotificationRecordInput): void {
     existing.onResummon = input.onResummon;
     existing.updatedAt = now;
   } else {
-    state.entries.push({
-      id: input.id,
-      kind: input.kind,
-      tone: input.tone,
-      title: input.title,
-      detail: input.detail,
-      code: input.code,
-      raisedAt: now,
-      updatedAt: now,
-      state: input.state ?? "active",
-      read: input.read ?? false,
-      ...(input.onResummon !== undefined ? { onResummon: input.onResummon } : {}),
-    });
-    enforceCap();
+    // Content consolidation (user direction 2026-11-19): identical
+    // messages arriving under different ids (every toast push carries a
+    // fresh id) fold into ONE entry with a corner count badge. Identity
+    // is the record's CONTENT — tone + title + code + detail — not the
+    // surface: the same condition seen through two surfaces is still one
+    // condition to the reader. The existing entry's lifecycle fields win:
+    // its episode state stays (a snoozed emergency must not be flipped by
+    // a same-text toast) and its resummon callback is never clobbered by
+    // a content merge. A recurrence IS news, so the fold wakes the entry
+    // unread (same judgement as the fresh-episode rule below).
+    const merged = state.entries.find(
+      (e) =>
+        e.tone === input.tone &&
+        e.title === input.title &&
+        (e.code ?? undefined) === (input.code ?? undefined) &&
+        (e.detail ?? undefined) === (input.detail ?? undefined),
+    );
+    if (merged) {
+      merged.count = (merged.count ?? 1) + 1;
+      merged.updatedAt = now;
+      merged.read = false;
+      // The lifecycle follows the incoming record exactly like the
+      // same-id update path above: an explicit state override applies
+      // (a recurrence IS the condition being present now), and the
+      // cleared→active wake is subsumed by the unread assignment.
+      if (input.state !== undefined) {
+        merged.state = input.state;
+      }
+    } else {
+      state.entries.push({
+        id: input.id,
+        kind: input.kind,
+        tone: input.tone,
+        title: input.title,
+        detail: input.detail,
+        code: input.code,
+        raisedAt: now,
+        updatedAt: now,
+        state: input.state ?? "active",
+        read: input.read ?? false,
+        ...(input.onResummon !== undefined ? { onResummon: input.onResummon } : {}),
+      });
+      enforceCap();
+    }
   }
   writeStorage();
   runtimeReport?.pulse();

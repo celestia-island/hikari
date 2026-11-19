@@ -341,6 +341,52 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
+  it("a consolidated record renders ONE row with a corner tally badge", async () => {
+    // User direction 2026-11-19: identical messages fold into one row;
+    // the tone glyph's bottom-end corner carries the count.
+    await setLocale("en");
+    for (const id of ["t:1", "t:2", "t:3"]) {
+      recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
+    }
+    recordNotification({ id: "s:1", kind: "toast", tone: "warning", title: "other" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(2);
+    const boomRow = rows().find((r) => r.textContent?.includes("boom"))!;
+    const badge = boomRow.querySelector<HTMLElement>(".hk-notification-row__icon-count");
+    expect(badge, "the tally badge renders").toBeTruthy();
+    expect(badge!.textContent).toBe("3");
+    expect(badge!.getAttribute("title")).toContain("msgs");
+    // A single-occurrence record carries NO badge.
+    const otherRow = rows().find((r) => r.textContent?.includes("other"))!;
+    expect(otherRow.querySelector(".hk-notification-row__icon-count")).toBeNull();
+  });
+
+  it("the open panel carries the overlay scrollbar tracks; closing detaches them", async () => {
+    // The list keeps native overflow MECHANICS with the suppression pair,
+    // so the overlay engine is the only chrome it can ever show (user
+    // report 2026-11-19: the list scrolled invisibly). HkPopover attaches
+    // its engine in sheet mode only — the bell owns the desktop one.
+    await setLocale("en");
+    for (let i = 0; i < 30; i++) {
+      recordNotification({ id: `t:${i}`, kind: "toast", tone: "error", title: `row ${i}` });
+    }
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const wrap = document.querySelector(".hk-notification-center__list-wrap");
+    expect(wrap, "the dedicated track host exists").toBeTruthy();
+    expect(wrap!.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
+    // Closing the panel must not leak the engine (document listeners /
+    // cron timers ride the handle).
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-notification-center__list-wrap")).toBeNull();
+  });
+
   it("rows sort newest-first and Clear all empties the journal", async () => {
     await setLocale("en");
     const { entries } = useNotificationCenter();

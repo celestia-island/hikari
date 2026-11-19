@@ -46,9 +46,13 @@ import {
   TriangleAlert as AlertTriangle,
   X,
 } from "lucide-vue-next";
-import { computed, defineComponent, h, ref, watch, type Component } from "vue";
+import { computed, defineComponent, h, nextTick, onUnmounted, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
+import {
+  attachOverlayScrollbars,
+  type OverlayScrollbarHandle,
+} from "../composables/useOverlayScrollbar";
 import { activeLocale, useI18n } from "../i18n/context";
 import {
   useNotificationCenter,
@@ -99,6 +103,20 @@ export default defineComponent({
     const clipboard = useClipboard();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
+    // The list is the popup's ONE scroll surface on the desktop flyout —
+    // it carries the native-suppression pair, so WITHOUT the overlay
+    // engine it scrolls invisibly (user report 2026-11-19). HkPopover
+    // attaches its own engine only in sheet mode ("desktop popovers size
+    // to content"), which is why the bell owns this one. Same shape as
+    // HkDrawer: a wrapper that wraps EXACTLY the viewport is the track
+    // host, attach on open, detach on close/unmount.
+    const listRef = ref<HTMLUListElement | null>(null);
+    const listWrapRef = ref<HTMLDivElement | null>(null);
+    let listScrollbar: OverlayScrollbarHandle | null = null;
+    function detachListScrollbar() {
+      listScrollbar?.detach();
+      listScrollbar = null;
+    }
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
@@ -115,7 +133,30 @@ export default defineComponent({
     // toggle) keeps the receipt honest for sheet-scrim closes too.
     watch(open, (v) => {
       if (v) markAllRead();
+      if (v) {
+        nextTick(() => {
+          // The sheet branch never scrolls the list (overflow: visible —
+          // the engine self-hides when content fits), so attaching
+          // unconditionally is correct for both modalities.
+          if (!listRef.value) return;
+          detachListScrollbar();
+          listScrollbar = attachOverlayScrollbars(listRef.value, {
+            axis: "vertical",
+            host: listWrapRef.value ?? undefined,
+          });
+        });
+      } else {
+        detachListScrollbar();
+      }
     });
+    // Content growth while open (a new record lands) changes scrollHeight
+    // without resizing the viewport box, so the engine's ResizeObserver
+    // cannot see it — re-derive the thumb on journal mutations.
+    watch(
+      () => entries.length,
+      () => listScrollbar?.update(),
+    );
+    onUnmounted(detachListScrollbar);
 
     /** The toast's copy affordance, carried over: same clipboard write
      *  path (useClipboard), but the payload is the journal's own shape —
@@ -141,6 +182,18 @@ export default defineComponent({
               actions' RotateCcw go through the render function. */}
           <span class="hk-notification-row__icon" aria-hidden="true">
             {h(Icon, { size: 14 })}
+            {(entry.count ?? 1) > 1 && (
+              // The consolidation tally (user direction 2026-11-19) — a
+              // corner badge on the tone glyph. Real text content (screen
+              // readers hear the number before the title); the toast
+              // family's own msgs unit names it on hover.
+              <span
+                class="hk-notification-row__icon-count"
+                title={`${entry.count} ${t("hikari::toast.msgs", "msgs")}`}
+              >
+                {entry.count! > 99 ? "99+" : entry.count}
+              </span>
+            )}
           </span>
           <div class="hk-notification-row__body">
             <div class="hk-notification-row__top">
@@ -255,9 +308,11 @@ export default defineComponent({
                 </p>
               ) : (
                 <>
-                  <ul class="hk-notification-center__list" role="list">
-                    {sorted.value.map(renderRow)}
-                  </ul>
+                  <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
+                    <ul class="hk-notification-center__list" role="list" ref={listRef}>
+                      {sorted.value.map(renderRow)}
+                    </ul>
+                  </div>
                   <div class="hk-notification-center__foot">
                     {/* The wipe glyph reads before the label is parsed —
                         a destructive affordance announced by its icon

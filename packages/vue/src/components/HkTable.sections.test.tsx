@@ -726,8 +726,11 @@ describe("HkTable section band stylesheet", () => {
 
     const cell = ruleBody(".hk-table-section-cell");
     expect(cell).toContain("text-align: start");
-    expect(cell).toContain("border-bottom");
-    expect(cell).toContain("background:");
+    expect(cell).toContain("border-bottom: 1px solid var(--hi-color-border");
+    expect(cell).toContain("background: var(--hi-color-bg-subtle");
+    // One declaration each — an appended override must not hide.
+    expect(cell.match(/(?:^|[;{\s])border-bottom\s*:/g) ?? []).toHaveLength(1);
+    expect(cell.match(/(?:^|[;{\s])background\s*:/g) ?? []).toHaveLength(1);
     // The UA's `th { font-weight: bold }` must not leak into slot content.
     expect(cell).toContain("font-weight: inherit");
     expect(cell).not.toMatch(/font-weight:\s*(?:bold|[1-9]\d{2})/);

@@ -213,7 +213,10 @@ describe("HkTitleBar stylesheet contract", () => {
 
   it("keeps the windowed radius var wired to the close button", () => {
     const scss = readFileSync(resolve(componentDir, "HkTitleBar.scss"), "utf8");
-    expect(scss).toContain("--hk-tb-radius-close:");
+    expect(scss).toContain("--hk-tb-radius-close: 0 var(--radius-md) 0 0;");
+    // Declaration + exactly one consumer: a second declaration would override
+    // the pinned one while it stayed in the text.
+    expect(scss.match(/--hk-tb-radius-close/g) ?? []).toHaveLength(2);
     const body = ruleBody(css, ".hk-titlebar .hk-titlebar-btn-close");
     expect(body).toContain("border-radius: var(--hk-tb-radius-close)");
   });

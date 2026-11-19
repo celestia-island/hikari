@@ -666,8 +666,16 @@ describe("HkStatusBar", () => {
     // Reduced-motion users keep the steady tint.
     const scss = readFileSync(resolve(__dirname, "../styles/admin-tokens.scss"), "utf8");
     const rule = /\.s-status-bar-tag-reconnecting\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
-    expect(rule, "reconnecting rule carries the breathe animation").toContain("animation:");
+    // Name + loop term, not a frozen shorthand: the duration/easing may be
+    // retuned without breaking the claim, while `animation: none` (the
+    // settled-state defect) and a lost `infinite` (one-shot pulse) both fail.
+    expect(rule, "reconnecting rule carries the breathe animation").toMatch(
+      /animation:\s*s-status-bar-reconnecting-breathe\b[^;]*\binfinite/,
+    );
     expect(scss).toContain("@keyframes s-status-bar-reconnecting-breathe");
+    // One declaration in the rule: an appended `animation: none` would win
+    // the cascade while the pinned shorthand above stayed present.
+    expect(rule.match(/(?:^|[;{\s])animation\s*:/g) ?? []).toHaveLength(1);
     expect(scss).toMatch(
       /@media[^{]*prefers-reduced-motion[^{]*\{[^@]*?\.s-status-bar-tag-reconnecting\s*\{[^}]*animation:\s*none/s,
     );

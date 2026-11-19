@@ -358,7 +358,13 @@ describe("panel rows", () => {
 
     // The clear-all affordance announces itself by its glyph (user
     // direction 2026-11-19): a leading icon inside the label button.
-    const clearBtn = document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!;
+    // Resolved by its LABEL, not by first-match in the foot (2026-11-19
+    // sweep): a sibling inserted before Clear all would otherwise
+    // satisfy the glyph pin while the trash glyph was deleted.
+    const clearBtn = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(".hk-notification-center__foot .hk-btn"),
+    ).find((b) => b.textContent?.includes("Clear all"))!;
+    expect(clearBtn, "the clear-all button is in the foot").toBeTruthy();
     expect(clearBtn.querySelector(".hk-btn-icon")).toBeTruthy();
     clearBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();

@@ -236,7 +236,11 @@ export default defineComponent({
       const isLive = group.members.some(
         (m) => m.kind === "emergency" && m.state !== "cleared",
       );
-      const restorable = group.members.find(
+      // ALL restorable members, not just the first (final-residual fix):
+      // two identical-content episodes are two episodes, each with its
+      // own live callback — a `find` surfaced one Restore and stranded
+      // the other's only handle.
+      const restorables = group.members.filter(
         (m) => m.onResummon !== undefined && m.state === "snoozed",
       );
       // State chip: the head's own state wins; otherwise any member's
@@ -265,9 +269,13 @@ export default defineComponent({
               <span
                 class="hk-notification-row__icon-count"
                 title={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
-                aria-label={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
               >
-                {tally > 99 ? "99+" : tally}
+                {/* The visible cap is sighted-user shorthand; AT gets the
+                    full pair as real text (final-residual fix: `aria-label`
+                    on a role-less span is not a reliable accessible name —
+                    generic role cannot be named from author). */}
+                <span aria-hidden="true">{tally > 99 ? "99+" : tally}</span>
+                <span class="hk-notification-row__sr-only">{`${tally} ${t("hikari::toast.msgs", "msgs")}`}</span>
               </span>
             )}
           </span>
@@ -340,16 +348,17 @@ export default defineComponent({
                 {{ icon: () => <X size={14} /> }}
               </HkIconButton>
             )}
-            {restorable && (
+            {restorables.map((m) => (
               <HkIconButton
+                key={`restore-${m.id}`}
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::emergencyAlert.restore", "Show again")}
-                onClick={() => restorable.onResummon?.()}
+                onClick={() => m.onResummon?.()}
               >
                 {{ icon: () => h(RotateCcw, { size: 14 }) }}
               </HkIconButton>
-            )}
+            ))}
           </div>
         </li>
       );

@@ -103,6 +103,8 @@ describe("HkBoard nodeActions dock styles", () => {
     expect(block.slice(0, 400)).toMatch(
       /bottom:\s*var\(--hk-board-node-action-inset, 4px\)/,
     );
-    expect(block.slice(0, 400)).toMatch(/z-index:\s*6/);
+    // Anchored: `/z-index:\s*6/` is a PREFIX match, so a stacking
+    // retune to 60/600 stayed green (final-residual fix).
+    expect(block.slice(0, 400)).toMatch(/z-index:\s*6\s*;/);
   });
 });

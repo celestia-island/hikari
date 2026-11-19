@@ -6,7 +6,8 @@
 
 .hk-serpentine {
   position: relative;
-  height: calc(var(--space-24, 24px) * 4);
+  display: flex;
+  flex-direction: column;
   border-radius: var(--radius-md, 8px);
   border: 1px solid var(--border-faint);
   background: rgb(var(--color-surface) / 40%);
@@ -32,6 +33,14 @@
     border-color: rgb(var(--color-error) / 35%);
   }
 
+}
+
+.hk-serpentine-stage {
+  // The walk area: fixed rows, relative origin for the absolute svg and
+  // handle. The hint lives BELOW this block as normal flow, so the copy
+  // and the stroke can never overlap (device feedback, light theme).
+  position: relative;
+  height: calc(var(--space-24, 24px) * 3 + var(--space-16, 16px));
 }
 
 .hk-serpentine-svg {
@@ -95,7 +104,7 @@
   // The generous top padding keeps the copy clear of the lane stroke —
   // a second device pass showed 8px reading as part of the graphic.
   display: block;
-  padding: var(--space-16, 16px) var(--space-12, 12px) var(--space-4, 4px);
+  padding: var(--space-8, 8px) var(--space-12, 12px) var(--space-4, 4px);
   text-align: center;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));

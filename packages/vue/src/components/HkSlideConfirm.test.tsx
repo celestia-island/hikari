@@ -241,7 +241,10 @@ describe("HkSlideConfirm", () => {
     pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
     pointer(handle, "pointermove", 24 + pixel[0]!.x + 20, 24 + pixel[0]!.y);
     await nextTick();
-    expect(now()).toBeGreaterThan(0);
+    // Assert the ADVANCE, not survival: a 20px sweep along the lane is
+    // ~20px of honest progress (a 1-unit partial regression still passed
+    // the old form).
+    expect(now()).toBeGreaterThanOrEqual(4);
   });
 
   it("completing the lane by pointer emits confirm once", async () => {

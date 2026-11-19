@@ -41,6 +41,19 @@ export function slideConfirmRng(seed: number): () => number {
   };
 }
 
+/**
+ * The pointer corridor for an inner lane height: HALF the lane spacing
+ * minus a small slack. The slack must stay NEGATIVE — at +4px the radius
+ * passes the half-spacing bound and a straight horizontal drag rides one
+ * lane's corridor straight through routes that only visit two adjacent
+ * lanes (the R3/R4 probes: 62/600 seeds defeatable at +4, 0/600 at −2).
+ * Exported so tests pin the constant against the half-spacing bound (a
+ * behavioral pin is masked by the runaway check).
+ */
+export function slideConfirmCorridor(innerHeight: number): number {
+  return innerHeight / 6 - 2;
+}
+
 /** Lane-center fraction for a row index in the three-lane band. */
 export function slideLaneY(row: 0 | 1 | 2): number {
   return (row + 0.5) / 3;

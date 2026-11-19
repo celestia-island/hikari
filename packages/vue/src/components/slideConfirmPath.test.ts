@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   generateSlidePath,
+  slideConfirmCorridor,
   slideLaneY,
   slidePathLength,
   slidePixelPoints,
@@ -96,6 +97,25 @@ describe("generateSlidePath", () => {
         }
       }
     }
+  });
+});
+
+describe("slideConfirmCorridor — the constant is the defense", () => {
+  it("stays BELOW half the lane spacing (the anti-straight-pull bound)", () => {
+    // The corridor is the ONLY thing stopping a straight pull from riding
+    // one lane's corridor across routes that revisit adjacent lanes — at
+    // +4 slack (the R3 shape) the radius passed half the lane spacing and
+    // 62/600 seeds completed with a straight pull. This pin bites the
+    // constant directly: the runaway check masks behavior pins.
+    for (let inner = 24; inner <= 240; inner += 8) {
+      const spacing = inner / 3;
+      expect(slideConfirmCorridor(inner), `inner ${inner}`).toBeLessThan(spacing / 2);
+      expect(slideConfirmCorridor(inner), `inner ${inner}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("the default geometry reads 10px (72 inner → 12/2 − 2)", () => {
+    expect(slideConfirmCorridor(72)).toBe(10);
   });
 });
 

@@ -14,6 +14,7 @@ import {
   slidePathLength,
   slidePixelPoints,
   slidePointAtT,
+  slideConfirmCorridor,
   slideSegmentDistance,
   type SlidePath,
   type SlidePoint,
@@ -27,15 +28,10 @@ const COMPLETE_T = 0.995;
 /** The lane keeps a knob-radius margin from the track edges. */
 const TRACK_PAD = 24;
 
-/** Pointer corridor: HALF A LANE SPACING minus a small slack, computed
- *  from the INNER lane height (the frame the lane lives in). Slack must
- *  stay NEGATIVE: at +4px the radius passes the half-spacing bound and a
- *  straight horizontal drag rides one lane's corridor straight through
- *  routes that only ever visit two adjacent lanes (the R3 probe: 62/600
- *  seeds defeatable at +4, 0/600 at −2). */
-function corridorRadius(innerHeight: number): number {
-  return innerHeight / 6 - 2;
-}
+/** Pointer corridor: the pure module's constant — HALF A LANE SPACING
+ *  minus a small slack over the inner height (the tests pin it against
+ *  the half-spacing bound; see slideConfirmPath.ts). */
+const corridorRadius = slideConfirmCorridor;
 
 /** Follow-walk resolution: the lane is sampled at this many arc-length
  *  steps per advance scan (fine enough that a corner is never chorded). */
@@ -245,7 +241,9 @@ export default defineComponent({
       status.value = "dragging";
     }
 
-    function onKnobPointermove(e: PointerEvent) {
+    /** One traced event (real, or a coalesced sub-sample): the pointer
+     *  moved to a new position — sweep the segment, advance. */
+    function traceEvent(e: PointerEvent) {
       if (status.value !== "dragging") return;
       const b = box.value;
       const inner = b.height - TRACK_PAD * 2;
@@ -287,21 +285,42 @@ export default defineComponent({
         snapBack();
         return;
       }
-      // Commit the advance FIRST — completion reads the new progress (the
-      // knob lands at the lane's very end, aria-valuenow 100).
+      // Commit the advance, then completion (the knob lands at the lane's
+      // very end; Vue renders the final aria-valuenow asynchronously).
       progress.value = advanced;
       if (advanced >= COMPLETE_T) {
         complete();
         return;
       }
-      // Runaway check: the walk stopped at a gap AND the pointer's final
-      // position is far from where the knob ended up — the pointer has
-      // left the lane for good (corridor exit). Snap instead of freezing.
+      // Runaway check: the walk stopped at a gap AND the pointer ended
+      // more than one corridor past where the knob ended up — the pointer
+      // has left the lane for good (corridor exit). The bound is 2× the
+      // corridor: the walk legitimately leaves the knob one corridor
+      // AHEAD of the pointer, so a 1× bound would turn ordinary aim error
+      // into a refusal (the R4 probe: ±3px lateral kills the gesture).
       const knobPoint = slidePointAtT(pixel, advanced);
-      if (Math.hypot(tx - knobPoint.x, ty - knobPoint.y) > tolerance) {
+      if (Math.hypot(tx - knobPoint.x, ty - knobPoint.y) > tolerance * 2) {
         snapBack();
         return;
       }
+    }
+
+    function onKnobPointermove(e: PointerEvent) {
+      if (status.value !== "dragging") return;
+      // Sub-divide with the browser's own coalesced sub-samples: a fast
+      // drag's coalesced frames each carry small pointer steps, so the
+      // walk traces through corners honestly (a single large event that
+      // straddles a corner by more than 2√2·corridor would otherwise
+      // abort — the documented single-event ceiling for environments
+      // without coalesced events, e.g. synthetic test dispatchers).
+      const coalesced = (
+        e as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] }
+      ).getCoalescedEvents?.();
+      if (coalesced && coalesced.length > 0) {
+        for (const sub of coalesced) traceEvent(sub);
+        return;
+      }
+      traceEvent(e);
     }
 
     function onKnobPointerup() {

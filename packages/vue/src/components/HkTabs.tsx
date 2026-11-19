@@ -447,9 +447,13 @@ export default defineComponent({
         triggerRefs.value.set(idx, el);
       } else {
         // A ref's null value carries the ORIGINAL index, which may now
-        // belong to a different (live) option — never unbind by index
-        // here. Detached elements are pruned by pruneDetachedBindings.
-        triggerRefs.value.delete(idx);
+        // belong to a different (live) option: deleting by index here
+        // evicted the SURVIVOR's record after a shrinking patch, which
+        // froze the sliding indicator and stopped arrow-key focus from
+        // following the selection. Only drop a record that no longer
+        // points at a live element.
+        const current = triggerRefs.value.get(idx);
+        if (!current || !current.isConnected) triggerRefs.value.delete(idx);
       }
     }
 
@@ -457,12 +461,10 @@ export default defineComponent({
       if (el instanceof HTMLElement) {
         cellRefs.value.set(idx, el);
       } else {
-        // Same stale-index trap as setTriggerRef: only drop the record
-        // when it no longer points at a live element, so a shrinking
-        // list cannot evict a sibling's freshly patched cell (which
-        // would silently fall back to measuring the trigger).
-        const current = cellRefs.value.get(idx);
-        if (!current || !current.isConnected) cellRefs.value.delete(idx);
+        // Never delete by index here: the null ref carries the ORIGINAL
+        // index, which may now belong to a live sibling's cell. The entry
+        // is overwritten by the next render that owns the index, and the
+        // deep `props.tabs` watcher clears the whole map.
       }
     }
 

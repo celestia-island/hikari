@@ -109,6 +109,9 @@ export default defineComponent({
 
     const api: ContextMenuApi = {
       open(next: ContextMenuRequest) {
+        // Replacing an open menu closes the previous one — its owner gets
+        // the "closed without a selection" hook it was promised.
+        if (open.value) request.value?.onClose?.();
         request.value = next;
         menuEpoch.value += 1;
         open.value = true;
@@ -174,6 +177,9 @@ export default defineComponent({
       { immediate: true },
     );
     onBeforeUnmount(() => {
+      // A menu still open when the provider goes away is a menu that
+      // closed without a selection — the documented hook fires.
+      request.value?.onClose?.();
       if (!canListen) return;
       window.removeEventListener("contextmenu", onWindowContextMenu);
       defaultsListening = false;

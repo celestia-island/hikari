@@ -203,6 +203,61 @@ describe("clipboard contributor", () => {
     expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
   });
 
+  it("claims contenteditable surfaces including plaintext-only and case variants", () => {
+    // The house selector (styles/selectionSheet) is the ONE definition of
+    // "editable surface": enumerated attribute values are case-insensitive
+    // and `plaintext-only` (whose isContentEditable is true) counts.
+    for (const attr of ["true", "TRUE", "plaintext-only", "PlainText-Only"]) {
+      const div = document.createElement("div");
+      div.setAttribute("contenteditable", attr);
+      document.body.appendChild(div);
+      expect(clipboardContextMenuDefault.build(point(div)), attr).toBeTruthy();
+    }
+    // …and `false` still declines.
+    const off = document.createElement("div");
+    off.setAttribute("contenteditable", "false");
+    document.body.appendChild(off);
+    expect(clipboardContextMenuDefault.build(point(off))).toBeNull();
+  });
+
+  it("cuts on a contenteditable through the snapshot, not a re-read caret", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined), readText: vi.fn() },
+      configurable: true,
+    });
+    const originalExec = document.execCommand;
+    let deleted = 0;
+    document.execCommand = vi.fn((cmd: string) => {
+      if (cmd === "delete") deleted += 1;
+      return true;
+    });
+    try {
+      const div = document.createElement("div");
+      div.setAttribute("contenteditable", "true");
+      div.textContent = "keep me";
+      document.body.appendChild(div);
+      // Select part of the content, snapshot it, then move the live
+      // selection elsewhere before the row runs.
+      const range = document.createRange();
+      range.selectNodeContents(div);
+      const sel = document.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      const request = clipboardContextMenuDefault.build(point(div))!;
+      sel.removeAllRanges(); // the caret "moved" (menu opened elsewhere)
+      div.appendChild(document.createTextNode(" later"));
+
+      request.onSelect!("cut", request.items[1]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      // The snapshot text is what gets copied, and the delete path runs.
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith("keep me");
+      expect(deleted).toBe(1);
+    } finally {
+      document.execCommand = originalExec;
+    }
+  });
+
   it("declines non-editable targets", () => {
     expect(clipboardContextMenuDefault.build(point(document.createElement("div")))).toBeNull();
     expect(clipboardContextMenuDefault.build(point(null))).toBeNull();

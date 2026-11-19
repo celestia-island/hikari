@@ -137,6 +137,11 @@
      growth, slot-unit grid tracks); in a shrink-to-fit inline strip the
      percentage resolves to the content size, so nothing changes there. */
   width: 100%;
+  /* RESERVE the action lane. The overlay is absolutely positioned at the
+     inline end, so without this the revealed buttons sit ON the label's
+     last ~20px in a shrink-to-fit pill (clicks there would select the
+     option's own text and fire the action instead). */
+  padding-inline-end: calc(var(--space-12) + 18px);
 }
 
 /* block (row-filling) strips: the cell takes the growth its trigger

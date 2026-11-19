@@ -87,16 +87,33 @@ export function contextMenuDefaultsFor(
   point: ContextTriggerPoint,
 ): ContextMenuRequest | null {
   for (const contribution of [...registry]) {
-    const request = contribution.build(point);
+    let request: ContextMenuRequest | null = null;
+    try {
+      request = contribution.build(point);
+    } catch (err) {
+      // ISOLATION is per-contributor: one broken host registration must
+      // not swallow the ones after it (the built-in clipboard menu sits at
+      // order 0 and every negative-order contributor would otherwise take
+      // it out for that click).
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console -- dev-only drift alarm
+        console.error(`[defaultContextMenu] contributor "${contribution.id}" threw:`, err);
+      }
+      request = null;
+    }
     if (request) return request;
   }
   return null;
 }
 
-/** Elements the built-in clipboard menu applies to. Same set the
- *  upstream-downported chest regime used. */
+/** Elements the built-in clipboard menu applies to. The contenteditable
+ *  half reuses the HOUSE selector (`styles/selectionSheet`): an enumerated
+ *  attribute is matched case-insensitively and `plaintext-only` — the
+ *  spec's plain-text editor value, whose `isContentEditable` is true —
+ *  counts too. A literal `='true'` list would silently skip both and leave
+ *  those surfaces with suppression only. */
 const EDITABLE_SELECTOR =
-  "input, textarea, [contenteditable='true'], [contenteditable='']";
+  "input, textarea, [contenteditable]:not([contenteditable='false' i])";
 
 /** Input types whose `value` is free text. Everything else (file, date,
  *  checkbox, range, …) rejects an arbitrary string — `field.value = text`
@@ -165,9 +182,17 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
     const sel = document.getSelection();
     let selText = "";
     let range: Range | null = null;
+    // Field offsets are part of the snapshot: the menu can outlive the
+    // caret it was built for (a host watcher rewriting `value`, a soft
+    // keyboard re-opening), so cut/paste must edit the SAME range the user
+    // was shown, not wherever the caret moved to.
+    let snapStart = 0;
+    let snapEnd = 0;
     if (field) {
       const start = field.selectionStart ?? field.value.length;
       const end = field.selectionEnd ?? start;
+      snapStart = start;
+      snapEnd = end;
       selText = field.value.slice(start, end);
     } else if (sel && sel.rangeCount > 0) {
       const r = sel.getRangeAt(0);
@@ -215,13 +240,15 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       if (!(await doCopy())) return; // never delete text that was not copied
       if (isReadOnly || !stillAttached()) return; // the target may have left while copying
       if (field) {
-        const start = field.selectionStart ?? 0;
-        const end = field.selectionEnd ?? 0;
+        const start = snapStart;
+        const end = snapEnd;
         field.value = field.value.slice(0, start) + field.value.slice(end);
         field.dispatchEvent(new Event("input", { bubbles: true }));
         field.selectionStart = field.selectionEnd = start;
       } else {
         restore();
+        // `execCommand` reports failure by RETURNING false (it only throws
+        // on unsupported commands) — the same rule copy already follows.
         document.execCommand("delete");
       }
     };
@@ -237,8 +264,8 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       if (!stillAttached()) return; // the target may have left while reading
       restore();
       if (field) {
-        const start = field.selectionStart ?? field.value.length;
-        const end = field.selectionEnd ?? start;
+        const start = snapStart;
+        const end = snapEnd;
         field.value = field.value.slice(0, start) + text + field.value.slice(end);
         field.dispatchEvent(new Event("input", { bubbles: true }));
         field.selectionStart = field.selectionEnd = start + text.length;

@@ -13,6 +13,41 @@ const scss = readFileSync(join(__dirname, "HkNotificationBell.scss"), "utf-8")
   .replace(/^[ \t]*\/\/.*$/gm, "");
 
 describe("HkNotificationBell scss contract", () => {
+  it("the tally's sr-only twin really hides (the a11y recipe is pinned here)", () => {
+    // The badge's accessible name is real text in a visually-hidden span;
+    // happy-dom applies no stylesheets, so the CONTRACT lives here — every
+    // arm of the sr-only recipe must survive a revert that would make the
+    // twin visible (or, worse, leave it in flow and break the row).
+    const block = scss.match(/\.hk-notification-row__sr-only \{([^}]*)\}/);
+    expect(block, "the sr-only rule exists").toBeTruthy();
+    for (const arm of [
+      "position: absolute",
+      "width: 1px",
+      "height: 1px",
+      "overflow: hidden",
+      "clip-path: inset(50%)",
+      "white-space: nowrap",
+    ]) {
+      expect(block![1], `sr-only carries ${arm}`).toContain(arm);
+    }
+  });
+
+  it("each load-bearing rule is declared ONCE (a duplicate top-level rule could override it unseen)", () => {
+    // The row helpers extract the FIRST matching rule, so an appended
+    // duplicate with the same selector wins the cascade while the pinned
+    // body stays present (final-residual class). Counting the selector at
+    // file scope closes it for the rules these pins defend.
+    for (const selector of [
+      ".hk-notification-center__list {",
+      ".hk-notification-row {",
+      ".hk-notification-row__icon-count {",
+      ".hk-notification-center__foot {",
+    ]) {
+      const hits = scss.split(selector).length - 1;
+      expect(hits, `${selector} declared exactly once`).toBe(1);
+    }
+  });
+
   it("the panel body is a definite 22rem inside the max-content popover", () => {
     expect(scss).toContain("width: 22rem;");
     // The old `min(22rem, 100%)` clamp is the dead-band root cause.
@@ -68,8 +103,15 @@ describe("HkNotificationBell scss contract", () => {
     expect(scss).toMatch(
       /\.hk-notification-row:hover \.hk-notification-row__actions \.hk-icon-button,\s*\n\.hk-notification-row:focus-within \.hk-notification-row__actions \.hk-icon-button\s*\{[^}]*--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 85%\)/,
     );
-    expect(scss).toMatch(
-      /\.hk-notification-row:focus-within \.hk-notification-row__actions \.hk-icon-button\s*\{\s*--hi-icon-button-icon-color:/,
-    );
+    // Exactly ONE declaration per ink value: the old third arm asserted
+    // only the property NAME on the focus-within selector, which the joint
+    // block above already covers (redundant) while an appended second
+    // declaration could override it unseen (final-residual fix).
+    expect(
+      scss.match(/--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 40%\)/g) ?? [],
+    ).toHaveLength(1);
+    expect(
+      scss.match(/--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 85%\)/g) ?? [],
+    ).toHaveLength(1);
   });
 });

@@ -364,7 +364,9 @@ describe("panel rows", () => {
     const boomRow = rows().find((r) => r.textContent?.includes("boom"))!;
     const badge = boomRow.querySelector<HTMLElement>(".hk-notification-row__icon-count");
     expect(badge, "the tally badge renders").toBeTruthy();
-    expect(badge!.textContent).toBe("3");
+    // The visible glyph is the cap ("99+" above 99); the SR twin carries
+    // the pair (see the a11y case below).
+    expect(badge!.querySelector('[aria-hidden="true"]')!.textContent).toBe("3");
     expect(badge!.getAttribute("title")).toContain("msgs");
     // A single-occurrence record carries NO badge.
     const otherRow = rows().find((r) => r.textContent?.includes("other"))!;
@@ -390,6 +392,28 @@ describe("panel rows", () => {
     // The whole line goes — not just the newest member.
     expect(useNotificationCenter().entries).toHaveLength(0);
     expect(rows()).toHaveLength(0);
+  });
+
+  it("the tally's accessible name is real text with its unit (not a bare number)", async () => {
+    // Final-residual fix: `aria-label` on a role-less span is not a
+    // reliable accessible name (generic role cannot be named from author),
+    // so the badge ships a visually-hidden twin with the full pair while
+    // the visible glyph stays the sighted shorthand.
+    await setLocale("en");
+    for (const id of ["t:1", "t:2", "t:3", "t:4"]) {
+      recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
+    }
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const badge = rows()[0]!.querySelector<HTMLElement>(".hk-notification-row__icon-count")!;
+    const sr = badge.querySelector<HTMLElement>(".hk-notification-row__sr-only");
+    expect(sr, "the visually-hidden twin renders").toBeTruthy();
+    expect(sr!.textContent).toBe("4 msgs");
+    // The hiding recipe itself is pinned in the scss contract (happy-dom
+    // applies no stylesheets, so a computed-style probe here would test
+    // the environment, not the code).
   });
 
   it("a toast joining a snoozed emergency's group does NOT dissolve the Restore", async () => {
@@ -425,7 +449,9 @@ describe("panel rows", () => {
       "Hidden",
     );
     // The tally counts both members.
-    expect(row.querySelector(".hk-notification-row__icon-count")?.textContent).toBe("2");
+    expect(
+      row.querySelector('.hk-notification-row__icon-count [aria-hidden="true"]')?.textContent,
+    ).toBe("2");
     // And the restore still works through the journal's resummon path.
     restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
@@ -433,6 +459,33 @@ describe("panel rows", () => {
       row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]'),
     ).toBeFalsy();
     expect(row.classList.contains("is-active")).toBe(true);
+  });
+
+  it("two identical-content snoozed episodes each keep their own Restore", async () => {
+    // Final-residual fix: `restorable` used to be a single `find`, so a
+    // group holding two episodes surfaced ONE handle and stranded the
+    // other's callback (journal intact, band hidden = unreachable).
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "a", severity: "warning", title: "dup" });
+    snoozeEmergencyAlert("a");
+    raiseEmergencyAlert({ id: "b", severity: "warning", title: "dup" });
+    snoozeEmergencyAlert("b");
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows(), "both episodes share one content group").toHaveLength(1);
+    const restores = rows()[0]!.querySelectorAll<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]',
+    );
+    expect(restores, "one Restore per restorable episode").toHaveLength(2);
+    // Each button drives its OWN episode: unsnoozing one leaves the other.
+    restores[0]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const after = rows()[0]!.querySelectorAll<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]',
+    );
+    expect(after, "the other episode keeps its handle").toHaveLength(1);
   });
 
   it("the open panel carries the overlay scrollbar tracks; closing detaches them", async () => {

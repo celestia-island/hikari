@@ -75,6 +75,17 @@ export default defineComponent({
     /** The leading all-pill's label; omit to hide the all-pill. The pill
      * wears the active tint exactly when nothing is picked. */
     allLabel: { type: String, default: undefined },
+    /** Pill-suffix renderer (2026-11-19, the filter-chip sort arrows): one
+     * call per rendered pill — a null value scopes the ALL-pill, a value
+     * scopes that option — rendered UNWRAPPED after the label so the
+     * suffix carries its own classes (a direction arrow rides its lucide
+     * class; the pill's flex gap seats it). Re-evaluated every render: the
+     * host rebuilds the returned vnode when its state moves, nothing is
+     * cached here. */
+    renderTrailing: {
+      type: Function as PropType<(value: string | null) => VNode>,
+      default: undefined,
+    },
   },
   emits: {
     toggle: (_value: string) => true,
@@ -101,6 +112,7 @@ export default defineComponent({
             onClick={() => emit("all")}
           >
             {props.allLabel}
+            {props.renderTrailing?.(null)}
           </button>
         )}
         {props.options.map((o) => {
@@ -117,6 +129,7 @@ export default defineComponent({
             >
               {icon != null && <span class="hk-pill-group-icon">{icon}</span>}
               {o.label}
+              {props.renderTrailing?.(o.value)}
             </button>
           );
         })}

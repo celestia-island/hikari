@@ -17,7 +17,8 @@
 //     button.hk-filter-chip [.hk-filter-chip--on] type=button
 //            aria-haspopup=dialog aria-expanded aria-label title
 //       span.hk-filter-chip-text {chip text}
-//       span[style="display:contents"] > the ▾ svg (class hk-filter-chip-caret)
+//       [trailing: Option<Element>]       (host suffix — a direction arrow;
+//                                          unwrapped, its own classes)
 //     ── open only ──
 //     div.hk-filter-chip-body           (style: absolute layer geometry)
 //       div.hk-pill-group role=group aria-label={label}
@@ -61,16 +62,12 @@
 //     `data-active` only, so the vendored sheet's tone rules are inert in
 //     this form rather than wrong.
 
-use crate::data::filter_panel::{filter_popup_layer_style, glyph_host};
+use crate::data::filter_panel::filter_popup_layer_style;
 use crate::feedback::popover::PopoverPlacement;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
 pub struct FilterChipComponent;
-
-/// The ▾ caret glyph (lucide `ChevronDown` at `size={12}`; the sheet's
-/// `.hk-filter-chip-caret` owns its opacity/box).
-pub const FILTER_CHIP_CARET_SVG: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide hk-filter-chip-caret lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>"#;
 
 /// How many picked labels the chip prints before collapsing the rest into a
 /// `+N` tail (Vue hard-codes 3).
@@ -84,6 +81,9 @@ pub struct FilterChipOption {
     pub label: String,
     /// Optional leading glyph (Vue resolves a component/name).
     pub icon: Option<Element>,
+    /// Optional trailing glyph rendered UNWRAPPED after the label (Vue:
+    /// `renderTrailing(value)` — the sort arrow seats here).
+    pub trailing: Option<Element>,
 }
 
 // ── pure functions ───────────────────────────────────────────────────────
@@ -199,6 +199,19 @@ pub struct FilterChipProps {
     /// story to tell.
     pub hint: Option<String>,
 
+    /// Chip-label override (Vue: `chipText`) — for hosts whose chip text
+    /// is not the picked-label list (a range corridor). None keeps the
+    /// mirror.
+    pub chip_text: Option<String>,
+
+    /// Trigger-suffix glyph (Vue: `renderChipTrailing()`) — the seat for
+    /// the host's direction arrow; rendered UNWRAPPED after the text
+    /// span, carrying its own classes.
+    pub trailing: Option<Element>,
+
+    /// All-pill suffix glyph (Vue: `renderPillTrailing(null)`).
+    pub all_trailing: Option<Element>,
+
     /// Fires with the desired open state (Vue: `update:open`).
     pub on_open_change: Option<EventHandler<bool>>,
 
@@ -213,9 +226,23 @@ pub struct FilterChipProps {
 pub fn FilterChip(props: FilterChipProps) -> Element {
     let selected = props.selected.clone();
     let on = filter_chip_is_on(&selected);
-    let chip_text = filter_chip_text(&props.options, &selected, &props.all_label);
-    let aria_label =
-        filter_chip_aria_label(&props.label, &props.options, &selected, &props.all_label);
+    // The override wins over the mirror (Vue: `chipText ?? mirrored`). The
+    // accessible name carries the SAME text the eye sees once a selection
+    // (or a corridor override) engages — a bare category would mask it.
+    let chip_text = props
+        .chip_text
+        .clone()
+        .unwrap_or_else(|| filter_chip_text(&props.options, &selected, &props.all_label));
+    let aria_label = if on
+        || props
+            .chip_text
+            .as_deref()
+            .map_or(false, |text| text != props.all_label)
+    {
+        format!("{}: {}", props.label, chip_text)
+    } else {
+        props.label.clone()
+    };
 
     let mut classes = String::from("hk-filter-chip");
     if on {
@@ -238,8 +265,14 @@ pub fn FilterChip(props: FilterChipProps) -> Element {
         })
         .child(rsx! {
             span { class: "hk-filter-chip-text", "{chip_text}" }
-        })
-        .child(glyph_host(FILTER_CHIP_CARET_SVG));
+        });
+    // The trigger renders NO caret (the Vue twin retired it): the facet
+    // chip reads as the same solid-surface family as the bespoke chips
+    // beside it, and the disclosure state rides aria-expanded. The host's
+    // direction arrow (Vue: renderChipTrailing) seats here, unwrapped.
+    if let Some(trailing) = props.trailing.clone() {
+        chip = chip.child(trailing);
+    }
 
     let mut anchor = VElement::new("span")
         .class("hk-filter-chip-anchor")
@@ -273,6 +306,11 @@ fn popup_body(props: &FilterChipProps) -> VNode {
             }
         })
         .child(VNode::Text(VText::new(props.all_label.as_str())));
+    // The all-pill's suffix (Vue: renderPillTrailing(null)) — the seat for
+    // the arrow while the all-state sort is engaged.
+    if let Some(trailing) = props.all_trailing.clone() {
+        all_pill = all_pill.child(trailing);
+    }
     if all_pressed {
         all_pill = all_pill.attr("data-active", "true");
     }
@@ -299,6 +337,11 @@ fn popup_body(props: &FilterChipProps) -> VNode {
         pill = pill.child(rsx! {
             {VNode::Text(VText::new(option.label.as_str()))}
         });
+        // The option's suffix (Vue: renderPillTrailing(value)) — the seat
+        // for the arrow while this option engages the shared sort.
+        if let Some(trailing) = option.trailing.clone() {
+            pill = pill.child(trailing);
+        }
         if active {
             pill = pill.attr("data-active", "true");
         }
@@ -332,6 +375,8 @@ impl StyledComponent for FilterChipComponent {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // The suffix fixtures ride the same glyph host the filter family uses.
+    use crate::data::filter_panel::glyph_host;
 
     fn options() -> Vec<FilterChipOption> {
         vec![
@@ -339,21 +384,25 @@ mod tests {
                 value: "deepseek".to_string(),
                 label: "DeepSeek".to_string(),
                 icon: None,
+                trailing: None,
             },
             FilterChipOption {
                 value: "openai".to_string(),
                 label: "OpenAI".to_string(),
                 icon: None,
+                trailing: None,
             },
             FilterChipOption {
                 value: "anthropic".to_string(),
                 label: "Anthropic".to_string(),
                 icon: None,
+                trailing: None,
             },
             FilterChipOption {
                 value: "mistral".to_string(),
                 label: "Mistral".to_string(),
                 icon: None,
+                trailing: None,
             },
         ]
     }
@@ -373,6 +422,9 @@ mod tests {
         // Vue default: "bottom-start".
         assert_eq!(props.placement, PopoverPlacement::BottomStart);
         assert_eq!(props.hint, None);
+        assert_eq!(props.chip_text, None);
+        assert!(props.trailing.is_none());
+        assert!(props.all_trailing.is_none());
         assert!(props.on_open_change.is_none());
         assert!(props.on_toggle.is_none());
         assert!(props.on_all.is_none());
@@ -488,7 +540,6 @@ mod tests {
             ".hk-filter-chip-anchor",
             ".hk-filter-chip",
             ".hk-filter-chip--on",
-            ".hk-filter-chip-caret",
             ".hk-filter-chip-body",
             ".hk-filter-chip-body",
             ".hk-filter-chip-hint",
@@ -532,17 +583,47 @@ mod tests {
             "aria-expanded=\"false\"",
             "aria-label=\"Provider: OpenAI\"",
             "title=\"Provider\"",
-            // The chip text + the caret's boxless host.
+            // The chip text; the trigger carries NO caret — the facet chip
+            // reads as the same solid-surface family as the bespoke chips
+            // beside it, and disclosure rides aria-expanded.
             "hk-filter-chip-text",
             ">OpenAI<",
-            "hk-filter-chip-caret",
-            "display:contents",
         ] {
             assert!(html.contains(needle), "missing {needle}: {html}");
         }
+        assert!(!html.contains("hk-filter-chip-caret"), "{html}");
         // Closed: the popup body does not render at all (Vue's HkPopover).
         assert!(!html.contains("hk-filter-chip-body"), "{html}");
         assert!(!html.contains("hk-pill-group"), "{html}");
+    }
+
+    #[test]
+    fn filter_chip_render_seats_the_host_suffixes_and_override() {
+        let mut opts = options();
+        opts[1].trailing = Some(glyph_host(r#"<svg class="lucide lucide-arrow-down"/>"#));
+        let html = FilterChip(FilterChipProps {
+            label: "Provider".to_string(),
+            all_label: "All providers".to_string(),
+            options: opts,
+            selected: selected(&["openai"]),
+            open: true,
+            chip_text: Some("VI – ★".to_string()),
+            trailing: Some(glyph_host(r#"<svg class="lucide lucide-arrow-up"/>"#)),
+            all_trailing: Some(glyph_host(r#"<svg class="lucide lucide-arrow-up"/>"#)),
+            ..Default::default()
+        })
+        .render_to_html();
+
+        // The override replaces the mirror on the trigger and in the
+        // accessible name.
+        assert!(html.contains("VI – ★"), "{html}");
+        assert!(html.contains("aria-label=\"Provider: VI – ★\""), "{html}");
+        // The trigger suffix seats after the text span, unwrapped.
+        assert!(html.contains("lucide-arrow-up"), "{html}");
+        // The all-pill suffix (renderPillTrailing(null)) and the picked
+        // option's suffix (renderPillTrailing(value)) seat after their
+        // labels — exactly one option arrow (openai), one all arrow.
+        assert_eq!(html.matches("lucide-arrow-down").count(), 1, "{html}");
     }
 
     #[test]

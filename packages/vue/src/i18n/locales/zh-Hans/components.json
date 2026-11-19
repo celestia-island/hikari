@@ -387,5 +387,7 @@
   "hikari::notificationCenter.stateHidden": "已隐藏",
   "hikari::notificationCenter.stateResolved": "已恢复",
   "hikari::notificationCenter.clearAll": "全部清空",
-  "hikari::notificationCenter.dismiss": "消除"
+  "hikari::notificationCenter.dismiss": "消除",
+  "hikari::slideConfirm.drag": "按住手柄，沿通道拖到最右侧",
+  "hikari::slideConfirm.success": "已确认"
 }

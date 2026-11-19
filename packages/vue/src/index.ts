@@ -910,6 +910,7 @@ export { default as HkPhoneInput } from "./components/HkPhoneInput";
 export { default as HkAffixPicker } from "./components/HkAffixPicker";
 export { default as HkAddTile } from "./components/HkAddTile";
 export { default as HkUserPicker, type HkUserOption } from "./components/HkUserPicker";
+export { default as HkSlideConfirm } from "./components/HkSlideConfirm";
 export { default as HkPhaseTransition } from "./components/HkPhaseTransition";
 export { default as HkGaugeRing } from "./components/HkGaugeRing";
 export { default as HkProgressRing } from "./components/HkProgressRing";

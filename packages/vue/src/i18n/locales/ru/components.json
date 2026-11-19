@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "Скрыто",
   "hikari::notificationCenter.stateResolved": "Устранено",
   "hikari::notificationCenter.clearAll": "Очистить всё",
-  "hikari::notificationCenter.dismiss": "Скрыть"
+  "hikari::notificationCenter.dismiss": "Скрыть",
+  "hikari::slideConfirm.drag": "Удерживайте ручку и протяните её по трассе до правого края",
+  "hikari::slideConfirm.success": "Подтверждено"
 }

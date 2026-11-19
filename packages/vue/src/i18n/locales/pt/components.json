@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "Oculta",
   "hikari::notificationCenter.stateResolved": "Resolvida",
   "hikari::notificationCenter.clearAll": "Limpar tudo",
-  "hikari::notificationCenter.dismiss": "Descartar"
+  "hikari::notificationCenter.dismiss": "Descartar",
+  "hikari::slideConfirm.drag": "Segure o botão e arraste-o pelo traçado até a borda direita",
+  "hikari::slideConfirm.success": "Confirmado"
 }

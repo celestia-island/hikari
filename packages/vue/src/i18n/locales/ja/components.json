@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "非表示",
   "hikari::notificationCenter.stateResolved": "解決済み",
   "hikari::notificationCenter.clearAll": "すべて消去",
-  "hikari::notificationCenter.dismiss": "削除"
+  "hikari::notificationCenter.dismiss": "削除",
+  "hikari::slideConfirm.drag": "ノブをつかみ、ラインに沿って右端までドラッグしてください",
+  "hikari::slideConfirm.success": "確認済み"
 }

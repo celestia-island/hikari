@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "Hidden",
   "hikari::notificationCenter.stateResolved": "Resolved",
   "hikari::notificationCenter.clearAll": "Clear all",
-  "hikari::notificationCenter.dismiss": "Dismiss"
+  "hikari::notificationCenter.dismiss": "Dismiss",
+  "hikari::slideConfirm.drag": "Hold the knob and drag along the lane to the right edge",
+  "hikari::slideConfirm.success": "Confirmed"
 }

@@ -94,6 +94,10 @@ describe("HkDraggableList actions-lane sheet", () => {
     // Multiple host buttons in one lane need the lane's own gap so they
     // never fuse into one cluster against the row edge.
     expect(body).toContain("gap: var(--space-8, 0.5rem)");
+    // Exactly one declaration: a SECOND `gap:` appended after this one
+    // would win the cascade while the pinned string stayed present
+    // (round-2 review; same shape as HkDockBar's single-declaration pin).
+    expect((body ?? "").match(/(?:^|[;{\s])gap\s*:/g) ?? []).toHaveLength(1);
   });
 
   // The right-edge pinning is STRUCTURAL, not a margin patch: the item

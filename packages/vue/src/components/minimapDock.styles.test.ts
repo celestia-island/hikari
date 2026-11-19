@@ -55,6 +55,9 @@ describe("minimap dock stylesheet contract", () => {
     expect(dock).toContain("position: absolute");
     expect(dock).toContain("inset-inline-end: var(--space-10)");
     expect(dock).toContain("bottom: var(--space-10)");
+    // One declaration per axis — an appended override must not hide.
+    expect(dock.match(/(?:^|[;{\s])inset-inline-end\s*:/g) ?? []).toHaveLength(1);
+    expect(dock.match(/(?:^|[;{\s])bottom\s*:/g) ?? []).toHaveLength(1);
   });
 
   it("the card's self-docking form survives for direct mounts", () => {

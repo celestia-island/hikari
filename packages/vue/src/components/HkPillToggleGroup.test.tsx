@@ -312,25 +312,55 @@ function stripSassComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
 }
 
+/** The block's TOP-LEVEL declarations: the slice before the first nested
+ *  rule (every nested rule in this sheet opens with `&`), then split on
+ *  `;` — a terminator is a separator, never the next match's anchor, so
+ *  consecutive declarations are all seen. Values trimmed and lowercased
+ *  (CSS keywords are ASCII-case-insensitive, so `FLEX` and `flex` are
+ *  the same declaration). Grouped per property so a LATER duplicate
+ *  declaration cannot hide behind a passing first one — the pins below
+ *  assert the FULL value set, not mere presence. */
+function declarations(block: string): Map<string, string[]> {
+  const body = block.replace(/^[^{]*\{/, "").replace(/\}[^}]*$/, "");
+  const nestedAt = body.search(/(?:^|\n)\s*&/);
+  const top = nestedAt === -1 ? body : body.slice(0, nestedAt);
+  const out = new Map<string, string[]>();
+  for (const fragment of top.split(";")) {
+    const m = fragment.match(/^\s*([-a-z]+)\s*:\s*(.+?)\s*$/);
+    if (!m) continue;
+    const prop = m[1].toLowerCase();
+    const value = m[2].toLowerCase();
+    out.set(prop, [...(out.get(prop) ?? []), value]);
+  }
+  return out;
+}
+
 describe("HkPillToggleGroup track geometry contract", () => {
   const track = stripSassComments(cssBlock(scssSource, ".hk-pill-group {"));
+  const trackDecls = declarations(track);
 
   it("the track hugs its pills instead of filling the lane", () => {
-    expect(track, "shrink-to-fit box").toMatch(/display:\s*inline-flex;/);
+    // The FULL value sets, not presence: a later `width: 100%` in the same
+    // block would cancel the hug while a presence pin stayed green.
+    expect(trackDecls.get("display")).toEqual(["inline-flex"]);
+    expect(trackDecls.get("width")).toEqual(["fit-content"]);
+    expect(trackDecls.get("max-width")).toEqual(["100%"]);
     // The pair is NOT redundant: a flex item is display-blockified
     // (inline-flex → flex), so only a definite width stops a column flex
-    // parent's align-items: stretch from re-filling the lane (HkTimePicker's
-    // AM/PM group is exactly such a child).
-    expect(track, "a definite width defeats the parent's stretch").toMatch(/width:\s*fit-content;/);
-    // The old contract must be gone, or the empty framed box is back.
-    expect(track, "no block-level flex track").not.toMatch(/display:\s*flex;/);
+    // parent's align-items: stretch from re-filling the lane (HkFilterChip's
+    // .hk-filter-chip-body column and the hosts' `flex flex-col` form-field
+    // slots are exactly such parents — HkTimePicker centers itself with
+    // align-self).
+    // No !important games: an override ladder inside the block must not be
+    // able to resurrect the stretch behind the pins above.
+    expect(track, "no important override inside the track block").not.toContain("!important");
   });
 
   it("the clamp keeps the one-line pannable strip alive when pills overflow", () => {
-    // fit-content + this clamp = shrink-to-fit capped at the lane: the pill
+    // fit-content + the clamp = shrink-to-fit capped at the lane: the pill
     // set that genuinely overflows still scrolls, and useOptionStrip's
-    // scrollWidth-vs-clientWidth fade sensing still sees it.
-    expect(track, "the hugged width is clamped, not unconstrained").toMatch(/max-width:\s*100%;/);
+    // scrollWidth-vs-clientWidth fade sensing still sees it. (The clamp
+    // value set is asserted above; the scroll machinery is asserted here.)
     expect(track).toMatch(/overflow-x:\s*auto;/);
     expect(track, "nowrap: one pannable line, not a wrap").toMatch(/flex-wrap:\s*nowrap;/);
     // The native-scrollbar suppression pair rides inside this rule block
@@ -348,7 +378,14 @@ describe("HkPillToggleGroup track geometry contract", () => {
     const phone = stripSassComments(
       cssBlock(scssSource.slice(scssSource.indexOf("@media (max-width: 767px)")), ".hk-pill-group {"),
     );
-    expect(phone, "the media query wraps").toMatch(/flex-wrap:\s*wrap;/);
-    expect(phone, "nothing pans on a phone sheet").toMatch(/overflow:\s*visible;/);
+    const phoneDecls = declarations(phone);
+    expect(phoneDecls.get("flex-wrap")).toEqual(["wrap"]);
+    expect(phoneDecls.get("overflow")).toEqual(["visible"]);
+    // The media query relaxes ONLY wrap/overflow/touch/cursor: it must not
+    // re-declare display or width (that would restore the stretched track
+    // on phones behind the desktop pins).
+    expect(phoneDecls.has("display"), "no display in the phone block").toBe(false);
+    expect(phoneDecls.has("width"), "no width in the phone block").toBe(false);
+    expect(phoneDecls.has("max-width"), "no max-width in the phone block").toBe(false);
   });
 });

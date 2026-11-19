@@ -62,5 +62,10 @@ describe("HkTimePicker source contracts", () => {
     // cannot center it; the track must center itself against the panel's
     // stretch alignment via `align-self`.
     expect(ruleBlock(".hk-tp-period")).toMatch(/align-self:\s*center/);
+    // …and there is exactly ONE such rule: a later duplicate re-declaring
+    // `align-self` (or `justify-content`) would override the centering
+    // while the pin above stayed green (presence ≠ winner).
+    const ruleCount = scss.match(/\.hk-tp-period\s*\{/g)?.length ?? 0;
+    expect(ruleCount, "exactly one .hk-tp-period rule block").toBe(1);
   });
 });

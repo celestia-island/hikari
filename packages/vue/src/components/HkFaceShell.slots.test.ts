@@ -57,6 +57,19 @@ describe("the public slot-type contract (L39)", () => {
     expect(header, "HkAdminHeader must stay exported").toBeTruthy();
   });
 
+  it("both components keep their slots declaration wired into the options (R3 M4 pin)", () => {
+    // The `slots: Object as <Aggregate>` option line is what makes the
+    // declared contract type the component's OWN render-site invocations
+    // (proved red under field-rename mutations) — but deleting the line
+    // alone kept vue-tsc green (R3 M4 SURVIVED), because nothing compiled
+    // against the component side of the wiring. The options object carries
+    // `slots` at runtime, so this pin makes the deletion loud.
+    const face = asIndexable(barrel.HkFaceShell);
+    const header = asIndexable(barrel.HkAdminHeader);
+    expect(face.slots, "HkFaceShell must keep its slots declaration").toBeTruthy();
+    expect(header.slots, "HkAdminHeader must keep its slots declaration").toBeTruthy();
+  });
+
   it("the slot param interfaces accept the real payloads", () => {
     expect(headerSubset({ isDesktop: false, showHamburger: true, compact: true, onHamburger: () => {}, onOpenDrawer: () => {} })).toEqual({ compact: true, onOpenDrawer: expect.any(Function) });
     expect(headerFull({ isDesktop: true, showHamburger: false, compact: false, onHamburger: () => {}, onOpenDrawer: () => {} }).filter(Boolean).length).toBe(3);

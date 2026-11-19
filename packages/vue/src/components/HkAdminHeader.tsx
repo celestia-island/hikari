@@ -23,10 +23,15 @@ export interface HkAdminHeaderAvatarModalSlot {
 
 /**
  * The header's whole slot surface, in `SlotsType` form. `identity`,
- * `center`, `emergency-stop-extra` and `theme-toggle` take no params; the
- * slots the header NEVER invokes (any other name) are not part of this
- * contract — see L39's record of the erp-side `locale-picker` /
- * `user-menu-extra` aspirational slots.
+ * `center`, `emergency-stop-extra` and `theme-toggle` take no params.
+ *
+ * NOT part of this contract: the erp-side `locale-picker` / `user-menu-extra`
+ * names (L39, lead ruling 2026-11-19) — declared by celestia-erp's local
+ * interfaces but NEVER consumed by hikari's HkAdminHeader, so the slot bodies
+ * erp passes have never rendered. Whether hikari should grow the consumption
+ * (reviving erp's invisible account-center menu entries) or erp should delete
+ * the dead bodies is ⏳ pending a user decision; until then neither name may
+ * appear in this aggregate.
  */
 export type HkAdminHeaderSlots = SlotsType<{
   identity?: () => VNode[];

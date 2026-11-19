@@ -73,7 +73,10 @@ fn parse_task(line: &str) -> Option<GanttTask> {
             }
         } else if task.id.is_none()
             && !part.contains(' ')
-            && part.chars().next().map_or(false, |c| c.is_alphanumeric() || c == '_')
+            && part
+                .chars()
+                .next()
+                .map_or(false, |c| c.is_alphanumeric() || c == '_')
         {
             // Bare positional ID: `task : t1, 2d` → id=t1 (no `id=` prefix).
             task.id = Some(part.to_string());

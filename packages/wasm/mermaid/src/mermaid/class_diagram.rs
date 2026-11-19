@@ -154,12 +154,16 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
         }
 
         if line.starts_with("class ") && line.contains('{') {
-            let rest = line.strip_prefix("class ")? .trim();
+            let rest = line.strip_prefix("class ")?.trim();
             let name = rest.split('{').next()?.trim().to_string();
             if name.is_empty() {
                 continue;
             }
-            let mut cls = ClassDefinition { name, attributes: Vec::new(), methods: Vec::new() };
+            let mut cls = ClassDefinition {
+                name,
+                attributes: Vec::new(),
+                methods: Vec::new(),
+            };
             let body_part = line.split('{').nth(1).unwrap_or("");
             if body_part.contains('}') {
                 let content = body_part.split('}').next().unwrap_or("");
@@ -196,5 +200,8 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
     if classes.is_empty() {
         return None;
     }
-    Some(MermaidClassDoc { classes, relationships })
+    Some(MermaidClassDoc {
+        classes,
+        relationships,
+    })
 }

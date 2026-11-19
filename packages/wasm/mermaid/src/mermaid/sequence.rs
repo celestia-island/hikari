@@ -49,7 +49,10 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     if participants.is_empty() {
         return None;
     }
-    Some(SequenceDiagram { participants, messages })
+    Some(SequenceDiagram {
+        participants,
+        messages,
+    })
 }
 
 fn parse_message(line: &str) -> Option<SequenceMessage> {

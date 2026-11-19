@@ -52,14 +52,13 @@ fn hash_id_to_unit(id: &str) -> f64 {
     for b in id.bytes() {
         h ^= b as u32;
         // FNV prime multiply via shifts (wrapping, 32-bit).
-        h = h
-            .wrapping_add(
-                h.wrapping_shl(1)
-                    .wrapping_add(h.wrapping_shl(4))
-                    .wrapping_add(h.wrapping_shl(7))
-                    .wrapping_add(h.wrapping_shl(8))
-                    .wrapping_add(h.wrapping_shl(24)),
-            );
+        h = h.wrapping_add(
+            h.wrapping_shl(1)
+                .wrapping_add(h.wrapping_shl(4))
+                .wrapping_add(h.wrapping_shl(7))
+                .wrapping_add(h.wrapping_shl(8))
+                .wrapping_add(h.wrapping_shl(24)),
+        );
     }
     // Second fold — mirrors the TS exactly: the multiply happens in f64
     // (where large products lose their low bits before >>> 0 truncates),
@@ -87,17 +86,17 @@ fn lerp_palette(palette: &[&str], t: f64) -> (f64, f64, f64) {
     if palette.len() == 1 {
         return hex_to_rgb(palette[0]);
     }
-    let clamped = if t.is_finite() { t.clamp(0.0, 1.0) } else { 0.0 };
+    let clamped = if t.is_finite() {
+        t.clamp(0.0, 1.0)
+    } else {
+        0.0
+    };
     let x = clamped * (palette.len() - 1) as f64;
     let i = ((palette.len() - 2) as f64).min(x.floor()) as usize;
     let f = x - i as f64;
     let (ar, ag, ab) = hex_to_rgb(palette[i]);
     let (br, bg, bb) = hex_to_rgb(palette[i + 1]);
-    (
-        ar + (br - ar) * f,
-        ag + (bg - ag) * f,
-        ab + (bb - ab) * f,
-    )
+    (ar + (br - ar) * f, ag + (bg - ag) * f, ab + (bb - ab) * f)
 }
 
 fn star_ring_radius(count: usize, widest_brood_outer: f64) -> f64 {
@@ -159,88 +158,103 @@ pub fn build_fleet_scene_spec(rows: &[FleetRow]) -> FleetSceneSpec {
 
     // Brood sizes (needed before the ring).
     let star_index_of = |node_id: &str| -> i64 {
-        if hubs.is_empty() { -1 }
-        else { ((hash_id_to_unit(node_id) * hubs.len() as f64).floor() as i64) % hubs.len() as i64 }
+        if hubs.is_empty() {
+            -1
+        } else {
+            ((hash_id_to_unit(node_id) * hubs.len() as f64).floor() as i64) % hubs.len() as i64
+        }
     };
     let mut brood_sizes = vec![0u32; hubs.len()];
     for node in &nodes {
         let i = star_index_of(&node.node_id);
-        if i >= 0 { brood_sizes[i as usize] += 1; }
+        if i >= 0 {
+            brood_sizes[i as usize] += 1;
+        }
     }
-    let widest_brood_outer = if brood_sizes.is_empty() { 0.0 }
-        else {
-            let max_brood = *brood_sizes.iter().max().unwrap_or(&0);
-            ORBIT_BASE + (max_brood.saturating_sub(1)).max(0) as f64 * ORBIT_STEP
-        };
+    let widest_brood_outer = if brood_sizes.is_empty() {
+        0.0
+    } else {
+        let max_brood = *brood_sizes.iter().max().unwrap_or(&0);
+        ORBIT_BASE + (max_brood.saturating_sub(1)).max(0) as f64 * ORBIT_STEP
+    };
 
     // Stars.
-    let stars: Vec<FleetBodySpec> = hubs.iter().enumerate().map(|(i, row)| {
-        let h = hash_id_to_unit(&row.node_id);
-        let center = if hubs.len() == 1 {
-            (0.0, 0.0, 0.0)
-        } else {
-            let angle = i as f64 * GOLDEN_ANGLE;
-            let ring = star_ring_radius(hubs.len(), widest_brood_outer);
-            (
-                angle.cos() * ring,
-                (h - 0.5) * 4.0,
-                angle.sin() * ring,
-            )
-        };
-        FleetBodySpec {
-            id: row.node_id.clone(),
-            label: row.label.clone().unwrap_or_else(|| row.node_id.clone()),
-            status: row.status.clone().unwrap_or_default(),
-            online: row.online.unwrap_or(true),
-            detail: row.detail.clone().unwrap_or_default(),
-            role: "star".to_string(),
-            color: lerp_palette(STAR_PALETTE, h),
-            radius: 2.4 + h * 0.8,
-            orbit_center: center,
-            orbit_radius: 0.0,
-            orbit_period_sec: 0.0,
-            orbit_phase: 0.0,
-            orbit_tilt: 0.0,
-            spin_period_sec: STAR_SPIN_SEC,
-            satellites: row.station_count.min(SATELLITE_VISUAL_CAP),
-            satellite_total: row.station_count,
-        }
-    }).collect();
+    let stars: Vec<FleetBodySpec> = hubs
+        .iter()
+        .enumerate()
+        .map(|(i, row)| {
+            let h = hash_id_to_unit(&row.node_id);
+            let center = if hubs.len() == 1 {
+                (0.0, 0.0, 0.0)
+            } else {
+                let angle = i as f64 * GOLDEN_ANGLE;
+                let ring = star_ring_radius(hubs.len(), widest_brood_outer);
+                (angle.cos() * ring, (h - 0.5) * 4.0, angle.sin() * ring)
+            };
+            FleetBodySpec {
+                id: row.node_id.clone(),
+                label: row.label.clone().unwrap_or_else(|| row.node_id.clone()),
+                status: row.status.clone().unwrap_or_default(),
+                online: row.online.unwrap_or(true),
+                detail: row.detail.clone().unwrap_or_default(),
+                role: "star".to_string(),
+                color: lerp_palette(STAR_PALETTE, h),
+                radius: 2.4 + h * 0.8,
+                orbit_center: center,
+                orbit_radius: 0.0,
+                orbit_period_sec: 0.0,
+                orbit_phase: 0.0,
+                orbit_tilt: 0.0,
+                spin_period_sec: STAR_SPIN_SEC,
+                satellites: row.station_count.min(SATELLITE_VISUAL_CAP),
+                satellite_total: row.station_count,
+            }
+        })
+        .collect();
 
     // Planets (stable star assignment by hash).
     use std::collections::HashMap;
     let mut brood_index: HashMap<String, u32> = HashMap::new();
-    let planets: Vec<FleetBodySpec> = nodes.iter().map(|row| {
-        let h = hash_id_to_unit(&row.node_id);
-        let star = if stars.is_empty() { None }
-        else { Some(&stars[((h * stars.len() as f64).floor() as usize) % stars.len()]) };
-        let center = star.map(|s| s.orbit_center).unwrap_or((0.0, 0.0, 0.0));
-        let brood_key = star.map(|s| s.id.clone()).unwrap_or_else(|| "core".to_string());
-        let k = *brood_index.entry(brood_key).or_insert(0);
-        brood_index.insert(
-            star.map(|s| s.id.clone()).unwrap_or_else(|| "core".to_string()),
-            k + 1,
-        );
-        let orbit_radius = ORBIT_BASE + k as f64 * ORBIT_STEP;
-        FleetBodySpec {
-            id: row.node_id.clone(),
-            label: row.label.clone().unwrap_or_else(|| row.node_id.clone()),
-            status: row.status.clone().unwrap_or_default(),
-            online: row.online.unwrap_or(true),
-            detail: row.detail.clone().unwrap_or_default(),
-            role: "planet".to_string(),
-            color: lerp_palette(PLANET_PALETTE, h),
-            radius: 0.85 + h * 0.45,
-            orbit_center: center,
-            orbit_radius,
-            orbit_period_sec: 22.0 * (orbit_radius / ORBIT_BASE).powf(1.5),
-            orbit_phase: h * std::f64::consts::PI * 2.0,
-            orbit_tilt: (h - 0.5) * 0.24,
-            spin_period_sec: PLANET_SPIN_MIN_SEC + h * PLANET_SPIN_SPREAD_SEC,
-            satellites: row.station_count.min(SATELLITE_VISUAL_CAP),
-            satellite_total: row.station_count,
-        }
-    }).collect();
+    let planets: Vec<FleetBodySpec> = nodes
+        .iter()
+        .map(|row| {
+            let h = hash_id_to_unit(&row.node_id);
+            let star = if stars.is_empty() {
+                None
+            } else {
+                Some(&stars[((h * stars.len() as f64).floor() as usize) % stars.len()])
+            };
+            let center = star.map(|s| s.orbit_center).unwrap_or((0.0, 0.0, 0.0));
+            let brood_key = star
+                .map(|s| s.id.clone())
+                .unwrap_or_else(|| "core".to_string());
+            let k = *brood_index.entry(brood_key).or_insert(0);
+            brood_index.insert(
+                star.map(|s| s.id.clone())
+                    .unwrap_or_else(|| "core".to_string()),
+                k + 1,
+            );
+            let orbit_radius = ORBIT_BASE + k as f64 * ORBIT_STEP;
+            FleetBodySpec {
+                id: row.node_id.clone(),
+                label: row.label.clone().unwrap_or_else(|| row.node_id.clone()),
+                status: row.status.clone().unwrap_or_default(),
+                online: row.online.unwrap_or(true),
+                detail: row.detail.clone().unwrap_or_default(),
+                role: "planet".to_string(),
+                color: lerp_palette(PLANET_PALETTE, h),
+                radius: 0.85 + h * 0.45,
+                orbit_center: center,
+                orbit_radius,
+                orbit_period_sec: 22.0 * (orbit_radius / ORBIT_BASE).powf(1.5),
+                orbit_phase: h * std::f64::consts::PI * 2.0,
+                orbit_tilt: (h - 0.5) * 0.24,
+                spin_period_sec: PLANET_SPIN_MIN_SEC + h * PLANET_SPIN_SPREAD_SEC,
+                satellites: row.station_count.min(SATELLITE_VISUAL_CAP),
+                satellite_total: row.station_count,
+            }
+        })
+        .collect();
 
     FleetSceneSpec {
         has_registry_core: stars.is_empty() && !planets.is_empty(),
@@ -256,16 +270,21 @@ pub struct Scene3d;
 
 #[cfg(target_family = "wasm")]
 impl bindings::Guest for Scene3d {
-    fn build_fleet_scene(rows: Vec<bindings::hikari::scene3d::types::FleetRow>) -> bindings::hikari::scene3d::types::FleetSceneSpec {
-        let native_rows: Vec<FleetRow> = rows.iter().map(|r| FleetRow {
-            node_id: r.node_id.clone(),
-            tier: r.tier,
-            station_count: r.station_count,
-            label: r.label.clone(),
-            status: r.status.clone(),
-            online: r.online,
-            detail: r.detail.clone(),
-        }).collect();
+    fn build_fleet_scene(
+        rows: Vec<bindings::hikari::scene3d::types::FleetRow>,
+    ) -> bindings::hikari::scene3d::types::FleetSceneSpec {
+        let native_rows: Vec<FleetRow> = rows
+            .iter()
+            .map(|r| FleetRow {
+                node_id: r.node_id.clone(),
+                tier: r.tier,
+                station_count: r.station_count,
+                label: r.label.clone(),
+                status: r.status.clone(),
+                online: r.online,
+                detail: r.detail.clone(),
+            })
+            .collect();
         let spec = build_fleet_scene_spec(&native_rows);
         let to_body = |b: &FleetBodySpec| bindings::hikari::scene3d::types::FleetBodySpec {
             id: b.id.clone(),
@@ -276,7 +295,11 @@ impl bindings::Guest for Scene3d {
             role: b.role.clone(),
             color: (b.color.0 as f32, b.color.1 as f32, b.color.2 as f32),
             radius: b.radius as f32,
-            orbit_center: (b.orbit_center.0 as f32, b.orbit_center.1 as f32, b.orbit_center.2 as f32),
+            orbit_center: (
+                b.orbit_center.0 as f32,
+                b.orbit_center.1 as f32,
+                b.orbit_center.2 as f32,
+            ),
             orbit_radius: b.orbit_radius as f32,
             orbit_period_sec: b.orbit_period_sec as f32,
             orbit_phase: b.orbit_phase as f32,

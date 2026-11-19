@@ -6,7 +6,6 @@
 
 pub mod engine;
 
-
 // ── Pest parser declarations (one per grammar) ──────────────────────
 
 pub mod grammars {
@@ -468,12 +467,17 @@ pub mod grammars {
             _ => None,
         }
     }
-    fn flat_tokens<R: pest::RuleType>(pairs: pest::iterators::Pairs<'_, R>) -> Vec<(String, String)> {
+    fn flat_tokens<R: pest::RuleType>(
+        pairs: pest::iterators::Pairs<'_, R>,
+    ) -> Vec<(String, String)> {
         let mut out = Vec::new();
         collect_flat(pairs, &mut out);
         out
     }
-    fn collect_flat<R: pest::RuleType>(pairs: pest::iterators::Pairs<'_, R>, out: &mut Vec<(String, String)>) {
+    fn collect_flat<R: pest::RuleType>(
+        pairs: pest::iterators::Pairs<'_, R>,
+        out: &mut Vec<(String, String)>,
+    ) {
         for pair in pairs {
             let inner: Vec<_> = pair.clone().into_inner().collect();
             if inner.is_empty() {

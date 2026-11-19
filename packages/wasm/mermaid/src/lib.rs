@@ -69,9 +69,7 @@ mod tests {
 
     #[test]
     fn arrow_order_matters() {
-        let json = super::native::parse(
-            "sequenceDiagram\n  A-->>B: dotted reply",
-        ).unwrap();
+        let json = super::native::parse("sequenceDiagram\n  A-->>B: dotted reply").unwrap();
         assert!(json.contains("\"from\":\"A\""));
         assert!(json.contains("\"to\":\"B\""));
         assert!(json.contains("\"arrowKind\":\"dotted-open\""));
@@ -79,9 +77,7 @@ mod tests {
 
     #[test]
     fn pie_strips_quotes_and_validates() {
-        let json = super::native::parse(
-            "pie\n  \"Alpha\" : 40\n  Beta: -5",
-        ).unwrap();
+        let json = super::native::parse("pie\n  \"Alpha\" : 40\n  Beta: -5").unwrap();
         assert!(json.contains("\"label\":\"Alpha\""));
         assert!(!json.contains("Beta"));
     }
@@ -97,7 +93,8 @@ mod tests {
 
     #[test]
     fn parses_quadrant() {
-        let src = "quadrantChart\n  x-axis Low --> High\n  y-axis Bottom --> Top\n  Point A: [0.5, 0.7]";
+        let src =
+            "quadrantChart\n  x-axis Low --> High\n  y-axis Bottom --> Top\n  Point A: [0.5, 0.7]";
         let json = super::native::parse(src).unwrap();
         assert!(json.contains("\"kind\":\"quadrant\""));
         assert!(json.contains("Point A"));

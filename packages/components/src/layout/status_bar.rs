@@ -1048,7 +1048,10 @@ mod tests {
                 .contains("--color-text-tertiary")
         );
 
-        assert_eq!(status_bar_latency_color(None), "var(--hi-color-muted, rgb(var(--color-muted)))");
+        assert_eq!(
+            status_bar_latency_color(None),
+            "var(--hi-color-muted, rgb(var(--color-muted)))"
+        );
         assert_eq!(
             status_bar_latency_color(Some(0.0)),
             "var(--hi-success-fg, rgb(var(--color-success)))"

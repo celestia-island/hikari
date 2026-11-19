@@ -59,5 +59,8 @@ fn parse_slice(line: &str) -> Option<PieSlice> {
     if !value.is_finite() || value <= 0.0 {
         return None;
     }
-    Some(PieSlice { label: label_part, value })
+    Some(PieSlice {
+        label: label_part,
+        value,
+    })
 }

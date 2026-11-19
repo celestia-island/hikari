@@ -37,8 +37,12 @@ impl bindings::Guest for Qr {
 
         let code = if version > 0 {
             // Explicit version: refuse if the payload does not fit.
-            qrcode::QrCode::with_version(text.as_bytes(), qrcode::Version::Normal(version as i16), ecc)
-                .map_err(|e| format!("qr encode: {e}"))?
+            qrcode::QrCode::with_version(
+                text.as_bytes(),
+                qrcode::Version::Normal(version as i16),
+                ecc,
+            )
+            .map_err(|e| format!("qr encode: {e}"))?
         } else {
             // Auto-select the smallest version that fits.
             qrcode::QrCode::with_error_correction_level(text.as_bytes(), ecc)
@@ -47,7 +51,10 @@ impl bindings::Guest for Qr {
 
         let size = code.width() as u8;
         let width = code.width();
-        let version_num = match code.version() { qrcode::Version::Normal(v) => v as u8, _ => 0 };
+        let version_num = match code.version() {
+            qrcode::Version::Normal(v) => v as u8,
+            _ => 0,
+        };
         let mut modules = Vec::with_capacity(width * width);
         for y in 0..width {
             for x in 0..width {
@@ -60,7 +67,7 @@ impl bindings::Guest for Qr {
             modules,
             version: version_num,
             ecc: from_qrcode_ecc(ecc),
-            mask: 0,    // The crate picks internally; not exposed. Consumed via modules.
+            mask: 0, // The crate picks internally; not exposed. Consumed via modules.
         })
     }
 }
@@ -89,8 +96,8 @@ fn from_qrcode_ecc(level: qrcode::EcLevel) -> bindings::hikari::qr::types::EccLe
 
 #[cfg(not(target_family = "wasm"))]
 pub mod native {
-    use qrcode::QrCode;
     use qrcode::EcLevel;
+    use qrcode::QrCode;
 
     pub fn encode(text: &str, ecc: char, version: i16) -> Result<Vec<Vec<bool>>, String> {
         let level = match ecc {
@@ -101,15 +108,23 @@ pub mod native {
             _ => EcLevel::M,
         };
         let code = if version > 0 {
-            QrCode::with_version(text.as_bytes(), qrcode::Version::Normal(version as i16), level)
-                .map_err(|e| format!("{e}"))?
+            QrCode::with_version(
+                text.as_bytes(),
+                qrcode::Version::Normal(version as i16),
+                level,
+            )
+            .map_err(|e| format!("{e}"))?
         } else {
             QrCode::with_error_correction_level(text.as_bytes(), level)
                 .map_err(|e| format!("{e}"))?
         };
         let w = code.width();
         Ok((0..w)
-            .map(|y| (0..w).map(|x| code[(x, y)] == qrcode::Color::Dark).collect())
+            .map(|y| {
+                (0..w)
+                    .map(|x| code[(x, y)] == qrcode::Color::Dark)
+                    .collect()
+            })
             .collect())
     }
 }

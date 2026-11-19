@@ -1,8 +1,8 @@
 //! The top-level mermaid parser: dispatches by diagram type keyword,
 //! serializes the result to JSON with a `kind` discriminator.
 
-use super::{class_diagram, graph_parser, gantt, pie, quadrant, sequence};
 use super::types::*;
+use super::{class_diagram, gantt, graph_parser, pie, quadrant, sequence};
 
 use serde::Serialize;
 

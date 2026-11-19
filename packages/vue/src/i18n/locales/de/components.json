@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Alle löschen",
   "hikari::notificationCenter.dismiss": "Verwerfen",
   "hikari::slideConfirm.drag": "Halte den Griff und ziehe ihn entlang der Bahn zum rechten Rand",
-  "hikari::slideConfirm.success": "Bestätigt"
+  "hikari::slideConfirm.success": "Bestätigt",
+  "hikari::contextmenu.title": "Bearbeiten",
+  "hikari::contextmenu.copy": "Kopieren",
+  "hikari::contextmenu.cut": "Ausschneiden",
+  "hikari::contextmenu.paste": "Einfügen",
+  "hikari::contextmenu.selectAll": "Alles auswählen"
 }

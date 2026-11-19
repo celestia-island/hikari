@@ -4,8 +4,9 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkTabs from "./HkTabs";
+import HkTabs, { _resetTabsWarnOnceForTests } from "./HkTabs";
 import type { TabItem } from "./HkTabs";
+import HkContextMenuProvider from "./HkContextMenuProvider";
 import { CROSSFADE_WATCHDOG_MS } from "./HkCrossfade";
 import { DEFAULT_ANIMATION_DURATION_MS } from "../composables/useAnimationLoop";
 
@@ -804,5 +805,588 @@ describe("HkTabs caption-band drag opt-out (2026-11-12)", () => {
     const { container } = mountTabs();
     const root = container.querySelector<HTMLElement>(".hk-tabs")!;
     expect(root.getAttribute("data-tauri-drag-region")).toBe("false");
+  });
+});
+
+describe("HkTabs attached trigger actions (2026-11-19)", () => {
+  /** Mount an explicit tab list (the shared harness hardcodes its own). */
+  function mountWithOptions(tabs: TabItem[], props: Record<string, unknown> = {}) {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const active = ref((props.modelValue as string) ?? "a");
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            ...props,
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+            tabs,
+            renderPanels: false,
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, setActive: (key: string) => { active.value = key; } };
+  }
+
+  it("wraps an action-carrying option in a cell whose action button is the trigger's SIBLING", () => {
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure alpha", onSelect }] },
+      { key: "b", label: "Beta" },
+      { key: "c", label: "Gamma" },
+    ]);
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell");
+    expect(cell).toBeTruthy();
+    // The trigger lives INSIDE the cell (valid HTML: no button in a button).
+    const trigger = cell!.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(trigger).toBeTruthy();
+    expect(trigger.textContent).toContain("Alpha");
+    // The action is a sibling of the trigger, never its child.
+    const action = cell!.querySelector<HTMLElement>(".hk-tabs-trigger-action")!;
+    expect(action).toBeTruthy();
+    expect(trigger.contains(action)).toBe(false);
+    expect(action.getAttribute("aria-label")).toBe("Configure alpha");
+    expect(action.getAttribute("data-test")).toBe("hk-tabs-action-a-dot");
+  });
+
+  it("renders plain options without a cell (no anatomy change)", () => {
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure alpha", onSelect }] },
+      { key: "b", label: "Beta" },
+      { key: "c", label: "Gamma" },
+    ]);
+    // Only option `a` carries actions — b and c render bare triggers.
+    const cells = container.querySelectorAll(".hk-tabs-cell");
+    expect(cells.length).toBe(1);
+    const triggers = container.querySelectorAll<HTMLElement>(".hk-tabs-list > .hk-tabs-trigger");
+    expect(triggers.length).toBe(2);
+    expect(triggers[0]!.textContent).toContain("Beta");
+  });
+
+  it("pressing the action fires onSelect and never selects the option", () => {
+    const onSelect = vi.fn();
+    const { container, setActive } = mountWithOptions(
+      [
+        { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure alpha", onSelect }] },
+        { key: "b", label: "Beta" },
+      ],
+      { modelValue: "b" },
+    );
+    void setActive;
+    const before = container.querySelector<HTMLElement>(".hk-tabs-trigger[data-active]")!.textContent;
+    container.querySelector<HTMLElement>('[data-test="hk-tabs-action-a-dot"]')!.click();
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    // The active option is unchanged (the action is not a selection).
+    const after = container.querySelector<HTMLElement>(".hk-tabs-trigger[data-active]")!.textContent;
+    expect(after).toBe(before);
+    expect(after).not.toContain("Alpha");
+  });
+
+  it("carries the slot-unit weight on the cell (grid contract unchanged)", () => {
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions(
+      [{ key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure", onSelect }] }],
+      { variant: "segmented", block: true },
+    );
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell");
+    expect(cell?.style.getPropertyValue("--hk-tabs-span")).toBe("1");
+  });
+
+  it("ignores actions on merged-away options (DEV alarm fires once)", () => {
+    // The alarm is once-per-key module state — start from a clean slate.
+    _resetTabsWarnOnceForTests();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      // WITH the #merged slot the run collapses for real (without it the
+      // documented degradation renders plain triggers, cells included).
+      const Wrapper = defineComponent({
+        setup() {
+          return () => h(
+            HkTabs,
+            {
+              variant: "segmented",
+              block: true,
+              modelValue: "a",
+              mergeKeys: ["a", "b"],
+              renderPanels: false,
+              tabs: [
+                {
+                  key: "a",
+                  label: "Auto",
+                  actions: [{ key: "dot", label: "Configure", onSelect: () => {} }],
+                },
+                { key: "b", label: "Light" },
+                { key: "c", label: "Dark" },
+              ] as TabItem[],
+            },
+            { merged: () => h("span", { class: "alt-cell" }, "altitude") },
+          );
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      const cells = container.querySelectorAll(".hk-tabs-cell");
+      expect(cells.length).toBe(0);
+      expect(container.querySelector(".alt-cell")).toBeTruthy();
+      expect(warn.mock.calls.some((args) => String(args[0]).includes("merged"))).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("keeps the survivor's geometry record when the option list shrinks", async () => {
+    // The removed option's null ref fires with its ORIGINAL index; an
+    // unconditional delete-by-index evicts the survivor's record and the
+    // sliding indicator freezes at the PRE-removal geometry. happy-dom CAN
+    // see this: stub the survivor's offsets, measure (indicator = first
+    // stub), re-stub, then shrink — a pristine map re-measures to the new
+    // stub; an evicted record keeps the first stub frozen.
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    containers.push(host);
+    const short = ref(false);
+    const active = ref("a");
+    const Wrapper = defineComponent({
+      setup() {
+        return () => h(
+          HkTabs,
+          {
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+            renderPanels: false,
+            tabs: (short.value
+              ? [{ key: "b", label: "Beta", actions: [{ key: "dot", label: "Configure", onSelect: () => {} }] }]
+              : [{ key: "a", label: "Alpha" }, { key: "b", label: "Beta", actions: [{ key: "dot", label: "Configure", onSelect: () => {} }] }]) as TabItem[],
+          },
+        );
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(host);
+    await nextTick();
+    await nextTick();
+
+    const stubTrigger = (left: number, width: number) => {
+      // The survivor carries an action, so the indicator frames its CELL —
+      // stub both layers (the button keeps working for action-less
+      // fixtures).
+      const btn = [...host.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
+        .find((candidate) => candidate.textContent?.trim() === "Beta")!;
+      Object.defineProperty(btn, "offsetLeft", { value: left, configurable: true });
+      Object.defineProperty(btn, "offsetWidth", { value: width, configurable: true });
+      const cell = btn.closest<HTMLElement>(".hk-tabs-cell");
+      if (cell) {
+        Object.defineProperty(cell, "offsetLeft", { value: left, configurable: true });
+        Object.defineProperty(cell, "offsetWidth", { value: width, configurable: true });
+      }
+      return btn;
+    };
+
+    // Measure #1 with the first stub. The measure runs on a post-render
+    // tick and the resulting style patch lands one tick after THAT, so the
+    // assertion polls.
+    stubTrigger(111, 222);
+    active.value = "b";
+    const indicator = host.querySelector<HTMLElement>(".hk-tabs-indicator")!;
+    await vi.waitFor(() => expect(indicator.style.left).toBe("111px"));
+
+    // Re-stub, then shrink. The survivor element is REUSED by the patch
+    // (b lands on index 0), the removed option's null ref fires with its
+    // original index — exactly the eviction window.
+    stubTrigger(333, 444);
+    short.value = true;
+    await vi.waitFor(() => {
+      expect(indicator.style.left, "the indicator followed the survivor").toBe("333px");
+      expect(indicator.style.width).toBe("444px");
+    });
+  });
+
+  it("does not alarm for merged options that carry no actions", () => {
+    // The theme panel's DEFAULT auto mode merges light/dark with no
+    // actions attached — that must stay silent (it alarmed once per option
+    // before the guard).
+    _resetTabsWarnOnceForTests();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const Wrapper = defineComponent({
+        setup() {
+          return () => h(
+            HkTabs,
+            {
+              variant: "segmented",
+              block: true,
+              modelValue: "a",
+              mergeKeys: ["b", "c"],
+              renderPanels: false,
+              tabs: [
+                { key: "a", label: "Auto" },
+                { key: "b", label: "Light" },
+                { key: "c", label: "Dark" },
+              ] as TabItem[],
+            },
+            { merged: () => h("span", "altitude") },
+          );
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      expect(warn.mock.calls.some((args) => String(args[0]).includes("merged"))).toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("marks the cell as presentation (a layout wrapper around real controls)", () => {
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure", onSelect }] },
+      { key: "b", label: "Beta" },
+    ]);
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    expect(cell.getAttribute("role")).toBe("presentation");
+  });
+
+  it("alarms in DEV when a trigger slot swallows the icon or badge", () => {
+    _resetTabsWarnOnceForTests();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const Wrapper = defineComponent({
+        setup() {
+          return () => h(
+            HkTabs,
+            {
+              modelValue: "a",
+              renderPanels: false,
+              tabs: [{ key: "a", label: "Alpha", badge: { count: 3 } }] as TabItem[],
+            },
+            { "trigger-a": () => h("em", "custom") },
+          );
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      expect(
+        warn.mock.calls.some((args) => String(args[0]).includes("replaces the icon and badge")),
+      ).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("exposes a per-option content slot that replaces the icon+label render", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () => h(
+          HkTabs,
+          {
+            modelValue: "a",
+            renderPanels: false,
+            tabs: [{ key: "a", label: "Alpha" }, { key: "b", label: "Beta" }] as TabItem[],
+          },
+          { "trigger-a": () => h("em", { class: "custom-cell" }, "custom content") },
+        );
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    expect(trigger.querySelector(".custom-cell")).toBeTruthy();
+    expect(trigger.textContent).toBe("custom content");
+    // The sibling option keeps the default render.
+    const second = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[1]!;
+    expect(second.textContent).toContain("Beta");
+  });
+
+  it("keeps the survivor's context-menu binding when the option list shrinks", async () => {
+    // Regression (S1): Vue patches the survivor into index 0 FIRST and
+    // only then unmounts the removed option, whose function-ref fires
+    // `null` with its ORIGINAL index. An index-keyed cleanup therefore
+    // unbinds the survivor's freshly installed binding.
+    const picks: string[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const shrink = ref(false);
+    const option = (key: string) => ({
+      key,
+      label: key.toUpperCase(),
+      contextMenu: (point: { x: number; y: number }) => ({
+        x: point.x,
+        y: point.y,
+        items: [{ key: "cfg", label: `Configure ${key}` }],
+        onSelect: () => picks.push(key),
+      }),
+    });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, null, {
+            default: () =>
+              h(HkTabs, {
+                modelValue: "b",
+                renderPanels: false,
+                tabs: (shrink.value ? [option("b")] : [option("a"), option("b")]) as TabItem[],
+              }),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+
+    // Shrink: `a` unmounts, `b` is patched into index 0. The swap
+    // transition's leave ghost needs a macrotask window to clear.
+    shrink.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    await nextTick();
+
+    // The leave ghost may still be dissolving (the ref callbacks already
+    // ran, which is what this test is about) — target the survivor by
+    // its label rather than by position.
+    const trigger = [...container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
+      .find((el) => el.textContent?.trim() === "B")!;
+    expect(trigger, "the survivor is still rendered").toBeTruthy();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 3, clientY: 3 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented, "the survivor still claims its right-click").toBe(true);
+    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Configure b"));
+    expect(row, "the survivor's menu opens").toBeTruthy();
+    row!.click();
+    await nextTick();
+    expect(picks).toEqual(["b"]);
+  });
+
+  it("a disabled option disables its attached actions too", () => {
+    // The whole option is inert, not just its label: an action on a
+    // disabled tab must not stay operable.
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", disabled: true, actions: [{ key: "dot", label: "Configure", onSelect }] },
+      { key: "b", label: "Beta" },
+    ]);
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    expect(cell.hasAttribute("data-disabled")).toBe(true);
+    const action = cell.querySelector<HTMLButtonElement>(".hk-tabs-trigger-action")!;
+    expect(action.disabled).toBe(true);
+    action.click();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("frames the CELL, not the trigger, when the active option carries actions", async () => {
+    // The cell is the trigger's POSITIONED ancestor, so the button's own
+    // offsets resolve against the cell — measuring the trigger would put
+    // the indicator in the wrong place (or at the wrong width) as soon as
+    // an option carries an action. happy-dom has no layout engine, so the
+    // geometry is stubbed per element: the two numbers must differ or the
+    // test cannot tell which element was measured.
+    const onSelect = vi.fn();
+    const { container, setActive } = mountWithOptions(
+      [
+        { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure", onSelect }] },
+        { key: "b", label: "Beta" },
+      ],
+      { modelValue: "b", variant: "segmented", block: true },
+    );
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    const trigger = cell.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    Object.defineProperty(cell, "offsetLeft", { value: 100, configurable: true });
+    Object.defineProperty(cell, "offsetWidth", { value: 50, configurable: true });
+    Object.defineProperty(trigger, "offsetLeft", { value: 7, configurable: true });
+    Object.defineProperty(trigger, "offsetWidth", { value: 9, configurable: true });
+
+    setActive("a");
+    await nextTick();
+    await nextTick();
+
+    const indicator = container.querySelector<HTMLElement>(".hk-tabs-indicator")!;
+    expect(indicator.style.left, "the cell's inline offset").toBe("100px");
+    expect(indicator.style.width, "the cell's width").toBe("50px");
+  });
+
+  it("pins the reveal + overlay grammar in the stylesheet", () => {
+    const scss = readFileSync(join(here, "HkTabs.scss"), "utf8");
+    // Hidden by default; hover/focus-within reveals (pointer-events gate).
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*pointer-events:\s*none/);
+    expect(scss).toMatch(/\.hk-tabs-cell:hover > \.hk-tabs-trigger-actions/);
+    expect(scss).toMatch(/\.hk-tabs-cell:focus-within > \.hk-tabs-trigger-actions/);
+    // Overlay: absolute at the inline end, never shifting layout.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*position:\s*absolute/);
+    // The cell is the slot-unit grid child (the trigger is not).
+    expect(scss).toMatch(/\[data-slots\] > \.hk-tabs-cell/);
+    // The reserved action lane: without it the revealed buttons sit ON the
+    // label's tail in a shrink-to-fit pill (clicks there hit the action,
+    // not the option). The lane is list padding (12px) + the overlay's own
+    // footprint (20px button; the inset cancels against the trigger's own
+    // edge padding) — pin the magnitude so a shrunken calc cannot pass.
+    expect(scss).toMatch(
+      /\.hk-tabs-cell > \.hk-tabs-trigger\s*{[^}]*padding-inline-end:\s*calc\(var\(--space-12\) \+ 18px\)/,
+    );
+    // The cell anchors the overlay (positioned ancestor).
+    expect(scss).toMatch(/\.hk-tabs-cell\s*{[^}]*position:\s*relative/);
+    // Unrevealed actions stay OUT of the page tab order (visibility,
+    // not just opacity) or every action leaks a Tab stop per option.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*visibility:\s*hidden/);
+    // PAINT ORDER: the trigger carries z-index 1, so the action layer must
+    // sit ABOVE it — an auto-z sibling loses hit-testing everywhere the two
+    // overlap (the buttons are inside the trigger's box), which makes every
+    // ⋯ unclickable while looking fine in a layout-free test.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*z-index:\s*2/);
+    expect(scss).toMatch(/\.hk-tabs-trigger\s*{[^}]*z-index:\s*1/);
+    // Reduced-motion lands on the reveal too.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions,\s*\n\s*\.hk-tabs-swap-enter-active/);
+  });
+});
+
+describe("HkTabs per-option context menu (2026-11-19)", () => {
+  it("opens the bound menu on right-click through the app-wide provider", async () => {
+    const onPick = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, null, {
+            default: () =>
+              h(HkTabs, {
+                modelValue: "a",
+                renderPanels: false,
+                tabs: [
+                  {
+                    key: "a",
+                    label: "Alpha",
+                    contextMenu: (point: { x: number; y: number }) => ({
+                      x: point.x,
+                      y: point.y,
+                      title: "Alpha menu",
+                      items: [{ key: "cfg", label: "Configure alpha" }],
+                      onSelect: onPick,
+                    }),
+                  },
+                  { key: "b", label: "Beta" },
+                ] as TabItem[],
+              }),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    const trigger = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
+    trigger.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 }));
+    await nextTick();
+    expect(document.querySelector(".hk-select-popout")).toBeTruthy();
+    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Configure alpha"));
+    expect(row).toBeTruthy();
+    row!.click();
+    await nextTick();
+    expect(onPick).toHaveBeenCalledTimes(1);
+    // The binding preventDefaults — the platform menu is gone on re-click too.
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("serves the CURRENT option closure after a rebuilt option list", async () => {
+    // The option arrays are rebuilt on every parent render (the theme
+    // panel does exactly that), so the menu a user opens must carry the
+    // CURRENT payload. The payload is CAPTURED AT RENDER TIME on purpose:
+    // a lazily-read ref would print the new value from a stale closure
+    // too, which is exactly how a binding that captures its option can
+    // pass a badly built pin.
+    const picks: string[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const revision = ref(1);
+    const Wrapper = defineComponent({
+      setup() {
+        return () => {
+          // Reading it HERE is what makes the rebuild real.
+          const snapshot = revision.value;
+          return h(HkContextMenuProvider, null, {
+            default: () =>
+              h(HkTabs, {
+                modelValue: "a",
+                renderPanels: false,
+                tabs: [
+                  {
+                    key: "a",
+                    label: "Alpha",
+                    contextMenu: (point: { x: number; y: number }) => ({
+                      x: point.x,
+                      y: point.y,
+                      items: [{ key: "cfg", label: `Configure ${snapshot}` }],
+                      onSelect: () => picks.push(String(snapshot)),
+                    }),
+                  },
+                ] as TabItem[],
+              }),
+          });
+        };
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+
+    // A real rebuild: fresh array, fresh closure, same trigger element.
+    revision.value = 2;
+    await nextTick();
+    await nextTick();
+
+    const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 9, clientY: 9 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented, "the rebuilt option still claims its right-click").toBe(true);
+    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Configure"));
+    expect(row?.textContent, "the menu carries the CURRENT render's payload").toContain("2");
+    row!.click();
+    await nextTick();
+    expect(picks).toEqual(["2"]);
+  });
+
+  it("defers outward when the option carries no contextMenu (event untouched)", async () => {
+    const { container } = mountTabs({ variant: "segmented" });
+    const trigger = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 4, clientY: 4 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    // No binding claims it: not prevented, no menu.
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.querySelector(".hk-select-popout")).toBeNull();
   });
 });

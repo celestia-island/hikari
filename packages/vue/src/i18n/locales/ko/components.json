@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "모두 지우기",
   "hikari::notificationCenter.dismiss": "지우기",
   "hikari::slideConfirm.drag": "손잡이를 잡고 라인을 따라 오른쪽 끝까지 끌어주세요",
-  "hikari::slideConfirm.success": "확인됨"
+  "hikari::slideConfirm.success": "확인됨",
+  "hikari::contextmenu.title": "편집",
+  "hikari::contextmenu.copy": "복사",
+  "hikari::contextmenu.cut": "잘라내기",
+  "hikari::contextmenu.paste": "붙여넣기",
+  "hikari::contextmenu.selectAll": "모두 선택"
 }

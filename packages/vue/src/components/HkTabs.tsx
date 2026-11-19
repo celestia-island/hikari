@@ -1,4 +1,5 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNodeChild } from "vue";
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, onUpdated, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNodeChild } from "vue";
+import { Ellipsis } from "lucide-vue-next";
 
 import "./HkTabs.scss";
 import HkScrollContainer from "./HkScrollContainer";
@@ -10,6 +11,28 @@ import type { CornerBadgePlacement, CornerBadgeVariant } from "./HkCornerBadge";
 import { iconByName } from "../composables/iconRegistry";
 import { useI18n } from "../i18n/context";
 import { clearLeaveGeometry, pinLeaveGeometry, type LeaveBoxSnapshot } from "../utils/dom";
+import {
+  bindContextMenu,
+  useContextMenu,
+  type ContextMenuRequest,
+  type ContextTriggerPoint,
+} from "../composables/useContextMenu";
+
+/** DEV-only drift alarms that must survive re-renders without spamming:
+ *  a render function runs per tick, so each distinct alarm fires once. */
+const warnedOnce = new Set<string>();
+function warnOnce(id: string, ...args: unknown[]): void {
+  if (!import.meta.env.DEV || warnedOnce.has(id)) return;
+  warnedOnce.add(id);
+  // eslint-disable-next-line no-console -- dev-only drift alarm
+  console.warn(...args);
+}
+
+/** Test hook: the once-only cache is module state, so a suite that mounts
+ *  the same option key twice would see the second alarm suppressed. */
+export function _resetTabsWarnOnceForTests(): void {
+  warnedOnce.clear();
+}
 
 export interface TabItem {
   /** Unique option key. `$indicator` and `$merged` are reserved — they
@@ -66,6 +89,42 @@ export interface TabItem {
    * clamp to 1. Ignored outside block strips.
    */
   span?: number;
+  /** Attached hover-revealed action buttons for this option (2026-11-19
+   *  user direction — the theme panel's auto-mode 配置 entry is the
+   *  first consumer). Rendered as SIBLINGS of the trigger inside the
+   *  option's cell wrapper — never children (a button inside a button
+   *  is invalid HTML). Revealed on cell hover / focus-within on pointer
+   *  devices; on touch there is no hover, so the reachable path is the
+   *  option's `contextMenu` binding (long-press) — pair the two when
+   *  touch matters. Ignored while the option is collapsed into a merged
+   *  cell (a DEV warning fires). Actions never affect selection,
+   *  keyboard navigation or the slot-unit math; the sliding indicator
+   *  frames the CELL, whose geometry equals the trigger's. */
+  actions?: TabsTriggerAction[];
+  /** Right-click / touch-long-press / keyboard-menu-key binding for
+   *  this option's trigger (the shared bindContextMenu grammar — menus
+   *  resolve innermost-first against the global regime). Return the
+   *  request to open a menu; return null to defer outward (the global
+   *  default regime then answers, e.g. the built-in clipboard menu on
+   *  editables). Without a provider mounted the binding is a no-op —
+   *  a context menu is an enhancement, never load-bearing. */
+  contextMenu?: (point: ContextTriggerPoint) => ContextMenuRequest | null;
+}
+
+/** One attached action button of a trigger (see {@link TabItem.actions}).
+ *  `label` is required — an unnamed icon button is an a11y hole, and a
+ *  DEV warning fires without it. */
+export interface TabsTriggerAction {
+  /** Stable identity (list key + test hook). */
+  key: string;
+  /** Icon vnode; omitted → the default Ellipsis glyph. */
+  icon?: unknown;
+  /** Accessible name + native tooltip. */
+  label: string;
+  /** Disable just this action (the trigger stays live). */
+  disabled?: boolean;
+  /** Pressed. The action never toggles/selects the option itself. */
+  onSelect: () => void;
 }
 
 /** A protruding icon button at one inline end of the strip (the former
@@ -130,6 +189,12 @@ interface ScrollerExpose {
  *   container height-morphs to the incoming panel's natural size
  *   (panels never had switch CSS before — inactive ones were simply
  *   display:none'd, so nothing visual is layered away);
+ * - `TabItem.actions` + `TabItem.contextMenu` — per-option attached
+ *   action buttons (hover/focus-revealed, siblings of the trigger inside
+ *   a `.hk-tabs-cell`) and a per-option right-click / long-press /
+ *   menu-key binding; `trigger-<key>` slots replace a trigger's content
+ *   entirely (the `icon-<key>` slot's whole-trigger sibling — same
+ *   naming family, same per-key contract);
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -199,7 +264,32 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    // Per-option context-menu bindings ride the shared app-wide menu
+    // (no provider mounted → the NOOP api, and the binding is silent).
+    const contextMenuApi = useContextMenu();
     const triggerRefs = ref<Map<number, HTMLElement>>(new Map());
+    /** Context-menu bindings actually installed, keyed by the ELEMENT
+     *  they are bound to (NOT by option index — Vue fires a function
+     *  ref's `null` with the ref's ORIGINAL index, so an index-keyed
+     *  cleanup tears down whatever entry now sits there, including a
+     *  live sibling's freshly installed binding after a shrinking list
+     *  patch). Rebinding happens only when the element instance (or the
+     *  option behind it) changes. */
+    const contextBindings = new Map<HTMLElement, { key: string; unbind: () => void }>();
+    /** The CURRENT option list, readable from the bound handlers. A plain
+     *  binding (not a ref) on purpose: the handlers run on events, long
+     *  after render, and must see the latest closures without writing
+     *  reactive state during render. Dispatch is by option KEY (not the
+     *  captured index) so a reordered list can never serve the wrong
+     *  option's menu. */
+    let tabsNow: TabItem[] = [];
+    /** The framed element per index when the option renders a CELL
+     *  (actions present) — the sliding indicator and the active-scroll
+     *  nudge measure the cell, whose geometry equals the trigger's but
+     *  whose offsetParent chain stays the list (the cell is the
+     *  positioned ancestor, so the button's own offsets would be
+     *  cell-relative and break the indicator math). */
+    const cellRefs = ref<Map<number, HTMLElement>>(new Map());
     const indicatorStyle = ref<Record<string, string>>({});
     /** The indicator fades in once real geometry first lands (no pop-in
      *  on mount), then slides via its left/width transition. */
@@ -330,22 +420,86 @@ export default defineComponent({
       return action.label || t("hikari::tabs.add", "Add tab");
     }
 
-    function setTriggerRef(el: Element | ComponentPublicInstance | null, idx: number) {
+    function setTriggerRef(el: Element | ComponentPublicInstance | null, idx: number, tab: TabItem) {
       if (el instanceof HTMLElement) {
+        // (Re)bind the option's context-menu grammar (right-click,
+        // long-press, keyboard menu key) only when this is genuinely a
+        // NEW element (or the element got reused for another option):
+        // the render function passes a fresh function-ref every render,
+        // so an unconditional rebind would tear down and reinstall the
+        // listeners on every tick.
+        const bound = contextBindings.get(el);
+        if (bound && bound.key === tab.key) {
+          triggerRefs.value.set(idx, el);
+          return;
+        }
+        bound?.unbind();
+        contextBindings.delete(el);
+        if (tab.contextMenu) {
+          const boundKey = tab.key;
+          const unbind = bindContextMenu(el, contextMenuApi, (point) => {
+            // Always dispatch to the LATEST handler of this option.
+            const live = tabsNow.find((tb) => tb.key === boundKey);
+            return live?.contextMenu?.(point) ?? null;
+          });
+          contextBindings.set(el, { key: boundKey, unbind });
+        }
         triggerRefs.value.set(idx, el);
       } else {
-        triggerRefs.value.delete(idx);
+        // A ref's null value carries the ORIGINAL index, which may now
+        // belong to a different (live) option: deleting by index here
+        // evicted the SURVIVOR's record after a shrinking patch, which
+        // froze the sliding indicator and stopped arrow-key focus from
+        // following the selection. Only drop a record that no longer
+        // points at a live element.
+        const current = triggerRefs.value.get(idx);
+        if (!current || !current.isConnected) triggerRefs.value.delete(idx);
       }
+    }
+
+    function setCellRef(el: Element | ComponentPublicInstance | null, idx: number) {
+      if (el instanceof HTMLElement) {
+        cellRefs.value.set(idx, el);
+      } else {
+        // Never delete by index here: the null ref carries the ORIGINAL
+        // index, which may now belong to a live sibling's cell. The entry
+        // is overwritten by the next render that owns the index, and the
+        // deep `props.tabs` watcher clears the whole map.
+      }
+    }
+
+    /** Tear down every context-menu binding (the tabs watcher drops the
+     *  whole option set on any change — stale indices must not keep
+     *  live listeners on detached elements). */
+    /** Drop bindings whose element left the document. Deliberately NOT
+     *  a full teardown on every option-list change: the option arrays
+     *  are rebuilt per parent render, and each unbind cancels an
+     *  in-progress long-press — a full sweep there would swallow the
+     *  touch menu on any repaint. */
+    function pruneDetachedBindings() {
+      for (const [el, bound] of [...contextBindings]) {
+        if (!el.isConnected) {
+          bound.unbind();
+          contextBindings.delete(el);
+        }
+      }
+    }
+
+    function unbindAllContextMenus() {
+      for (const bound of contextBindings.values()) bound.unbind();
+      contextBindings.clear();
     }
 
     function setMergedCellRef(el: Element | ComponentPublicInstance | null) {
       mergedCellRef.value = el instanceof HTMLElement ? el : null;
     }
 
-    /** The element the indicator should frame: the merged cell when the
-     *  active option is collapsed into it, otherwise the active trigger
-     *  (falling back to the first option's render — trigger OR cell —
-     *  while no geometry exists). */
+    /** The element the indicator should frame: the CELL when the active
+     *  option renders one (actions present — geometry equals the
+     *  trigger's, but only the cell's offsets resolve against the
+     *  list), the merged cell when the active key is collapsed into it,
+     *  otherwise the active trigger (falling back to the first option's
+     *  render — trigger OR cell — while no geometry exists). */
     function activeFrameEl(): HTMLElement | undefined {
       const idx = tabs.value.findIndex((tb) => tb.key === props.modelValue);
       const i = idx >= 0 ? idx : 0;
@@ -353,7 +507,7 @@ export default defineComponent({
       if (tab && isMergedTab(tab)) {
         return mergedCellRef.value ?? undefined;
       }
-      return triggerRefs.value.get(i);
+      return cellRefs.value.get(i) ?? triggerRefs.value.get(i);
     }
 
     function updateIndicator() {
@@ -415,17 +569,26 @@ export default defineComponent({
       }
     });
 
+    // Post-patch prune: the `props.tabs` watcher runs BEFORE Vue patches
+    // the DOM, so an element this very update detaches still reports
+    // itself connected there. After the patch it is genuinely gone.
+    onUpdated(() => {
+      pruneDetachedBindings();
+    });
+
     onBeforeUnmount(() => {
       resizeObserver?.disconnect();
       resizeObserver = null;
       scrollerResizeObserver?.disconnect();
       scrollerResizeObserver = null;
+      unbindAllContextMenus();
     });
 
     watch(() => props.modelValue, () => nextTick(refreshGeometry));
 
     watch(() => props.tabs, () => {
       triggerRefs.value.clear();
+      cellRefs.value.clear();
       nextTick(refreshGeometry);
     }, { deep: true });
 
@@ -524,6 +687,8 @@ export default defineComponent({
     }
 
     return () => {
+      // Read side of the context-menu bindings (see tabsNow's doc).
+      tabsNow = tabs.value;
       const mergedHead = mergedRun.value[0];
       /** The ONE panel on stage: the active tab's, when panels render
        *  (pill mode only) and the tab is not collapsed into the merged
@@ -542,6 +707,12 @@ export default defineComponent({
       ];
       tabs.value.forEach((tab, idx) => {
         if (isMergedTab(tab)) {
+          // Attached actions have no trigger to attach to while the run
+          // is collapsed — documented ignore, loud ONCE in DEV (a render
+          // function repeats, a drift alarm must not).
+          if (tab.actions?.length) {
+            warnOnce(`merged-actions:${tab.key}`, "[HkTabs] actions on a merged tab are ignored:", tab.key);
+          }
           // The merged run renders as ONE combined cell at its first
           // option's position — a real in-flow child of the track (joins
           // layout and the swap/indicator animation context), never an
@@ -580,10 +751,23 @@ export default defineComponent({
         // (hosts may pass vnodes materialized against another vue store);
         // at the render site its documented contract is a render child.
         const icon = slots[`icon-${tab.key}`]?.() ?? (tab.icon != null ? <span class="hk-tabs-trigger-icon">{tab.icon as VNodeChild}</span> : null);
-        listChildren.push(
+        // Attached actions (2026-11-19): rendered through a CELL wrapper
+        // so the action buttons are SIBLINGS of the trigger — a button
+        // cannot nest a button, and the wrapper (not the trigger) becomes
+        // the track child the grid/flex layout and the indicator measure.
+        // (Merged-away options are handled — and DEV-alarmed — in the
+        // merged branch above; this code only sees plain triggers.)
+        const actions = tab.actions?.length ? tab.actions : undefined;
+        if (actions?.some((action) => !action.label)) {
+          warnOnce(`unlabeled-action:${tab.key}`, "[HkTabs] trigger action without a label is an unnamed button:", tab.key);
+        }
+        const trigger = (
           <button
-            key={tab.key}
-            ref={(el) => setTriggerRef(el, idx)}
+            // Keyed child of the swap TransitionGroup — a CELL takes the
+            // key when the option carries actions (the button is then an
+            // unkeyed cell child; the cell is the track child).
+            key={actions ? undefined : tab.key}
+            ref={(el) => setTriggerRef(el, idx, tab)}
             type="button"
             role={isSegmented.value ? "radio" : "tab"}
             aria-checked={isSegmented.value ? active : undefined}
@@ -593,7 +777,8 @@ export default defineComponent({
             data-active={active || undefined}
             data-disabled={props.disabled || disabled || undefined}
             // Slot-unit weight (1 unless the option declares a span);
-            // only consumed while the strip carries data-slots.
+            // only consumed while the strip carries data-slots (a CELL,
+            // not the trigger, is the direct child then).
             style={{ "--hk-tabs-span": String(slotSpan(tab)) }}
             // Roving tabindex: the active trigger joins the page tab
             // sequence, the others stay arrow-reachable.
@@ -603,33 +788,94 @@ export default defineComponent({
               if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
             }}
           >
-            {icon}
-            {/* The badge anchors the LABEL (inside the trigger's own
-             *  padding box) rather than the button box: the mark reads
-             *  as part of the control's silhouette. A tab is a
-             *  BUTTON-GROUP member, so its default is the side placement
-             *  (`right`, vertically centered): the label keeps its full
-             *  box and the strip grows by the mark + gap — a corner
-             *  overlay straddled the label and read as covering it (user
-             *  report 2026-11-05). Corner placements stay available for
-             *  hosts that want the overlay on purpose. */}
-            {tab.label && (tab.badge ? (
-              <HkCornerBadge
-                count={tab.badge.count}
-                max={tab.badge.max}
-                showZero
-                placement={badgePlacement}
-                offset={badgeOffset}
-                variant={tab.badge.variant ?? "primary"}
-                label={tab.badge.label}
-              >
-                <span>{tab.label}</span>
-              </HkCornerBadge>
-            ) : (
-              <span>{tab.label}</span>
-            ))}
-          </button>,
+            {(() => {
+              const triggerSlot = slots[`trigger-${tab.key}`];
+              if (triggerSlot) {
+                if (tab.icon != null || tab.badge) {
+                  warnOnce(
+                    `trigger-slot-drops-decor:${tab.key}`,
+                    "[HkTabs] trigger-<key> slot replaces the icon and badge of:",
+                    tab.key,
+                  );
+                }
+                return triggerSlot({ tab });
+              }
+              return null;
+            })() ?? (
+              <>
+                {icon}
+                {/* The badge anchors the LABEL (inside the trigger's own
+                 *  padding box) rather than the button box: the mark reads
+                 *  as part of the control's silhouette. A tab is a
+                 *  BUTTON-GROUP member, so its default is the side placement
+                 *  (`right`, vertically centered): the label keeps its full
+                 *  box and the strip grows by the mark + gap — a corner
+                 *  overlay straddled the label and read as covering it (user
+                 *  report 2026-11-05). Corner placements stay available for
+                 *  hosts that want the overlay on purpose. */}
+                {tab.label && (tab.badge ? (
+                  <HkCornerBadge
+                    count={tab.badge.count}
+                    max={tab.badge.max}
+                    showZero
+                    placement={badgePlacement}
+                    offset={badgeOffset}
+                    variant={tab.badge.variant ?? "primary"}
+                    label={tab.badge.label}
+                  >
+                    <span>{tab.label}</span>
+                  </HkCornerBadge>
+                ) : (
+                  <span>{tab.label}</span>
+                ))}
+              </>
+            )}
+          </button>
         );
+        if (actions) {
+          listChildren.push(
+            <div
+              key={tab.key}
+              class="hk-tabs-cell"
+              role="presentation"
+              ref={(el) => setCellRef(el, idx)}
+              // The CELL mutes for the same reasons its trigger does: the
+              // strip's own flag OR this option's `disabled` (a disabled
+              // option's actions must not stay operable — the whole option
+              // is inert, not just its label).
+              data-disabled={props.disabled || disabled || undefined}
+              style={{ "--hk-tabs-span": String(slotSpan(tab)) }}
+            >
+              {trigger}
+              <span class="hk-tabs-trigger-actions">
+                {actions.map((action) => (
+                  <button
+                    key={action.key}
+                    type="button"
+                    class="hk-tabs-trigger-action"
+                    title={action.label}
+                    aria-label={action.label}
+                    data-test={`hk-tabs-action-${tab.key}-${action.key}`}
+                    // NO tabindex override: the buttons are natively
+                    // Tab-reachable, and the reveal is what keeps the
+                    // page tab order clean — `visibility: hidden` makes an
+                    // unrevealed action UNFOCUSABLE, while focusing the
+                    // trigger flips `:focus-within`, which reveals the
+                    // cell's actions and hands the next Tab stop to them.
+                    disabled={props.disabled || disabled || action.disabled || undefined}
+                    onClick={() => {
+                      if (!props.disabled && !disabled && !action.disabled) action.onSelect();
+                    }}
+                  >
+                    {(action.icon != null ? action.icon : <Ellipsis size={14} />) as VNodeChild}
+                  </button>
+                ))}
+              </span>
+            </div>,
+          );
+        } else {
+          listChildren.push(trigger);
+        }
       });
       const list = (
         <div

@@ -1,0 +1,569 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
+
+import {
+  clipboardContextMenuDefault,
+  contextMenuDefaultsFor,
+  registerContextMenuDefault,
+} from "./defaultContextMenu";
+import HkContextMenuProvider from "../components/HkContextMenuProvider";
+import type { ContextTriggerPoint } from "./useContextMenu";
+
+function point(target: EventTarget | null, x = 10, y = 10): ContextTriggerPoint {
+  return { x, y, kind: "pointer", target, defaultPrevented: false };
+}
+
+afterEach(() => {
+  document.body.innerHTML = "";
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+describe("default menu registry", () => {
+  it("runs contributions in order (lowest first) and stops at the first claim", () => {
+    const first = registerContextMenuDefault({
+      id: "test.late",
+      order: 50,
+      build: () => ({ x: 0, y: 0, items: [{ key: "late", label: "Late" }] }),
+    });
+    const second = registerContextMenuDefault({
+      id: "test.early",
+      order: 10,
+      build: () => ({ x: 0, y: 0, items: [{ key: "early", label: "Early" }] }),
+    });
+    try {
+      const request = contextMenuDefaultsFor(point(document.body));
+      expect(request?.items[0]?.key).toBe("early");
+    } finally {
+      first();
+      second();
+    }
+  });
+
+  it("a null build defers to later contributors", () => {
+    const passing = registerContextMenuDefault({
+      id: "test.pass",
+      order: 10,
+      build: () => null,
+    });
+    try {
+      // The built-in clipboard contributor follows and does not claim a
+      // non-editable target → null overall.
+      expect(contextMenuDefaultsFor(point(document.body))).toBeNull();
+    } finally {
+      passing();
+    }
+  });
+
+  it("re-registering an id replaces the entry and the unregister is idempotent", () => {
+    const a = registerContextMenuDefault({
+      id: "test.dup",
+      order: 99,
+      build: () => ({ x: 0, y: 0, items: [{ key: "a", label: "A" }] }),
+    });
+    const b = registerContextMenuDefault({
+      id: "test.dup",
+      order: 99,
+      build: () => ({ x: 0, y: 0, items: [{ key: "b", label: "B" }] }),
+    });
+    try {
+      const request = contextMenuDefaultsFor(point(document.body));
+      // Order 99 puts it last; the built-in clipboard menu (order 0)
+      // declines a plain body target, so the replacement answers.
+      expect(request?.items[0]?.key).toBe("b");
+      a(); // stale handle of the REPLACED entry must not remove the new one
+      expect(contextMenuDefaultsFor(point(document.body))?.items[0]?.key).toBe("b");
+    } finally {
+      b();
+      a();
+    }
+  });
+
+  it("the built-in clipboard contributor ships registered at module scope", () => {
+    const input = document.createElement("input");
+    input.value = "hello";
+    document.body.appendChild(input);
+    // No explicit install needed — the module-scope registration answers.
+    expect(contextMenuDefaultsFor(point(input))?.items.some((i) => i.key === "copy")).toBe(true);
+  });
+});
+
+describe("clipboard contributor", () => {
+  function editableMenu(target: HTMLElement) {
+    document.body.appendChild(target);
+    return clipboardContextMenuDefault.build(point(target))!;
+  }
+
+  it("claims editable targets with the localized clipboard menu", () => {
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(0, 5);
+    const request = editableMenu(input);
+    expect(request.items.map((i) => i.key)).toEqual(["copy", "cut", "paste", "selectAll"]);
+    const byKey = Object.fromEntries(request.items.map((i) => [i.key, i]));
+    expect(byKey.copy!.disabled).toBe(false);
+    expect(byKey.cut!.disabled).toBe(false);
+    expect(byKey.paste!.disabled).toBe(false);
+    // selectAll carries no disabled field at all (always available).
+    expect(byKey.selectAll!.disabled).toBeFalsy();
+    expect(request.title).toBeTruthy();
+  });
+
+  it("disables copy/cut without a selection and cut/paste on readonly", () => {
+    // Paste availability is a capability fact — pin it so the assertions
+    // below measure the readonly rule, not the environment.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn() },
+      configurable: true,
+    });
+    const plain = editableMenu(Object.assign(document.createElement("input"), { value: "" }));
+    const byKey = Object.fromEntries(plain.items.map((i) => [i.key, i]));
+    expect(byKey.copy!.disabled).toBe(true);
+    expect(byKey.cut!.disabled).toBe(true);
+    expect(byKey.paste!.disabled).toBe(false);
+
+    const readonlyInput = document.createElement("input") as HTMLInputElement;
+    readonlyInput.value = "abc";
+    readonlyInput.readOnly = true;
+    readonlyInput.setSelectionRange(0, 3);
+    const readonly = editableMenu(readonlyInput);
+    const ro = Object.fromEntries(readonly.items.map((i) => [i.key, i]));
+    expect(ro.copy!.disabled).toBe(false);
+    expect(ro.cut!.disabled).toBe(true);
+    expect(ro.paste!.disabled).toBe(true);
+  });
+
+  it("disables paste where the clipboard read API does not exist (no dead key)", () => {
+    // A plain-HTTP LAN deployment has no navigator.clipboard: an ENABLED
+    // paste row that silently does nothing is a dead key, so the row
+    // reports the capability instead.
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    const request = editableMenu(Object.assign(document.createElement("input"), { value: "abc" }));
+    const paste = request.items.find((i) => i.key === "paste")!;
+    expect(paste.disabled).toBe(true);
+    // The rest of the menu stays usable.
+    expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
+  });
+
+  it("declines input types whose value is not free text", () => {
+    // `field.value = text` throws InvalidStateError on a file input, and a
+    // date/range/checkbox picker owns its own interaction.
+    for (const type of ["file", "checkbox", "date", "range"]) {
+      const input = document.createElement("input");
+      input.type = type;
+      document.body.appendChild(input);
+      expect(clipboardContextMenuDefault.build(point(input)), type).toBeNull();
+    }
+    // A text-like type still claims.
+    const text = document.createElement("input");
+    text.type = "search";
+    document.body.appendChild(text);
+    expect(clipboardContextMenuDefault.build(point(text))).toBeTruthy();
+  });
+
+  it("refuses to mutate a target that left the document while the menu was open", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn().mockResolvedValue("x") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "original";
+    input.setSelectionRange(0, 8);
+    const request = editableMenu(input);
+    // The field unmounts with the menu still open.
+    input.remove();
+    request.onSelect!("paste", request.items[2]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // No write into detached DOM, no error escaped.
+    expect(input.value).toBe("original");
+    // selectAll on a detached target must not throw either; the value
+    // assertion above is the real pin.
+    expect(() => request.onSelect!("selectAll", request.items[3]!)).not.toThrow();
+  });
+
+  it("keeps the menu on a number input but refuses paste there", () => {
+    // `<input type="number">` sanitizes arbitrary text to "" — a paste would
+    // dispatch `input` with an EMPTY value and wipe the host model. Copy /
+    // cut / select-all stay useful, so the menu is claimed and only the
+    // paste row reports the refusal.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn() },
+      configurable: true,
+    });
+    const number = document.createElement("input");
+    number.type = "number";
+    number.value = "42";
+    // A number input has no selection API (`setSelectionRange` throws), and
+    // the contributor must not depend on one to build its rows.
+    const request = editableMenu(number);
+    // The menu is still claimed (select-all is useful on a number field),
+    // and only paste reports the refusal.
+    expect(request).toBeTruthy();
+    expect(request.items.find((i) => i.key === "paste")!.disabled).toBe(true);
+    expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
+  });
+
+  it("claims contenteditable surfaces including plaintext-only and case variants", () => {
+    // The house selector (styles/selectionSheet) is the ONE definition of
+    // "editable surface": enumerated attribute values are case-insensitive
+    // and `plaintext-only` (whose isContentEditable is true) counts.
+    for (const attr of ["true", "TRUE", "plaintext-only", "PlainText-Only"]) {
+      const div = document.createElement("div");
+      div.setAttribute("contenteditable", attr);
+      document.body.appendChild(div);
+      expect(clipboardContextMenuDefault.build(point(div)), attr).toBeTruthy();
+    }
+    // …and `false` still declines.
+    const off = document.createElement("div");
+    off.setAttribute("contenteditable", "false");
+    document.body.appendChild(off);
+    expect(clipboardContextMenuDefault.build(point(off))).toBeNull();
+  });
+
+  it("cuts on a contenteditable through the snapshot, not a re-read caret", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined), readText: vi.fn() },
+      configurable: true,
+    });
+    const originalExec = document.execCommand;
+    let deleted = 0;
+    document.execCommand = vi.fn((cmd: string) => {
+      if (cmd === "delete") deleted += 1;
+      return true;
+    });
+    try {
+      const div = document.createElement("div");
+      div.setAttribute("contenteditable", "true");
+      div.textContent = "keep me";
+      document.body.appendChild(div);
+      // Select part of the content, snapshot it, then move the live
+      // selection elsewhere before the row runs.
+      const range = document.createRange();
+      range.selectNodeContents(div);
+      const sel = document.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      const request = clipboardContextMenuDefault.build(point(div))!;
+      sel.removeAllRanges(); // the caret "moved" (menu opened elsewhere)
+      div.appendChild(document.createTextNode(" later"));
+
+      request.onSelect!("cut", request.items[1]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      // The snapshot text is what gets copied, and the delete path runs.
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith("keep me");
+      expect(deleted).toBe(1);
+    } finally {
+      document.execCommand = originalExec;
+    }
+  });
+
+  it("declines non-editable targets", () => {
+    expect(clipboardContextMenuDefault.build(point(document.createElement("div")))).toBeNull();
+    expect(clipboardContextMenuDefault.build(point(null))).toBeNull();
+  });
+
+  it("copy writes the snapshotted selection to the clipboard", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText, readText: vi.fn() }, configurable: true });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(6, 11);
+    const request = editableMenu(input);
+    request.onSelect!("copy", request.items[0]!);
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith("world"));
+  });
+
+  it("paste inserts at the caret and moves it after the text", async () => {
+    const readText = vi.fn().mockResolvedValue("inserted");
+    Object.defineProperty(navigator, "clipboard", { value: { writeText: vi.fn(), readText }, configurable: true });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(5, 5);
+    const request = editableMenu(input);
+    let inputEvent = false;
+    input.addEventListener("input", () => { inputEvent = true; });
+    request.onSelect!("paste", request.items[2]!);
+    await vi.waitFor(() => {
+      expect(input.value).toBe("helloinserted world");
+      expect(input.selectionStart).toBe(13);
+      expect(inputEvent).toBe(true);
+    });
+  });
+
+  it("cut never deletes text that was never copied", async () => {
+    // Copy failing (denied clipboard + execCommand reporting failure) must
+    // leave the field intact — "cut" is copy-then-delete, not delete.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockRejectedValue(new Error("denied")), readText: vi.fn() },
+      configurable: true,
+    });
+    const original = document.execCommand;
+    // The legacy fallback reports failure by RETURNING false.
+    document.execCommand = vi.fn(() => false);
+    try {
+      const input = document.createElement("input");
+      input.value = "keep me";
+      input.setSelectionRange(0, 7);
+      const request = editableMenu(input);
+      request.onSelect!("cut", request.items[1]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(input.value, "nothing was copied, so nothing may be deleted").toBe("keep me");
+    } finally {
+      document.execCommand = original;
+    }
+  });
+
+  it("cut/paste act on the SNAPSHOT range even after the caret moved", async () => {
+    // The menu can outlive the caret it was built for: a host watcher may
+    // rewrite `value` between open and click. Handlers must edit the range
+    // the user was shown, not wherever the caret drifted.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined), readText: vi.fn().mockResolvedValue("P") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(0, 5); // snapshot: "hello"
+    const request = editableMenu(input);
+    // The caret "moved" (value rewritten, keyboard re-opened) after the
+    // menu was built but before the row ran.
+    input.setSelectionRange(11, 11);
+
+    request.onSelect!("cut", request.items[1]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // The snapshotted range was removed, not the empty tail range.
+    expect(input.value).toBe(" world");
+    expect(input.selectionStart).toBe(0);
+
+    // Paste rides the same snapshot offsets (start 0, not the drifted
+    // caret) — the cut assertion above is the pin; a second stale-snapshot
+    // application after the value changed would assert nonsense.
+  });
+
+  it("a later non-built-in contributor still answers after a thrower", () => {
+    const unregisterThrower = registerContextMenuDefault({
+      id: "test.thrower-late",
+      order: -1,
+      build: () => {
+        throw new Error("boom");
+      },
+    });
+    const unregisterLater = registerContextMenuDefault({
+      id: "test.later",
+      order: 50,
+      build: () => ({ x: 0, y: 0, items: [{ key: "later", label: "Later" }] }),
+    });
+    try {
+      // A plain body target: the built-in clipboard declines it, so THIS
+      // assertion exercises the walk RESUMING past the thrower.
+      const request = contextMenuDefaultsFor(point(document.body));
+      expect(request?.items[0]?.key).toBe("later");
+    } finally {
+      unregisterThrower();
+      unregisterLater();
+    }
+  });
+
+  it("paste inserts at the snapshot start (not the drifted caret)", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn().mockResolvedValue("P") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(0, 5); // snapshot 0..5 = "hello"
+    const request = editableMenu(input);
+    input.setSelectionRange(11, 11); // the caret drifted to the tail
+
+    request.onSelect!("paste", request.items[2]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Snapshot form: "hello world"[0..0) + "P" + [5..) = "P world" — the
+    // insertion landed at the snapshot start; a live caret read would have
+    // appended at the tail ("hello worldP").
+    expect(input.value).toBe("P world");
+    expect(input.selectionStart).toBe(1);
+  });
+
+  it("select all covers the whole field", () => {
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(2, 3);
+    const request = editableMenu(input);
+    request.onSelect!("selectAll", request.items[3]!);
+    expect(input.selectionStart).toBe(0);
+    expect(input.selectionEnd).toBe(11);
+  });
+
+  it("resolves labels through the hikari i18n context (zh-Hans relabels)", async () => {
+    const { setLocale } = await import("../i18n/context");
+    const input = document.createElement("input");
+    input.value = "x";
+    const en = editableMenu(input);
+    expect(en.items.find((i) => i.key === "copy")!.label).toBe("Copy");
+    await setLocale("zh-Hans");
+    const zh = editableMenu(input);
+    expect(zh.items.find((i) => i.key === "copy")!.label).toBe("复制");
+    expect(zh.items.find((i) => i.key === "selectAll")!.label).toBe("全选");
+    await setLocale("en");
+  });
+});
+
+describe("provider defaults regime", () => {
+  /** Mount a provider (defaults on) around a live element — the child is
+   *  created INSIDE the render (a raw DOM element passed as a vnode child
+   *  never lands in the tree, and a detached target's events do not
+   *  bubble to the window listener). */
+  function mountDefaults(tag: "input" | "div") {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const Wrapper = defineComponent({
+      name: "DefaultsHost",
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, { defaults: true }, {
+            default: () =>
+              h("div", [
+                tag === "input"
+                  ? h("input", { class: "probe-input", value: "abc" })
+                  : h("div", { class: "probe-div" }),
+              ]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    const target = container.querySelector(tag === "input" ? ".probe-input" : ".probe-div")!;
+    return { app, container, target };
+  }
+
+  it("an editable right-click opens the clipboard menu and suppresses the platform menu", async () => {
+    const { app, target } = mountDefaults("input");
+    await nextTick();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 8, clientY: 8 });
+    target.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(true); // the platform menu is gone
+    const row = Array.from(document.querySelectorAll<HTMLElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Copy"));
+    expect(row).toBeTruthy();
+    app.unmount();
+  });
+
+  it("a non-editable right-click is silently suppressed (no menu, no platform menu)", async () => {
+    const { app, target } = mountDefaults("div");
+    await nextTick();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 8, clientY: 8 });
+    target.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(true);
+    expect(document.querySelector(".hk-select-popout")).toBeNull();
+    app.unmount();
+  });
+
+  it("yields to an element-level binding that already preventDefaulted", async () => {
+    const { app, target } = mountDefaults("div");
+    await nextTick();
+    // Simulate a bound menu: an element listener claims the event first.
+    target.addEventListener("contextmenu", (e) => e.preventDefault(), { once: true });
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 8, clientY: 8 });
+    target.dispatchEvent(event);
+    await nextTick();
+    expect(document.querySelector(".hk-select-popout")).toBeNull();
+    app.unmount();
+  });
+
+  it("follows a runtime flip of the defaults prop (on installs, off un-claims)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const on = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, { defaults: on.value }, {
+            default: () => h("div", [h("div", { class: "flip-probe" })]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    await nextTick();
+    const target = container.querySelector(".flip-probe")!;
+
+    const fire = () => {
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+      target.dispatchEvent(event);
+      return event;
+    };
+
+    // Initially off: the event is untouched.
+    expect(fire().defaultPrevented).toBe(false);
+
+    // Flipped on after mount: the regime claims the right-click.
+    on.value = true;
+    await nextTick();
+    expect(fire().defaultPrevented).toBe(true);
+
+    // Flipped back off: claiming stops.
+    on.value = false;
+    await nextTick();
+    expect(fire().defaultPrevented).toBe(false);
+
+    app.unmount();
+  });
+
+  it("isolates a throwing contributor (later contributors still answer)", async () => {
+    const unregister = registerContextMenuDefault({
+      id: "test.thrower",
+      order: -1,
+      build: () => {
+        throw new Error("boom");
+      },
+    });
+    try {
+      // An EDITABLE target: the built-in clipboard menu sits AFTER the
+      // thrower in the walk. Under a whole-walk catch the throw would
+      // abort the registry and the clipboard menu would be gone for that
+      // click — isolation means a broken host registration cannot take
+      // the default menu down with it.
+      const { app, target } = mountDefaults("input");
+      await nextTick();
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+      target.dispatchEvent(event);
+      await nextTick();
+      // preventDefault runs FIRST — a broken contributor cannot hand the
+      // event back to the browser either.
+      expect(event.defaultPrevented).toBe(true);
+      const row = Array.from(document.querySelectorAll<HTMLElement>(".hk-menu-row"))
+        .find((r) => r.textContent?.includes("Copy"));
+      expect(row, "the built-in clipboard menu still claims the point").toBeTruthy();
+      app.unmount();
+    } finally {
+      unregister();
+    }
+  });
+
+  it("without the defaults prop the window listener is not installed", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, null, {
+            default: () => h("div", [h("div", { class: "probe-div" })]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    await nextTick();
+    const target = container.querySelector(".probe-div")!;
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 8, clientY: 8 });
+    target.dispatchEvent(event);
+    await nextTick();
+    // Untouched: no suppression, no menu.
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.querySelector(".hk-select-popout")).toBeNull();
+    app.unmount();
+  });
+});

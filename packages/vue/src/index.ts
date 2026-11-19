@@ -85,6 +85,12 @@ export {
   type ContextMenuRequest,
   type ContextTriggerPoint,
 } from "./composables/useContextMenu";
+export {
+  registerContextMenuDefault,
+  contextMenuDefaultsFor,
+  clipboardContextMenuDefault,
+  type ContextMenuDefaultContribution,
+} from "./composables/defaultContextMenu";
 export { default as HMessageBox, HkMessageBox, type HkMessageBoxOptions, type HkMessageBoxPrompt } from "./components/HkMessageBox";
 export { HkLocalizedInput as HLocalizedInput, type HkLocaleOption } from "./components/HkLocalizedInput";
 export { default as HMenuPanel } from "./components/HkMenuPanel";
@@ -132,6 +138,7 @@ export { default as HSwitch } from "./components/HkSwitch";
 export { default as HRowActions } from "./components/HkRowActions";
 export { default as HTable } from "./components/HkTable";
 export { default as HTabs } from "./components/HkTabs";
+export type { TabItem, TabsTriggerAction, TabsEndAction } from "./components/HkTabs";
 export { default as HTag } from "./components/HkTag";
 export { HkTagInput as HTagInput, type HkTagOption } from "./components/HkTagInput";
 export { default as HTemplateField } from "./components/HkTemplateField";
@@ -657,6 +664,7 @@ export { HkNavSidebar as HNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HThemeToggle, type ThemeItemScope } from "./components/HkThemeToggle";
 export { HkThemePanelContent as HThemePanelContent } from "./components/HkThemePanelContent";
 export { HkSolarLocationSetting as HSolarLocationSetting } from "./components/HkSolarLocationSetting";
+export { HkSolarLocationEditor as HSolarLocationEditor } from "./components/HkSolarLocationEditor";
 export { HkDateTag as HDateTag } from "./components/HkDateTag";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
 export { default as HAuthMethodList } from "./components/HkAuthMethodList";
@@ -1076,6 +1084,7 @@ export { HkNavSidebar as HkNavSidebar } from "./components/HkNavSidebar";
 export { HkThemeToggle as HkThemeToggle } from "./components/HkThemeToggle";
 export { HkThemePanelContent as HkThemePanelContent } from "./components/HkThemePanelContent";
 export { HkSolarLocationSetting as HkSolarLocationSetting } from "./components/HkSolarLocationSetting";
+export { HkSolarLocationEditor as HkSolarLocationEditor } from "./components/HkSolarLocationEditor";
 export { HkDateTag as HkDateTag } from "./components/HkDateTag";
 export { HkAuthCard as HkAuthCard } from "./components/HkAuthCard";
 export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";

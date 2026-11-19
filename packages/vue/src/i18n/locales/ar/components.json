@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "مسح الكل",
   "hikari::notificationCenter.dismiss": "تجاهل",
   "hikari::slideConfirm.drag": "اضغط المقبض واسحبه على طول المسار إلى الحافة اليمنى",
-  "hikari::slideConfirm.success": "تم التأكيد"
+  "hikari::slideConfirm.success": "تم التأكيد",
+  "hikari::contextmenu.title": "تحرير",
+  "hikari::contextmenu.copy": "نسخ",
+  "hikari::contextmenu.cut": "قص",
+  "hikari::contextmenu.paste": "لصق",
+  "hikari::contextmenu.selectAll": "تحديد الكل"
 }

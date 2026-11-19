@@ -22,15 +22,17 @@
  * `useContextMenuTrigger()` (composables/useContextMenu).
  */
 
-import { computed, defineComponent, provide, ref, shallowRef } from "vue";
+import { computed, defineComponent, onBeforeUnmount, provide, ref, shallowRef, watch } from "vue";
 
 import { popupViewportRect } from "../runtime/popupBounds";
 import HkMenu from "./HkMenu";
 import type { PanelAnchor } from "./HkSelectPanel";
+import { contextMenuDefaultsFor } from "../composables/defaultContextMenu";
 import {
   CONTEXT_MENU_KEY,
   type ContextMenuApi,
   type ContextMenuRequest,
+  type ContextTriggerPoint,
 } from "../composables/useContextMenu";
 
 /** Pick the HkMenu placement that grows away from the pointer's nearest
@@ -66,7 +68,21 @@ function pointAnchor(x: number, y: number): PanelAnchor {
 
 export default defineComponent({
   name: "HkContextMenuProvider",
-  setup(_, { slots }) {
+  props: {
+    /**
+     * Install the app-wide DEFAULT context-menu regime while this
+     * provider is mounted (composables/defaultContextMenu): a
+     * window-level bubble listener that yields to any element-level
+     * binding (those preventDefault first), consults the registered
+     * default contributors (the built-in clipboard menu claims
+     * editable targets), and suppresses the platform menu everywhere
+     * else. Hosts extend the regime with
+     * `registerContextMenuDefault(...)` — region-specific defaults
+     * belong in contributors, not in new window listeners.
+     */
+    defaults: { type: Boolean, default: false },
+  },
+  setup(props, { slots }) {
     const open = ref(false);
     const request = shallowRef<ContextMenuRequest | null>(null);
     /** Remount identity: every open() swaps the HkMenu instance, so a
@@ -93,6 +109,9 @@ export default defineComponent({
 
     const api: ContextMenuApi = {
       open(next: ContextMenuRequest) {
+        // Replacing an open menu closes the previous one — its owner gets
+        // the "closed without a selection" hook it was promised.
+        if (open.value) request.value?.onClose?.();
         request.value = next;
         menuEpoch.value += 1;
         open.value = true;
@@ -102,6 +121,69 @@ export default defineComponent({
       },
     };
     provide(CONTEXT_MENU_KEY, api);
+
+    // ── The default regime (prop `defaults`) ─────────────────────────
+    // Window-level BUBBLE phase: target-level bindings run first on the
+    // element; only their leftovers reach here (defaultPrevented =
+    // yielded). The platform menu never appears: the regime owns every
+    // unclaimed right-click, with a menu when a contributor claims the
+    // point and silent suppression otherwise.
+    //
+    // preventDefault comes FIRST: the platform menu must be suppressed
+    // even when a contributor misbehaves, and a throwing contributor is
+    // isolated (DEV-loud) instead of silently handing the event back to
+    // the browser.
+    function onWindowContextMenu(event: MouseEvent) {
+      if (event.defaultPrevented) return; // a binding opened its menu
+      event.preventDefault();
+      const point: ContextTriggerPoint = {
+        x: event.clientX,
+        y: event.clientY,
+        kind: "pointer",
+        target: event.target,
+        defaultPrevented: false,
+      };
+      let request: ContextMenuRequest | null = null;
+      try {
+        request = contextMenuDefaultsFor(point);
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console -- dev-only drift alarm
+          console.error("[HkContextMenuProvider] default contributor threw:", err);
+        }
+      }
+      if (request) api.open(request);
+    }
+
+    // The listener follows the prop: a host may flip `defaults` at
+    // runtime (a face that gains the regime after boot), and toggling it
+    // off must actually stop claiming right-clicks.
+    let defaultsListening = false;
+    /** SSR-safe: a server render has no window, and `immediate: true` runs
+     *  this during setup (the provider's documented SSR contract). */
+    const canListen = typeof window !== "undefined";
+    watch(
+      () => props.defaults,
+      (on) => {
+        if (!canListen) return;
+        if (on && !defaultsListening) {
+          window.addEventListener("contextmenu", onWindowContextMenu);
+          defaultsListening = true;
+        } else if (!on && defaultsListening) {
+          window.removeEventListener("contextmenu", onWindowContextMenu);
+          defaultsListening = false;
+        }
+      },
+      { immediate: true },
+    );
+    onBeforeUnmount(() => {
+      // A menu still open when the provider goes away is a menu that
+      // closed without a selection — the documented hook fires.
+      request.value?.onClose?.();
+      if (!canListen) return;
+      window.removeEventListener("contextmenu", onWindowContextMenu);
+      defaultsListening = false;
+    });
 
     /** A server render has no DOM to build the anchor from: pass `null`,
      *  the same state as a consumer that gives HkMenu no anchor at all

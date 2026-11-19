@@ -970,6 +970,85 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(second.textContent).toContain("Beta");
   });
 
+  it("keeps the survivor's context-menu binding when the option list shrinks", async () => {
+    // Regression (S1): Vue patches the survivor into index 0 FIRST and
+    // only then unmounts the removed option, whose function-ref fires
+    // `null` with its ORIGINAL index. An index-keyed cleanup therefore
+    // unbinds the survivor's freshly installed binding.
+    const picks: string[] = [];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const shrink = ref(false);
+    const option = (key: string) => ({
+      key,
+      label: key.toUpperCase(),
+      contextMenu: (point: { x: number; y: number }) => ({
+        x: point.x,
+        y: point.y,
+        items: [{ key: "cfg", label: `Configure ${key}` }],
+        onSelect: () => picks.push(key),
+      }),
+    });
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, null, {
+            default: () =>
+              h(HkTabs, {
+                modelValue: "b",
+                renderPanels: false,
+                tabs: (shrink.value ? [option("b")] : [option("a"), option("b")]) as TabItem[],
+              }),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+
+    // Shrink: `a` unmounts, `b` is patched into index 0. The swap
+    // transition's leave ghost needs a macrotask window to clear.
+    shrink.value = true;
+    await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    await nextTick();
+
+    // The leave ghost may still be dissolving (the ref callbacks already
+    // ran, which is what this test is about) — target the survivor by
+    // its label rather than by position.
+    const trigger = [...container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
+      .find((el) => el.textContent?.trim() === "B")!;
+    expect(trigger, "the survivor is still rendered").toBeTruthy();
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 3, clientY: 3 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented, "the survivor still claims its right-click").toBe(true);
+    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Configure b"));
+    expect(row, "the survivor's menu opens").toBeTruthy();
+    row!.click();
+    await nextTick();
+    expect(picks).toEqual(["b"]);
+  });
+
+  it("a disabled option disables its attached actions too", () => {
+    // The whole option is inert, not just its label: an action on a
+    // disabled tab must not stay operable.
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", disabled: true, actions: [{ key: "dot", label: "Configure", onSelect }] },
+      { key: "b", label: "Beta" },
+    ]);
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    expect(cell.hasAttribute("data-disabled")).toBe(true);
+    const action = cell.querySelector<HTMLButtonElement>(".hk-tabs-trigger-action")!;
+    expect(action.disabled).toBe(true);
+    action.click();
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it("frames the CELL, not the trigger, when the active option carries actions", async () => {
     // The cell is the trigger's POSITIONED ancestor, so the button's own
     // offsets resolve against the cell — measuring the trigger would put
@@ -1013,6 +1092,9 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(scss).toMatch(/\[data-slots\] > \.hk-tabs-cell/);
     // The cell anchors the overlay (positioned ancestor).
     expect(scss).toMatch(/\.hk-tabs-cell\s*{[^}]*position:\s*relative/);
+    // Unrevealed actions stay OUT of the page tab order (visibility,
+    // not just opacity) or every action leaks a Tab stop per option.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*visibility:\s*hidden/);
     // Reduced-motion lands on the reveal too.
     expect(scss).toMatch(/\.hk-tabs-trigger-actions,\s*\n\s*\.hk-tabs-swap-enter-active/);
   });

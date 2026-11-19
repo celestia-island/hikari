@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import {
   clipboardContextMenuDefault,
@@ -110,6 +110,12 @@ describe("clipboard contributor", () => {
   });
 
   it("disables copy/cut without a selection and cut/paste on readonly", () => {
+    // Paste availability is a capability fact — pin it so the assertions
+    // below measure the readonly rule, not the environment.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn() },
+      configurable: true,
+    });
     const plain = editableMenu(Object.assign(document.createElement("input"), { value: "" }));
     const byKey = Object.fromEntries(plain.items.map((i) => [i.key, i]));
     expect(byKey.copy!.disabled).toBe(true);
@@ -125,6 +131,18 @@ describe("clipboard contributor", () => {
     expect(ro.copy!.disabled).toBe(false);
     expect(ro.cut!.disabled).toBe(true);
     expect(ro.paste!.disabled).toBe(true);
+  });
+
+  it("disables paste where the clipboard read API does not exist (no dead key)", () => {
+    // A plain-HTTP LAN deployment has no navigator.clipboard: an ENABLED
+    // paste row that silently does nothing is a dead key, so the row
+    // reports the capability instead.
+    Object.defineProperty(navigator, "clipboard", { value: undefined, configurable: true });
+    const request = editableMenu(Object.assign(document.createElement("input"), { value: "abc" }));
+    const paste = request.items.find((i) => i.key === "paste")!;
+    expect(paste.disabled).toBe(true);
+    // The rest of the menu stays usable.
+    expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
   });
 
   it("declines non-editable targets", () => {
@@ -246,6 +264,69 @@ describe("provider defaults regime", () => {
     await nextTick();
     expect(document.querySelector(".hk-select-popout")).toBeNull();
     app.unmount();
+  });
+
+  it("follows a runtime flip of the defaults prop (on installs, off un-claims)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const on = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, { defaults: on.value }, {
+            default: () => h("div", [h("div", { class: "flip-probe" })]),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    app.mount(container);
+    await nextTick();
+    const target = container.querySelector(".flip-probe")!;
+
+    const fire = () => {
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+      target.dispatchEvent(event);
+      return event;
+    };
+
+    // Initially off: the event is untouched.
+    expect(fire().defaultPrevented).toBe(false);
+
+    // Flipped on after mount: the regime claims the right-click.
+    on.value = true;
+    await nextTick();
+    expect(fire().defaultPrevented).toBe(true);
+
+    // Flipped back off: claiming stops.
+    on.value = false;
+    await nextTick();
+    expect(fire().defaultPrevented).toBe(false);
+
+    app.unmount();
+  });
+
+  it("isolates a throwing contributor (the platform menu still never appears)", async () => {
+    const unregister = registerContextMenuDefault({
+      id: "test.thrower",
+      order: -1,
+      build: () => {
+        throw new Error("boom");
+      },
+    });
+    try {
+      const { app, target } = mountDefaults("div");
+      await nextTick();
+      const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
+      target.dispatchEvent(event);
+      await nextTick();
+      // preventDefault runs FIRST — a broken contributor cannot hand the
+      // event back to the browser.
+      expect(event.defaultPrevented).toBe(true);
+      expect(document.querySelector(".hk-select-popout")).toBeNull();
+      app.unmount();
+    } finally {
+      unregister();
+    }
   });
 
   it("without the defaults prop the window listener is not installed", async () => {

@@ -22,7 +22,7 @@
  * `useContextMenuTrigger()` (composables/useContextMenu).
  */
 
-import { computed, defineComponent, onBeforeUnmount, onMounted, provide, ref, shallowRef } from "vue";
+import { computed, defineComponent, onBeforeUnmount, provide, ref, shallowRef, watch } from "vue";
 
 import { popupViewportRect } from "../runtime/popupBounds";
 import HkMenu from "./HkMenu";
@@ -125,8 +125,14 @@ export default defineComponent({
     // yielded). The platform menu never appears: the regime owns every
     // unclaimed right-click, with a menu when a contributor claims the
     // point and silent suppression otherwise.
+    //
+    // preventDefault comes FIRST: the platform menu must be suppressed
+    // even when a contributor misbehaves, and a throwing contributor is
+    // isolated (DEV-loud) instead of silently handing the event back to
+    // the browser.
     function onWindowContextMenu(event: MouseEvent) {
       if (event.defaultPrevented) return; // a binding opened its menu
+      event.preventDefault();
       const point: ContextTriggerPoint = {
         x: event.clientX,
         y: event.clientY,
@@ -134,16 +140,43 @@ export default defineComponent({
         target: event.target,
         defaultPrevented: false,
       };
-      const request = contextMenuDefaultsFor(point);
-      event.preventDefault();
+      let request: ContextMenuRequest | null = null;
+      try {
+        request = contextMenuDefaultsFor(point);
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console -- dev-only drift alarm
+          console.error("[HkContextMenuProvider] default contributor threw:", err);
+        }
+      }
       if (request) api.open(request);
     }
 
-    onMounted(() => {
-      if (props.defaults) window.addEventListener("contextmenu", onWindowContextMenu);
-    });
+    // The listener follows the prop: a host may flip `defaults` at
+    // runtime (a face that gains the regime after boot), and toggling it
+    // off must actually stop claiming right-clicks.
+    let defaultsListening = false;
+    /** SSR-safe: a server render has no window, and `immediate: true` runs
+     *  this during setup (the provider's documented SSR contract). */
+    const canListen = typeof window !== "undefined";
+    watch(
+      () => props.defaults,
+      (on) => {
+        if (!canListen) return;
+        if (on && !defaultsListening) {
+          window.addEventListener("contextmenu", onWindowContextMenu);
+          defaultsListening = true;
+        } else if (!on && defaultsListening) {
+          window.removeEventListener("contextmenu", onWindowContextMenu);
+          defaultsListening = false;
+        }
+      },
+      { immediate: true },
+    );
     onBeforeUnmount(() => {
+      if (!canListen) return;
       window.removeEventListener("contextmenu", onWindowContextMenu);
+      defaultsListening = false;
     });
 
     /** A server render has no DOM to build the anchor from: pass `null`,

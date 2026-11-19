@@ -173,6 +173,12 @@ interface ScrollerExpose {
  *   container height-morphs to the incoming panel's natural size
  *   (panels never had switch CSS before — inactive ones were simply
  *   display:none'd, so nothing visual is layered away);
+ * - `TabItem.actions` + `TabItem.contextMenu` — per-option attached
+ *   action buttons (hover/focus-revealed, siblings of the trigger inside
+ *   a `.hk-tabs-cell`) and a per-option right-click / long-press /
+ *   menu-key binding; `trigger-<key>` slots replace a trigger's content
+ *   entirely (the `icon-<key>` slot's whole-trigger sibling — same
+ *   naming family, same per-key contract);
  * - full arrow-key navigation (arrows/Home/End, wrapping, disabled tabs
  *   skipped, selection follows focus) and roving tabindex.
  */
@@ -246,12 +252,14 @@ export default defineComponent({
     // (no provider mounted → the NOOP api, and the binding is silent).
     const contextMenuApi = useContextMenu();
     const triggerRefs = ref<Map<number, HTMLElement>>(new Map());
-    /** Context-menu bindings actually installed, keyed by option index:
-     *  the ELEMENT they are bound to plus the unbinder. Rebinding only
-     *  happens when the element instance changes — the option arrays are
-     *  rebuilt every render (fresh closures), so binding per render
-     *  would churn listeners on every altitude tick. */
-    const contextBindings = new Map<number, { el: HTMLElement; key: string; unbind: () => void }>();
+    /** Context-menu bindings actually installed, keyed by the ELEMENT
+     *  they are bound to (NOT by option index — Vue fires a function
+     *  ref's `null` with the ref's ORIGINAL index, so an index-keyed
+     *  cleanup tears down whatever entry now sits there, including a
+     *  live sibling's freshly installed binding after a shrinking list
+     *  patch). Rebinding happens only when the element instance (or the
+     *  option behind it) changes. */
+    const contextBindings = new Map<HTMLElement, { key: string; unbind: () => void }>();
     /** The CURRENT option list, readable from the bound handlers. A plain
      *  binding (not a ref) on purpose: the handlers run on events, long
      *  after render, and must see the latest closures without writing
@@ -400,16 +408,17 @@ export default defineComponent({
       if (el instanceof HTMLElement) {
         // (Re)bind the option's context-menu grammar (right-click,
         // long-press, keyboard menu key) only when this is genuinely a
-        // NEW element: the render function passes a fresh function-ref
-        // every render, so an unconditional rebind would tear down and
-        // reinstall the listeners on every tick.
-        const bound = contextBindings.get(idx);
-        if (bound && bound.el === el && bound.key === tab.key) {
+        // NEW element (or the element got reused for another option):
+        // the render function passes a fresh function-ref every render,
+        // so an unconditional rebind would tear down and reinstall the
+        // listeners on every tick.
+        const bound = contextBindings.get(el);
+        if (bound && bound.key === tab.key) {
           triggerRefs.value.set(idx, el);
           return;
         }
         bound?.unbind();
-        contextBindings.delete(idx);
+        contextBindings.delete(el);
         if (tab.contextMenu) {
           const boundKey = tab.key;
           const unbind = bindContextMenu(el, contextMenuApi, (point) => {
@@ -417,15 +426,13 @@ export default defineComponent({
             const live = tabsNow.find((tb) => tb.key === boundKey);
             return live?.contextMenu?.(point) ?? null;
           });
-          contextBindings.set(idx, { el, key: boundKey, unbind });
+          contextBindings.set(el, { key: boundKey, unbind });
         }
         triggerRefs.value.set(idx, el);
       } else {
-        const bound = contextBindings.get(idx);
-        if (bound) {
-          bound.unbind();
-          contextBindings.delete(idx);
-        }
+        // A ref's null value carries the ORIGINAL index, which may now
+        // belong to a different (live) option — never unbind by index
+        // here. Detached elements are pruned by pruneDetachedBindings.
         triggerRefs.value.delete(idx);
       }
     }
@@ -434,13 +441,32 @@ export default defineComponent({
       if (el instanceof HTMLElement) {
         cellRefs.value.set(idx, el);
       } else {
-        cellRefs.value.delete(idx);
+        // Same stale-index trap as setTriggerRef: only drop the record
+        // when it no longer points at a live element, so a shrinking
+        // list cannot evict a sibling's freshly patched cell (which
+        // would silently fall back to measuring the trigger).
+        const current = cellRefs.value.get(idx);
+        if (!current || !current.isConnected) cellRefs.value.delete(idx);
       }
     }
 
     /** Tear down every context-menu binding (the tabs watcher drops the
      *  whole option set on any change — stale indices must not keep
      *  live listeners on detached elements). */
+    /** Drop bindings whose element left the document. Deliberately NOT
+     *  a full teardown on every option-list change: the option arrays
+     *  are rebuilt per parent render, and each unbind cancels an
+     *  in-progress long-press — a full sweep there would swallow the
+     *  touch menu on any repaint. */
+    function pruneDetachedBindings() {
+      for (const [el, bound] of [...contextBindings]) {
+        if (!el.isConnected) {
+          bound.unbind();
+          contextBindings.delete(el);
+        }
+      }
+    }
+
     function unbindAllContextMenus() {
       for (const bound of contextBindings.values()) bound.unbind();
       contextBindings.clear();
@@ -538,7 +564,7 @@ export default defineComponent({
     watch(() => props.tabs, () => {
       triggerRefs.value.clear();
       cellRefs.value.clear();
-      unbindAllContextMenus();
+      pruneDetachedBindings();
       nextTick(refreshGeometry);
     }, { deep: true });
 
@@ -776,7 +802,11 @@ export default defineComponent({
               key={tab.key}
               class="hk-tabs-cell"
               ref={(el) => setCellRef(el, idx)}
-              data-disabled={props.disabled || undefined}
+              // The CELL mutes for the same reasons its trigger does: the
+              // strip's own flag OR this option's `disabled` (a disabled
+              // option's actions must not stay operable — the whole option
+              // is inert, not just its label).
+              data-disabled={props.disabled || disabled || undefined}
               style={{ "--hk-tabs-span": String(slotSpan(tab)) }}
             >
               {trigger}
@@ -789,9 +819,16 @@ export default defineComponent({
                     title={action.label}
                     aria-label={action.label}
                     data-test={`hk-tabs-action-${tab.key}-${action.key}`}
-                    disabled={props.disabled || action.disabled || undefined}
+                    // A `<button>` is natively Tab-reachable, and the
+                    // reveal is pointer/focus driven — the actions stay
+                    // out of the page tab order (tabindex -1) and become
+                    // reachable ONCE the cell is hovered or already holds
+                    // focus (`:focus-within` reveals them, so a keyboard
+                    // user tabs from the trigger straight into them).
+                    tabindex={-1}
+                    disabled={props.disabled || disabled || action.disabled || undefined}
                     onClick={() => {
-                      if (!props.disabled && !action.disabled) action.onSelect();
+                      if (!props.disabled && !disabled && !action.disabled) action.onSelect();
                     }}
                   >
                     {(action.icon != null ? action.icon : <Ellipsis size={14} />) as VNodeChild}

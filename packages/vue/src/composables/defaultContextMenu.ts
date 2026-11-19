@@ -34,6 +34,7 @@
 import type { ContextMenuRequest, ContextTriggerPoint } from "./useContextMenu";
 
 import { useI18n } from "../i18n/context";
+import { useClipboard } from "../runtime/useClipboard";
 
 /** One default-menu contribution. `build` returning a request claims
  *  the event; returning null defers to later contributors (and
@@ -55,7 +56,9 @@ export interface ContextMenuDefaultContribution {
 const registry: ContextMenuDefaultContribution[] = [];
 
 /** Register a default-menu contribution. Returns the unregister
- *  function (idempotent). */
+ *  function (idempotent). Re-registering an id REPLACES the entry and the
+ *  replacement is inserted by `order` again — among equal orders it lands
+ *  after its peers (registration order is kept for DISTINCT ids only). */
 export function registerContextMenuDefault(
   contribution: ContextMenuDefaultContribution,
 ): () => void {
@@ -105,9 +108,17 @@ function closestEditable(target: EventTarget | null): HTMLElement | null {
  *
  * The menu moves focus to its rows, which would collapse the live
  * selection before any item handler reads it — so the selection is
- * SNAPSHOTTED at build time and restored before acting (the same
- * grammar the chest implementation proved). Handlers never re-read
- * the (by then collapsed) selection.
+ * SNAPSHOTTED at build time and restored before acting. Handlers never
+ * re-read the (by then collapsed) selection.
+ *
+ * OWNERSHIP BOUNDARY: the contributor claims every `input` / `textarea` /
+ * `[contenteditable]` target. A model-driven rich editor (ProseMirror /
+ * TipTap class) must own its own menu — registering a contributor at a
+ * lower `order` (or binding `bindContextMenu` on the editor element)
+ * claims the point first; leaving it to the default means `execCommand`
+ * edits its DOM behind the editor's model. Shadow-DOM editables are the
+ * mirror case: `event.target` is retargeted at the window listener, so
+ * the selector does not reach them and they get suppression only.
  */
 export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
   id: "hk.clipboard",
@@ -124,6 +135,8 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
     const isReadOnly = field
       ? field.readOnly || field.disabled
       : editable.isContentEditable === false;
+    const canPaste = typeof navigator !== "undefined"
+      && typeof navigator.clipboard?.readText === "function";
 
     // ── Snapshot the selection NOW ──────────────────────────────────
     const sel = document.getSelection();
@@ -155,17 +168,20 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       }
     };
 
-    const doCopy = async () => {
-      if (!selText) return;
-      try {
-        await navigator.clipboard.writeText(selText);
-      } catch {
-        restore();
-        document.execCommand("copy");
-      }
+    // Copy rides the app's ONE clipboard implementation (`runtime/
+    // useClipboard`): it already handles the insecure-context fallback and
+    // — the trap a hand-rolled path hits — treats `execCommand("copy")`
+    // returning false as a FAILURE instead of reporting a write that never
+    // landed. Readable outside setup (no inject), so a contributor can use
+    // it directly.
+    const copyText = useClipboard().copy;
+
+    const doCopy = async (): Promise<boolean> => {
+      if (!selText) return false;
+      return copyText(selText);
     };
     const doCut = async () => {
-      await doCopy();
+      if (!(await doCopy())) return; // never delete text that was not copied
       if (isReadOnly) return;
       if (field) {
         const start = field.selectionStart ?? 0;
@@ -217,7 +233,14 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       items: [
         { key: "copy", label: t("hikari::contextmenu.copy", "Copy"), disabled: !hasSelection },
         { key: "cut", label: t("hikari::contextmenu.cut", "Cut"), disabled: !hasSelection || isReadOnly },
-        { key: "paste", label: t("hikari::contextmenu.paste", "Paste"), disabled: isReadOnly },
+        {
+          key: "paste",
+          label: t("hikari::contextmenu.paste", "Paste"),
+          // Clipboard READS need both the API and permission: where the API
+          // is absent (a plain-HTTP LAN deployment) the row is disabled —
+          // an enabled row that silently does nothing is a dead key.
+          disabled: isReadOnly || !canPaste,
+        },
         { key: "selectAll", label: t("hikari::contextmenu.selectAll", "Select all") },
       ],
       onSelect: (key) => {

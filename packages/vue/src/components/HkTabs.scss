@@ -162,15 +162,25 @@
   transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
+  /* `visibility: hidden` (not just opacity) keeps the unrevealed action
+     buttons OUT of the page tab order: an opacity-only hide leaves every
+     action focusable while invisible, which both leaks Tab stops and
+     contradicts the strip's roving-tabindex contract. `:focus-within`
+     reveals them, so a keyboard user tabs trigger → actions. */
+  visibility: hidden;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--duration-short) ease;
+  transition: opacity var(--duration-short) ease,
+              visibility 0s linear var(--duration-short);
 }
 
 .hk-tabs-cell:hover > .hk-tabs-trigger-actions,
 .hk-tabs-cell:focus-within > .hk-tabs-trigger-actions {
+  visibility: visible;
   opacity: 1;
   pointer-events: auto;
+  transition: opacity var(--duration-short) ease,
+              visibility 0s linear 0s;
 }
 
 /* A whole-strip disabled render has no live actions to reveal. */

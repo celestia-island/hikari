@@ -7,6 +7,7 @@ import HkHoverRevealAction from "./HkHoverRevealAction";
 import HkIconButton from "./HkIconButton";
 import HkTransitionContainer from "./HkTransitionContainer";
 import HkCornerBadge from "./HkCornerBadge";
+import HkSupplementInset from "./HkSupplementInset";
 import type { CornerBadgePlacement, CornerBadgeVariant } from "./HkCornerBadge";
 import { iconByName } from "../composables/iconRegistry";
 import { useI18n } from "../i18n/context";
@@ -290,6 +291,13 @@ export default defineComponent({
      *  positioned ancestor, so the button's own offsets would be
      *  cell-relative and break the indicator math). */
     const cellRefs = ref<Map<number, HTMLElement>>(new Map());
+    /** The press state of attached supplements per option key: pressing an
+     *  ALREADY-ACTIVE option is a no-op selection-wise, so with actions
+     *  attached that press toggles the supplement — 'open' forces it open,
+     *  'closed' forces it shut (even under the sticky hover a touch tap
+     *  leaves behind), no entry = hover-follow. Cleared when the selection
+     *  moves; pruned when options leave the strip. */
+    const supplementStates = ref<Map<string, "open" | "closed">>(new Map());
     const indicatorStyle = ref<Record<string, string>>({});
     /** The indicator fades in once real geometry first lands (no pop-in
      *  on mount), then slides via its left/width transition. */
@@ -584,11 +592,29 @@ export default defineComponent({
       unbindAllContextMenus();
     });
 
-    watch(() => props.modelValue, () => nextTick(refreshGeometry));
+    watch(() => props.modelValue, () => {
+      // A pressed-open supplement belongs to the option the user was
+      // interacting with; once the selection moves, it closes.
+      if (supplementStates.value.size) {
+        supplementStates.value = new Map();
+      }
+      nextTick(refreshGeometry);
+    });
 
     watch(() => props.tabs, () => {
       triggerRefs.value.clear();
       cellRefs.value.clear();
+      // Supplements of options that left the strip — or collapsed into a
+      // merged run (props.tabs keeps those keys; they just stop rendering)
+      // — are dead state: a later un-merge must not re-open a stale reveal.
+      const live = new Set(
+        props.tabs.filter((tb) => !mergeSet.value.has(tb.key)).map((tb) => tb.key),
+      );
+      if (supplementStates.value.size) {
+        for (const key of [...supplementStates.value.keys()]) {
+          if (!live.has(key)) supplementStates.value.delete(key);
+        }
+      }
       nextTick(refreshGeometry);
     }, { deep: true });
 
@@ -785,7 +811,18 @@ export default defineComponent({
             tabindex={active || idx === fallbackTabbableIdx.value ? undefined : -1}
             disabled={props.disabled || disabled}
             onClick={() => {
-              if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
+              if (props.disabled || disabled) return;
+              if (tab.key !== props.modelValue) {
+                emit("update:modelValue", tab.key);
+              } else if (actions?.length) {
+                // Re-pressing the active option toggles its supplement —
+                // the click/tap reveal path (hover is the pointer path).
+                const cycle = (state: "open" | "closed" | undefined): "open" | "closed" =>
+                  state === "open" ? "closed" : "open";
+                const next = new Map(supplementStates.value);
+                next.set(tab.key, cycle(supplementStates.value.get(tab.key)));
+                supplementStates.value = next;
+              }
             }}
           >
             {(() => {
@@ -833,6 +870,14 @@ export default defineComponent({
           </button>
         );
         if (actions) {
+          // The attached actions ride the supplement inset: at rest it takes
+          // NO space (the option's own content stays exactly centred — the
+          // old lane reservation pushed it off-centre); on reveal it
+          // animates open, pushing the content left, and the controls fade
+          // in. The action buttons are SIBLINGS of the trigger (a button
+          // cannot nest a button) inside the inset's supplement region.
+          const state = supplementStates.value.get(tab.key);
+          const isRevealed = state === "open";
           listChildren.push(
             <div
               key={tab.key}
@@ -846,31 +891,27 @@ export default defineComponent({
               data-disabled={props.disabled || disabled || undefined}
               style={{ "--hk-tabs-span": String(slotSpan(tab)) }}
             >
-              {trigger}
-              <span class="hk-tabs-trigger-actions">
-                {actions.map((action) => (
-                  <button
-                    key={action.key}
-                    type="button"
-                    class="hk-tabs-trigger-action"
-                    title={action.label}
-                    aria-label={action.label}
-                    data-test={`hk-tabs-action-${tab.key}-${action.key}`}
-                    // NO tabindex override: the buttons are natively
-                    // Tab-reachable, and the reveal is what keeps the
-                    // page tab order clean — `visibility: hidden` makes an
-                    // unrevealed action UNFOCUSABLE, while focusing the
-                    // trigger flips `:focus-within`, which reveals the
-                    // cell's actions and hands the next Tab stop to them.
-                    disabled={props.disabled || disabled || action.disabled || undefined}
-                    onClick={() => {
-                      if (!props.disabled && !disabled && !action.disabled) action.onSelect();
-                    }}
-                  >
-                    {(action.icon != null ? action.icon : <Ellipsis size={14} />) as VNodeChild}
-                  </button>
-                ))}
-              </span>
+              <HkSupplementInset closed={state === "closed"} revealed={isRevealed}>
+                {{
+                  default: () => trigger,
+                  supplement: () => actions.map((action) => (
+                    <button
+                      key={action.key}
+                      type="button"
+                      class="hk-tabs-trigger-action"
+                      title={action.label}
+                      aria-label={action.label}
+                      data-test={`hk-tabs-action-${tab.key}-${action.key}`}
+                      disabled={props.disabled || disabled || action.disabled || undefined}
+                      onClick={() => {
+                        if (!props.disabled && !disabled && !action.disabled) action.onSelect();
+                      }}
+                    >
+                      {(action.icon != null ? action.icon : <Ellipsis size={14} />) as VNodeChild}
+                    </button>
+                  )),
+                }}
+              </HkSupplementInset>
             </div>,
           );
         } else {

@@ -795,6 +795,69 @@ describe("HkTabs trigger corner badge", () => {
   });
 });
 
+describe("HkTabs per-option context menu", () => {
+  it("opens the bound menu on right-click through the app-wide provider", async () => {
+    const onPick = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkContextMenuProvider, null, {
+            default: () =>
+              h(HkTabs, {
+                modelValue: "a",
+                renderPanels: false,
+                tabs: [
+                  {
+                    key: "a",
+                    label: "Alpha",
+                    contextMenu: (point: { x: number; y: number }) => ({
+                      x: point.x,
+                      y: point.y,
+                      title: "Alpha menu",
+                      items: [{ key: "cfg", label: "Configure alpha" }],
+                      onSelect: onPick,
+                    }),
+                  },
+                  { key: "b", label: "Beta" },
+                ] as TabItem[],
+              }),
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    const trigger = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
+    trigger.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 }));
+    await nextTick();
+    expect(document.querySelector(".hk-select-popout")).toBeTruthy();
+    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
+      .find((r) => r.textContent?.includes("Configure alpha"));
+    expect(row).toBeTruthy();
+    row!.click();
+    await nextTick();
+    expect(onPick).toHaveBeenCalledTimes(1);
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("defers outward when the option carries no contextMenu (event untouched)", async () => {
+    const { container } = mountTabs({ variant: "segmented" });
+    const trigger = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 4, clientY: 4 });
+    trigger.dispatchEvent(event);
+    await nextTick();
+    expect(event.defaultPrevented).toBe(false);
+    expect(document.querySelector(".hk-select-popout")).toBeNull();
+  });
+});
+
 describe("HkTabs caption-band drag opt-out (2026-11-12)", () => {
   // A caption-band ancestor may be a DEEP Tauri drag region, and the scroller
   // pans overflowing strips with its own pointer sweep — the two gestures
@@ -852,6 +915,64 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(trigger.contains(action)).toBe(false);
     expect(action.getAttribute("aria-label")).toBe("Configure alpha");
     expect(action.getAttribute("data-test")).toBe("hk-tabs-action-a-dot");
+  });
+
+  it("reveals the supplement on a press of the ALREADY-ACTIVE option (touch path)", async () => {
+    // Pressing the active option is a no-op selection-wise; with actions
+    // attached that press toggles the supplement instead — the click/tap
+    // reveal path (hover is the pointer path).
+    const onSelect = vi.fn();
+    const { container, setActive } = mountWithOptions(
+      [{ key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure alpha", onSelect }] }],
+      { modelValue: "a", variant: "segmented" },
+    );
+    void setActive;
+    await nextTick();
+    const inset = container.querySelector<HTMLElement>(".hk-supplement-inset")!;
+    expect(inset).toBeTruthy();
+    expect(inset.hasAttribute("data-revealed")).toBe(false);
+    const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    trigger.click();
+    await nextTick();
+    expect(inset.hasAttribute("data-revealed"), "the press reveals the supplement").toBe(true);
+    // Press again: toggles to the CLOSED state — the attribute wiring is
+    // data-closed (which the CSS lets beat hover; a mere data-revealed
+    // removal would be masked by sticky hover). A revert to the old
+    // set-toggle (no closed state) fails this.
+    trigger.click();
+    await nextTick();
+    expect(inset.hasAttribute("data-revealed")).toBe(false);
+    expect(inset.hasAttribute("data-closed"), "the press-off state is explicit").toBe(true);
+    // Third press: re-opens.
+    trigger.click();
+    await nextTick();
+    expect(inset.hasAttribute("data-revealed")).toBe(true);
+    expect(inset.hasAttribute("data-closed")).toBe(false);
+    // And the selection never moved (the active option re-selected nothing).
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("closes a click-revealed supplement when the selection moves", async () => {
+    const onSelect = vi.fn();
+    const { container, setActive } = mountWithOptions(
+      [
+        { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure alpha", onSelect }] },
+        { key: "b", label: "Beta" },
+      ],
+      { modelValue: "a", variant: "segmented" },
+    );
+    const inset = container.querySelector<HTMLElement>(".hk-supplement-inset")!;
+    const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    trigger.click();
+    await nextTick();
+    expect(inset.hasAttribute("data-revealed")).toBe(true);
+    setActive("b");
+    await nextTick();
+    await nextTick();
+    expect(
+      container.querySelector(".hk-supplement-inset")!.hasAttribute("data-revealed"),
+      "moving the selection closes the reveal",
+    ).toBe(false);
   });
 
   it("renders plain options without a cell (no anatomy change)", () => {
@@ -1230,91 +1351,19 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(indicator.style.width, "the cell's width").toBe("50px");
   });
 
-  it("pins the reveal + overlay grammar in the stylesheet", () => {
+  it("pins the supplement-inset grammar and the absent lane (off-centre fix)", () => {
     const scss = readFileSync(join(here, "HkTabs.scss"), "utf8");
-    // Hidden by default; hover/focus-within reveals (pointer-events gate).
-    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*pointer-events:\s*none/);
-    expect(scss).toMatch(/\.hk-tabs-cell:hover > \.hk-tabs-trigger-actions/);
-    expect(scss).toMatch(/\.hk-tabs-cell:focus-within > \.hk-tabs-trigger-actions/);
-    // Overlay: absolute at the inline end, never shifting layout.
-    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*position:\s*absolute/);
+    // THE OFF-CENTRE FIX: no lane reservation on the trigger — at rest the
+    // supplement takes no space and the option's own content stays centred.
+    expect(scss).not.toMatch(/\.hk-tabs-cell > \.hk-tabs-trigger[^}]*padding-inline-end/);
+    // The inset fills the cell; the trigger fills the main region (so the
+    // push shifts its content).
+    expect(scss).toMatch(/\.hk-tabs-cell > \.hk-supplement-inset\s*{[^}]*width:\s*100%/);
+    expect(scss).toMatch(/\.hk-supplement-inset-main > \.hk-tabs-trigger\s*{[^}]*width:\s*100%/);
     // The cell is the slot-unit grid child (the trigger is not).
     expect(scss).toMatch(/\[data-slots\] > \.hk-tabs-cell/);
-    // The reserved action lane: without it the revealed buttons sit ON the
-    // label's tail in a shrink-to-fit pill (clicks there hit the action,
-    // not the option). The lane is list padding (12px) + the overlay's own
-    // footprint (20px button; the inset cancels against the trigger's own
-    // edge padding) — pin the magnitude so a shrunken calc cannot pass.
-    expect(scss).toMatch(
-      /\.hk-tabs-cell > \.hk-tabs-trigger\s*{[^}]*padding-inline-end:\s*calc\(var\(--space-12\) \+ 18px\)/,
-    );
-    // The cell anchors the overlay (positioned ancestor).
-    expect(scss).toMatch(/\.hk-tabs-cell\s*{[^}]*position:\s*relative/);
-    // Unrevealed actions stay OUT of the page tab order (visibility,
-    // not just opacity) or every action leaks a Tab stop per option.
-    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*visibility:\s*hidden/);
-    // PAINT ORDER: the trigger carries z-index 1, so the action layer must
-    // sit ABOVE it — an auto-z sibling loses hit-testing everywhere the two
-    // overlap (the buttons are inside the trigger's box), which makes every
-    // ⋯ unclickable while looking fine in a layout-free test.
-    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*z-index:\s*2/);
-    expect(scss).toMatch(/\.hk-tabs-trigger\s*{[^}]*z-index:\s*1/);
-    // Reduced-motion lands on the reveal too.
-    expect(scss).toMatch(/\.hk-tabs-trigger-actions,\s*\n\s*\.hk-tabs-swap-enter-active/);
-  });
-});
-
-describe("HkTabs per-option context menu (2026-11-19)", () => {
-  it("opens the bound menu on right-click through the app-wide provider", async () => {
-    const onPick = vi.fn();
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    containers.push(container);
-    const Wrapper = defineComponent({
-      setup() {
-        return () =>
-          h(HkContextMenuProvider, null, {
-            default: () =>
-              h(HkTabs, {
-                modelValue: "a",
-                renderPanels: false,
-                tabs: [
-                  {
-                    key: "a",
-                    label: "Alpha",
-                    contextMenu: (point: { x: number; y: number }) => ({
-                      x: point.x,
-                      y: point.y,
-                      title: "Alpha menu",
-                      items: [{ key: "cfg", label: "Configure alpha" }],
-                      onSelect: onPick,
-                    }),
-                  },
-                  { key: "b", label: "Beta" },
-                ] as TabItem[],
-              }),
-          });
-      },
-    });
-    const app = createApp(Wrapper);
-    mounts.push(app);
-    app.mount(container);
-    await nextTick();
-    const trigger = container.querySelectorAll<HTMLElement>(".hk-tabs-trigger")[0]!;
-    trigger.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 }));
-    await nextTick();
-    expect(document.querySelector(".hk-select-popout")).toBeTruthy();
-    const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
-      .find((r) => r.textContent?.includes("Configure alpha"));
-    expect(row).toBeTruthy();
-    row!.click();
-    await nextTick();
-    expect(onPick).toHaveBeenCalledTimes(1);
-    // The binding preventDefaults — the platform menu is gone on re-click too.
-    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 12, clientY: 12 });
-    trigger.dispatchEvent(event);
-    await nextTick();
-    expect(event.defaultPrevented).toBe(true);
+    // The cell anchors nothing anymore — the overlay grammar is gone.
+    expect(scss).not.toContain("hk-tabs-trigger-actions");
   });
 
   it("serves the CURRENT option closure after a rebuilt option list", async () => {

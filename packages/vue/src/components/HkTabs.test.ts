@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import HkTabs from "./HkTabs";
+import HkTabs, { _resetTabsWarnOnceForTests } from "./HkTabs";
 import type { TabItem } from "./HkTabs";
 import HkContextMenuProvider from "./HkContextMenuProvider";
 import { CROSSFADE_WATCHDOG_MS } from "./HkCrossfade";
@@ -898,7 +898,9 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(cell?.style.getPropertyValue("--hk-tabs-span")).toBe("1");
   });
 
-  it("ignores actions on merged-away options (DEV alarm fires)", () => {
+  it("ignores actions on merged-away options (DEV alarm fires once)", () => {
+    // The alarm is once-per-key module state — start from a clean slate.
+    _resetTabsWarnOnceForTests();
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     try {
       const container = document.createElement("div");
@@ -1095,6 +1097,12 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     // Unrevealed actions stay OUT of the page tab order (visibility,
     // not just opacity) or every action leaks a Tab stop per option.
     expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*visibility:\s*hidden/);
+    // PAINT ORDER: the trigger carries z-index 1, so the action layer must
+    // sit ABOVE it — an auto-z sibling loses hit-testing everywhere the two
+    // overlap (the buttons are inside the trigger's box), which makes every
+    // ⋯ unclickable while looking fine in a layout-free test.
+    expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*z-index:\s*2/);
+    expect(scss).toMatch(/\.hk-tabs-trigger\s*{[^}]*z-index:\s*1/);
     // Reduced-motion lands on the reveal too.
     expect(scss).toMatch(/\.hk-tabs-trigger-actions,\s*\n\s*\.hk-tabs-swap-enter-active/);
   });

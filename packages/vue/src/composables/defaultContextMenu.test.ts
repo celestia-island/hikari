@@ -145,6 +145,41 @@ describe("clipboard contributor", () => {
     expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
   });
 
+  it("declines input types whose value is not free text", () => {
+    // `field.value = text` throws InvalidStateError on a file input, and a
+    // date/range/checkbox picker owns its own interaction.
+    for (const type of ["file", "checkbox", "date", "range"]) {
+      const input = document.createElement("input");
+      input.type = type;
+      document.body.appendChild(input);
+      expect(clipboardContextMenuDefault.build(point(input)), type).toBeNull();
+    }
+    // A text-like type still claims.
+    const text = document.createElement("input");
+    text.type = "search";
+    document.body.appendChild(text);
+    expect(clipboardContextMenuDefault.build(point(text))).toBeTruthy();
+  });
+
+  it("refuses to mutate a target that left the document while the menu was open", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn().mockResolvedValue("x") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "original";
+    input.setSelectionRange(0, 8);
+    const request = editableMenu(input);
+    // The field unmounts with the menu still open.
+    input.remove();
+    request.onSelect!("paste", request.items[2]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // No write into detached DOM, no error escaped.
+    expect(input.value).toBe("original");
+    request.onSelect!("selectAll", request.items[3]!);
+    expect(document.getSelection()?.toString() ?? "").not.toBe("original");
+  });
+
   it("declines non-editable targets", () => {
     expect(clipboardContextMenuDefault.build(point(document.createElement("div")))).toBeNull();
     expect(clipboardContextMenuDefault.build(point(null))).toBeNull();

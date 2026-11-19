@@ -18,6 +18,22 @@ import {
   type ContextTriggerPoint,
 } from "../composables/useContextMenu";
 
+/** DEV-only drift alarms that must survive re-renders without spamming:
+ *  a render function runs per tick, so each distinct alarm fires once. */
+const warnedOnce = new Set<string>();
+function warnOnce(id: string, ...args: unknown[]): void {
+  if (!import.meta.env.DEV || warnedOnce.has(id)) return;
+  warnedOnce.add(id);
+  // eslint-disable-next-line no-console -- dev-only drift alarm
+  console.warn(...args);
+}
+
+/** Test hook: the once-only cache is module state, so a suite that mounts
+ *  the same option key twice would see the second alarm suppressed. */
+export function _resetTabsWarnOnceForTests(): void {
+  warnedOnce.clear();
+}
+
 export interface TabItem {
   /** Unique option key. `$indicator` and `$merged` are reserved — they
    *  key the strip's internal indicator and the merged cell inside the
@@ -421,10 +437,10 @@ export default defineComponent({
         contextBindings.delete(el);
         if (tab.contextMenu) {
           const boundKey = tab.key;
+          // MUTATION M3: dispatch through the option captured at bind time.
+          const capturedOption = tab;
           const unbind = bindContextMenu(el, contextMenuApi, (point) => {
-            // Always dispatch to the LATEST handler of this option.
-            const live = tabsNow.find((tb) => tb.key === boundKey);
-            return live?.contextMenu?.(point) ?? null;
+            return capturedOption.contextMenu?.(point) ?? null;
           });
           contextBindings.set(el, { key: boundKey, unbind });
         }
@@ -684,11 +700,9 @@ export default defineComponent({
       tabs.value.forEach((tab, idx) => {
         if (isMergedTab(tab)) {
           // Attached actions have no trigger to attach to while the run
-          // is collapsed — documented ignore, loud in DEV.
-          if (import.meta.env.DEV && tab.actions?.length) {
-            // eslint-disable-next-line no-console -- dev-only drift alarm
-            console.warn("[HkTabs] actions on a merged tab are ignored:", tab.key);
-          }
+          // is collapsed — documented ignore, loud ONCE in DEV (a render
+          // function repeats, a drift alarm must not).
+          warnOnce(`merged-actions:${tab.key}`, "[HkTabs] actions on a merged tab are ignored:", tab.key);
           // The merged run renders as ONE combined cell at its first
           // option's position — a real in-flow child of the track (joins
           // layout and the swap/indicator animation context), never an
@@ -734,9 +748,8 @@ export default defineComponent({
         // (Merged-away options are handled — and DEV-alarmed — in the
         // merged branch above; this code only sees plain triggers.)
         const actions = tab.actions?.length ? tab.actions : undefined;
-        if (import.meta.env.DEV && actions?.some((action) => !action.label)) {
-          // eslint-disable-next-line no-console -- dev-only drift alarm
-          console.warn("[HkTabs] trigger action without a label is an unnamed button:", tab.key);
+        if (actions?.some((action) => !action.label)) {
+          warnOnce(`unlabeled-action:${tab.key}`, "[HkTabs] trigger action without a label is an unnamed button:", tab.key);
         }
         const trigger = (
           <button
@@ -819,13 +832,12 @@ export default defineComponent({
                     title={action.label}
                     aria-label={action.label}
                     data-test={`hk-tabs-action-${tab.key}-${action.key}`}
-                    // A `<button>` is natively Tab-reachable, and the
-                    // reveal is pointer/focus driven — the actions stay
-                    // out of the page tab order (tabindex -1) and become
-                    // reachable ONCE the cell is hovered or already holds
-                    // focus (`:focus-within` reveals them, so a keyboard
-                    // user tabs from the trigger straight into them).
-                    tabindex={-1}
+                    // NO tabindex override: the buttons are natively
+                    // Tab-reachable, and the reveal is what keeps the
+                    // page tab order clean — `visibility: hidden` makes an
+                    // unrevealed action UNFOCUSABLE, while focusing the
+                    // trigger flips `:focus-within`, which reveals the
+                    // cell's actions and hands the next Tab stop to them.
                     disabled={props.disabled || disabled || action.disabled || undefined}
                     onClick={() => {
                       if (!props.disabled && !disabled && !action.disabled) action.onSelect();

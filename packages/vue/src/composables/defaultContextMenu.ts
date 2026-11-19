@@ -97,6 +97,18 @@ export function contextMenuDefaultsFor(
 const EDITABLE_SELECTOR =
   "input, textarea, [contenteditable='true'], [contenteditable='']";
 
+/** Input types whose `value` is free text. Everything else (file, date,
+ *  checkbox, range, …) rejects an arbitrary string — `field.value = text`
+ *  throws `InvalidStateError` on a file input — and its own picker owns
+ *  the interaction, so the clipboard menu declines it. */
+const TEXT_INPUT_TYPES = new Set([
+  "", "text", "search", "url", "tel", "email", "password", "number",
+]);
+
+function isTextLikeInput(el: HTMLInputElement): boolean {
+  return TEXT_INPUT_TYPES.has((el.getAttribute("type") ?? "").toLowerCase());
+}
+
 function closestEditable(target: EventTarget | null): HTMLElement | null {
   if (!(target instanceof Element)) return null;
   return target.closest<HTMLElement>(EDITABLE_SELECTOR);
@@ -126,6 +138,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
   build(point) {
     const editable = closestEditable(point.target);
     if (!editable) return null;
+    if (editable instanceof HTMLInputElement && !isTextLikeInput(editable)) return null;
     const { t } = useI18n();
 
     const isField =
@@ -155,8 +168,15 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
     }
     const hasSelection = selText.length > 0;
 
+    /** The menu can outlive its target (the field unmounts while the menu
+     *  is open, e.g. a dialog closes under it): every mutating handler
+     *  refuses a detached target instead of writing into removed DOM and
+     *  re-adding a detached Range to the live selection. */
+    const stillAttached = (): boolean => editable.isConnected;
+
     /** Focus the editable again and restore the snapshotted selection. */
     const restore = () => {
+      if (!stillAttached()) return;
       editable.focus();
       if (field) {
         // Nothing to restore without a snapshot — leave the caret alone.
@@ -181,6 +201,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       return copyText(selText);
     };
     const doCut = async () => {
+      if (!stillAttached()) return;
       if (!(await doCopy())) return; // never delete text that was not copied
       if (isReadOnly) return;
       if (field) {
@@ -195,6 +216,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       }
     };
     const doPaste = async () => {
+      if (!stillAttached()) return;
       let text: string;
       try {
         text = await navigator.clipboard.readText();
@@ -214,6 +236,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       }
     };
     const doSelectAll = () => {
+      if (!stillAttached()) return;
       editable.focus();
       if (field) {
         field.select();

@@ -170,6 +170,11 @@
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
+  /* PAINT ORDER: the trigger above carries z-index 1, so an auto-z
+     sibling would lose hit-testing everywhere the two overlap (which is
+     everywhere — the trigger fills the cell and the buttons sit inside
+     its box). One layer above the trigger puts the buttons back on top. */
+  z-index: 2;
   transition: opacity var(--duration-short) ease,
               visibility 0s linear var(--duration-short);
 }

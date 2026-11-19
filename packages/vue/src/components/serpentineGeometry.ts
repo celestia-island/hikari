@@ -72,9 +72,7 @@ export function projectOntoPath(points: PathPoint[], distance: number): PathPoin
 }
 
 /** Minimum horizontal run per horizontal leg (px) — keeps turns readable. */
-const MIN_H_RUN = 48;
-/** Minimum vertical travel per vertical leg (px). */
-const MIN_V_TRAVEL = 16;
+const MIN_H_RUN = 40;
 
 /**
  * Build the serpentine lane for a `width × height` canvas.
@@ -103,7 +101,8 @@ export function generateSerpentinePath(
 
   const rowA = centre - height * ROW_FRACTION;
   const rowB = centre + height * ROW_FRACTION;
-  const minHRun = 40;
+  // On narrow canvases the run floor shrinks so the lane still fits.
+  const minHRun = Math.min(MIN_H_RUN, Math.floor(width / 8));
 
   const points: PathPoint[] = [{ x: 0, y: centre }];
   let x = 0;

@@ -7,7 +7,7 @@
   height: calc(var(--space-24, 24px) * 4);
   border-radius: var(--radius-md, 8px);
   border: 1px solid var(--border-faint);
-  background: rgb(var(--color-bg) / 40%);
+  background: rgb(var(--color-surface) / 40%);
   cursor: grab;
   touch-action: none;
   user-select: none;
@@ -31,9 +31,17 @@
   }
 
   &--failed {
-    // Static outline flash under reduced motion; the shake keyframe (below,
-    // sanctioned for the deliberate-action feedback class) runs otherwise.
-    animation: hk-serpentine-shake 0.3s var(--hk-motion-ease, cubic-bezier(0.4, 0, 0.2, 1));
+    animation: hk-serpentine-shake var(--duration-normal, 0.2s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+}
+
+// Reduced motion: no displacement animation at all — the failure feedback
+// becomes a static error outline flash (colour only, no movement).
+@media (prefers-reduced-motion: reduce) {
+  .hk-serpentine--failed {
+    animation: none;
+    outline: 2px solid rgb(var(--color-error));
+    outline-offset: 2px;
   }
 }
 
@@ -69,7 +77,7 @@
   border-radius: 999px;
   transform: translate(-50%, -50%);
   background: rgb(var(--color-info));
-  border: 2px solid rgb(var(--color-bg));
+  border: 2px solid rgb(var(--color-surface));
   box-shadow: 0 0 0 2px rgb(var(--color-info) / 45%);
   pointer-events: none;
 }

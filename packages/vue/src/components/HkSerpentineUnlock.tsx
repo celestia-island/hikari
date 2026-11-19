@@ -46,8 +46,6 @@ export default defineComponent({
     grabHint: { type: String, required: true },
     /** Hint while tracking ("继续，沿路径走完"). */
     trackingHint: { type: String, required: true },
-    /** Number of 90° turns in the lane; random 3–5 when omitted. */
-    turns: { type: Number, default: null },
     /**
      * Deterministic lane seed. Omitted → a fresh random maze per mount
      * (the intended production behaviour); supplied → a reproducible lane,
@@ -117,8 +115,8 @@ export default defineComponent({
       if (props.disabled || confirmed.value) return;
       if (event.key === "Escape") {
         keyboardGrabbed.value = false;
-        progress.value = 0;
         emit("cancel", progress.value);
+        progress.value = 0;
         return;
       }
       if (event.key === " " && !keyboardGrabbed.value) {
@@ -144,15 +142,34 @@ export default defineComponent({
     }
 
     // ── pointer tracking ─────────────────────────────────────────────
+    /** Kill any running spring and its bus registrations. */
+    function stopSpring() {
+      frameHandle?.disconnect();
+      frameHandle = null;
+      transitionHandle?.disconnect();
+      transitionHandle = null;
+      springState = null;
+      snapping.value = false;
+    }
+
     function onPointerDown(event: PointerEvent) {
-      if (props.disabled || confirmed.value || snapping.value) return;
+      if (props.disabled || confirmed.value) return;
+      // A re-grab mid-snap-back wins over the spring: stop it first, or the
+      // two inputs fight over progress for up to a second.
+      stopSpring();
+      failed.value = null;
       const box = viewport.value?.getBoundingClientRect();
       if (!box) return;
       const start = path.value.points[0]!;
       const dx = event.clientX - (box.left + start.x);
       const dy = event.clientY - (box.top + start.y);
       if (Math.hypot(dx, dy) > 24) return;
-      (event.target as HTMLElement).setPointerCapture(event.pointerId);
+      try {
+        (event.target as HTMLElement).setPointerCapture(event.pointerId);
+      } catch {
+        // Capture can throw for non-active pointers; tracking still works
+        // via this element's own move/up handlers.
+      }
       tracking.value = true;
       onPointerMove(event);
     }
@@ -176,33 +193,26 @@ export default defineComponent({
       }
       progress.value = Math.min(1, near.arc / path.value.totalLength);
       announce(progress.value);
-      // Reaching the goal ENDS the drag: the confirm fires on release.
-      if (progress.value >= 1) release(true);
-    }
-
-    function release(atGoal: boolean) {
-      if (!tracking.value) return;
-      tracking.value = false;
-      if (atGoal) {
-        confirmed.value = true;
-        emit("confirm");
-        return;
-      }
-      if (progress.value > 0) {
-        emit("cancel", progress.value);
-        snapBack();
-      }
+      // Arrival only ARMS the goal; the confirm fires on release at it.
     }
 
     function onPointerUp() {
       if (!tracking.value) return;
-      const atGoal = progress.value >= 0.98;
       tracking.value = false;
-      if (atGoal) {
+      if (progress.value >= 0.98) {
         confirmed.value = true;
         emit("confirm");
         return;
       }
+      emit("cancel", progress.value);
+      snapBack();
+    }
+
+    /** A browser-cancelled gesture (palm rejection, interruption) is a
+     *  cancel, never a confirm — release semantics do not apply. */
+    function onPointerCancel() {
+      if (!tracking.value) return;
+      tracking.value = false;
       emit("cancel", progress.value);
       snapBack();
     }
@@ -224,10 +234,13 @@ export default defineComponent({
         progress.value = 0;
         return;
       }
+      stopSpring();
+      snapping.value = true;
       springState = { pos: progress.value, vel: 0 };
       const started = performance.now();
-      transitionHandle = reportTransition(700);
-      frameHandle?.disconnect();
+      // Cover the spring's full worst-case lifetime (the 1200ms watchdog),
+      // not just its typical settle, so scroll/pause policies wait for it.
+      transitionHandle = reportTransition(1200);
       frameHandle = onFrame((ctx) => {
         const state = springState;
         if (!state) return;
@@ -238,11 +251,7 @@ export default defineComponent({
         state.pos += state.vel * ctx.delta;
         if (state.pos <= 0 || performance.now() - started > 1200) {
           progress.value = 0;
-          springState = null;
-          frameHandle?.disconnect();
-          frameHandle = null;
-          transitionHandle?.disconnect();
-          transitionHandle = null;
+          stopSpring();
           return;
         }
         progress.value = state.pos;
@@ -258,8 +267,7 @@ export default defineComponent({
     }
 
     onBeforeUnmount(() => {
-      frameHandle?.disconnect();
-      transitionHandle?.disconnect();
+      stopSpring();
     });
 
     // Lane regenerates per mount (fresh maze each time).
@@ -279,23 +287,13 @@ export default defineComponent({
     };
 
     // ── render ───────────────────────────────────────────────────────
-    const rows = computed(() => {
-      const at = projectOntoPath(
-        path.value.points,
-        progress.value * path.value.totalLength,
-      );
-      return { at };
-    });
-
     return () => {
       const pts: PathPoint[] = path.value.points;
-      const at = rows.value.at;
       const tone = props.tone === "danger" ? "danger" : "default";
       const handlePos = projectOntoPath(
         path.value.points,
         progress.value * path.value.totalLength,
       );
-      void at;
       return (
         <div
           class={{
@@ -314,7 +312,7 @@ export default defineComponent({
           onPointerdown={onPointerDown}
           onPointermove={onPointerMove}
           onPointerup={onPointerUp}
-          onPointercancel={onPointerUp}
+          onPointercancel={onPointerCancel}
         >
           <svg
             class="hk-serpentine-svg"
@@ -347,7 +345,7 @@ export default defineComponent({
             {confirmed.value
               ? undefined
               : tracking.value || keyboardGrabbed.value
-                ? props.trackingHint
+                ? `${props.trackingHint} (${announced.value}%)`
                 : props.grabHint}
           </span>
         </div>

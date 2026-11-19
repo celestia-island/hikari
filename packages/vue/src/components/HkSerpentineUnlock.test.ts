@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h } from "vue";
 
 type FrameCb = (ctx: { delta: number; elapsed: number; now: number }) => void;
@@ -32,6 +34,7 @@ import HkSerpentineUnlock from "./HkSerpentineUnlock";
 import { generateSerpentinePath, projectOntoPath } from "./serpentineGeometry";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+
 const confirmSpy = vi.fn();
 const cancelSpy = vi.fn();
 const failSpy = vi.fn();
@@ -75,6 +78,11 @@ function pointer(el: Element, type: string, x: number, y: number) {
     }),
   );
 }
+
+beforeEach(() => {
+  frameBus.onFrame.mockClear();
+  frameBus.reportTransition.mockClear();
+});
 
 afterEach(() => {
   for (const { app, container } of mounts.splice(0)) {
@@ -160,5 +168,28 @@ describe("HkSerpentineUnlock (mounted)", () => {
     container.remove();
     mounts.length = 0;
     expect(frameBus.activeCount()).toBe(0);
+  });
+});
+
+describe("HkSerpentineUnlock styles contract", () => {
+  const scss = readFileSync(resolve(__dirname, "./HkSerpentineUnlock.scss"), "utf-8");
+
+  it("paints only channels the theme emits (no phantom tokens)", () => {
+    // A var() whose name no theme emits computes to nothing and the paint
+    // silently disappears (the chest palette incident class).
+    for (const m of scss.matchAll(/--color-[a-z0-9-]+/g)) {
+      expect(["--color-surface", "--color-info", "--color-error", "--color-success", "--color-muted"]).toContain(m[0]);
+    }
+  });
+
+  it("honours reduced motion: no shake, static outline instead", () => {
+    expect(scss).toMatch(/@media \(prefers-reduced-motion: reduce\)/);
+    expect(scss).toContain("animation: none;");
+    expect(scss).toContain("outline: 2px solid");
+  });
+
+  it("uses real motion tokens, not invented ones", () => {
+    expect(scss).toContain("--ease-standard");
+    expect(scss).not.toContain("--hk-motion-ease");
   });
 });

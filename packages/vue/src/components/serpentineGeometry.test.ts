@@ -81,6 +81,49 @@ describe("generateSerpentinePath", () => {
     const p = generateSerpentinePath(W, H, 1);
     expect(p.totalLength).toBeGreaterThan(W);
   });
+
+  // Regression pins for the leg-class variance: a generator that always
+  // produced 4 legs (3 corners) would satisfy the per-path bounds above,
+  // so the CLASSES themselves must be asserted to occur (the R2 mutation
+  // that always returned 4 legs survived the whole suite otherwise).
+  it("produces BOTH 3-corner and 5-corner lanes across seeds", () => {
+    const counts = { 3: 0, 5: 0 };
+    for (let seed = 0; seed < 200; seed++) {
+      const corners = generateSerpentinePath(W, H, seed).points.length - 2;
+      counts[corners as 3 | 5] = (counts[corners as 3 | 5] ?? 0) + 1;
+    }
+    expect(counts[3]).toBeGreaterThan(0);
+    expect(counts[5]).toBeGreaterThan(0);
+  });
+
+  it("produces BOTH first-leg directions (up and down) across seeds", () => {
+    let up = 0;
+    let down = 0;
+    for (let seed = 0; seed < 200; seed++) {
+      const pts = generateSerpentinePath(W, H, seed).points;
+      const firstTurnY = pts[1]!.y;
+      if (firstTurnY < H / 2) up++;
+      else if (firstTurnY > H / 2) down++;
+    }
+    expect(up).toBeGreaterThan(0);
+    expect(down).toBeGreaterThan(0);
+  });
+
+  it("stays inside the canvas on narrow widths (the budget guard)", () => {
+    for (const narrow of [120, 160, 240]) {
+      for (let seed = 0; seed < 50; seed++) {
+        const p = generateSerpentinePath(narrow, H, seed);
+        for (const pt of p.points) {
+          expect(pt.x).toBeLessThanOrEqual(narrow);
+          expect(pt.y).toBeLessThanOrEqual(H);
+        }
+        // The final leg still lands on the right edge at the centre.
+        const last = p.points[p.points.length - 1]!;
+        expect(last.x).toBe(narrow);
+        expect(last.y).toBeCloseTo(H / 2, 5);
+      }
+    }
+  });
 });
 
 describe("pathLength / projectOntoPath", () => {

@@ -106,7 +106,7 @@ function mountSwappable(
     },
   }));
   mounts.push(app);
-  const vm = app.mount(container) as unknown as { $el: HTMLElement };
+  const vm = app.mount(container) as { $el: HTMLElement };
   return { host: vm.$el, mode };
 }
 
@@ -211,7 +211,7 @@ function mountWithApi(
     },
   }));
   mounts.push(app);
-  const vm = app.mount(container) as unknown as { $el: HTMLElement };
+  const vm = app.mount(container) as { $el: HTMLElement };
   return { host: vm.$el, api };
 }
 
@@ -370,7 +370,7 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("139px");
 
     show.value = false;
@@ -408,7 +408,7 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     expect(host.querySelector(".hk-scroll-dock[data-side='bottom']")).toBeTruthy();
     expect(host.style.getPropertyValue("--hk-scroll-dock-bottom")).toBe("139px");
 
@@ -490,7 +490,7 @@ describe("HkScrollContainer ride-mode bottom dock", () => {
       const rideWarnings = () =>
         warn.mock.calls.filter((call) => String(call[0]).includes('dockMode="ride"'));
       expect(rideWarnings().length, "the unsupported combination is called out").toBe(1);
-      (vm as unknown as { $forceUpdate: () => void }).$forceUpdate();
+      vm.$forceUpdate();
       await nextTick();
       expect(rideWarnings().length, "once per mount, not per re-render").toBe(1);
     } finally {
@@ -755,7 +755,7 @@ describe("HkScrollContainer dock-size observer wiring", () => {
 
   function installFakeRO() {
     FakeResizeObserver.instances = [];
-    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
+    globalThis.ResizeObserver = FakeResizeObserver;
   }
 
   it("watches the dock wrapper it measures in both placements", () => {
@@ -831,7 +831,7 @@ describe("HkKanban ride-dock forwarding", () => {
       },
     }));
     mounts.push(app);
-    return app.mount(container) as unknown as { $el: HTMLElement };
+    return app.mount(container) as { $el: HTMLElement };
   }
 
   it("forwards dockMode and the dockBottom slot onto the vertical strip", () => {

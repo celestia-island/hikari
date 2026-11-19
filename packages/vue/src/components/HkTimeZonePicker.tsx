@@ -60,7 +60,7 @@ export function formatZoneOffset(zone: string, at: Date = new Date()): string {
 /** `Intl.supportedValuesOf("timeZone")` where the runtime has it. */
 function supportedZoneIds(): readonly string[] {
   try {
-    const supported = (Intl as unknown as { supportedValuesOf?: (key: string) => unknown })
+    const supported = (Intl as { supportedValuesOf?: (key: string) => unknown })
       .supportedValuesOf;
     if (typeof supported !== "function") return [];
     const ids = supported.call(Intl, "timeZone");

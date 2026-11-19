@@ -19,7 +19,7 @@ const HkLocalePickerPopup = defineComponent({
     currentLocale: { type: String, default: "" },
     t: { type: Function as PropType<(key: string) => string>, default: (k: string) => k },
   },
-  emits: ["update:open", "select"],
+  emits: { "update:open": null, select: null },
   setup(props, { emit }) {
     const items: HkMenuItem[] = props.locales.map((loc) => ({
       key: loc.code,

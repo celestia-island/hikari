@@ -25,7 +25,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createApp, h } from "vue";
 
-import HkEditableTable from "./HkEditableTable";
+import HkEditableTable, {
+  type HkEditableCellSlotProps,
+  type HkEditableRowErrorSlotProps,
+} from "./HkEditableTable";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(join(here, "HkEditableTable.tsx"), "utf-8");
@@ -54,9 +57,12 @@ afterEach(() => {
   document.body.innerHTML = "";
 });
 
+// The slot bag is forwarded to `h()` untouched (Vue's own `RawSlots` is
+// `Record<string, unknown>`); each caller annotates its lambdas with the
+// payload interface the component actually hands that slot.
 function mount(
   props: Record<string, unknown> = {},
-  slots: Record<string, (payload: any) => unknown> = {},
+  slots: Record<string, unknown> = {},
 ): { container: HTMLElement; emitted: Array<{ event: string; args: unknown[] }> } {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -120,9 +126,9 @@ describe("HkEditableTable composition", () => {
 
 describe("HkEditableTable slot contract", () => {
   it("renders an edit slot in place of the display slot", () => {
-    const seen: any[] = [];
+    const seen: HkEditableCellSlotProps[] = [];
     const { container } = mount({}, {
-      "edit-price": (payload: any) => {
+      "edit-price": (payload: HkEditableCellSlotProps) => {
         seen.push(payload);
         return h("input", { class: "host-editor", value: String(payload.value) });
       },
@@ -139,7 +145,7 @@ describe("HkEditableTable slot contract", () => {
 
   it("uses the display slot for columns without an editor", () => {
     const { container } = mount({}, {
-      "cell-tier": (payload: any) => h("strong", { class: "tier-display" }, payload.value),
+      "cell-tier": (payload: HkEditableCellSlotProps) => h("strong", { class: "tier-display" }, String(payload.value)),
     });
     expect(container.querySelectorAll(".tier-display")).toHaveLength(2);
     // The other column still falls back to HkTable's text rendering.
@@ -149,7 +155,7 @@ describe("HkEditableTable slot contract", () => {
   it("falls back to the display slot when disabled", () => {
     const { container } = mount({ disabled: true }, {
       "edit-price": () => h("input", { class: "host-editor" }),
-      "cell-price": (payload: any) => h("span", { class: "host-display" }, payload.value),
+      "cell-price": (payload: HkEditableCellSlotProps) => h("span", { class: "host-display" }, String(payload.value)),
     });
     expect(container.querySelector(".host-editor")).toBeNull();
     expect(container.querySelectorAll(".host-display")).toHaveLength(2);
@@ -157,11 +163,11 @@ describe("HkEditableTable slot contract", () => {
   });
 
   it("hands the row-error slot the invalid row", () => {
-    const seen: any[] = [];
+    const seen: HkEditableRowErrorSlotProps[] = [];
     const { container } = mount(
       { validate: (row: Row) => (row.id === "b" ? "Price must be above zero" : null) },
       {
-        "row-error": (payload: any) => {
+        "row-error": (payload: HkEditableRowErrorSlotProps) => {
           seen.push(payload);
           return h("span", { class: "custom-error" }, `! ${payload.error}`);
         },
@@ -252,7 +258,7 @@ describe("HkEditableTable per-row validation", () => {
 
   it("wires the editor's aria-describedby to the rendered error line", () => {
     const { container } = mount({ validate }, {
-      "edit-price": (payload: any) =>
+      "edit-price": (payload: HkEditableCellSlotProps) =>
         h("input", {
           class: "host-editor",
           "aria-invalid": payload.error ? "true" : undefined,

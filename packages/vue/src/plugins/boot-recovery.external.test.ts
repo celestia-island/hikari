@@ -26,6 +26,11 @@ import {
   bootRecoveryScript,
 } from "./boot-recovery.js";
 
+// Vite types the hooks as `ObjectHook<Fn> | Fn`; these are plain functions
+// here, so narrow once instead of spraying casts.
+type Hook = (...args: unknown[]) => unknown;
+const asFn = (hook: unknown): Hook => hook as Hook;
+
 /** Drive the plugin the way Vite does, without a real build. */
 function drivePlugin(
   plugin: ReturnType<typeof bootRecoveryPlugin>,
@@ -38,10 +43,6 @@ function drivePlugin(
     },
     warn() {},
   };
-  // Vite types the hooks as `ObjectHook<Fn> | Fn`; these are plain functions
-  // here, so narrow once instead of spraying casts.
-  type Hook = (...args: unknown[]) => unknown;
-  const asFn = (hook: unknown): Hook => hook as Hook;
   asFn(plugin.configResolved).call(ctx, { base } as never);
   asFn(plugin.generateBundle).call(ctx);
   const tags = asFn(plugin.transformIndexHtml).call(ctx, "", {
@@ -110,7 +111,7 @@ describe("dev server (external mode has no bundle to serve from)", () => {
       config: { base: "/" },
       middlewares: { use: (fn: (typeof handlers)[number]) => handlers.push(fn) },
     };
-    (plugin.configureServer as unknown as (s: typeof server) => void)(server);
+    asFn(plugin.configureServer)(server);
     expect(handlers).toHaveLength(1);
 
     const served: { status?: number; headers?: Record<string, string>; body?: string } = {};
@@ -131,7 +132,7 @@ describe("dev server (external mode has no bundle to serve from)", () => {
   it("passes unrelated paths through", () => {
     const plugin = bootRecoveryPlugin({ external: true });
     const handlers: Array<(req: unknown, res: unknown, next: () => void) => void> = [];
-    (plugin.configureServer as unknown as (s: unknown) => void)({
+    asFn(plugin.configureServer)({
       config: { base: "/" },
       middlewares: { use: (fn: (typeof handlers)[number]) => handlers.push(fn) },
     });
@@ -145,7 +146,7 @@ describe("dev server (external mode has no bundle to serve from)", () => {
     // hooks conditionally); it must simply register nothing.
     const handlers: unknown[] = [];
     const plugin = bootRecoveryPlugin();
-    (plugin.configureServer as unknown as (s: unknown) => void)({
+    asFn(plugin.configureServer)({
       config: { base: "/" },
       middlewares: { use: (fn: unknown) => handlers.push(fn) },
     });

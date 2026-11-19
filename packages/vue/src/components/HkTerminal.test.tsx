@@ -177,7 +177,7 @@ describe("HkTerminal", () => {
     // Host-side retune wins over the defaults (happy-dom's computed
     // style doesn't resolve inline custom properties, so the retune arm
     // is exercised through a stubbed window computed-style).
-    const fakeHost = { tag: "stub" } as unknown as HTMLElement;
+    const fakeHost = { tag: "stub" } as never;
     const resolver = (el: Element) =>
       el === fakeHost
         ? ({

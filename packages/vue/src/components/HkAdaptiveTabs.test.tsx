@@ -63,7 +63,7 @@ async function settle() {
 }
 
 function setMobile(mobile: boolean) {
-  (window as unknown as { innerWidth: number }).innerWidth = mobile ? 500 : 1280;
+  window.innerWidth = mobile ? 500 : 1280;
   window.dispatchEvent(new Event("resize"));
 }
 

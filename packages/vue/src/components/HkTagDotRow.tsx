@@ -39,7 +39,7 @@ export default defineComponent({
     /** Accessible name for the whole group (aria-label). */
     label: { type: String, default: undefined },
   },
-  emits: ["toggle"],
+  emits: { toggle: null },
   setup(props, { emit }) {
     return () => (
       <div class="hk-tag-dot-row" role="group" aria-label={props.label}>

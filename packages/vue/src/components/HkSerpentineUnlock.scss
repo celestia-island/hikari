@@ -92,8 +92,10 @@
 .hk-serpentine-hint {
   // In-flow under the lane: an absolutely-positioned hint hung below the
   // box got clipped by the confirmation window's padding (device feedback).
+  // The generous top padding keeps the copy clear of the lane stroke —
+  // a second device pass showed 8px reading as part of the graphic.
   display: block;
-  padding: var(--space-8, 8px) var(--space-12, 12px) var(--space-4, 4px);
+  padding: var(--space-16, 16px) var(--space-12, 12px) var(--space-4, 4px);
   text-align: center;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));

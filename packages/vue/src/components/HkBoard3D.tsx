@@ -953,19 +953,19 @@ export default defineComponent({
         frameAll(padding = 1.3, durationMs = 0) {
           if (!camera || !controls) return;
           const box = new THREE.Box3();
-          let any = false;
+          let frameable = false;
           for (const def of registry.values()) {
             if (def.content === false) continue;
             // Skip what the MAIN camera cannot see (the minimap's helpers
             // live on their own layer): framing must never chase them.
             if (!def.object.layers.test(camera.layers)) continue;
             box.expandByObject(def.object);
-            any = true;
+            frameable = true;
           }
           // Nothing frameable registered yet (an async page calling
           // frameAll before its content arrives): stay put rather than
           // framing whatever happens to be in the scene.
-          if (!any || box.isEmpty()) return;
+          if (!frameable || box.isEmpty()) return;
           groundHandle?.fit(box);
           const sphere = box.getBoundingSphere(new THREE.Sphere());
           const dist = fitDistance(sphere.radius, camera.fov, camera.aspect) * padding;

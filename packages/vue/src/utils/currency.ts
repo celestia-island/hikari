@@ -403,7 +403,7 @@ export function currencyDisplayName(code: string, locale: string, fallback?: str
   const own = typeof fallback === "string" && fallback.trim() !== "" ? fallback.trim() : "";
   if (upper === "") return own;
   try {
-    const DisplayNames = (Intl as unknown as { DisplayNames?: typeof Intl.DisplayNames })
+    const DisplayNames = (Intl as { DisplayNames?: typeof Intl.DisplayNames })
       .DisplayNames;
     if (typeof DisplayNames === "function") {
       const names = new DisplayNames([locale || "en"], {

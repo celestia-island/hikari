@@ -137,7 +137,7 @@ describe("emergency alert layering contract", () => {
     // themes — the 0.55.370 bug).
     const scrim = root.match(/--hk-emergency-scrim:\s*rgb\(\s*(\d+)\s+(\d+)\s+(\d+)\s*\/\s*(\d+)%\s*\);/);
     expect(scrim, "the scrim must be a literal rgb(…) dark ink").not.toBeNull();
-    const [, r, g, b, a] = scrim!.map(Number) as unknown as number[];
+    const [, r, g, b, a] = scrim!.map(Number);
     expect(Math.max(r, g, b)).toBeLessThan(60);
     expect(a).toBeGreaterThanOrEqual(40);
     // Wash: exactly one, and it derives from the LINE (the theme's

@@ -158,7 +158,7 @@ export default defineComponent({
     /** Accessible label for the waterfall region. */
     ariaLabel: { type: String, default: undefined },
   },
-  emits: ["update:activeBucket", "update:backTopVisible"],
+  emits: { "update:activeBucket": null, "update:backTopVisible": null },
   setup(props, { slots, expose, emit }) {
     const scrollHost = shallowRef<ScrollHost | null>(null);
     const rootEl = shallowRef<HTMLElement | null>(null);

@@ -80,8 +80,10 @@ function runScript(
   document.body.appendChild(loader);
 
   const timers: Array<() => void> = [];
-  const FakeDate = { now: options.now ?? (() => 1_700_000_000_000) };
-  (FakeDate as unknown as { prototype: unknown }).prototype = Date.prototype;
+  const FakeDate = {
+    now: options.now ?? (() => 1_700_000_000_000),
+    prototype: Date.prototype,
+  };
 
   const run = new Function(
     "location",

@@ -96,7 +96,7 @@ describe("HkScrollContainer dock slots", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
     Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
     Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
@@ -147,7 +147,7 @@ describe("HkScrollContainer dock slots", () => {
         },
       }));
       mounts.push(app);
-      const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+      const host = app.mount(container).$el;
       const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
       Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
       Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
@@ -193,7 +193,7 @@ describe("HkScrollContainer dock slots", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
     Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
     Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
@@ -241,7 +241,7 @@ describe("HkScrollContainer dock slots", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
     Object.defineProperty(viewport, "scrollHeight", { value: 400, configurable: true });
     Object.defineProperty(viewport, "clientHeight", { value: 100, configurable: true });
@@ -286,7 +286,7 @@ describe("HkScrollContainer dock slots", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
     const strength = () => host.style.getPropertyValue("--hk-scroll-dock-gate-bottom");
 
@@ -335,7 +335,7 @@ describe("HkScrollContainer dock slots", () => {
       },
     }));
     mounts.push(app);
-    const host = (app.mount(container) as unknown as { $el: HTMLElement }).$el;
+    const host = app.mount(container).$el;
     const viewport = host.querySelector(".hk-scroll-container-viewport") as HTMLElement;
     const strength = () => host.style.getPropertyValue("--hk-scroll-dock-gate-bottom");
     const stub = (scrollTop: number) => {

@@ -51,7 +51,7 @@ export const HkNavSidebar = defineComponent({
       default: false,
     },
   },
-  emits: ["navigate"],
+  emits: { navigate: null },
   setup(props, { emit }) {
     return () => (
       <HSidebar width="224px">

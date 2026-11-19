@@ -203,7 +203,7 @@ export default defineComponent({
      */
     collapsed: { type: Boolean, default: false },
   },
-  emits: ["update:open", "select"],
+  emits: { "update:open": null, select: null },
   setup(props, { emit, slots }) {
     const { isMobile } = useBreakpoint();
 

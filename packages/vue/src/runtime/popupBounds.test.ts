@@ -31,7 +31,7 @@ function claimBand(bandInset: string): void {
   vi.spyOn(window, "getComputedStyle").mockReturnValue({
     getPropertyValue: (name: string) =>
       name === "--hk-chrome-band-inset" ? bandInset : "",
-  } as unknown as CSSStyleDeclaration);
+  } as CSSStyleDeclaration);
 }
 
 describe("popupBounds chrome-band floor", () => {
@@ -64,7 +64,7 @@ describe("popupBounds chrome-band floor", () => {
     vi.spyOn(window, "getComputedStyle").mockReturnValue({
       getPropertyValue: (name: string) =>
         name === "--hk-chrome-band-inset" ? "48px" : "",
-    } as unknown as CSSStyleDeclaration);
+    } as CSSStyleDeclaration);
     expect(popupViewportRect()).toEqual({ x: 0, y: 0, width: 1280, height: 800 });
   });
 

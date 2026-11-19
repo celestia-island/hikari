@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 
 import HkMermaidDiagram from "./HkMermaidDiagram";
 import { buildBoardModel, heuristicTextWidth } from "../mermaid/layout";
@@ -110,17 +110,15 @@ describe("HkMermaidDiagram", () => {
     setMermaidEngineForTests(mermaidParser);
     const container = document.createElement("div");
     document.body.appendChild(container);
+    const source = ref(FLOWCHART);
     const app = createApp({
-      data: () => ({ source: FLOWCHART }),
-      render() {
-        return h(HkMermaidDiagram, { source: (this as { source: string }).source });
-      },
+      render: () => h(HkMermaidDiagram, { source: source.value }),
     });
     app.mount(container);
     mounts.push({ app, container });
     await settle();
     expect(container.querySelector(".hk-mermaid")?.getAttribute("data-mermaid-kind")).toBe("graph");
-    (app as unknown as { _instance: { proxy: { source: string } } })._instance.proxy.source = "sequenceDiagram\nA ->> B: x";
+    source.value = "sequenceDiagram\nA ->> B: x";
     await settle();
     expect(container.querySelector(".hk-mermaid")?.getAttribute("data-mermaid-kind")).toBe("sequence");
     container.remove();

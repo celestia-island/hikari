@@ -479,7 +479,7 @@ describe("HkRangeRibbon windowed view", () => {
 
   it("normalizes inverted, out-of-domain and degenerate windows; NaN means full", () => {
     // Inverted [0.8, 0.2] → [0.2, 0.8].
-    const inverted = mountRibbon({ window: [0.8, 0.2] as unknown as [number, number] });
+    const inverted = mountRibbon({ window: [0.8, 0.2] as [number, number] });
     expect(boxOf(inverted.querySelector<HTMLElement>(".hk-range-ribbon-window")!).left).toBeCloseTo(
       20,
       4,
@@ -1544,7 +1544,7 @@ describe("HkRangeRibbon domain normalizer", () => {
     expect(normalizeHkRangeWindow([0.2, 0.4])).toEqual([0.2, 0.4]);
     expect(normalizeHkRangeWindow([0.2, 0.4], 0.02)).toEqual([0.2, 0.4]);
     expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, null)).toEqual([0.2, 0.4]);
-    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, "nope" as unknown as number[])).toEqual([
+    expect(normalizeHkRangeWindow([0.2, 0.4], 0.02, "nope" as never)).toEqual([
       0.2, 0.4,
     ]);
     // A zero-width domain has no interior: the unit axis takes over.

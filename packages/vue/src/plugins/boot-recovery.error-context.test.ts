@@ -180,8 +180,10 @@ function runScript(
     "console",
     script,
   );
-  const FakeDate = { now: options.now ?? (() => 1_700_000_000_000) };
-  (FakeDate as unknown as { prototype: unknown }).prototype = Date.prototype;
+  const FakeDate = {
+    now: options.now ?? (() => 1_700_000_000_000),
+    prototype: Date.prototype,
+  };
   run(
     { protocol: "http:", hostname: "tauri.localhost", href: "http://tauri.localhost/" },
     document,
@@ -1005,15 +1007,12 @@ describe("the copy action", () => {
   it("falls back to execCommand when the Clipboard API is absent", async () => {
     const run = runScript(bootRecoveryScript(CTX_OPTION), {});
     paintedCard(run);
-    const doc = document as unknown as Record<string, unknown>;
-    const originalCreate = doc.createElement;
-    const originalExec = doc.execCommand;
+    const originalCreate = document.createElement;
+    const originalExec = document.execCommand;
     let seenValue = "";
     let command: string | null = null;
-    doc.createElement = ((tag: string) => {
-      const el = (
-        originalCreate as typeof document.createElement
-      ).call(document, tag);
+    document.createElement = ((tag: string) => {
+      const el = originalCreate.call(document, tag);
       if (tag === "textarea") {
         let value = "";
         Object.defineProperty(el, "value", {
@@ -1027,7 +1026,7 @@ describe("the copy action", () => {
       }
       return el;
     }) as typeof document.createElement;
-    doc.execCommand = (cmd: string) => {
+    document.execCommand = (cmd: string) => {
       command = cmd;
       return true;
     };
@@ -1038,22 +1037,21 @@ describe("the copy action", () => {
       expect(seenValue).toContain('"reason"');
       expect(copyButtonOf(run).textContent).toBe(BOOT_RECOVERY_COPIED);
     } finally {
-      doc.createElement = originalCreate;
-      doc.execCommand = originalExec;
+      document.createElement = originalCreate;
+      document.execCommand = originalExec;
     }
   });
 
   it("reports the failed label when every path refuses", async () => {
     const run = runScript(bootRecoveryScript(CTX_OPTION), {});
     paintedCard(run);
-    const doc = document as unknown as Record<string, unknown>;
-    const originalExec = doc.execCommand;
-    doc.execCommand = () => false;
+    const originalExec = document.execCommand;
+    document.execCommand = () => false;
     try {
       await clickCopy(run);
       expect(copyButtonOf(run).textContent).toBe(BOOT_RECOVERY_COPY_FAILED);
     } finally {
-      doc.execCommand = originalExec;
+      document.execCommand = originalExec;
     }
   });
 

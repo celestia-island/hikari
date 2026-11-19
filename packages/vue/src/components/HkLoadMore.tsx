@@ -29,7 +29,7 @@ export default defineComponent({
     /** Full item count behind the windowed list. */
     total: { type: Number, default: undefined },
   },
-  emits: ["loadMore"],
+  emits: { loadMore: null },
   setup(props, { emit }) {
     const { t } = useI18n();
     return () => {

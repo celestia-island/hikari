@@ -154,7 +154,7 @@ export async function openExternalHyperlink(url: string): Promise<boolean> {
   // `window.open` sink reachable. Cheap, so it guards itself.
   if (isDangerousHref(url)) return false;
   if (typeof window === "undefined") return false;
-  const scope = window as unknown as TauriOpenerScope;
+  const scope = window as TauriOpenerScope;
 
   const opener = scope.__TAURI__?.opener;
   if (typeof opener?.openUrl === "function") {

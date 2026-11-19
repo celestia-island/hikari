@@ -134,7 +134,7 @@ export default defineComponent({
      *  for an empty dock slot), so every existing board is untouched. */
     dockMode: { type: String as PropType<"pin" | "ride">, default: "pin" },
   },
-  emits: ["move"],
+  emits: { move: null },
   setup(props, { slots, emit, expose }) {
     const scrollHost = shallowRef<{ getScrollElement: () => HTMLElement | undefined } | null>(null);
     /** The card being dragged, kept at module scope of the setup so a drop

@@ -338,7 +338,7 @@ describe("tooltipBridge caption-band avoidance", () => {
     vi.spyOn(window, "getComputedStyle").mockReturnValue({
       getPropertyValue: (name: string) =>
         name === "--hk-chrome-band-inset" ? "48px" : "",
-    } as unknown as CSSStyleDeclaration);
+    } as never);
   }
 
   it("places an unmarked trigger with the band-overlap avoidance default", () => {

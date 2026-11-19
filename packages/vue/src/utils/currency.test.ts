@@ -201,7 +201,7 @@ describe("parseMoney", () => {
       "12e3",
       "--5",
       "1..2",
-      null as unknown as string,
+      null as never,
     ]) {
       expect(parseMoney(raw, 2), `${JSON.stringify(raw)} must not parse`).toBeNull();
     }

@@ -449,7 +449,7 @@ describe("HkWindowControls maximized glyph (the reported defect)", () => {
       const shell = stubShell(false);
       // A shell whose subscription silently yields nothing callable: the only
       // way the glyph can follow is the bounded fallback poll.
-      (shell as unknown as { onResized: unknown }).onResized = () =>
+      (shell as { onResized: unknown }).onResized = () =>
         Promise.resolve(undefined);
 
       const t = mountControls({ variant: "standard" });
@@ -471,7 +471,7 @@ describe("HkWindowControls maximized glyph (the reported defect)", () => {
     vi.useFakeTimers();
     try {
       const shell = stubShell(false);
-      (shell as unknown as { onResized: unknown }).onResized = () =>
+      (shell as { onResized: unknown }).onResized = () =>
         Promise.resolve(undefined);
       const t = mountControls({ variant: "standard" });
       await settle();

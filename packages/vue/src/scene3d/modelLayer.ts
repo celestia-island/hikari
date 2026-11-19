@@ -337,12 +337,12 @@ export class ModelLayer {
   private parse(source: ArrayBuffer | string): Promise<{ scene?: THREE.Object3D; scenes?: THREE.Object3D[] }> {
     if (typeof source === "string") {
       return new Promise((resolve, reject) => {
-        this.loader.load(source, (gltf) => resolve(gltf as never), undefined, (err) => reject(err));
+        this.loader.load(source, (gltf) => resolve({ scene: gltf.scene, scenes: gltf.scenes }), undefined, (err) => reject(err));
       });
     }
     // GLTFLoader.parse handles GLB and JSON buffers alike.
     return new Promise((resolve, reject) => {
-      this.loader.parse(source, "", (gltf) => resolve(gltf as never), (err) => reject(err));
+      this.loader.parse(source, "", (gltf) => resolve({ scene: gltf.scene, scenes: gltf.scenes }), (err) => reject(err));
     });
   }
 }

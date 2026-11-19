@@ -497,7 +497,7 @@ export const HkJsonTree = defineComponent({
      *  root and receives every commit through `update:value`. */
     editable: { type: Boolean, default: false },
   },
-  emits: ["update:value"],
+  emits: { "update:value": null },
   setup(props, { emit }) {
     const clipboard = useClipboard();
     const { t } = useI18n();

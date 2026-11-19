@@ -13,14 +13,14 @@ type WasmHighlightFn = (code: string, language: string) => string | null;
 
 // Module-level state: the loaded wasm function (null until loaded).
 let wasmFn: WasmHighlightFn | null = null;
-let loadPromise: Promise<WasmHighlightFn> | null = null;
+let loadPromise: Promise<WasmHighlightFn | null> | null = null;
 
 // Reactive version — bumped when the module finishes loading so
 // computed/render effects re-run and replace plain text with color.
 const version = ref(0);
 
 /** Load the wasm module on first use; cached thereafter. */
-function ensureLoaded(): Promise<WasmHighlightFn> {
+function ensureLoaded(): Promise<WasmHighlightFn | null> {
   if (wasmFn) return Promise.resolve(wasmFn);
   if (!loadPromise) {
     loadPromise = import("../wasm/highlight/hikari_wasm_highlight.js")
@@ -32,7 +32,7 @@ function ensureLoaded(): Promise<WasmHighlightFn> {
       .catch(() => {
         // Module failed to load — stay plaintext forever.
         loadPromise = null;
-        return null as unknown as WasmHighlightFn;
+        return null;
       });
   }
   return loadPromise;

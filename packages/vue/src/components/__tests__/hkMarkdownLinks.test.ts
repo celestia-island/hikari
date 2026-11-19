@@ -88,7 +88,7 @@ describe("markdown link activation", () => {
   });
 
   it("never lets the anchor default through (the webview must not navigate)", async () => {
-    const open = vi.fn(() => ({}));
+    const open = vi.fn((_href?: string) => ({}));
     vi.stubGlobal("open", open);
 
     const locationBefore = window.location.href;
@@ -104,7 +104,7 @@ describe("markdown link activation", () => {
     expect(event.defaultPrevented).toBe(true);
     expect(window.location.href).toBe(locationBefore);
     expect(open).toHaveBeenCalledTimes(1);
-    const firstCall = open.mock.calls[0] as unknown as [string] | undefined;
+    const firstCall = open.mock.calls[0];
     expect(firstCall?.[0]).toBe(new URL("cla.md", document.baseURI).href);
   });
 

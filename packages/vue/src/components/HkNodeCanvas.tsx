@@ -293,16 +293,16 @@ export default defineComponent({
       default: undefined,
     },
   },
-  emits: [
-    "update:camera",
+  emits: {
+    "update:camera": null,
     /** An edge's hit stroke was entered/left (`null` on leave). */
-    "edge-hover",
+    "edge-hover": null,
     /** An edge's hit stroke was clicked (not after a pan). */
-    "edge-click",
+    "edge-click": null,
     /** An edge's hit stroke received a contextmenu (right-click, or a
      *  synthesized touch long-press). Already `preventDefault()`ed. */
-    "edge-contextmenu",
-  ],
+    "edge-contextmenu": null,
+  },
   setup(props, { slots, emit, expose }) {
     const rootEl = shallowRef<HTMLElement | null>(null);
     const viewport = ref({ width: 0, height: 0 });

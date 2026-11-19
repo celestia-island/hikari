@@ -31,7 +31,7 @@ export const HkLocalePicker = defineComponent({
       default: "en",
     },
   },
-  emits: ["select"],
+  emits: { select: null },
   setup(props, { emit }) {
     const open = ref(false);
     const trigger = ref<HTMLElement | null>(null);

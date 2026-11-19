@@ -125,13 +125,13 @@ describe("mermaid sub-app lifecycle pins", () => {
     const { container, set } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const stale = container.querySelector(".hk-md-mermaid") as HTMLElement;
-    expect((stale as unknown as Record<string, unknown>).__vue_app__).toBeTruthy();
+    expect((stale as { __vue_app__?: unknown }).__vue_app__).toBeTruthy();
 
     set(["Update:", "", "```mermaid", "sequenceDiagram", "X ->> Y: ping", "```"].join("\n"));
     await settleFor(container, ".hk-mermaid[data-mermaid-kind='sequence']");
     // The stale host left the document AND its app was unmounted.
     expect(stale.isConnected).toBe(false);
-    expect((stale as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+    expect((stale as { __vue_app__?: unknown }).__vue_app__).toBeUndefined();
   });
 
   it("renderer teardown unmounts every mermaid sub-app", async () => {
@@ -139,11 +139,11 @@ describe("mermaid sub-app lifecycle pins", () => {
     const { container } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
-    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeTruthy();
+    expect((host as { __vue_app__?: unknown }).__vue_app__).toBeTruthy();
 
     const entry = mounts[mounts.length - 1];
     entry.app.unmount();
-    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+    expect((host as { __vue_app__?: unknown }).__vue_app__).toBeUndefined();
     expect(host.isConnected).toBe(false);
   });
 });
@@ -206,7 +206,7 @@ describe("mermaid streaming reuse", () => {
     const fresh = container.querySelector(".hk-md-mermaid") as HTMLElement;
     expect(fresh).not.toBe(first);
     expect(first.isConnected).toBe(false);
-    expect((first as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+    expect((first as { __vue_app__?: unknown }).__vue_app__).toBeUndefined();
   });
 
   it("retires the sub-app when the fence disappears from the body", async () => {
@@ -220,6 +220,6 @@ describe("mermaid streaming reuse", () => {
     await new Promise((r) => setTimeout(r, 60));
     await nextTick();
     expect(container.querySelector(".hk-md-mermaid")).toBeNull();
-    expect((host as unknown as Record<string, unknown>).__vue_app__).toBeUndefined();
+    expect((host as { __vue_app__?: unknown }).__vue_app__).toBeUndefined();
   });
 });

@@ -1,0 +1,107 @@
+// Serpentine deliberate-action gate. The lane aliases the theme's tokens;
+// all paint values wrap the triplet in rgb(...) (see WorkspaceGitWindow's
+// palette pin for why the bare form paints nothing).
+
+.hk-serpentine {
+  position: relative;
+  height: calc(var(--space-24, 24px) * 4);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border-faint);
+  background: rgb(var(--color-bg) / 40%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-info));
+    outline-offset: 2px;
+  }
+
+  &--tracking {
+    cursor: grabbing;
+  }
+
+  &--confirmed {
+    cursor: default;
+    border-color: rgb(var(--color-success) / 60%);
+  }
+
+  &--danger {
+    border-color: rgb(var(--color-error) / 35%);
+  }
+
+  &--failed {
+    // Static outline flash under reduced motion; the shake keyframe (below,
+    // sanctioned for the deliberate-action feedback class) runs otherwise.
+    animation: hk-serpentine-shake 0.3s var(--hk-motion-ease, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+}
+
+.hk-serpentine-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hk-serpentine-lane {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: var(--border-faint);
+  opacity: 0.7;
+}
+
+.hk-serpentine-travelled {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke: rgb(var(--color-info));
+}
+
+.hk-serpentine-handle {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: rgb(var(--color-info));
+  border: 2px solid rgb(var(--color-bg));
+  box-shadow: 0 0 0 2px rgb(var(--color-info) / 45%);
+  pointer-events: none;
+}
+
+.hk-serpentine--danger .hk-serpentine-handle {
+  background: rgb(var(--color-error));
+  box-shadow: 0 0 0 2px rgb(var(--color-error) / 45%);
+}
+
+.hk-serpentine--confirmed .hk-serpentine-handle {
+  background: rgb(var(--color-success));
+  box-shadow: 0 0 0 2px rgb(var(--color-success) / 60%);
+}
+
+.hk-serpentine-hint {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(-1 * var(--space-16, 16px) - 4px);
+  text-align: center;
+  font-size: var(--text-xs, 0.75rem);
+  color: rgb(var(--color-muted));
+}
+
+@keyframes hk-serpentine-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}

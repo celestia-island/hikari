@@ -309,10 +309,10 @@ export default defineComponent({
       if (status.value !== "dragging") return;
       // Sub-divide with the browser's own coalesced sub-samples: a fast
       // drag's coalesced frames each carry small pointer steps, so the
-      // walk traces through corners honestly (a single large event that
-      // straddles a corner by more than 2√2·corridor would otherwise
-      // abort — the documented single-event ceiling for environments
-      // without coalesced events, e.g. synthetic test dispatchers).
+      // walk traces through corners honestly. CAVEAT: Chromium removes
+      // getCoalescedEvents in NON-SECURE contexts — a plain-HTTP page
+      // keeps the single-event ceiling below (synthetic dispatchers too):
+      // one event straddling a corner by more than 2√2·corridor aborts.
       const coalesced = (
         e as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] }
       ).getCoalescedEvents?.();

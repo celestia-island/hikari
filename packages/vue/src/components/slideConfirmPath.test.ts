@@ -121,10 +121,12 @@ describe("slideConfirmCorridor — the constant is the defense", () => {
 
 describe("pixel mapping and arc-length", () => {
   // The COMPONENT's real lane frame: a 300×120 track minus the 24px
-  // TRACK_PAD on each side = 252×72, corridor = 72/6 + 4 = 16px. Pinning
-  // the raw math in THIS frame is what makes the component's corridor
-  // constant measurable (a 300×120 frame would silently measure a
-  // different physical quantity than the shipped code).
+  // TRACK_PAD on each side = 252×72, corridor = slideConfirmCorridor(72)
+  // = 10px (half the 24px lane spacing minus slack — the constant has its
+  // own describe block above). Pinning the raw math in THIS frame is what
+  // makes the component's corridor constant measurable (a 300×120 frame
+  // would silently measure a different physical quantity than the
+  // shipped code).
   const path = generateSlidePath(20261119);
   const pixel = slidePixelPoints(path.points, 252, 72);
 

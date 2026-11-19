@@ -284,6 +284,72 @@ describe("HkSlideConfirm", () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
+  it("coalesced sub-samples trace through a corner (regression: M4)", async () => {
+    // The R4 S1(b) fix: a single large event straddling a corner aborts
+    // (2√2·corridor ceiling), but the browser's coalesced sub-samples are
+    // traced INDIVIDUALLY — deleting the coalesced branch makes this red
+    // (the combined single event snaps back instead of crossing).
+    const onConfirm = vi.fn();
+    mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+    injectRect(root(), 300, 120);
+    const handle = knob();
+    const pixel = lane42();
+    pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+    // Arm progress up to just before the first turn (~t 0.18).
+    trace(handle, pixel, 0, 0.18, 16);
+    await nextTick();
+    const before = now();
+
+    // ONE real event whose coalesced sub-samples carry the pointer
+    // through the corner: base → top → beyond.
+    const cornerBase = slidePointAtT(pixel, 0.19);
+    const cornerTop = slidePointAtT(pixel, 0.24);
+    const beyond = slidePointAtT(pixel, 0.3);
+    const big = new PointerEvent("pointermove", {
+      bubbles: true,
+      cancelable: true,
+      pointerId: 1,
+      clientX: 24 + beyond.x,
+      clientY: 24 + beyond.y,
+    });
+    Object.defineProperty(big, "getCoalescedEvents", {
+      value: () => [
+        { clientX: 24 + cornerBase.x, clientY: 24 + cornerBase.y },
+        { clientX: 24 + cornerTop.x, clientY: 24 + cornerTop.y },
+        { clientX: 24 + beyond.x, clientY: 24 + beyond.y },
+      ],
+    });
+    handle.dispatchEvent(big);
+    await nextTick();
+    // Crossed the corner: progress past it, no snap-back.
+    expect(now()).toBeGreaterThanOrEqual(28);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("the 2x runaway bound tolerates ordinary aim error (regression: M5)", async () => {
+    // The R4 S1(a) fix: the runaway bound is 2× the corridor, so an
+    // honest trace with a ±3px lateral aim error completes. With a 1×
+    // bound the knob-lead + aim error crossed the bound and snapped
+    // mid-trace (progress froze well before the end / no emit).
+    const onConfirm = vi.fn();
+    mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+    injectRect(root(), 300, 120);
+    const handle = knob();
+    const pixel = lane42();
+    pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+    // Trace the whole lane with a ±3px vertical aim wobble in small steps.
+    const steps = 60;
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      const p = slidePointAtT(pixel, t);
+      const wobble = i % 2 === 0 ? 3 : -3;
+      pointer(handle, "pointermove", 24 + p.x, 24 + p.y + wobble);
+    }
+    await nextTick();
+    expect(onConfirm, "the wobbling honest trace completes").toHaveBeenCalledTimes(1);
+    expect(now()).toBe(100);
+  });
+
   it("disabled blocks pointer and keyboard paths", () => {
     const onConfirm = vi.fn();
     mount(() => h(HkSlideConfirm, { seed: 42, disabled: true, onConfirm }));

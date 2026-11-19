@@ -3,7 +3,7 @@ import { HAlert, HCard, HEmptyState, HSpinner, HTable, useI18n } from "@celestia
 import HkCrossfade from "./HkCrossfade";
 import HkScrollProgressDock from "./HkScrollProgressDock";
 import { HkPageHeader } from "./HkPageHeader";
-import type { HkRowManageGate } from "./HkTable";
+import type { HkRowManageGate, HkTableRow } from "./HkTable";
 
 
 /** Column definition passed through to HTable. */
@@ -50,7 +50,7 @@ export const HkAdminTablePage = defineComponent({
     /** Refresh failed while rows are still on screen — banner, not a
      *  replacement of the table. */
     staleError: { type: String as PropType<string | undefined>, default: undefined },
-    rows: { type: Array as PropType<Record<string, unknown>[]>, required: true },
+    rows: { type: Array as PropType<readonly HkTableRow[]>, required: true },
     columns: { type: Array as PropType<HTableColumn[]>, required: true },
     rowKey: { type: String, default: "id" },
     emptyTitle: { type: String, default: "" },

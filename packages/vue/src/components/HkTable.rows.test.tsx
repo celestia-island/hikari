@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
-import { HkTable, type HkTableSection, type HkTableRow } from "../index";
+import { HkAdminTablePage, HkTable, type HkTableSection, type HkTableRow } from "../index";
 
 /**
  * The L38 row-typing contract. The old `rows: Record<string, unknown>[]`
@@ -133,5 +133,32 @@ describe("HkTable row typing (L38)", () => {
     expect(container.textContent).toContain("Alpha");
     expect(container.textContent).toContain("3x@0");
     expect(seen[0]).toBe(rows[0]);
+  });
+
+  it("HkAdminTablePage accepts interface rows too (R5 S2 pin — it forwards rows verbatim to HkTable)", () => {
+    // HkAdminTablePage only reads `.length` and forwards `rows={props.rows}`
+    // to the widened HkTable, so its own prop must be the SAME family or
+    // every chest site routed through it keeps needing the bridge
+    // (MyTasksView-style: `interface UserTask` rows). Declared const, not
+    // an inline literal, so reverting THIS prop to Record fails the compile.
+    const pageRows: PanelRow[] = [
+      { id: "a", label: "PageAlpha", count: 4 },
+      { id: "b", label: "PageBeta", count: 6 },
+    ];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkAdminTablePage, {
+          title: "Panels",
+          columns: PANEL_COLUMNS,
+          rows: pageRows,
+          rowKey: "id",
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    expect(container.textContent).toContain("PageAlpha");
+    expect(container.textContent).toContain("6");
   });
 });

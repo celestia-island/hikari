@@ -101,8 +101,8 @@ export default defineComponent({
       () => props.resetKey,
       () => {
         confirmed.value = false;
+        stopSpring();
         failed.value = null;
-        snapping.value = false;
         progress.value = 0;
       },
     );
@@ -139,6 +139,7 @@ export default defineComponent({
       // keyboard path stays usable without pixel precision.
       const next = Math.min(1, progress.value + keyboardStep * dir);
       progress.value = Math.max(0, next);
+      announce(progress.value);
     }
 
     // ── pointer tracking ─────────────────────────────────────────────
@@ -231,6 +232,7 @@ export default defineComponent({
 
     function snapBack() {
       if (prefersReducedMotion()) {
+        stopSpring();
         progress.value = 0;
         return;
       }
@@ -280,10 +282,9 @@ export default defineComponent({
     );
 
     const announce = (value: number) => {
-      const pct = Math.floor(value * 100);
-      if (pct - announced.value >= 20) {
-        announced.value = pct;
-      }
+      // Twenty-percent bands, recomputed in both directions so a backward
+      // drag lowers the announced value instead of sticking high.
+      announced.value = Math.floor(value * 20) * 20;
     };
 
     // ── render ───────────────────────────────────────────────────────

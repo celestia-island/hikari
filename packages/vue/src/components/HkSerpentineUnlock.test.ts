@@ -144,6 +144,50 @@ describe("HkSerpentineUnlock (mounted)", () => {
     frameBus.tick(16);
   });
 
+  it("stops a running spring when the handle is re-grabbed", () => {
+    // Drag, release mid-lane (the spring starts), then put the pointer back
+    // on the resting handle and grab: the spring must be disconnected
+    // IMMEDIATELY — no frame handle may survive, and ticking frames must
+    // not move the handle afterwards (the old spring writing progress is
+    // the R2-flagged fight).
+    const el = mountGate();
+    const path = generateSerpentinePath(600, 96, 42);
+    const start = path.points[0]!;
+    pointer(el, "pointerdown", start.x, start.y);
+    const mid = projectOntoPath(path.points, path.totalLength / 2);
+    pointer(el, "pointermove", mid.x, mid.y);
+    pointer(el, "pointerup", mid.x, mid.y);
+    expect(frameBus.activeCount()).toBe(1); // the spring is running
+
+    pointer(el, "pointerdown", start.x, start.y); // re-grab at rest
+    expect(frameBus.activeCount()).toBe(0); // the spring died with the grab
+    frameBus.tick(16);
+    frameBus.tick(16);
+    // The re-grab put the pointer at the start; progress stays there
+    // regardless of how many stale spring frames fire.
+    expect((el.querySelector(".hk-serpentine-handle") as HTMLElement).style.left).toBe("0px");
+  });
+
+  it("zeroing paths reset the announcer (no stale percent)", async () => {
+    // Walk to ~60%, release (spring), let the spring settle to zero via
+    // ticks, then re-grab and walk: the hint must announce from 0, not
+    // carry the old 60% band.
+    const el = mountGate();
+    const path = generateSerpentinePath(600, 96, 42);
+    const start = path.points[0]!;
+    pointer(el, "pointerdown", start.x, start.y);
+    const sixty = projectOntoPath(path.points, path.totalLength * 0.6);
+    pointer(el, "pointermove", sixty.x, sixty.y);
+    pointer(el, "pointerup", sixty.x, sixty.y);
+    for (let i = 0; i < 40; i++) frameBus.tick(64); // spring settles
+    pointer(el, "pointerdown", start.x, start.y);
+    const ten = projectOntoPath(path.points, path.totalLength * 0.1);
+    pointer(el, "pointermove", ten.x, ten.y);
+    const hint = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
+    const pct = Number(hint.match(/\((\d+)%\)/)?.[1] ?? "0");
+    expect(pct).toBeLessThanOrEqual(20);
+  });
+
   it("does not grab when disabled", () => {
     const el = mountGate({ disabled: true });
     const path = generateSerpentinePath(600, 96, 42);
@@ -176,9 +220,19 @@ describe("HkSerpentineUnlock styles contract", () => {
 
   it("paints only channels the theme emits (no phantom tokens)", () => {
     // A var() whose name no theme emits computes to nothing and the paint
-    // silently disappears (the chest palette incident class).
+    // silently disappears (the chest palette incident class). The emitted
+    // set is DERIVED from the theme channel source, so a theme-side rename
+    // cannot leave this test green while the paint dies.
+    const channels = readFileSync(
+      resolve(__dirname, "../styles/theme/channels.scss"),
+      "utf-8",
+    );
+    const emitted = new Set(
+      [...channels.matchAll(/--color-[a-z0-9-]+\s*:/g)].map((m) => m[0].replace(/\s*:$$/, "")),
+    );
+    expect(emitted.size).toBeGreaterThan(0); // the derivation itself works
     for (const m of scss.matchAll(/--color-[a-z0-9-]+/g)) {
-      expect(["--color-surface", "--color-info", "--color-error", "--color-success", "--color-muted"]).toContain(m[0]);
+      expect(emitted, `channel ${m[0]} is not emitted by the theme`).toContain(m[0]);
     }
   });
 

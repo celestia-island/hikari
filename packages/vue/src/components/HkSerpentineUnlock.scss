@@ -87,6 +87,13 @@
   box-shadow: 0 0 0 2px rgb(var(--color-error) / 45%);
 }
 
+// Mid-spring: the handle is visually "loose" (semi-transparent) — it is
+// being driven by the snap-back, not by the user, and cannot be grabbed
+// until it rests.
+.hk-serpentine--snap .hk-serpentine-handle {
+  opacity: 0.55;
+}
+
 .hk-serpentine--confirmed .hk-serpentine-handle {
   background: rgb(var(--color-success));
   box-shadow: 0 0 0 2px rgb(var(--color-success) / 60%);

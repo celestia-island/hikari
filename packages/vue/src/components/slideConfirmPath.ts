@@ -73,10 +73,20 @@ export function generateSlidePath(
   // Enforce a minimum spacing (each vertical jump deserves a horizontal
   // approach); a squeezed draw collapses toward an even spread.
   const minGap = 0.12;
-  const cols: number[] = [];
+  let cols: number[] = [];
   for (const c of raw) {
+    // The spacing floor pushes squeezed draws apart; nothing may pass the
+    // band's hi edge — an unclamped floor would push turns past x=1 and
+    // the forced closing point would lie BEHIND them (a backwards closing
+    // run).
     const floor = cols.length > 0 ? cols[cols.length - 1]! + minGap : lo;
     cols.push(Math.max(c, floor));
+  }
+  if (cols[cols.length - 1]! > hi) {
+    // Squeezed draw: the floor overflowed the band. Even spacing keeps
+    // every turn inside [lo, hi] with the min gap by construction — the
+    // turn COUNT and the random lane walk (the shape's randomness) stay.
+    cols = Array.from({ length: turns }, (_, i) => lo + ((i + 1) * (hi - lo)) / turns);
   }
 
   // Lane walk: each turn = the horizontal run ends ON the current lane at

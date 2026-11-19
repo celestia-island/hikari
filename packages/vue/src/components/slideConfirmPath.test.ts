@@ -48,6 +48,34 @@ describe("generateSlidePath", () => {
     }
   });
 
+  it("never overshoots the band: every turn column stays in [lo, hi]", () => {
+    // The min-gap floor clamps nothing — a squeezed draw used to push
+    // turn columns past x=1 and run the closing segment BACKWARDS.
+    for (let seed = 1; seed <= 2000; seed++) {
+      const { points } = generateSlidePath(seed);
+      let prevX = -1;
+      for (const p of points) {
+        expect(p.x, `seed ${seed}`).toBeGreaterThanOrEqual(prevX);
+        expect(p.x, `seed ${seed}`).toBeLessThanOrEqual(1);
+        prevX = p.x;
+      }
+    }
+  });
+
+  it("turn columns keep the minimum spacing (grabbable horizontal runs)", () => {
+    for (let seed = 1; seed <= 2000; seed++) {
+      const { points } = generateSlidePath(seed);
+      const cols = points.filter((p) => p.x > 0 && p.x < 1).map((p) => p.x);
+      const uniq = [...new Set(cols)];
+      // Spacing between distinct turn columns stays at or above the
+      // floor (0.12); a squeeze collapses to the even fallback, which is
+      // spaced (hi - lo) / turns ≥ 0.12 for 3..5 turns in [0.14, 0.86].
+      for (let i = 1; i < uniq.length; i++) {
+        expect(uniq[i]! - uniq[i - 1]!, `seed ${seed}`).toBeGreaterThanOrEqual(0.12 - 1e-9);
+      }
+    }
+  });
+
   it("stays on the three lanes and never repeats a lane across a turn", () => {
     for (const seed of [1, 42, 20261119]) {
       const { points } = generateSlidePath(seed);
@@ -72,16 +100,21 @@ describe("generateSlidePath", () => {
 });
 
 describe("pixel mapping and arc-length", () => {
-  // A deterministic orthogonal route in a 300×120 box (TRACK_PAD-style
-  // mapping is the component's job; these pins are on the raw math).
+  // The COMPONENT's real lane frame: a 300×120 track minus the 24px
+  // TRACK_PAD on each side = 252×72, corridor = 72/6 + 4 = 16px. Pinning
+  // the raw math in THIS frame is what makes the component's corridor
+  // constant measurable (a 300×120 frame would silently measure a
+  // different physical quantity than the shipped code).
   const path = generateSlidePath(20261119);
-  const pixel = slidePixelPoints(path.points, 300, 120);
+  const pixel = slidePixelPoints(path.points, 252, 72);
 
   it("maps grid fractions to the measured box", () => {
     expect(pixel[0]!.x).toBe(0);
-    expect(pixel[0]!.y).toBeCloseTo(slideLaneY(path.points[0]!.y > 0.5 ? 2 : path.points[0]!.y > 0.16 ? 1 : 0) * 120, 5);
+    // The lane fraction maps into the SAME frame the component draws in
+    // (252×72 here): a lane fraction 0.5 → the box's mid-height 36.
+    expect(pixel[0]!.y).toBeCloseTo(path.points[0]!.y * 72, 5);
     const last = pixel[pixel.length - 1]!;
-    expect(last.x).toBe(300);
+    expect(last.x).toBe(252);
   });
 
   it("pointAtT walks the endpoints and keeps arc length honest", () => {
@@ -110,8 +143,9 @@ describe("pixel mapping and arc-length", () => {
   });
 
   it("slideAdvanceT advances only inside the corridor and rejects off-lane pointers", () => {
-    // Corridor = half a lane height + slack (the component's radius).
-    const corridor = 120 / 6 + 4;
+    // Corridor = half a lane height + slack (the component's constant,
+    // over the INNER height).
+    const corridor = 72 / 6 + 4;
     const nearStart = slidePointAtT(pixel, 0);
     // A pointer ON the lane advances.
     const advanced = slideAdvanceT(pixel, 0, nearStart.x + 5, nearStart.y, corridor);
@@ -123,7 +157,7 @@ describe("pixel mapping and arc-length", () => {
   });
 
   it("slideAdvanceT is monotonic: never retreats below fromT", () => {
-    const corridor = 120 / 6 + 4;
+    const corridor = 72 / 6 + 4;
     const from = 0.5;
     const anchor = slidePointAtT(pixel, from);
     // Even a pointer parked at the START of the lane cannot pull the

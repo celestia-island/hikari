@@ -19,7 +19,7 @@
   height: calc(var(--space-40, 2.5rem) * 3);
   border-radius: var(--radius-lg, 0.75rem);
   background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
-  border: 1px solid var(--hk-kw-border, rgb(var(--color-border) / 8%));
+  border: 1px solid rgb(var(--color-border) / 8%);
   overflow: hidden;
   transition: border-color 0.2s ease, background 0.2s ease;
 

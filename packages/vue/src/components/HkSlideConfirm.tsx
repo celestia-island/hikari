@@ -27,12 +27,21 @@ const COMPLETE_T = 0.995;
 /** The lane keeps a knob-radius margin from the track edges. */
 const TRACK_PAD = 24;
 
-/** Pointer corridor: half a lane's height (+ a little slack) — the knob
- *  must be traced, not approximated with a straight chord across the
- *  turns (the corridor is deliberately too narrow to cut a corner). */
+/** Pointer corridor: HALF A LANE SPACING + slack, computed from the
+ *  INNER lane height (the frame the lane actually lives in — the outer
+ *  box would inflate the radius to a full lane spacing and a single
+ *  straight drag could ride it across turns). */
 function corridorRadius(innerHeight: number): number {
   return innerHeight / 6 + 4;
 }
+
+/** The knob's px radius (2.4rem box / 2) — the pointer may lead the knob
+ *  center by up to this much before the trace is considered lost. */
+const KNOB_RADIUS = 19;
+
+/** Follow-walk resolution: the lane is sampled at this many arc-length
+ *  steps per advance scan (fine enough that a corner is never chorded). */
+const SCAN_STEPS = 240;
 
 interface TrackBox {
   width: number;
@@ -98,12 +107,6 @@ export default defineComponent({
     const knobRef = ref<HTMLElement | null>(null);
 
     const path = ref<SlidePath>(generateSlidePath((props.seed ?? (Math.random() * 0xffffffff)) >>> 0));
-    const regenerate = () => {
-      path.value = generateSlidePath((props.seed ?? (Math.random() * 0xffffffff)) >>> 0);
-      progress.value = 0;
-      status.value = "idle";
-    };
-    watch(() => props.seed, regenerate);
 
     /** Arc-length progress 0..1 along the lane. */
     const progress = ref(0);
@@ -111,6 +114,15 @@ export default defineComponent({
     const status = ref<SlideStatus>("idle");
 
     const dragging = () => status.value === "dragging";
+
+    /** A new seed (or a fresh mount) lays a fresh route and resets the
+     *  gesture. Declared after the state refs it writes. */
+    const regenerate = () => {
+      path.value = generateSlidePath((props.seed ?? (Math.random() * 0xffffffff)) >>> 0);
+      progress.value = 0;
+      status.value = "idle";
+    };
+    watch(() => props.seed, regenerate);
 
     /** The measured track box — reactive so the lane and knob re-map when
      *  it lands (mount) or moves (resize). jsdom measures 0×0 until a
@@ -122,16 +134,21 @@ export default defineComponent({
         box.value = { width: rect.width, height: rect.height, left: rect.left, top: rect.top };
       }
     }
-    function onWindowResize() {
-      box.value = { width: 0, height: 0, left: 0, top: 0 };
-      measure();
-    }
+    // ResizeObserver (the 42-sibling house pattern): a track mounted
+    // before layout (hidden/collapsed container) measures 0×0 — the
+    // observer re-measures the moment the box exists, instead of leaving
+    // a knob with no visible route until the first grab.
+    let resizeObserver: ResizeObserver | null = null;
     onMounted(() => {
       measure();
-      window.addEventListener("resize", onWindowResize);
+      resizeObserver = new ResizeObserver(() => {
+        box.value = { width: 0, height: 0, left: 0, top: 0 };
+        measure();
+      });
+      if (rootRef.value) resizeObserver.observe(rootRef.value);
     });
     onBeforeUnmount(() => {
-      window.removeEventListener("resize", onWindowResize);
+      resizeObserver?.disconnect();
       if (snapTimer) clearTimeout(snapTimer);
     });
 
@@ -163,10 +180,17 @@ export default defineComponent({
     });
 
     let snapTimer: ReturnType<typeof setTimeout> | null = null;
+    function clearSnapTimer() {
+      if (snapTimer) {
+        clearTimeout(snapTimer);
+        snapTimer = null;
+      }
+    }
+
     function snapBack() {
       status.value = "snapping";
       progress.value = 0;
-      if (snapTimer) clearTimeout(snapTimer);
+      clearSnapTimer();
       // The transition (SCSS) carries the visual return; the state resets
       // after it so the next grab starts clean.
       snapTimer = setTimeout(() => {
@@ -177,11 +201,27 @@ export default defineComponent({
     function complete() {
       if (status.value === "done") return;
       status.value = "done";
+      // A stale snap-back timer must never tear the done state down (it
+      // would resurrect the control and allow a second emit).
+      clearSnapTimer();
       emit("confirm");
     }
 
+    /** The pointer offset from the knob CENTER at grab time — subtracted
+     *  from every move so the knob CENTER (not the raw pointer) is what
+     *  traces the lane. Without this, grabbing the knob's edge offsets
+     *  the whole trace by that edge and lets a straight drag ride a lane
+     *  it never turned onto. */
+    let grabOffset: SlidePoint = { x: 0, y: 0 };
+
     function onKnobPointerdown(e: PointerEvent) {
+      // The house drag-family guard: only the primary button traces.
+      if (e.button !== 0) return;
       if (props.disabled || status.value === "done") return;
+      // A regrab inside the snap-back window is a FRESH gesture: cancel
+      // the pending timer (an uncancelled one would flip the status to
+      // idle mid-gesture — freezing the drag — or tear down a done state).
+      clearSnapTimer();
       try {
         knobRef.value?.setPointerCapture?.(e.pointerId);
       } catch {
@@ -190,6 +230,12 @@ export default defineComponent({
       }
       box.value = { width: 0, height: 0, left: 0, top: 0 }; // re-measure per gesture
       measure();
+      const b = box.value;
+      const start = slidePointAtT(pixelPolyline(), progress.value);
+      grabOffset = {
+        x: e.clientX - b.left - TRACK_PAD - start.x,
+        y: e.clientY - b.top - TRACK_PAD - start.y,
+      };
       status.value = "dragging";
     }
 
@@ -200,17 +246,39 @@ export default defineComponent({
       const total = slidePathLength(pixel);
       if (total <= 0) return;
       // The pointer arrives in TRACK-LOCAL px; the lane lives in the
-      // TRACK_PAD-inset frame — compare in the lane's own frame.
-      const px = e.clientX - b.left - TRACK_PAD;
-      const py = e.clientY - b.top - TRACK_PAD;
-      const next = slideAdvanceT(pixel, progress.value, px, py, corridorRadius(b.height));
-      if (next === null) {
-        // Left the corridor: corner-cutting is a failed attempt.
+      // TRACK_PAD-inset frame — compare in the lane's own frame, minus
+      // the grab offset (the knob CENTER is the traced point).
+      const tx = e.clientX - b.left - TRACK_PAD - grabOffset.x;
+      const ty = e.clientY - b.top - TRACK_PAD - grabOffset.y;
+      const tolerance = corridorRadius(b.height - TRACK_PAD * 2);
+
+      // Stop-at-first-gap walk: advance from the current progress while
+      // each successive lane sample stays inside the corridor of the
+      // traced point. Teleporting past a turn requires steering THROUGH
+      // it — a straight pull dies at the first corner because the walk
+      // never skips a gap.
+      const from = progress.value;
+      let advanced: number | null = null;
+      let lost = false;
+      for (let i = 0; i <= SCAN_STEPS; i++) {
+        const t = (from * SCAN_STEPS + i) / SCAN_STEPS;
+        if (t > 1) break;
+        const p = slidePointAtT(pixel, t);
+        if (Math.hypot(p.x - tx, p.y - ty) <= tolerance) {
+          advanced = t;
+        } else {
+          lost = true;
+          break;
+        }
+      }
+      if (advanced === null) {
+        // Not even the current position corresponds to the traced point:
+        // the pointer no longer represents the knob.
         snapBack();
         return;
       }
-      progress.value = next;
-      if (next >= COMPLETE_T) complete();
+      progress.value = advanced;
+      if (advanced >= COMPLETE_T) complete();
     }
 
     function onKnobPointerup() {
@@ -265,7 +333,6 @@ export default defineComponent({
           class={{
             "hk-slide-confirm": true,
             "is-dragging": status.value === "dragging",
-            "is-snapping": status.value === "snapping",
             "is-done": done,
             "is-disabled": props.disabled,
           }}
@@ -297,11 +364,12 @@ export default defineComponent({
             class={{ "hk-slide-confirm-knob": true, "is-done": done }}
             role="slider"
             tabindex={props.disabled ? -1 : 0}
-            aria-disabled={props.disabled}
+            aria-disabled={props.disabled || done}
             aria-label={done ? doneLabel.value : idleLabel.value}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress.value * 100)}
+            aria-valuetext={done ? doneLabel.value : undefined}
             style={{
               // The lane frame is inset by TRACK_PAD; the knob (absolutely
               // parked at the track's corner) rides it from there.

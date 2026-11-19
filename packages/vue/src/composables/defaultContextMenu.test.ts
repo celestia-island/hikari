@@ -314,6 +314,33 @@ describe("clipboard contributor", () => {
     }
   });
 
+  it("cut/paste act on the SNAPSHOT range even after the caret moved", async () => {
+    // The menu can outlive the caret it was built for: a host watcher may
+    // rewrite `value` between open and click. Handlers must edit the range
+    // the user was shown, not wherever the caret drifted.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockResolvedValue(undefined), readText: vi.fn().mockResolvedValue("P") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(0, 5); // snapshot: "hello"
+    const request = editableMenu(input);
+    // The caret "moved" (value rewritten, keyboard re-opened) after the
+    // menu was built but before the row ran.
+    input.setSelectionRange(11, 11);
+
+    request.onSelect!("cut", request.items[1]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // The snapshotted range was removed, not the empty tail range.
+    expect(input.value).toBe(" world");
+    expect(input.selectionStart).toBe(0);
+
+    // Paste rides the same snapshot offsets (start 0, not the drifted
+    // caret) — the cut assertion above is the pin; a second stale-snapshot
+    // application after the value changed would assert nonsense.
+  });
+
   it("select all covers the whole field", () => {
     const input = document.createElement("input");
     input.value = "hello world";
@@ -441,7 +468,7 @@ describe("provider defaults regime", () => {
     app.unmount();
   });
 
-  it("isolates a throwing contributor (the platform menu still never appears)", async () => {
+  it("isolates a throwing contributor (later contributors still answer)", async () => {
     const unregister = registerContextMenuDefault({
       id: "test.thrower",
       order: -1,
@@ -450,15 +477,22 @@ describe("provider defaults regime", () => {
       },
     });
     try {
-      const { app, target } = mountDefaults("div");
+      // An EDITABLE target: the built-in clipboard menu sits AFTER the
+      // thrower in the walk. Under a whole-walk catch the throw would
+      // abort the registry and the clipboard menu would be gone for that
+      // click — isolation means a broken host registration cannot take
+      // the default menu down with it.
+      const { app, target } = mountDefaults("input");
       await nextTick();
       const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 5, clientY: 5 });
       target.dispatchEvent(event);
       await nextTick();
       // preventDefault runs FIRST — a broken contributor cannot hand the
-      // event back to the browser.
+      // event back to the browser either.
       expect(event.defaultPrevented).toBe(true);
-      expect(document.querySelector(".hk-select-popout")).toBeNull();
+      const row = Array.from(document.querySelectorAll<HTMLElement>(".hk-menu-row"))
+        .find((r) => r.textContent?.includes("Copy"));
+      expect(row, "the built-in clipboard menu still claims the point").toBeTruthy();
       app.unmount();
     } finally {
       unregister();

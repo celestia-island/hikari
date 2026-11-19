@@ -944,6 +944,66 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     }
   });
 
+  it("keeps the survivor's geometry record when the option list shrinks", async () => {
+    // The removed option's null ref fires with its ORIGINAL index; an
+    // unconditional delete-by-index evicts the survivor's record and the
+    // sliding indicator freezes at the PRE-removal geometry. happy-dom CAN
+    // see this: stub the survivor's offsets, measure (indicator = first
+    // stub), re-stub, then shrink — a pristine map re-measures to the new
+    // stub; an evicted record keeps the first stub frozen.
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    containers.push(host);
+    const short = ref(false);
+    const active = ref("a");
+    const Wrapper = defineComponent({
+      setup() {
+        return () => h(
+          HkTabs,
+          {
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+            renderPanels: false,
+            tabs: (short.value
+              ? [{ key: "b", label: "Beta" }]
+              : [{ key: "a", label: "Alpha" }, { key: "b", label: "Beta" }]) as TabItem[],
+          },
+        );
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(host);
+    await nextTick();
+    await nextTick();
+
+    const stubTrigger = (left: number, width: number) => {
+      const el = [...host.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
+        .find((candidate) => candidate.textContent?.trim() === "Beta")!;
+      Object.defineProperty(el, "offsetLeft", { value: left, configurable: true });
+      Object.defineProperty(el, "offsetWidth", { value: width, configurable: true });
+      return el;
+    };
+
+    // Measure #1 with the first stub. The measure runs on a post-render
+    // tick and the resulting style patch lands one tick after THAT, so the
+    // assertion polls.
+    stubTrigger(111, 222);
+    active.value = "b";
+    const indicator = host.querySelector<HTMLElement>(".hk-tabs-indicator")!;
+    await vi.waitFor(() => expect(indicator.style.left).toBe("111px"));
+
+    // Re-stub, then shrink. The survivor element is REUSED by the patch
+    // (b lands on index 0), the removed option's null ref fires with its
+    // original index — exactly the eviction window.
+    stubTrigger(333, 444);
+    short.value = true;
+    await vi.waitFor(() => {
+      expect(indicator.style.left, "the indicator followed the survivor").toBe("333px");
+      expect(indicator.style.width).toBe("444px");
+    });
+  });
+
   it("does not alarm for merged options that carry no actions", () => {
     // The theme panel's DEFAULT auto mode merges light/dark with no
     // actions attached — that must stay silent (it alarmed once per option
@@ -1172,6 +1232,13 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(scss).toMatch(/\.hk-tabs-trigger-actions\s*{[^}]*position:\s*absolute/);
     // The cell is the slot-unit grid child (the trigger is not).
     expect(scss).toMatch(/\[data-slots\] > \.hk-tabs-cell/);
+    // The reserved action lane: without it the revealed buttons sit ON the
+    // label's tail in a shrink-to-fit pill (clicks there hit the action,
+    // not the option). The lane must exist and exceed the overlay's own
+    // footprint (inset 4px + 20px button).
+    expect(scss).toMatch(
+      /\.hk-tabs-cell > \.hk-tabs-trigger\s*{[^}]*padding-inline-end:\s*calc\([^)]*\)/,
+    );
     // The cell anchors the overlay (positioned ancestor).
     expect(scss).toMatch(/\.hk-tabs-cell\s*{[^}]*position:\s*relative/);
     // Unrevealed actions stay OUT of the page tab order (visibility,

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkNotificationBell from "./HkNotificationBell";
@@ -13,9 +13,12 @@ import { setLocale } from "../i18n/context";
  * - clicking the bell opens the panel (HkPopover panel mounts) and
  *   opening IS the read receipt (dot goes dark)
  * - rows render title / time / detail / code chip
+ * - error/warning rows carry the toast-family copy button (user
+ *   direction 2026-11-19) and copy the FULL record to the clipboard;
+ *   the other tones stay non-copyable like their surfaces
  * - a snoozed emergency entry shows the Hidden state chip and its
  *   restore button unsnoozes through the journal's resummon path
- * - Clear all empties the journal
+ * - Clear all (icon + label) empties the journal
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -48,6 +51,16 @@ function panel(): HTMLElement | null {
 
 function rows(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>(".hk-notification-row"));
+}
+
+/** The toast family's clipboard write, stubbed at navigator level
+ *  (same shape HkTable/HkErrorLanding tests use) — jsdom has no
+ *  clipboard, and the fallback execCommand path would not tell us
+ *  WHAT text was copied. */
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  return writeText;
 }
 
 afterEach(() => {
@@ -120,6 +133,57 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__detail-text")?.textContent).toBe("充值后立即可用");
     expect(row.querySelector(".hk-notification-row__code")?.textContent).toBe("QUOTA_EXHAUSTED");
     expect(row.querySelector(".hk-notification-row__time")).toBeTruthy();
+  });
+
+  it("an error row carries the toast's copy button and copies the FULL record", async () => {
+    // User direction 2026-11-19: beside dismiss, error/warning rows get
+    // the toast family's own copy affordance (same button shape, same
+    // `hikari::toast.copy` label, same clipboard write). The row clips
+    // its text, so the copied payload must be the complete record —
+    // title / code / detail, one per line.
+    await setLocale("en");
+    const writeText = stubClipboard();
+    recordNotification({
+      id: "toast:e:1:1",
+      kind: "toast",
+      tone: "error",
+      title: "billing.quota.snapshot: billing.quota.bad_gate",
+      detail: "The gate returned an unrecoverable verdict",
+      code: "billing.quota.bad_gate",
+    });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const row = rows()[0];
+    const copy = row.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Copy"]',
+    );
+    expect(copy, "copy button renders on an error row").toBeTruthy();
+    // LEFT of dismiss: the copy button is the actions lane's first child.
+    expect(copy!.parentElement!.firstElementChild).toBe(copy);
+    copy!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(
+      "billing.quota.snapshot: billing.quota.bad_gate\nbilling.quota.bad_gate\nThe gate returned an unrecoverable verdict",
+    );
+  });
+
+  it("tones the toast family treats as non-copyable get NO copy button", async () => {
+    await setLocale("en");
+    stubClipboard();
+    recordNotification({ id: "s1", kind: "toast", tone: "success", title: "saved" });
+    recordNotification({ id: "i1", kind: "toast", tone: "info", title: "heads up" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(2);
+    expect(
+      document.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Copy"]'),
+      "success/info records stay non-copyable, like their surfaces",
+    ).toBeNull();
   });
 
   it("a snoozed emergency shows Hidden + a working restore button", async () => {
@@ -237,7 +301,9 @@ describe("panel rows", () => {
     await settle();
     expect(rows()).toHaveLength(2);
     const dropRow = rows().find((r) => r.textContent?.includes("drop me"))!;
-    const dismiss = dropRow.querySelector<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button")!;
+    const dismiss = dropRow.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+    )!;
     expect(dismiss.getAttribute("aria-label")).toBe("Dismiss");
     dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
@@ -260,9 +326,11 @@ describe("panel rows", () => {
     const titles = rows().map((r) => r.querySelector(".hk-notification-row__title")?.textContent);
     expect(titles).toEqual(["newer", "older"]);
 
-    (document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!).dispatchEvent(
-      new MouseEvent("click", { bubbles: true }),
-    );
+    // The clear-all affordance announces itself by its glyph (user
+    // direction 2026-11-19): a leading icon inside the label button.
+    const clearBtn = document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!;
+    expect(clearBtn.querySelector(".hk-btn-icon")).toBeTruthy();
+    clearBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
     expect(rows()).toHaveLength(0);

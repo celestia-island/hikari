@@ -23,11 +23,29 @@
  * (`onResummon`, wired by useEmergencyAlert); the button reuses the
  * emergency family's own "Show again" copy.
  *
+ * Per-row copy (user direction 2026-11-19): rows whose tone the toast
+ * family already deems copyable by default (error/warning —
+ * useToast's `defaultCopyable`) carry the toast's own copy icon
+ * button (same HkIconButton shape, same `hikari::toast.copy` label,
+ * same useClipboard write) to the LEFT of dismiss, copying the full
+ * untruncated record (title / code / detail, one per line) — the row
+ * clips its text, so the clipboard is the only place the whole thing
+ * still exists.
+ *
  * Renders nothing extra while the journal is empty beyond the bell
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
  */
-import { CircleCheck as CheckCircle, Info, LoaderCircle, RotateCcw, TriangleAlert as AlertTriangle, X } from "lucide-vue-next";
+import {
+  CircleCheck as CheckCircle,
+  Copy,
+  Info,
+  LoaderCircle,
+  RotateCcw,
+  Trash2,
+  TriangleAlert as AlertTriangle,
+  X,
+} from "lucide-vue-next";
 import { computed, defineComponent, h, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
@@ -37,6 +55,7 @@ import {
   type HkNotificationEntry,
   type HkNotificationTone,
 } from "../runtime/notificationCenter";
+import { useClipboard } from "../runtime/useClipboard";
 import HkIconButton from "./HkIconButton";
 import HkButton from "./HkButton";
 import HkPopover from "./HkPopover";
@@ -50,6 +69,13 @@ const TONE_ICONS: Record<HkNotificationTone, Component> = {
   info: Info,
   loading: LoaderCircle,
 };
+
+/** The toast family's own copyable-by-default set (useToast
+ *  `defaultCopyable`): error and warning records get the per-row copy
+ *  button, the other tones mirror their non-copyable surfaces. */
+function rowCopyable(entry: HkNotificationEntry): boolean {
+  return entry.tone === "error" || entry.tone === "warning";
+}
 
 /** `HH:mm` today, `MM-dd HH:mm` otherwise — Intl does the locale work
  *  (the journal stores epoch ms; formatting is a view concern). */
@@ -70,6 +96,7 @@ export default defineComponent({
     const { t } = useI18n();
     const { entries, forget, markAllRead, reset } = useNotificationCenter();
     const chromeSize = useChromeActionSize();
+    const clipboard = useClipboard();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
 
@@ -89,6 +116,17 @@ export default defineComponent({
     watch(open, (v) => {
       if (v) markAllRead();
     });
+
+    /** The toast's copy contract, carried over verbatim: the FULL
+     *  untruncated record, one field per line (title / code / detail —
+     *  whatever the entry carries). The row itself ellipsizes, so the
+     *  clipboard is the only complete copy of what was shown. */
+    function copyEntry(entry: HkNotificationEntry) {
+      const parts = [entry.title];
+      if (entry.code) parts.push(entry.code);
+      if (entry.detail) parts.push(entry.detail);
+      void clipboard.copy(parts.join("\n"));
+    }
 
     function renderRow(entry: HkNotificationEntry) {
       const Icon = TONE_ICONS[entry.tone] ?? Info;
@@ -137,9 +175,21 @@ export default defineComponent({
             )}
           </div>
           <div class="hk-notification-row__actions">
-            {/* Dismiss is gated OFF for live emergency episodes (round-6
-                S1: a snoozed alert's entry carries the ONLY restore
-                handle). Restore is gated ON only for snoozed entries. */}
+            {/* Copy (toast-family tones, left of dismiss per user
+                direction 2026-11-19) → dismiss → restore. Dismiss is
+                gated OFF for live emergency episodes (round-6 S1: a
+                snoozed alert's entry carries the ONLY restore handle).
+                Restore is gated ON only for snoozed entries. */}
+            {rowCopyable(entry) && (
+              <HkIconButton
+                size={24}
+                variant="ghost"
+                aria-label={t("hikari::toast.copy", "Copy")}
+                onClick={() => copyEntry(entry)}
+              >
+                {{ icon: () => <Copy size={14} /> }}
+              </HkIconButton>
+            )}
             {!isLive && (
               <HkIconButton
                 size={24}
@@ -207,11 +257,11 @@ export default defineComponent({
                     {sorted.value.map(renderRow)}
                   </ul>
                   <div class="hk-notification-center__foot">
-                    <HkButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => reset()}
-                    >
+                    {/* The wipe glyph reads before the label is parsed —
+                        a destructive affordance announced by its icon
+                        (user direction 2026-11-19), from the same lucide
+                        family the row glyphs already speak. */}
+                    <HkButton variant="ghost" size="sm" icon="Trash2" onClick={() => reset()}>
                       {t("hikari::notificationCenter.clearAll", "Clear all")}
                     </HkButton>
                   </div>

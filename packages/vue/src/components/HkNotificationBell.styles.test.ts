@@ -25,6 +25,16 @@ describe("HkNotificationBell scss contract", () => {
     );
   });
 
+  it("the clear-all foot carries bottom padding (the glass edge gap)", () => {
+    // User direction 2026-11-19: the popover panel's own 4px pad glued
+    // the clear-all button to the panel's bottom edge — the foot owns
+    // the extra bottom inset, so a revert that drops padding-bottom
+    // must fail here.
+    const footBlock = scss.match(/^\.hk-notification-center__foot \{([^}]*)\}/m);
+    expect(footBlock).toBeTruthy();
+    expect(footBlock![1]).toContain("padding-bottom:");
+  });
+
   it("the row centers its columns against the ROW height (one-line rows included)", () => {
     // Default stretch stretched a one-line body to the 24px dismiss
     // button and hugged the title to the body's top — visibly off the

@@ -74,6 +74,10 @@
   display: flex;
   justify-content: flex-end;
   padding-top: var(--space-8, 0.5rem);
+  /* Breathing room BELOW the clear-all (user direction 2026-11-19):
+     the popover panel's own pad is a bare 4px, which glued the button
+     to the glass edge — the foot owns the extra bottom inset. */
+  padding-bottom: var(--space-8, 0.5rem);
   border-top: 1px solid rgb(var(--color-border) / 10%);
   margin-top: var(--space-8, 0.5rem);
 }

@@ -9,13 +9,32 @@
  * STRIP: overflow hides under edge fades (data-h-overflow masks, the
  * HkScrollContainer contract) and pans by wheel / mouse drag / native
  * touch (the machinery lives in useOptionStrip); phones relax back into
- * a wrapping group (media query below — the sheet carries full width).
+ * a wrapping group (media query below — wrap replaces the pan; the hug
+ * survives, so a one-line set stays pill-width and only a wrapping set
+ * fills the sheet).
  */
 
 @use "../styles/polyfill" as *;
 
 .hk-pill-group {
-  display: flex;
+  /* HUG, DON'T STRETCH (2026-11-19 report: "the group has mysterious
+   * padding" — a bordered EMPTY BOX trailing the last pill in a ~148px
+   * table cell). The track is a block-level div, so a `display: flex`
+   * track filled its container and the chrome framed blank space to the
+   * right of a short option set. `inline-flex` + `width: fit-content`
+   * makes the track exactly as wide as its pills; the pairing is NOT
+   * redundant — a flex item is display-blockified (inline-flex → flex),
+   * so only the definite `fit-content` width stops a column flex parent's
+   * `align-items: stretch` from re-filling the lane (HkFilterChip's
+   * `.hk-filter-chip-body` and the hosts' `flex flex-col` form-field
+   * slots are exactly such parents).
+   *
+   * `max-width: 100%` is what keeps the pannable strip intact: a pill
+   * set too wide for the lane still clamps to the lane, so
+   * `scrollWidth > clientWidth` (the data-h-overflow fade sensing in
+   * useOptionStrip) and the wheel/drag pan behave exactly as before. */
+  display: inline-flex;
+  width: fit-content;
   flex-wrap: nowrap;
   max-width: 100%;
   gap: var(--space-4, 4px);
@@ -144,10 +163,11 @@
   flex: 0 0 auto;
 }
 
-/* Phones: the sheet carries the full width, nothing pans there — the
- * strip relaxes back into the wrapping group (the wowsp filter bar's
- * rule; the fade masks and the grab affordance name interactions the
- * track no longer has). */
+/* Phones: the wrap replaces the pan (the wowsp filter bar's rule; the
+ * fade masks and the grab affordance name interactions the track no
+ * longer has). Only wrap/overflow/touch/cursor relax — the hug and the
+ * lane clamp survive, so a one-line set stays pill-width and a wrapping
+ * set fills the sheet width. */
 @media (max-width: 767px) {
   .hk-pill-group {
     flex-wrap: wrap;

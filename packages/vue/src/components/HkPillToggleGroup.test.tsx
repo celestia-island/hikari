@@ -277,3 +277,115 @@ describe("HkPillToggleGroup tone channel", () => {
     }
   });
 });
+
+// ── Track geometry: hug, don't stretch ───────────────────────────────────
+// 2026-11-19 report (shittim-chest GrantListEditor): the 授予/拒绝 state
+// pills in a ~148px table cell sat left-aligned inside a full-width
+// bordered track, so the chrome framed an EMPTY BOX after the last pill
+// ("部分按钮组有莫名其妙的内边距"). The track must size to its pills while
+// keeping the one-line pannable strip intact — happy-dom does no layout, so
+// the contract is pinned over the sheet source (the nativeScrollbar /
+// HkAffixPicker house pattern), never a computed width.
+const scssSource = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkPillToggleGroup.scss"), "utf-8");
+
+/** Extract ONE balanced `{...}` declaration block following the given
+ *  selector — `[^}]*` would stop at the first nested `}` and let
+ *  properties appended after a future nested block evade the pin. */
+function cssBlock(src: string, selector: string): string {
+  const at = src.indexOf(selector);
+  expect(at, `${selector} block exists`).toBeGreaterThanOrEqual(0);
+  const open = src.indexOf("{", at);
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === "{") depth++;
+    else if (src[i] === "}") {
+      depth--;
+      if (depth === 0) return src.slice(open, i + 1);
+    }
+  }
+  return "";
+}
+
+/** Declarations only: a comment that happens to quote a property must not
+ *  satisfy a pin (mutating the rule away would otherwise stay green). */
+function stripSassComments(src: string): string {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+}
+
+/** The block's TOP-LEVEL declarations: the slice before the first nested
+ *  rule (every nested rule in this sheet opens with `&`), then split on
+ *  `;` — a terminator is a separator, never the next match's anchor, so
+ *  consecutive declarations are all seen. Values trimmed and lowercased
+ *  (CSS keywords are ASCII-case-insensitive, so `FLEX` and `flex` are
+ *  the same declaration). Grouped per property so a LATER duplicate
+ *  declaration cannot hide behind a passing first one — the pins below
+ *  assert the FULL value set, not mere presence. */
+function declarations(block: string): Map<string, string[]> {
+  const body = block.replace(/^[^{]*\{/, "").replace(/\}[^}]*$/, "");
+  const nestedAt = body.search(/(?:^|\n)\s*&/);
+  const top = nestedAt === -1 ? body : body.slice(0, nestedAt);
+  const out = new Map<string, string[]>();
+  for (const fragment of top.split(";")) {
+    const m = fragment.match(/^\s*([-a-z]+)\s*:\s*(.+?)\s*$/);
+    if (!m) continue;
+    const prop = m[1].toLowerCase();
+    const value = m[2].toLowerCase();
+    out.set(prop, [...(out.get(prop) ?? []), value]);
+  }
+  return out;
+}
+
+describe("HkPillToggleGroup track geometry contract", () => {
+  const track = stripSassComments(cssBlock(scssSource, ".hk-pill-group {"));
+  const trackDecls = declarations(track);
+
+  it("the track hugs its pills instead of filling the lane", () => {
+    // The FULL value sets, not presence: a later `width: 100%` in the same
+    // block would cancel the hug while a presence pin stayed green.
+    expect(trackDecls.get("display")).toEqual(["inline-flex"]);
+    expect(trackDecls.get("width")).toEqual(["fit-content"]);
+    expect(trackDecls.get("max-width")).toEqual(["100%"]);
+    // The pair is NOT redundant: a flex item is display-blockified
+    // (inline-flex → flex), so only a definite width stops a column flex
+    // parent's align-items: stretch from re-filling the lane (HkFilterChip's
+    // .hk-filter-chip-body column and the hosts' `flex flex-col` form-field
+    // slots are exactly such parents — HkTimePicker centers itself with
+    // align-self).
+    // No !important games: an override ladder inside the block must not be
+    // able to resurrect the stretch behind the pins above.
+    expect(track, "no important override inside the track block").not.toContain("!important");
+  });
+
+  it("the clamp keeps the one-line pannable strip alive when pills overflow", () => {
+    // fit-content + the clamp = shrink-to-fit capped at the lane: the pill
+    // set that genuinely overflows still scrolls, and useOptionStrip's
+    // scrollWidth-vs-clientWidth fade sensing still sees it. (The clamp
+    // value set is asserted above; the scroll machinery is asserted here.)
+    expect(track).toMatch(/overflow-x:\s*auto;/);
+    expect(track, "nowrap: one pannable line, not a wrap").toMatch(/flex-wrap:\s*nowrap;/);
+    // The native-scrollbar suppression pair rides inside this rule block
+    // (nativeScrollbar.contract.test.ts group 1 also enforces it).
+    expect(track).toMatch(/scrollbar-width:\s*none;/);
+    expect(track).toMatch(/&::-webkit-scrollbar\s*\{[^}]*display:\s*none/);
+    // Edge-fade masks are keyed off data-h-overflow — the sensing contract
+    // they share with HkScrollContainer must survive the hug.
+    for (const side of ["start", "end", "both"]) {
+      expect(track, `data-h-overflow=${side} fade`).toContain(`&[data-h-overflow="${side}"]`);
+    }
+  });
+
+  it("phones still relax the hugging track back into a wrapping group", () => {
+    const phone = stripSassComments(
+      cssBlock(scssSource.slice(scssSource.indexOf("@media (max-width: 767px)")), ".hk-pill-group {"),
+    );
+    const phoneDecls = declarations(phone);
+    expect(phoneDecls.get("flex-wrap")).toEqual(["wrap"]);
+    expect(phoneDecls.get("overflow")).toEqual(["visible"]);
+    // The media query relaxes ONLY wrap/overflow/touch/cursor: it must not
+    // re-declare display or width (that would restore the stretched track
+    // on phones behind the desktop pins).
+    expect(phoneDecls.has("display"), "no display in the phone block").toBe(false);
+    expect(phoneDecls.has("width"), "no width in the phone block").toBe(false);
+    expect(phoneDecls.has("max-width"), "no max-width in the phone block").toBe(false);
+  });
+});

@@ -45,8 +45,15 @@ function resolveIcon(icon: unknown): VNode | null {
  * hides under edge fades and pans by wheel / mouse drag / native touch,
  * exactly the 水表 popups' behavior — a wrapping track always measured
  * ONE long line inside HkPopover's max-content panel and ran off-screen
- * (wowsp #667). Phones relax back into a wrapping group (the sheet
- * carries full width; nothing pans there) via the SCSS media query.
+ * (wowsp #667). Phones relax back into a wrapping group (wrap replaces
+ * the pan; the hug survives — a one-line set stays pill-width) via the
+ * SCSS media query.
+ * The track HUGS its pills (`inline-flex` + `width: fit-content` clamped
+ * by `max-width: 100%`), so a two-option state toggle inside a narrow
+ * table cell frames its own width instead of framing an empty box to the
+ * right of the last pill (2026-11-19 chest GrantListEditor report);
+ * the clamp keeps the pannable strip intact whenever the pills really
+ * overflow.
  *
  * Deliberately THIN (the host owns the set): `toggle(value)` reports one
  * pill toggled; the optional leading all-pill reports `all()` and the

@@ -4,6 +4,7 @@ import {
   generateSerpentinePath,
   pathLength,
   projectOntoPath,
+  TRACK_PAD,
   type PathPoint,
 } from "./serpentineGeometry";
 
@@ -20,10 +21,12 @@ describe("generateSerpentinePath", () => {
     }
   });
 
-  it("starts at the left edge, vertically centred", () => {
+  it("starts inset from the left edge, vertically centred", () => {
+    // Device feedback: the resting handle hugged the border line. The walk
+    // now begins TRACK_PAD in from the edge.
     const p = generateSerpentinePath(W, H, 7);
     const first = p.points[0]!;
-    expect(first.x).toBeGreaterThanOrEqual(0);
+    expect(first.x).toBe(TRACK_PAD);
     expect(first.x).toBeLessThan(W / 2);
     expect(first.y).toBeCloseTo(H / 2, 5);
   });
@@ -34,7 +37,7 @@ describe("generateSerpentinePath", () => {
       const pts = p.points;
       const last = pts[pts.length - 1]!;
       const prev = pts[pts.length - 2]!;
-      expect(last.x).toBeGreaterThan(W / 2);
+      expect(last.x).toBeCloseTo(W - TRACK_PAD, 5);
       expect(last.y).toBeCloseTo(H / 2, 5);
       // The final leg approaches horizontally (same y as the endpoint).
       expect(prev.y).toBeCloseTo(last.y, 5);
@@ -61,8 +64,8 @@ describe("generateSerpentinePath", () => {
     for (let seed = 0; seed < 100; seed++) {
       const p = generateSerpentinePath(W, H, seed);
       for (const pt of p.points) {
-        expect(pt.x).toBeGreaterThanOrEqual(0);
-        expect(pt.x).toBeLessThanOrEqual(W);
+        expect(pt.x).toBeGreaterThanOrEqual(TRACK_PAD);
+        expect(pt.x).toBeLessThanOrEqual(W - TRACK_PAD);
         expect(pt.y).toBeGreaterThanOrEqual(0);
         expect(pt.y).toBeLessThanOrEqual(H);
       }
@@ -79,7 +82,8 @@ describe("generateSerpentinePath", () => {
 
   it("reports a positive total length", () => {
     const p = generateSerpentinePath(W, H, 1);
-    expect(p.totalLength).toBeGreaterThan(W);
+    // The arc exceeds the padded x span by the vertical travel.
+    expect(p.totalLength).toBeGreaterThan(W - TRACK_PAD * 2);
   });
 
   // Regression pins for the leg-class variance: a generator that always
@@ -114,12 +118,13 @@ describe("generateSerpentinePath", () => {
       for (let seed = 0; seed < 50; seed++) {
         const p = generateSerpentinePath(narrow, H, seed);
         for (const pt of p.points) {
+          expect(pt.x).toBeGreaterThanOrEqual(0);
           expect(pt.x).toBeLessThanOrEqual(narrow);
           expect(pt.y).toBeLessThanOrEqual(H);
         }
-        // The final leg still lands on the right edge at the centre.
+        // The final leg lands at the right inset at the centre.
         const last = p.points[p.points.length - 1]!;
-        expect(last.x).toBe(narrow);
+        expect(last.x).toBe(narrow - Math.min(TRACK_PAD, Math.floor(narrow / 8)));
         expect(last.y).toBeCloseTo(H / 2, 5);
       }
     }

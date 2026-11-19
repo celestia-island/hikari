@@ -32,19 +32,6 @@
     border-color: rgb(var(--color-error) / 35%);
   }
 
-  &--failed {
-    animation: hk-serpentine-shake var(--duration-normal, 0.2s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
-  }
-}
-
-// Reduced motion: no displacement animation at all — the failure feedback
-// becomes a static error outline flash (colour only, no movement).
-@media (prefers-reduced-motion: reduce) {
-  .hk-serpentine--failed {
-    animation: none;
-    outline: 2px solid rgb(var(--color-error));
-    outline-offset: 2px;
-  }
 }
 
 .hk-serpentine-svg {
@@ -98,27 +85,17 @@
 
 .hk-serpentine--confirmed .hk-serpentine-handle {
   background: rgb(var(--color-success));
+  transition: background var(--duration-normal, 0.2s) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
   box-shadow: 0 0 0 2px rgb(var(--color-success) / 60%);
 }
 
 .hk-serpentine-hint {
-  position: absolute;
-  inset-inline: 0;
-  bottom: calc(-1 * var(--space-16, 16px) - 4px);
+  // In-flow under the lane: an absolutely-positioned hint hung below the
+  // box got clipped by the confirmation window's padding (device feedback).
+  display: block;
+  padding: var(--space-8, 8px) var(--space-12, 12px) var(--space-4, 4px);
   text-align: center;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));
 }
 
-@keyframes hk-serpentine-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-6px);
-  }
-  75% {
-    transform: translateX(6px);
-  }
-}

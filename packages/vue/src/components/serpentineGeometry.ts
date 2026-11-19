@@ -74,6 +74,11 @@ export function projectOntoPath(points: PathPoint[], distance: number): PathPoin
 /** Minimum horizontal run per horizontal leg (px) — keeps turns readable. */
 const MIN_H_RUN = 40;
 
+/** Horizontal inset of the start/goal from the container edges (px). The
+ *  resting handle sits ON these points; without the inset it hugs the
+ *  border line and half of its hit area falls outside the gate. */
+export const TRACK_PAD = 24;
+
 /**
  * Build the serpentine lane for a `width × height` canvas.
  *
@@ -92,6 +97,7 @@ export function generateSerpentinePath(
   const rand = mulberry32(seed);
   const centre = height / 2;
   const firstRowUp = rand() < 0.5;
+  const pad = Math.min(TRACK_PAD, width / 8);
   // Leg count is EVEN and always ends with the horizontal run to the right
   // edge: V,H,V,H,...,V,H. Corners (interior vertices) are therefore 3 or 5,
   // both inside the briefed 3..=5 range; the seeded first V satisfies "the
@@ -104,12 +110,13 @@ export function generateSerpentinePath(
   // On narrow canvases the run floor shrinks so the lane still fits.
   const minHRun = Math.min(MIN_H_RUN, Math.floor(width / 8));
 
-  const points: PathPoint[] = [{ x: 0, y: centre }];
-  let x = 0;
+  const points: PathPoint[] = [{ x: pad, y: centre }];
+  let x = pad;
   // Distribute the horizontal budget across the H legs: every H leg except
   // the last gets a random slice (>= minHRun); the LAST H leg takes the
   // remainder so the walk lands exactly on the right edge.
-  const hBudget = width - minHRun * (vLegs - 1);
+  const span = width - pad * 2;
+  const hBudget = span - minHRun * (vLegs - 1);
   const hRuns: number[] = [];
   let used = 0;
   for (let h = 0; h < vLegs - 1; h++) {
@@ -119,7 +126,7 @@ export function generateSerpentinePath(
     hRuns.push(Math.max(minHRun, capped));
     used += hRuns[hRuns.length - 1]!;
   }
-  hRuns.push(width - used);
+  hRuns.push(span - used);
 
   // Legs strictly alternate V,H,V,H,...,V,H: each V switches the travelling
   // row (centre -> firstRow -> secondRow -> ... -> centre), each H advances

@@ -126,22 +126,21 @@ describe("HkSerpentineUnlock (mounted)", () => {
     expect(cancelSpy).not.toHaveBeenCalled();
   });
 
-  it("fails off-lane and starts the spring", () => {
+  it("holds position when the pointer drifts off-lane (no reset)", () => {
+    // Device feedback: an 18px corridor reset the walk on every wobble.
+    // Now a drifting pointer HOLDS the knob (no fail, no spring); the walk
+    // resumes when the pointer comes back, and only the release decides.
     const el = mountGate();
     const path = generateSerpentinePath(600, 96, 42);
-    // Grab at the start, walk onto the lane, then veer FAR off it (the
-    // grab check anchors at the lane start — mid-lane grabs are refused).
     const start = path.points[0]!;
     pointer(el, "pointerdown", start.x, start.y);
     const mid = projectOntoPath(path.points, path.totalLength / 2);
     pointer(el, "pointermove", mid.x, mid.y);
-    pointer(el, "pointermove", mid.x + 30, 95);
-    expect(failSpy).toHaveBeenCalledWith("off-path");
-    // The snap-back spring runs on the shared frame bus.
-    expect(frameBus.onFrame).toHaveBeenCalled();
-    expect(frameBus.reportTransition).toHaveBeenCalled();
-    frameBus.tick(16);
-    frameBus.tick(16);
+    pointer(el, "pointermove", mid.x + 30, 95); // far off-lane
+    pointer(el, "pointermove", mid.x, mid.y); // back on the lane
+    pointer(el, "pointerup", mid.x, mid.y);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(cancelSpy).toHaveBeenCalledWith(expect.closeTo(0.5, 1));
   });
 
   it("stops a running spring when the handle is re-grabbed", async () => {
@@ -165,10 +164,10 @@ describe("HkSerpentineUnlock (mounted)", () => {
     frameBus.tick(16);
     frameBus.tick(16);
     await nextTick();
-    // The re-grab put the pointer at the start; stale spring frames must
-    // not have moved the handle (the old spring is dead — this is the
-    // regression pin for the re-grab fight).
-    expect((el.querySelector(".hk-serpentine-handle") as HTMLElement).style.left).toBe("0px");
+    // The re-grab put the pointer at the padded start (TRACK_PAD); stale
+    // spring frames must not have moved the handle (the old spring is
+    // dead — this is the regression pin for the re-grab fight).
+    expect((el.querySelector(".hk-serpentine-handle") as HTMLElement).style.left).toBe("24px");
   });
 
   it("announces twenty-percent bands (40% renders as forty, not worse)", async () => {
@@ -299,14 +298,25 @@ describe("HkSerpentineUnlock styles contract", () => {
     }
   });
 
-  it("honours reduced motion: no shake, static outline instead", () => {
-    expect(scss).toMatch(/@media \(prefers-reduced-motion: reduce\)/);
-    expect(scss).toContain("animation: none;");
-    expect(scss).toContain("outline: 2px solid");
+  it("keeps no displacement animation at all (the shake retired with the off-path fail)", () => {
+    expect(scss).not.toContain("@keyframes");
+    expect(scss).not.toContain("animation:");
+  });
+
+  it("puts the hint in flow (no absolute hang below the box)", () => {
+    // Device feedback: the absolutely-positioned hint got clipped by the
+    // confirmation window. The hint is a block in flow now.
+    expect(scss).toContain("display: block;");
+    expect(scss).not.toContain("position: absolute;\n  inset-inline: 0;");
   });
 
   it("uses real motion tokens, not invented ones", () => {
+    // The shake retired with the off-path fail; the remaining motion
+    // surface is the confirmed knob's transition, which uses the real
+    // duration/ease tokens. The invented --hk-motion-ease must not return.
     expect(scss).toContain("--ease-standard");
     expect(scss).not.toContain("--hk-motion-ease");
+    expect(scss).not.toContain("@keyframes");
+    expect(scss).not.toContain("HkSerpentineUnlock.scss:13");
   });
 });

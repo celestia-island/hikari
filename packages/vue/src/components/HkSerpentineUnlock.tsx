@@ -65,8 +65,6 @@ export default defineComponent({
     confirm: () => true,
     /** Progress at release (0..1); the parent may log or ignore. */
     cancel: (progress: number) => typeof progress === "number",
-    fail: (reason: "off-path" | "short") =>
-      reason === "off-path" || reason === "short",
   },
   setup(props, { emit }) {
     const viewport = ref<HTMLElement | null>(null);
@@ -80,7 +78,6 @@ export default defineComponent({
     const snapping = ref(false);
     /** Set after a successful drag, before the parent acts. */
     const confirmed = ref(false);
-    const failed = ref<"off-path" | "short" | null>(null);
     const announced = ref(0);
 
     const laneWidth = ref(600);
@@ -102,7 +99,6 @@ export default defineComponent({
       () => {
         confirmed.value = false;
         stopSpring();
-        failed.value = null;
         progress.value = 0;
       },
     );
@@ -110,6 +106,11 @@ export default defineComponent({
     // ── keyboard path ────────────────────────────────────────────────
     const keyboardGrabbed = ref(false);
     const keyboardStep = 1 / 20;
+
+/** Pointer-to-lane distance the tracking forgives (px): inside it the knob
+ *  follows the projection; outside it the knob holds (no reset). Generous
+ *  by design — a touch wobble must not cost the walk. */
+const TRACKING_TOLERANCE = 30;
 
     function onKeydown(event: KeyboardEvent) {
       if (props.disabled || confirmed.value) return;
@@ -171,7 +172,6 @@ export default defineComponent({
       // The pointer IS on the resting handle: a re-grab mid-snap-back wins
       // over the spring — stop it, or the two inputs fight over progress.
       stopSpring();
-      failed.value = null;
       try {
         (event.target as HTMLElement).setPointerCapture(event.pointerId);
       } catch {
@@ -193,15 +193,15 @@ export default defineComponent({
         x: event.clientX - box.left,
         y: event.clientY - box.top,
       });
-      // Off-lane check: the pointer must stay within tolerance of the lane.
-      const tolerance = 18;
-      if (near.distance > tolerance) {
-        fail("off-path");
-        return;
-      }
+      // Forgiving tracking (device feedback: an 18px corridor reset the
+      // walk on every touch wobble). Off-lane the knob HOLDS — the
+      // projection can only advance along the lane, so a stray pointer
+      // cannot skip ahead, and coming back resumes. The walk ends only on
+      // release: short of the goal that is a cancel (spring back), at the
+      // goal it confirms.
+      if (near.distance > TRACKING_TOLERANCE) return;
       progress.value = Math.min(1, near.arc / path.value.totalLength);
       announce(progress.value);
-      // Arrival only ARMS the goal; the confirm fires on release at it.
     }
 
     function onPointerUp() {
@@ -222,13 +222,6 @@ export default defineComponent({
       if (!tracking.value) return;
       tracking.value = false;
       emit("cancel", progress.value);
-      snapBack();
-    }
-
-    function fail(reason: "off-path" | "short") {
-      tracking.value = false;
-      failed.value = reason;
-      emit("fail", reason);
       snapBack();
     }
 
@@ -310,7 +303,6 @@ export default defineComponent({
             "hk-serpentine--danger": tone === "danger",
             "hk-serpentine--tracking": tracking.value,
             "hk-serpentine--confirmed": confirmed.value,
-            "hk-serpentine--failed": failed.value !== null,
             "hk-serpentine--snap": snapping.value,
           }}
           ref={viewport}
@@ -352,7 +344,7 @@ export default defineComponent({
           />
           <span class="hk-serpentine-hint" aria-live="polite">
             {confirmed.value
-              ? undefined
+              ? "✓"
               : tracking.value || keyboardGrabbed.value
                 ? `${props.trackingHint} (${announced.value}%)`
                 : props.grabHint}

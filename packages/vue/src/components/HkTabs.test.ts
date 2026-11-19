@@ -970,6 +970,37 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(second.textContent).toContain("Beta");
   });
 
+  it("frames the CELL, not the trigger, when the active option carries actions", async () => {
+    // The cell is the trigger's POSITIONED ancestor, so the button's own
+    // offsets resolve against the cell — measuring the trigger would put
+    // the indicator in the wrong place (or at the wrong width) as soon as
+    // an option carries an action. happy-dom has no layout engine, so the
+    // geometry is stubbed per element: the two numbers must differ or the
+    // test cannot tell which element was measured.
+    const onSelect = vi.fn();
+    const { container, setActive } = mountWithOptions(
+      [
+        { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure", onSelect }] },
+        { key: "b", label: "Beta" },
+      ],
+      { modelValue: "b", variant: "segmented", block: true },
+    );
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    const trigger = cell.querySelector<HTMLElement>(".hk-tabs-trigger")!;
+    Object.defineProperty(cell, "offsetLeft", { value: 100, configurable: true });
+    Object.defineProperty(cell, "offsetWidth", { value: 50, configurable: true });
+    Object.defineProperty(trigger, "offsetLeft", { value: 7, configurable: true });
+    Object.defineProperty(trigger, "offsetWidth", { value: 9, configurable: true });
+
+    setActive("a");
+    await nextTick();
+    await nextTick();
+
+    const indicator = container.querySelector<HTMLElement>(".hk-tabs-indicator")!;
+    expect(indicator.style.left, "the cell's inline offset").toBe("100px");
+    expect(indicator.style.width, "the cell's width").toBe("50px");
+  });
+
   it("pins the reveal + overlay grammar in the stylesheet", () => {
     const scss = readFileSync(join(here, "HkTabs.scss"), "utf8");
     // Hidden by default; hover/focus-within reveals (pointer-events gate).

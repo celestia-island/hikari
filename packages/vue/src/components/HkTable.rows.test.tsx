@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h } from "vue";
 
-import HkTable from "./HkTable";
-import type { HkTableSection, HkTableRow } from "./HkTable";
+import { HkTable, type HkTableSection, type HkTableRow } from "../index";
 
 /**
  * The L38 row-typing contract. The old `rows: Record<string, unknown>[]`
@@ -72,10 +71,17 @@ describe("HkTable row typing (L38)", () => {
     expect(container.textContent).toContain("5");
   });
 
-  it("accepts interface-typed sections the same way", () => {
+  it("accepts interface-typed sections the same way (R3 M2 pin: the rows must be interface-typed ARRAYS, not inline literals)", () => {
+    // Inline section-row literals carry implicit index signatures and stay
+    // assignable to the OLD Record type too — this pin routes declared
+    // `PanelRow[]` consts through `sections` so reverting the widening in
+    // HkTableSection fails THIS file's compile (R3 mutation M2 survived
+    // the first version of this test for exactly that reason).
+    const oneRows: PanelRow[] = [{ id: "a", label: "Alpha", count: 1 }];
+    const twoRows: PanelRow[] = [{ id: "b", label: "Beta", count: 7 }];
     const sections: HkTableSection[] = [
-      { key: "one", label: "One", rows: [{ id: "a", label: "Alpha", count: 1 }] },
-      { key: "two", label: "Two", rows: [{ id: "b", label: "Beta", count: 7 }] },
+      { key: "one", label: "One", rows: oneRows },
+      { key: "two", label: "Two", rows: twoRows },
     ];
     const container = mountRows([], sections);
     expect(container.textContent).toContain("One");

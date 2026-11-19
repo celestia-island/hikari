@@ -68,7 +68,8 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4, 0.25rem) var(--space-6);
-  padding: var(--space-4, 0.25rem) var(--space-4, 0.25rem) var(--space-8, 0.5rem);
+  // The expansion panel's content padding (HkExpansionPanel) owns the
+  // inset now — this grid renders only inside those panels.
 }
 
 /* Non-color slot cell (number slider / enum tab strip). A picker labels

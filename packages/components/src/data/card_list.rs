@@ -331,7 +331,6 @@ mod tests {
             } else {
                 lane.push(c);
             }
-
         }
         assert!(
             lane.contains("min-width: 0"),

@@ -340,7 +340,6 @@ mod tests {
         });
     }
 
-
     /// The mirror must carry the same aria-label semantics as Vue:
     /// ariaLabel wins, label is the fallback, and empty strings never
     /// fabricate a name (the Vue-side contract test pins the same three

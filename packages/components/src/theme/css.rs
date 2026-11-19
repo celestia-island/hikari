@@ -288,11 +288,23 @@ impl ThemePalette {
             success: palette.success.hex(),
             warning: palette.warning.hex(),
             danger: palette.danger.hex(),
-            success_fg: palette.success.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
-            warning_fg: palette.warning.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
-            danger_fg: palette.danger.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
+            success_fg: palette
+                .success
+                .readable_on(&[&palette.background, &palette.surface], 4.5)
+                .hex(),
+            warning_fg: palette
+                .warning
+                .readable_on(&[&palette.background, &palette.surface], 4.5)
+                .hex(),
+            danger_fg: palette
+                .danger
+                .readable_on(&[&palette.background, &palette.surface], 4.5)
+                .hex(),
             info: palette.info.hex(),
-            info_fg: palette.info.readable_on(&[&palette.background, &palette.surface], 4.5).hex(),
+            info_fg: palette
+                .info
+                .readable_on(&[&palette.background, &palette.surface], 4.5)
+                .hex(),
             background: palette.background.hex(),
             surface: palette.surface.hex(),
             surface_rgba: palette.surface.rgba(0.7),
@@ -560,31 +572,55 @@ impl ThemePalette {
             // with --color-surface / --color-background (admin-tokens.scss:110,
             // HkPopover.scss:82); without these a pure-Rust host leaves the
             // static light seed in place and the fg variant misses its target.
-            format!("--color-background: {};", Self::hex_triplet(&self.background)),
+            format!(
+                "--color-background: {};",
+                Self::hex_triplet(&self.background)
+            ),
             format!("--color-surface: {};", Self::hex_triplet(&self.surface)),
             format!("--color-success: {};", Self::hex_triplet(&self.success)),
             format!("--color-error: {};", Self::hex_triplet(&self.danger)),
             format!("--color-warning: {};", Self::hex_triplet(&self.warning)),
             format!("--color-info: {};", Self::hex_triplet(&self.info)),
             format!("--color-text: {};", Self::hex_triplet(&self.text_primary)),
-            format!("--color-muted: {};", Self::hex_triplet(&self.text_secondary)),
-            format!("--color-text-secondary: {};", Self::hex_triplet(&self.text_secondary)),
+            format!(
+                "--color-muted: {};",
+                Self::hex_triplet(&self.text_secondary)
+            ),
+            format!(
+                "--color-text-secondary: {};",
+                Self::hex_triplet(&self.text_secondary)
+            ),
             format!("--color-border: {};", Self::hex_triplet(&self.border)),
             format!("--color-primary: {};", Self::hex_triplet(&self.primary)),
             format!("--color-secondary: {};", Self::hex_triplet(&self.secondary)),
             format!("--color-accent: {};", Self::hex_triplet(&self.accent)),
-            format!("--color-on-primary: {};", Self::on_ink_triplet(&self.primary)),
+            format!(
+                "--color-on-primary: {};",
+                Self::on_ink_triplet(&self.primary)
+            ),
             format!("--color-on-danger: {};", Self::on_ink_triplet(&self.danger)),
-            format!("--color-on-success: {};", Self::on_ink_triplet(&self.success)),
-            format!("--color-on-warning: {};", Self::on_ink_triplet(&self.warning)),
+            format!(
+                "--color-on-success: {};",
+                Self::on_ink_triplet(&self.success)
+            ),
+            format!(
+                "--color-on-warning: {};",
+                Self::on_ink_triplet(&self.warning)
+            ),
             format!("--color-on-info: {};", Self::on_ink_triplet(&self.info)),
             // on-solid is the ink for the BRAND fill (primary). The semantic
             // fills carry their own --color-on-{danger,success,…} channels.
             // on-solid is the ink for the BRAND fill (primary). The semantic
             // fills use their own --color-on-{danger,success,…} channels.
             format!("--color-on-solid: {};", Self::on_ink_triplet(&self.primary)),
-            format!("--color-on-solid-text: {};", Self::on_ink_triplet(&self.primary)),
-            format!("--color-on-solid-icon: {};", Self::on_ink_triplet(&self.primary)),
+            format!(
+                "--color-on-solid-text: {};",
+                Self::on_ink_triplet(&self.primary)
+            ),
+            format!(
+                "--color-on-solid-icon: {};",
+                Self::on_ink_triplet(&self.primary)
+            ),
             format!("--hi-background: {};", self.background),
             format!("--hi-surface: {};", self.surface_rgba),
             format!("--hi-border: {};", self.border),
@@ -858,10 +894,7 @@ mod interaction_alias_tests {
                         .to_string()
                 })
                 .unwrap_or_default();
-            assert!(
-                !value.is_empty(),
-                "{name} not found in css_variables()"
-            );
+            assert!(!value.is_empty(), "{name} not found in css_variables()");
             // The triplet regex: three 1-3 digit numbers separated by spaces.
             let parts: Vec<&str> = value.split(' ').collect();
             assert_eq!(
@@ -870,7 +903,9 @@ mod interaction_alias_tests {
                 "{name}: expected `R G B` triplet, got `{value}`"
             );
             for part in &parts {
-                let n: u16 = part.parse().unwrap_or_else(|_| panic!("{name}: `{value}` is not a triplet"));
+                let n: u16 = part
+                    .parse()
+                    .unwrap_or_else(|_| panic!("{name}: `{value}` is not a triplet"));
                 assert!(n <= 255, "{name}: channel {n} > 255");
             }
         }
@@ -891,8 +926,8 @@ mod interaction_alias_tests {
     /// palette alpha after a host overrides the surface.
     #[test]
     fn surface_override_resyncs_the_glass_paint() {
-        let palette = ThemePalette::from_palette(&default_theme())
-            .with_overrides(PaletteOverrides {
+        let palette =
+            ThemePalette::from_palette(&default_theme()).with_overrides(PaletteOverrides {
                 surface: Some("#888888".to_string()),
                 ..Default::default()
             });

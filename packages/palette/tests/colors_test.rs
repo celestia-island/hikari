@@ -38,7 +38,12 @@ fn test_palette_default() {
     // `themes.rs::semantic_tests`), not the old brand constant: 葱倩 #0eb840
     // only reached 2.64:1 against white, so white ink was unreadable on it.
     assert_ne!(palette.success.hex(), 葱倩.hex());
-    assert!(palette.success.contrast_ratio(&Color::from_rgb_hex(0xff, 0xff, 0xff)) >= 7.0);
+    assert!(
+        palette
+            .success
+            .contrast_ratio(&Color::from_rgb_hex(0xff, 0xff, 0xff))
+            >= 7.0
+    );
 }
 
 #[test]

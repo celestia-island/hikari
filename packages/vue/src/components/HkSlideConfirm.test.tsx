@@ -298,8 +298,6 @@ describe("HkSlideConfirm", () => {
     // Arm progress up to just before the first turn (~t 0.18).
     trace(handle, pixel, 0, 0.18, 16);
     await nextTick();
-    const before = now();
-
     // ONE real event whose coalesced sub-samples carry the pointer
     // through the corner: base → top → beyond.
     const cornerBase = slidePointAtT(pixel, 0.19);
@@ -348,6 +346,61 @@ describe("HkSlideConfirm", () => {
     await nextTick();
     expect(onConfirm, "the wobbling honest trace completes").toHaveBeenCalledTimes(1);
     expect(now()).toBe(100);
+  });
+
+  it("a stale snap-back timer never tears the done state down", async () => {
+    // The complete() guard: a snap-back scheduled BEFORE completion must
+    // not fire after it (a teardown would resurrect the control and allow
+    // a second confirm — a destructive host action firing twice).
+    vi.useFakeTimers();
+    try {
+      const onConfirm = vi.fn();
+      mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+      injectRect(root(), 300, 120);
+      const handle = knob();
+      const pixel = lane42();
+      pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+      // Arm, release early → snap-back scheduled (260ms).
+      trace(handle, pixel, 0, 0.3, 20);
+      pointer(handle, "pointerup", 24, 24);
+      // Complete by keyboard BEFORE the timer fires.
+      for (let i = 0; i < 30; i++) key(handle, "ArrowRight");
+      await nextTick();
+      expect(onConfirm).toHaveBeenCalledTimes(1);
+      // Let the stale timer's deadline pass: the done state must survive.
+      vi.advanceTimersByTime(600);
+      await nextTick();
+      expect(now()).toBe(100);
+      expect(document.body.querySelector(".hk-slide-confirm-done-label")).not.toBeNull();
+      // And no second confirm can be produced for the same gesture.
+      for (let i = 0; i < 5; i++) key(handle, "ArrowRight");
+      await nextTick();
+      expect(onConfirm).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("flipping disabled mid-gesture refuses instead of tracking", async () => {
+    // The traceEvent guard: a host gating on async state can disable the
+    // control mid-drag — the knob must stop (snap back), never emit.
+    const onConfirm = vi.fn();
+    const disabled = ref(false);
+    mount(() => h(HkSlideConfirm, { seed: 42, disabled: disabled.value, onConfirm }));
+    injectRect(root(), 300, 120);
+    const handle = knob();
+    const pixel = lane42();
+    pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+    trace(handle, pixel, 0, 0.3, 20);
+    await nextTick();
+    expect(now()).toBeGreaterThan(0);
+
+    disabled.value = true;
+    await nextTick();
+    trace(handle, pixel, 0.3, 1, 60);
+    await nextTick();
+    expect(now()).toBe(0);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   it("disabled blocks pointer and keyboard paths", () => {

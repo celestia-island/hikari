@@ -114,7 +114,7 @@ describe("slideConfirmCorridor — the constant is the defense", () => {
     }
   });
 
-  it("the default geometry reads 10px (72 inner → 12/2 − 2)", () => {
+  it("the default geometry reads 10px (inner/6 − 2 at 72)", () => {
     expect(slideConfirmCorridor(72)).toBe(10);
   });
 });

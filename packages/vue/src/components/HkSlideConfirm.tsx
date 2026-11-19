@@ -244,6 +244,13 @@ export default defineComponent({
     /** One traced event (real, or a coalesced sub-sample): the pointer
      *  moved to a new position — sweep the segment, advance. */
     function traceEvent(e: PointerEvent) {
+      // `disabled` may flip mid-gesture (a host gating on an async state):
+      // the gesture then ends like a refusal instead of tracking a dead
+      // control and emitting confirm.
+      if (props.disabled) {
+        if (status.value === "dragging") snapBack();
+        return;
+      }
       if (status.value !== "dragging") return;
       const b = box.value;
       const inner = b.height - TRACK_PAD * 2;
@@ -411,7 +418,7 @@ export default defineComponent({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={Math.round(progress.value * 100)}
-            aria-valuetext={done ? doneLabel.value : undefined}
+            aria-valuetext={done ? doneLabel.value : `${Math.round(progress.value * 100)}%`}
             style={{
               // The lane frame is inset by TRACK_PAD; the knob (absolutely
               // parked at the track's corner) rides it from there.

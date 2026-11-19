@@ -117,10 +117,11 @@ export default defineComponent({
       if (v) markAllRead();
     });
 
-    /** The toast's copy contract, carried over verbatim: the FULL
-     *  untruncated record, one field per line (title / code / detail —
-     *  whatever the entry carries). The row itself ellipsizes, so the
-     *  clipboard is the only complete copy of what was shown. */
+    /** The toast's copy affordance, carried over: same clipboard write
+     *  path (useClipboard), but the payload is the journal's own shape —
+     *  the FULL untruncated record, one field per line (title / code /
+     *  detail — whatever the entry carries). The row itself ellipsizes,
+     *  so the clipboard is the only complete copy of what was shown. */
     function copyEntry(entry: HkNotificationEntry) {
       const parts = [entry.title];
       if (entry.code) parts.push(entry.code);
@@ -185,6 +186,7 @@ export default defineComponent({
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::toast.copy", "Copy")}
+                {...{ title: t("hikari::toast.copy", "Copy") }}
                 onClick={() => copyEntry(entry)}
               >
                 {{ icon: () => <Copy size={14} /> }}

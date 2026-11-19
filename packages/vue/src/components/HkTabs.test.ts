@@ -965,8 +965,8 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
             "onUpdate:modelValue": (v: string) => { active.value = v; },
             renderPanels: false,
             tabs: (short.value
-              ? [{ key: "b", label: "Beta" }]
-              : [{ key: "a", label: "Alpha" }, { key: "b", label: "Beta" }]) as TabItem[],
+              ? [{ key: "b", label: "Beta", actions: [{ key: "dot", label: "Configure", onSelect: () => {} }] }]
+              : [{ key: "a", label: "Alpha" }, { key: "b", label: "Beta", actions: [{ key: "dot", label: "Configure", onSelect: () => {} }] }]) as TabItem[],
           },
         );
       },
@@ -978,11 +978,19 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     await nextTick();
 
     const stubTrigger = (left: number, width: number) => {
-      const el = [...host.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
+      // The survivor carries an action, so the indicator frames its CELL —
+      // stub both layers (the button keeps working for action-less
+      // fixtures).
+      const btn = [...host.querySelectorAll<HTMLElement>(".hk-tabs-trigger")]
         .find((candidate) => candidate.textContent?.trim() === "Beta")!;
-      Object.defineProperty(el, "offsetLeft", { value: left, configurable: true });
-      Object.defineProperty(el, "offsetWidth", { value: width, configurable: true });
-      return el;
+      Object.defineProperty(btn, "offsetLeft", { value: left, configurable: true });
+      Object.defineProperty(btn, "offsetWidth", { value: width, configurable: true });
+      const cell = btn.closest<HTMLElement>(".hk-tabs-cell");
+      if (cell) {
+        Object.defineProperty(cell, "offsetLeft", { value: left, configurable: true });
+        Object.defineProperty(cell, "offsetWidth", { value: width, configurable: true });
+      }
+      return btn;
     };
 
     // Measure #1 with the first stub. The measure runs on a post-render
@@ -1234,10 +1242,11 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(scss).toMatch(/\[data-slots\] > \.hk-tabs-cell/);
     // The reserved action lane: without it the revealed buttons sit ON the
     // label's tail in a shrink-to-fit pill (clicks there hit the action,
-    // not the option). The lane must exist and exceed the overlay's own
-    // footprint (inset 4px + 20px button).
+    // not the option). The lane is list padding (12px) + the overlay's own
+    // footprint (20px button; the inset cancels against the trigger's own
+    // edge padding) — pin the magnitude so a shrunken calc cannot pass.
     expect(scss).toMatch(
-      /\.hk-tabs-cell > \.hk-tabs-trigger\s*{[^}]*padding-inline-end:\s*calc\([^)]*\)/,
+      /\.hk-tabs-cell > \.hk-tabs-trigger\s*{[^}]*padding-inline-end:\s*calc\(var\(--space-12\) \+ 18px\)/,
     );
     // The cell anchors the overlay (positioned ancestor).
     expect(scss).toMatch(/\.hk-tabs-cell\s*{[^}]*position:\s*relative/);

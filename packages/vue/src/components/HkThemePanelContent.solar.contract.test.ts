@@ -98,8 +98,10 @@ describe("HkThemePanelContent solar editor entry", () => {
     const container = mountPanel({ solarEditor: true });
     expect(solarAction()).toBeTruthy();
     useTheme().setMode("light");
-    await settle();
-    expect(solarAction()).toBeNull();
+    // The cell LEAVES through the strip's swap transition (the ⋯ rides the
+    // leaving element), so a fixed settle races the animation — poll until
+    // the entry is actually gone.
+    await vi.waitFor(() => expect(solarAction()).toBeNull());
     // No dead right-click either: the trigger carries no binding.
     const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
     const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 6, clientY: 6 });

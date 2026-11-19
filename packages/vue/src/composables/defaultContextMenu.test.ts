@@ -341,6 +341,50 @@ describe("clipboard contributor", () => {
     // application after the value changed would assert nonsense.
   });
 
+  it("a later non-built-in contributor still answers after a thrower", () => {
+    const unregisterThrower = registerContextMenuDefault({
+      id: "test.thrower-late",
+      order: -1,
+      build: () => {
+        throw new Error("boom");
+      },
+    });
+    const unregisterLater = registerContextMenuDefault({
+      id: "test.later",
+      order: 50,
+      build: () => ({ x: 0, y: 0, items: [{ key: "later", label: "Later" }] }),
+    });
+    try {
+      // A plain body target: the built-in clipboard declines it, so THIS
+      // assertion exercises the walk RESUMING past the thrower.
+      const request = contextMenuDefaultsFor(point(document.body));
+      expect(request?.items[0]?.key).toBe("later");
+    } finally {
+      unregisterThrower();
+      unregisterLater();
+    }
+  });
+
+  it("paste inserts at the snapshot start (not the drifted caret)", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn().mockResolvedValue("P") },
+      configurable: true,
+    });
+    const input = document.createElement("input");
+    input.value = "hello world";
+    input.setSelectionRange(0, 5); // snapshot 0..5 = "hello"
+    const request = editableMenu(input);
+    input.setSelectionRange(11, 11); // the caret drifted to the tail
+
+    request.onSelect!("paste", request.items[2]!);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // Snapshot form: "hello world"[0..0) + "P" + [5..) = "P world" — the
+    // insertion landed at the snapshot start; a live caret read would have
+    // appended at the tail ("hello worldP").
+    expect(input.value).toBe("P world");
+    expect(input.selectionStart).toBe(1);
+  });
+
   it("select all covers the whole field", () => {
     const input = document.createElement("input");
     input.value = "hello world";

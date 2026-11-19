@@ -19,6 +19,14 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* Avatars are round — the letter fallback included (2026-11-20 user
+     report: the workspace roster's fallback chip rendered SQUARE because
+     this rule never rounded; every other avatar grammar in the two faces
+     — .s-user-avatar / .s-user-avatar-chip / the account modal's
+     rounded-full preview — already answers 50%, so the component was the
+     one square holdout). `overflow: hidden` above clips the <img> to the
+     same circle. */
+  border-radius: 50%;
   background-color: rgb(var(--color-muted, 108 108 108) / 15%);
   color: rgb(var(--color-text-secondary, 102 102 102));
   transition: all 0.2s ease;

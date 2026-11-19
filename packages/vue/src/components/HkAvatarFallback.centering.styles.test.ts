@@ -84,6 +84,13 @@ describe("avatar letter-fallback optical centering (text-box guard)", () => {
     expect(ruleFor(css.adminTokens, ".s-user-avatar", "admin-tokens")).toContain("display: flex");
   });
 
+  it("hk-avatar: the fallback chip is ROUND (2026-11-20 square-chip report)", () => {
+    // The roster fallback rendered a SQUARE letter chip because this rule
+    // never rounded while every sibling avatar grammar answers 50% — the
+    // component was the one square holdout. Pin it so it stays round.
+    expect(ruleFor(css.avatar, ".hk-avatar", "avatar")).toContain("border-radius: 50%");
+  });
+
   it("hk-avatar-fallback: guard block swaps flex for block + centered trimmed line", () => {
     const body = supportsBody(css.avatar, SUPPORTS_PREAMBLE, "avatar");
     expect(guardedSelector(css.avatar, SUPPORTS_PREAMBLE, "avatar")).toBe(".hk-avatar-fallback");

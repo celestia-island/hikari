@@ -53,8 +53,8 @@ describe("minimap dock stylesheet contract", () => {
     expect(canvasCss).toContain(".hk-node-canvas-minimap[data-placement=bottom-right]");
     const dock = ruleFor(boardCss, ".hk-board-minimap");
     expect(dock).toContain("position: absolute");
-    expect(dock).toContain("inset-inline-end");
-    expect(dock).toContain("bottom");
+    expect(dock).toContain("inset-inline-end: var(--space-10)");
+    expect(dock).toContain("bottom: var(--space-10)");
   });
 
   it("the card's self-docking form survives for direct mounts", () => {

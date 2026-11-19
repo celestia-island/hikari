@@ -93,7 +93,7 @@ describe("HkDraggableList actions-lane sheet", () => {
     expect(body).toContain("flex-shrink: 0");
     // Multiple host buttons in one lane need the lane's own gap so they
     // never fuse into one cluster against the row edge.
-    expect(body).toContain("gap:");
+    expect(body).toContain("gap: var(--space-8, 0.5rem)");
   });
 
   // The right-edge pinning is STRUCTURAL, not a margin patch: the item

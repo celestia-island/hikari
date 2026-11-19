@@ -666,7 +666,9 @@ describe("HkStatusBar", () => {
     // Reduced-motion users keep the steady tint.
     const scss = readFileSync(resolve(__dirname, "../styles/admin-tokens.scss"), "utf8");
     const rule = /\.s-status-bar-tag-reconnecting\s*\{[^}]*\}/.exec(scss)?.[0] ?? "";
-    expect(rule, "reconnecting rule carries the breathe animation").toContain("animation:");
+    expect(rule, "reconnecting rule carries the breathe animation").toContain(
+      "animation: s-status-bar-reconnecting-breathe 1.8s var(--ease-standard) infinite",
+    );
     expect(scss).toContain("@keyframes s-status-bar-reconnecting-breathe");
     expect(scss).toMatch(
       /@media[^{]*prefers-reduced-motion[^{]*\{[^@]*?\.s-status-bar-tag-reconnecting\s*\{[^}]*animation:\s*none/s,

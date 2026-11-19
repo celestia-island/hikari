@@ -1161,25 +1161,28 @@ describe("HkTabs per-option context menu (2026-11-19)", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  it("dispatches through the LATEST option closure after a rebuilt option list", async () => {
-    // The option arrays are rebuilt on every render (fresh closures — the
-    // theme panel does exactly this). The binding must not churn, and it
-    // must resolve the CURRENT handler rather than the one captured when
-    // the element first mounted.
+  it("serves the CURRENT option closure after a rebuilt option list", async () => {
+    // The option arrays are rebuilt on every parent render (the theme
+    // panel does exactly that), so the menu a user opens must carry the
+    // CURRENT payload. The payload is CAPTURED AT RENDER TIME on purpose:
+    // a lazily-read ref would print the new value from a stale closure
+    // too, which is exactly how a binding that captures its option can
+    // pass a badly built pin.
     const picks: string[] = [];
     const container = document.createElement("div");
     document.body.appendChild(container);
     containers.push(container);
-    const label = ref("first");
+    const revision = ref(1);
     const Wrapper = defineComponent({
       setup() {
-        return () =>
-          h(HkContextMenuProvider, null, {
+        return () => {
+          // Reading it HERE is what makes the rebuild real.
+          const snapshot = revision.value;
+          return h(HkContextMenuProvider, null, {
             default: () =>
               h(HkTabs, {
                 modelValue: "a",
                 renderPanels: false,
-                // A fresh array + fresh closures each render.
                 tabs: [
                   {
                     key: "a",
@@ -1187,13 +1190,14 @@ describe("HkTabs per-option context menu (2026-11-19)", () => {
                     contextMenu: (point: { x: number; y: number }) => ({
                       x: point.x,
                       y: point.y,
-                      items: [{ key: "cfg", label: `Configure ${label.value}` }],
-                      onSelect: () => picks.push(label.value),
+                      items: [{ key: "cfg", label: `Configure ${snapshot}` }],
+                      onSelect: () => picks.push(String(snapshot)),
                     }),
                   },
                 ] as TabItem[],
               }),
           });
+        };
       },
     });
     const app = createApp(Wrapper);
@@ -1201,20 +1205,22 @@ describe("HkTabs per-option context menu (2026-11-19)", () => {
     app.mount(container);
     await nextTick();
 
-    // Re-render with a different closure payload.
-    label.value = "second";
+    // A real rebuild: fresh array, fresh closure, same trigger element.
+    revision.value = 2;
     await nextTick();
     await nextTick();
 
     const trigger = container.querySelector<HTMLElement>(".hk-tabs-trigger")!;
-    trigger.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 9, clientY: 9 }));
+    const event = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 9, clientY: 9 });
+    trigger.dispatchEvent(event);
     await nextTick();
+    expect(event.defaultPrevented, "the rebuilt option still claims its right-click").toBe(true);
     const row = Array.from(document.querySelectorAll<HTMLButtonElement>(".hk-menu-row"))
       .find((r) => r.textContent?.includes("Configure"));
-    expect(row?.textContent, "the menu carries the LATEST closure's label").toContain("second");
+    expect(row?.textContent, "the menu carries the CURRENT render's payload").toContain("2");
     row!.click();
     await nextTick();
-    expect(picks).toEqual(["second"]);
+    expect(picks).toEqual(["2"]);
   });
 
   it("defers outward when the option carries no contextMenu (event untouched)", async () => {

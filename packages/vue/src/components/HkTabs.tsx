@@ -437,10 +437,10 @@ export default defineComponent({
         contextBindings.delete(el);
         if (tab.contextMenu) {
           const boundKey = tab.key;
-          // MUTATION M3: dispatch through the option captured at bind time.
-          const capturedOption = tab;
           const unbind = bindContextMenu(el, contextMenuApi, (point) => {
-            return capturedOption.contextMenu?.(point) ?? null;
+            // Always dispatch to the LATEST handler of this option.
+            const live = tabsNow.find((tb) => tb.key === boundKey);
+            return live?.contextMenu?.(point) ?? null;
           });
           contextBindings.set(el, { key: boundKey, unbind });
         }

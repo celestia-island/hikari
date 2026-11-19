@@ -176,8 +176,9 @@ describe("clipboard contributor", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     // No write into detached DOM, no error escaped.
     expect(input.value).toBe("original");
-    request.onSelect!("selectAll", request.items[3]!);
-    expect(document.getSelection()?.toString() ?? "").not.toBe("original");
+    // selectAll on a detached target must not throw either; the value
+    // assertion above is the real pin.
+    expect(() => request.onSelect!("selectAll", request.items[3]!)).not.toThrow();
   });
 
   it("declines non-editable targets", () => {
@@ -211,6 +212,29 @@ describe("clipboard contributor", () => {
       expect(input.selectionStart).toBe(13);
       expect(inputEvent).toBe(true);
     });
+  });
+
+  it("cut never deletes text that was never copied", async () => {
+    // Copy failing (denied clipboard + execCommand reporting failure) must
+    // leave the field intact — "cut" is copy-then-delete, not delete.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn().mockRejectedValue(new Error("denied")), readText: vi.fn() },
+      configurable: true,
+    });
+    const original = document.execCommand;
+    // The legacy fallback reports failure by RETURNING false.
+    document.execCommand = vi.fn(() => false);
+    try {
+      const input = document.createElement("input");
+      input.value = "keep me";
+      input.setSelectionRange(0, 7);
+      const request = editableMenu(input);
+      request.onSelect!("cut", request.items[1]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(input.value, "nothing was copied, so nothing may be deleted").toBe("keep me");
+    } finally {
+      document.execCommand = original;
+    }
   });
 
   it("select all covers the whole field", () => {

@@ -1,0 +1,137 @@
+@use "../styles/polyfill" as *;
+
+// HkSlideConfirm (components/HkSlideConfirm.tsx) — the fat slide-to-
+// confirm: a three-standard-row block whose orthogonal lane carries ≥3
+// random right-angle turns; the knob is grabbed and TRACED from the left
+// edge to the right edge; a premature release or a corridor exit snaps it
+// back at once. Tokens follow the house scale (--space-*, --radius-*,
+// rgb(var(--color-*)), --hi-color-*).
+//
+// GEOMETRY: the block's height is THREE standard control rows
+// (calc(var(--space-40, 2.5rem) * 3)) — the 2026-11-19 user direction
+// that makes the confirmation feel deliberate instead of reflexive. The
+// lane svg is inset by the same TRACK_PAD the tsx maps coordinates with;
+// the knob rides the lane's px frame (transform from the track corner,
+// centered by the negative half-margin below).
+
+.hk-slide-confirm {
+  position: relative;
+  height: calc(var(--space-40, 2.5rem) * 3);
+  border-radius: var(--radius-lg, 0.75rem);
+  background: var(--hi-color-surface, rgba(255, 255, 255, 0.95));
+  border: 1px solid rgb(var(--color-border) / 8%);
+  overflow: hidden;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  &:hover:not(.is-disabled) {
+    border-color: rgb(var(--color-border) / 20%);
+  }
+
+  &.is-done {
+    border-color: rgb(var(--color-primary) / 35%);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 8%, transparent);
+  }
+
+  &.is-disabled {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+/* The lane: an svg inset by TRACK_PAD (the tsx maps coordinates in the
+ * same frame). One polyline, thick round stroke — a corridor to trace,
+ * not a line to read. */
+.hk-slide-confirm-lane {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.hk-slide-confirm-lane-path {
+  fill: none;
+  stroke: rgb(var(--color-text) / 14%);
+  stroke-width: 1.25rem;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+
+  &.is-done {
+    stroke: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 45%, transparent);
+  }
+}
+
+.hk-slide-confirm-label,
+.hk-slide-confirm-done-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-32, 2rem);
+  font-size: 0.75rem;
+  color: rgb(var(--color-text) / 45%);
+  text-align: center;
+  pointer-events: none;
+  @include user-select(none);
+}
+
+.hk-slide-confirm-done-label {
+  color: var(--hi-color-primary, #7aa2f7);
+  font-weight: 600;
+}
+
+/* The knob: a joystick-sized circle, centered on the lane point by the
+ * negative half-margin, riding the transform the tsx writes. While
+ * snapping it transitions back to the start (the "一下子回去" — the
+ * instant return reads as refusal, not as a reset). */
+.hk-slide-confirm-knob {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: -1.2rem; /* center the knob on the lane point */
+  border-radius: 50%;
+  background: var(--hi-color-surface, rgba(255, 255, 255, 0.98));
+  border: 1px solid rgb(var(--color-border) / 22%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 22%);
+  cursor: grab;
+  touch-action: none;
+  transition: transform 0.24s cubic-bezier(0.3, 0, 0.5, 1), border-color 0.2s ease;
+
+  &.is-done {
+    cursor: default;
+    border-color: var(--hi-color-primary, #7aa2f7);
+    background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 18%, var(--hi-color-surface, rgba(255, 255, 255, 0.95)));
+  }
+}
+
+.hk-slide-confirm.is-dragging .hk-slide-confirm-knob {
+  cursor: grabbing;
+  /* While tracing, the knob follows the pointer 1:1 — no transition (a
+   * transitioned follow would lag the hand). Only the snap-back transition
+   * above applies, and only once .is-dragging is gone. */
+  transition: border-color 0.2s ease;
+}
+
+/* The grip: three horizontal pills — the joystick affordance. */
+.hk-slide-confirm-knob-grip {
+  width: 0.9rem;
+  height: 0.55rem;
+  background:
+    linear-gradient(to bottom,
+      rgb(var(--color-text) / 45%) 0 2px, transparent 2px 4px,
+      rgb(var(--color-text) / 45%) 4px 6px, transparent 6px 8px,
+      rgb(var(--color-text) / 45%) 8px 10px, transparent 10px);
+  border-radius: 1px;
+}
+
+/* Reduced motion: the snap-back must SNAP (the whole point of the refusal
+ * read), not glide — the transition is the only animated part. */
+@media (prefers-reduced-motion: reduce) {
+  .hk-slide-confirm-knob {
+    transition: border-color 0.2s ease;
+  }
+}

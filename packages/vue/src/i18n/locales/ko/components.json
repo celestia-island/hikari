@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "숨김",
   "hikari::notificationCenter.stateResolved": "해제됨",
   "hikari::notificationCenter.clearAll": "모두 지우기",
-  "hikari::notificationCenter.dismiss": "지우기"
+  "hikari::notificationCenter.dismiss": "지우기",
+  "hikari::slideConfirm.drag": "손잡이를 잡고 라인을 따라 오른쪽 끝까지 끌어주세요",
+  "hikari::slideConfirm.success": "확인됨"
 }

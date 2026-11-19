@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "Masquée",
   "hikari::notificationCenter.stateResolved": "Résolue",
   "hikari::notificationCenter.clearAll": "Tout effacer",
-  "hikari::notificationCenter.dismiss": "Ignorer"
+  "hikari::notificationCenter.dismiss": "Ignorer",
+  "hikari::slideConfirm.drag": "Maintenez la poignée et faites-la glisser le long du tracé jusqu'au bord droit",
+  "hikari::slideConfirm.success": "Confirmé"
 }

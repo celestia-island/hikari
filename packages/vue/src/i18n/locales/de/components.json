@@ -383,5 +383,7 @@
   "hikari::notificationCenter.stateHidden": "Ausgeblendet",
   "hikari::notificationCenter.stateResolved": "Behoben",
   "hikari::notificationCenter.clearAll": "Alle löschen",
-  "hikari::notificationCenter.dismiss": "Verwerfen"
+  "hikari::notificationCenter.dismiss": "Verwerfen",
+  "hikari::slideConfirm.drag": "Halte den Griff und ziehe ihn entlang der Bahn zum rechten Rand",
+  "hikari::slideConfirm.success": "Bestätigt"
 }

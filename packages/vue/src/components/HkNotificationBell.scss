@@ -35,6 +35,14 @@
   }
 }
 
+/* The list wrapper is the overlay scrollbar's track host (useOverlay
+  Scrollbar requires a box wrapping EXACTLY the viewport — the panel body
+   also holds the foot, so the list gets its own). No styles of its own:
+   the engine's positioning guard promotes it in place. */
+.hk-notification-center__list-wrap {
+  position: relative;
+}
+
 .hk-notification-center__list {
   list-style: none;
   margin: 0;
@@ -105,12 +113,39 @@
   }
 }
 
-.hk-notification-row__icon {
+.hk-notification-row__icon-box {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  /* The consolidation badge anchors to this box's corner. */
+  position: relative;
+}
+
+.hk-notification-row__icon {
   display: inline-flex;
   align-items: center;
   /* Tone ink follows the row's tone class (rules below). */
   color: rgb(var(--color-text) / 65%);
+}
+
+/* Corner tally for consolidated records (2026-11-19): the unread dot's
+   primary channel — the same "attention" grammar the bell trigger speaks.
+   Sits on the glyph's bottom-end corner like a notification count. */
+.hk-notification-row__icon-count {
+  position: absolute;
+  inset-inline-end: -7px;
+  bottom: -6px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--hi-color-primary, #7aa2f7);
+  color: rgb(255 255 255 / 95%);
+  font-size: 9px;
+  line-height: 14px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Tone ink on the glyph (the toast family's own --hi-color-<tone>

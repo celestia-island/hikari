@@ -341,6 +341,137 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
+  it("identical messages render ONE row with a corner tally badge", async () => {
+    // User direction 2026-11-19: identical messages consolidate into one
+    // row; the tone glyph's corner carries the count. The JOURNAL stays
+    // 1:1 with its sources (ids are lifecycle keys) — the grouping is a
+    // view concern (the record-time merge design was rejected in review:
+    // folding discards the incoming id and breaks every id-keyed op).
+    await setLocale("en");
+    for (const id of ["t:1", "t:2", "t:3"]) {
+      recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
+    }
+    recordNotification({ id: "s:1", kind: "toast", tone: "warning", title: "other" });
+    const { entries } = useNotificationCenter();
+    // The journal keeps full fidelity — three separate records.
+    expect(entries).toHaveLength(4);
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    // …but the reader sees ONE row per distinct message.
+    expect(rows()).toHaveLength(2);
+    const boomRow = rows().find((r) => r.textContent?.includes("boom"))!;
+    const badge = boomRow.querySelector<HTMLElement>(".hk-notification-row__icon-count");
+    expect(badge, "the tally badge renders").toBeTruthy();
+    expect(badge!.textContent).toBe("3");
+    expect(badge!.getAttribute("title")).toContain("msgs");
+    // A single-occurrence record carries NO badge.
+    const otherRow = rows().find((r) => r.textContent?.includes("other"))!;
+    expect(otherRow.querySelector(".hk-notification-row__icon-count")).toBeNull();
+  });
+
+  it("dismiss on a consolidated row forgets EVERY member of the group", async () => {
+    await setLocale("en");
+    for (const id of ["t:1", "t:2", "t:3"]) {
+      recordNotification({ id, kind: "toast", tone: "error", title: "boom" });
+    }
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    const boomRow = rows()[0]!;
+    const dismiss = boomRow.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+    )!;
+    dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    // The whole line goes — not just the newest member.
+    expect(useNotificationCenter().entries).toHaveLength(0);
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("a toast joining a snoozed emergency's group does NOT dissolve the Restore", async () => {
+    // Round-3 S2, proven by probe: the group's FACE is its newest member
+    // (the toast), so head-only action gating hid the emergency's only
+    // restore affordance while the journal still held the callback — the
+    // same loss the record-time merge was rejected for, at the view
+    // layer. The actions lane scans members instead.
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out" });
+    snoozeEmergencyAlert("quota");
+    recordNotification({
+      id: "toast:same",
+      kind: "toast",
+      tone: "warning",
+      title: "quota out",
+      state: "active",
+    });
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(2);
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    const row = rows()[0]!;
+    // Restore is STILL offered (member scan), and the Hidden chip shows.
+    const restore = row.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]',
+    );
+    expect(restore, "the emergency's restore survives the grouping").toBeTruthy();
+    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toContain(
+      "Hidden",
+    );
+    // The tally counts both members.
+    expect(row.querySelector(".hk-notification-row__icon-count")?.textContent).toBe("2");
+    // And the restore still works through the journal's resummon path.
+    restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(
+      row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]'),
+    ).toBeFalsy();
+    expect(row.classList.contains("is-active")).toBe(true);
+  });
+
+  it("the open panel carries the overlay scrollbar tracks; closing detaches them", async () => {
+    // The list keeps native overflow MECHANICS with the suppression pair,
+    // so the overlay engine is the only chrome it can ever show (user
+    // report 2026-11-19: the list scrolled invisibly). HkPopover attaches
+    // its engine in sheet mode only — the bell owns the desktop one.
+    await setLocale("en");
+    for (let i = 0; i < 30; i++) {
+      recordNotification({ id: `t:${i}`, kind: "toast", tone: "error", title: `row ${i}` });
+    }
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const wrap = document.querySelector(".hk-notification-center__list-wrap");
+    expect(wrap, "the dedicated track host exists").toBeTruthy();
+    expect(wrap!.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
+    // Closing the panel must not leak the engine (document listeners /
+    // cron timers ride the handle).
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-notification-center__list-wrap")).toBeNull();
+
+    // Round-2 hole: with the panel OPEN on the empty state the list is
+    // not mounted — a record landing NOW mounts it fresh. The signature
+    // watcher must attach the engine to the NEW viewport (an update() on
+    // a stale handle would leave it scrolling invisibly).
+    resetNotifications();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    recordNotification({ id: "late", kind: "toast", tone: "error", title: "late arrival" });
+    await settle();
+    const wrap2 = document.querySelector(".hk-notification-center__list-wrap");
+    expect(wrap2, "the list mounts under the open panel").toBeTruthy();
+    expect(wrap2!.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
+  });
+
   it("rows sort newest-first and Clear all empties the journal", async () => {
     await setLocale("en");
     const { entries } = useNotificationCenter();

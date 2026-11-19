@@ -46,9 +46,13 @@ import {
   TriangleAlert as AlertTriangle,
   X,
 } from "lucide-vue-next";
-import { computed, defineComponent, h, ref, watch, type Component } from "vue";
+import { computed, defineComponent, h, nextTick, onUnmounted, ref, watch, type Component } from "vue";
 
 import { useChromeActionSize } from "../composables/useChromeActionSize";
+import {
+  attachOverlayScrollbars,
+  type OverlayScrollbarHandle,
+} from "../composables/useOverlayScrollbar";
 import { activeLocale, useI18n } from "../i18n/context";
 import {
   useNotificationCenter,
@@ -99,6 +103,44 @@ export default defineComponent({
     const clipboard = useClipboard();
     const open = ref(false);
     const anchorRef = ref<HTMLElement | null>(null);
+    // The list is the popup's ONE scroll surface on the desktop flyout —
+    // it carries the native-suppression pair, so WITHOUT the overlay
+    // engine it scrolls invisibly (user report 2026-11-19). HkPopover
+    // attaches its own engine only in sheet mode ("desktop popovers size
+    // to content"), which is why the bell owns this one. Same shape as
+    // HkDrawer: a wrapper that wraps EXACTLY the viewport is the track
+    // host, attach on open, detach on close/unmount.
+    const listRef = ref<HTMLUListElement | null>(null);
+    const listWrapRef = ref<HTMLDivElement | null>(null);
+    let listScrollbar: OverlayScrollbarHandle | null = null;
+    function detachListScrollbar() {
+      listScrollbar?.detach();
+      listScrollbar = null;
+    }
+    /** One sync point for the list's overlay chrome: attach when the
+     *  viewport exists under an open panel, detach when it does not,
+     *  update when only the content moved. Re-checks `open` INSIDE the
+     *  nextTick so a same-flush open→close cannot attach onto a panel
+     *  that is already on its way out (round-2 flap note). The sheet
+     *  branch never scrolls the list (overflow: visible — the engine
+     *  self-hides when content fits), so one unconditional path serves
+     *  both modalities. */
+    function syncListScrollbar() {
+      nextTick(() => {
+        if (!open.value || !listRef.value) {
+          detachListScrollbar();
+          return;
+        }
+        if (!listScrollbar) {
+          listScrollbar = attachOverlayScrollbars(listRef.value, {
+            axis: "vertical",
+            host: listWrapRef.value ?? undefined,
+          });
+        } else {
+          listScrollbar.update();
+        }
+      });
+    }
 
     const unread = computed(() => entries.filter((e) => !e.read).length);
     const sorted = computed(() =>
@@ -110,12 +152,63 @@ export default defineComponent({
         (a, b) => b.updatedAt - a.updatedAt || entries.indexOf(b) - entries.indexOf(a),
       ),
     );
+    // Content consolidation (user direction 2026-11-19) lives in the VIEW,
+    // deliberately not in the journal: ids are the key every lifecycle op
+    // speaks (a source's own re-record, setNotificationState, forget), and
+    // a record-time merge would discard the incoming id — a folded source's
+    // re-records then count as recurrences forever and its state/forget
+    // calls no-op (the round-1 review's S1, proven by probe). Grouping the
+    // sorted rows keeps the journal 1:1 with its sources while the reader
+    // sees ONE row per distinct message with a tally badge. Newest member
+    // is the group's face (time/state/actions); the tally is the member
+    // count; dismiss forgets every DISMISSABLE member of the group.
+    interface HkNotificationGroup {
+      /** Stable content key — the row's vue key, so a new member joining
+       *  (or the face changing) does not remount the row under the cursor. */
+      key: string;
+      members: HkNotificationEntry[];
+      head: HkNotificationEntry;
+    }
+    const groups = computed<HkNotificationGroup[]>(() => {
+      const out: HkNotificationGroup[] = [];
+      const byKey = new Map<string, HkNotificationGroup>();
+      for (const e of sorted.value) {
+        const key = `${e.tone}\u0000${e.title}\u0000${e.code ?? ""}\u0000${e.detail ?? ""}`;
+        const hit = byKey.get(key);
+        if (hit) {
+          hit.members.push(e);
+        } else {
+          const group: HkNotificationGroup = { key, members: [e], head: e };
+          byKey.set(key, group);
+          out.push(group);
+        }
+      }
+      return out;
+    });
+    // A signature of everything the rendered rows depend on — drives the
+    // scrollbar sync (rows appearing/vanishing/changing height all move
+    // scrollHeight, which the engine's box ResizeObserver cannot see).
+    const rowSignature = computed(() =>
+      groups.value
+        .map((g) =>
+          g.members
+            .map((m) => `${m.id}:${m.updatedAt}:${m.state}:${m.read ? 1 : 0}`)
+            .join("+"),
+        )
+        .join("|"),
+    );
 
     // Open = read receipt. Watching the flag (not wiring it into the
     // toggle) keeps the receipt honest for sheet-scrim closes too.
     watch(open, (v) => {
       if (v) markAllRead();
+      syncListScrollbar();
     });
+    // Rows mount/unmount/change while open too (empty↔list swaps, new
+    // records, tallies) — every such transition moves scrollHeight, which
+    // the engine's box ResizeObserver cannot see.
+    watch(rowSignature, () => syncListScrollbar());
+    onUnmounted(detachListScrollbar);
 
     /** The toast's copy affordance, carried over: same clipboard write
      *  path (useClipboard), but the payload is the journal's own shape —
@@ -129,18 +222,54 @@ export default defineComponent({
       void clipboard.copy(parts.join("\n"));
     }
 
-    function renderRow(entry: HkNotificationEntry) {
+    function renderRow(group: HkNotificationGroup) {
+      // The NEWEST member is the group's face — time, code/detail and the
+      // tone all answer "what happened most recently".
+      const entry = group.head;
       const Icon = TONE_ICONS[entry.tone] ?? Info;
-      const isLive = entry.kind === "emergency" && entry.state !== "cleared";
-      const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
+      // The actions lane is MEMBER-SCANNED, not head-only (round-3 S2,
+      // proven by probe): a same-content toast joining a snoozed
+      // emergency's group becomes the face, and a head-only read would
+      // hide the emergency's ONLY restore affordance while the journal
+      // still holds it — exactly the loss the record-time merge was
+      // rejected for, at the view layer instead.
+      const isLive = group.members.some(
+        (m) => m.kind === "emergency" && m.state !== "cleared",
+      );
+      const restorable = group.members.find(
+        (m) => m.onResummon !== undefined && m.state === "snoozed",
+      );
+      // State chip: the head's own state wins; otherwise any member's
+      // Hidden/Resolved state still deserves its chip.
+      const chip =
+        entry.state === "snoozed" || entry.state === "cleared"
+          ? entry
+          : group.members.find((m) => m.state === "snoozed" || m.state === "cleared");
+      const tally = group.members.length;
       return (
-        <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
+        <li key={group.key} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
           {/* The row glyph renders through h(Icon, …): Vue's Component
               union is not a valid JSX element type, so `<Icon />` is
               not available here — both this tone glyph and the row
               actions' RotateCcw go through the render function. */}
-          <span class="hk-notification-row__icon" aria-hidden="true">
-            {h(Icon, { size: 14 })}
+          <span class="hk-notification-row__icon-box">
+            <span class="hk-notification-row__icon" aria-hidden="true">
+              {h(Icon, { size: 14 })}
+            </span>
+            {tally > 1 && (
+              // The consolidation tally (user direction 2026-11-19): a
+              // corner badge on the tone glyph. It sits OUTSIDE the
+              // glyph's aria-hidden box (round-2 a11y note) as real text —
+              // screen readers hear the number — and keeps pointer events
+              // so the hover naming works.
+              <span
+                class="hk-notification-row__icon-count"
+                title={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
+                aria-label={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
+              >
+                {tally > 99 ? "99+" : tally}
+              </span>
+            )}
           </span>
           <div class="hk-notification-row__body">
             <div class="hk-notification-row__top">
@@ -150,14 +279,14 @@ export default defineComponent({
               {/* The state word is a flex:none SIBLING of the clipping
                   title (round-2 review: inside the span, ellipsis ate it
                   first for exactly the long titles where it matters). */}
-              {(entry.state === "snoozed" || entry.state === "cleared") && (
+              {chip && (
                 <span class="hk-notification-row__title-state">
                   {"· "}
                   {t(
-                    entry.state === "snoozed"
+                    chip.state === "snoozed"
                       ? "hikari::notificationCenter.stateHidden"
                       : "hikari::notificationCenter.stateResolved",
-                    entry.state === "snoozed" ? "Hidden" : "Resolved",
+                    chip.state === "snoozed" ? "Hidden" : "Resolved",
                   )}
                 </span>
               )}
@@ -197,17 +326,26 @@ export default defineComponent({
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::notificationCenter.dismiss", "Dismiss")}
-                onClick={() => forget(entry.id)}
+                onClick={() => {
+                  // X on a consolidated row dismisses the WHOLE line —
+                  // every member whose surface allows dismissal (a live
+                  // emergency episode is never user-dismissable).
+                  for (const m of group.members) {
+                    if (!(m.kind === "emergency" && m.state !== "cleared")) {
+                      forget(m.id);
+                    }
+                  }
+                }}
               >
                 {{ icon: () => <X size={14} /> }}
               </HkIconButton>
             )}
-            {resummonable && (
+            {restorable && (
               <HkIconButton
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::emergencyAlert.restore", "Show again")}
-                onClick={() => entry.onResummon?.()}
+                onClick={() => restorable.onResummon?.()}
               >
                 {{ icon: () => h(RotateCcw, { size: 14 }) }}
               </HkIconButton>
@@ -255,9 +393,11 @@ export default defineComponent({
                 </p>
               ) : (
                 <>
-                  <ul class="hk-notification-center__list" role="list">
-                    {sorted.value.map(renderRow)}
-                  </ul>
+                  <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
+                    <ul class="hk-notification-center__list" role="list" ref={listRef}>
+                      {groups.value.map(renderRow)}
+                    </ul>
+                  </div>
                   <div class="hk-notification-center__foot">
                     {/* The wipe glyph reads before the label is parsed —
                         a destructive affordance announced by its icon

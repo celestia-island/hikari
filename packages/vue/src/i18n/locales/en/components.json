@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Clear all",
   "hikari::notificationCenter.dismiss": "Dismiss",
   "hikari::slideConfirm.drag": "Hold the knob and drag along the lane to the right edge",
-  "hikari::slideConfirm.success": "Confirmed"
+  "hikari::slideConfirm.success": "Confirmed",
+  "hikari::contextmenu.title": "Edit",
+  "hikari::contextmenu.copy": "Copy",
+  "hikari::contextmenu.cut": "Cut",
+  "hikari::contextmenu.paste": "Paste",
+  "hikari::contextmenu.selectAll": "Select all"
 }

@@ -1,8 +1,9 @@
 import HkAddTile from "./HkAddTile";
+import HkSolarLocationEditor from "./HkSolarLocationEditor";
 import { HkListRow, type HkListRowAction } from "./HkCardList";
 
 import { computed, defineComponent, onUnmounted, ref, watch, type PropType } from "vue";
-import { Monitor, MoonStar, Sun, Trash as Trash2 } from "lucide-vue-next";
+import { Ellipsis, Monitor, MoonStar, Sun, Trash as Trash2 } from "lucide-vue-next";
 import {
   HDivider,
   solarAltitude,
@@ -92,11 +93,29 @@ export const HkThemePanelContent = defineComponent({
       type: Function as PropType<(scope: ThemeItemScope) => HkListRowAction[] | undefined>,
       default: undefined,
     },
+    /**
+     * Attach the SOLAR-CLOCK configuration entry to the auto-mode
+     * option of the color-mode group (2026-11-19 user direction): the
+     * dedicated strategy card retires from hosts' mode-extra strips —
+     * the auto trigger gains a hover-revealed "⋯" action plus a
+     * right-click menu item, both opening the built-in
+     * HkSolarLocationEditor. The entry rides the STANDARD HTabs
+     * per-option capabilities (actions + contextMenu), so any host
+     * could assemble the same thing itself — this prop is the
+     * batteries-included form. DELIBERATELY HIDDEN outside auto mode
+     * (user ruling 2026-11-19: 非 auto 直接隐藏) — the sun clock only
+     * drives the theme in "system", and a hidden affordance beats a
+     * permanently-grey one for a control that mostly does nothing.
+     * Fires `solar-applied` after the editor applied a strategy (hosts
+     * typically toast).
+     */
+    solarEditor: { type: Boolean, default: false },
   },
   emits: {
     "update:scheme": (_theme: HCustomTheme) => true,
     "open-customize": () => true,
     "request-close": () => true,
+    "solar-applied": () => true,
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
@@ -126,6 +145,10 @@ export const HkThemePanelContent = defineComponent({
     }
 
     const schemeDialogOpen = ref(false);
+    /** The solar editor's open state (prop `solarEditor`) — the editor
+     *  modal teleports, so hosting it inside the panel content is safe
+     *  wherever the panel itself is embedded. */
+    const solarEditorOpen = ref(false);
 
     // ── Solar-altitude readout (auto-mode merged cell) ──────────────
     // `geo` comes from the theme clock (timezone estimate until the real
@@ -176,11 +199,34 @@ export const HkThemePanelContent = defineComponent({
      * doing nothing.
      */
     function modeOptions(): TabItem[] {
-      return [
+      const options: TabItem[] = [
         { key: "system", label: t("hikari::theme.modeAuto"), icon: <Monitor size={16} /> },
         { key: "light", label: t("hikari::theme.modeLight"), icon: <Sun size={16} /> },
         { key: "dark", label: t("hikari::theme.modeDark"), icon: <MoonStar size={16} /> },
       ];
+      // The solar-clock entry rides the AUTO option only (fresh option
+      // objects per call; a hidden entry outside auto — no actions, no
+      // context menu, nothing greyed). The ⋯ and the right-click item
+      // open the same extracted editor.
+      if (props.solarEditor && isAutoMode.value) {
+        const openSolarEditor = () => { solarEditorOpen.value = true; };
+        options[0].actions = [
+          {
+            key: "solar",
+            icon: <Ellipsis size={14} />,
+            label: t("hikari::theme.solar.configure"),
+            onSelect: openSolarEditor,
+          },
+        ];
+        options[0].contextMenu = (point) => ({
+          x: point.x,
+          y: point.y,
+          title: t("hikari::theme.solar.title"),
+          items: [{ key: "solar", label: t("hikari::theme.solar.configure") }],
+          onSelect: openSolarEditor,
+        });
+      }
+      return options;
     }
 
     function onSelectMode(value: string) {
@@ -398,6 +444,14 @@ export const HkThemePanelContent = defineComponent({
             modelValue={schemeDialogOpen.value}
             onUpdate:modelValue={(v: boolean) => { schemeDialogOpen.value = v; }}
             onConfirm={onConfirmScheme}
+          />
+        )}
+
+        {props.solarEditor && (
+          <HkSolarLocationEditor
+            modelValue={solarEditorOpen.value}
+            onUpdate:modelValue={(v: boolean) => { solarEditorOpen.value = v; }}
+            onApplied={() => emit("solar-applied")}
           />
         )}
       </>

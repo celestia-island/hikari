@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Limpar tudo",
   "hikari::notificationCenter.dismiss": "Descartar",
   "hikari::slideConfirm.drag": "Segure o botão e arraste-o pelo traçado até a borda direita",
-  "hikari::slideConfirm.success": "Confirmado"
+  "hikari::slideConfirm.success": "Confirmado",
+  "hikari::contextmenu.title": "Editar",
+  "hikari::contextmenu.copy": "Copiar",
+  "hikari::contextmenu.cut": "Recortar",
+  "hikari::contextmenu.paste": "Colar",
+  "hikari::contextmenu.selectAll": "Selecionar tudo"
 }

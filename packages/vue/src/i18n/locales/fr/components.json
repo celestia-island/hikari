@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Tout effacer",
   "hikari::notificationCenter.dismiss": "Ignorer",
   "hikari::slideConfirm.drag": "Maintenez la poignée et faites-la glisser le long du tracé jusqu'au bord droit",
-  "hikari::slideConfirm.success": "Confirmé"
+  "hikari::slideConfirm.success": "Confirmé",
+  "hikari::contextmenu.title": "Édition",
+  "hikari::contextmenu.copy": "Copier",
+  "hikari::contextmenu.cut": "Couper",
+  "hikari::contextmenu.paste": "Coller",
+  "hikari::contextmenu.selectAll": "Tout sélectionner"
 }

@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Borrar todo",
   "hikari::notificationCenter.dismiss": "Descartar",
   "hikari::slideConfirm.drag": "Mantén el tirador y arrástralo por el trazado hasta el borde derecho",
-  "hikari::slideConfirm.success": "Confirmado"
+  "hikari::slideConfirm.success": "Confirmado",
+  "hikari::contextmenu.title": "Editar",
+  "hikari::contextmenu.copy": "Copiar",
+  "hikari::contextmenu.cut": "Cortar",
+  "hikari::contextmenu.paste": "Pegar",
+  "hikari::contextmenu.selectAll": "Seleccionar todo"
 }

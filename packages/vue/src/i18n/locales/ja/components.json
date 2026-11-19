@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "すべて消去",
   "hikari::notificationCenter.dismiss": "削除",
   "hikari::slideConfirm.drag": "ノブをつかみ、ラインに沿って右端までドラッグしてください",
-  "hikari::slideConfirm.success": "確認済み"
+  "hikari::slideConfirm.success": "確認済み",
+  "hikari::contextmenu.title": "編集",
+  "hikari::contextmenu.copy": "コピー",
+  "hikari::contextmenu.cut": "切り取り",
+  "hikari::contextmenu.paste": "貼り付け",
+  "hikari::contextmenu.selectAll": "すべて選択"
 }

@@ -385,5 +385,10 @@
   "hikari::notificationCenter.clearAll": "Очистить всё",
   "hikari::notificationCenter.dismiss": "Скрыть",
   "hikari::slideConfirm.drag": "Удерживайте ручку и протяните её по трассе до правого края",
-  "hikari::slideConfirm.success": "Подтверждено"
+  "hikari::slideConfirm.success": "Подтверждено",
+  "hikari::contextmenu.title": "Правка",
+  "hikari::contextmenu.copy": "Копировать",
+  "hikari::contextmenu.cut": "Вырезать",
+  "hikari::contextmenu.paste": "Вставить",
+  "hikari::contextmenu.selectAll": "Выбрать все"
 }

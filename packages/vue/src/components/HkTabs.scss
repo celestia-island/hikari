@@ -114,6 +114,102 @@
   align-items: center;
 }
 
+/* === Option cell (attached trigger actions, 2026-11-19) ===
+ * An option carrying `actions` renders its trigger INSIDE a cell
+ * wrapper — the action buttons are siblings of the trigger (a button
+ * cannot nest a button). The cell is the track child: it carries the
+ * slot-unit weight, joins the swap transitions, and is the element the
+ * sliding indicator frames (the cell is the trigger's positioned
+ * ancestor, so the button's own offsets would be cell-relative and
+ * break the indicator math — activeFrameEl measures the cell instead;
+ * their geometry is equal because the trigger fills the cell). */
+.hk-tabs-cell {
+  position: relative;
+  /* Same layer as the triggers, above the sliding indicator. */
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+.hk-tabs-cell > .hk-tabs-trigger {
+  /* Fill the cell wherever the cell's width is definite (block flex
+     growth, slot-unit grid tracks); in a shrink-to-fit inline strip the
+     percentage resolves to the content size, so nothing changes there. */
+  width: 100%;
+}
+
+/* block (row-filling) strips: the cell takes the growth its trigger
+   rule would have had (the descendant trigger rules keep matching, but
+   the growth must land on the cell). */
+.hk-tabs-list[data-variant="segmented"][data-block="true"] > .hk-tabs-cell {
+  flex: 1 1 auto;
+}
+
+.hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"] > .hk-tabs-cell {
+  flex: 1 0 auto;
+}
+
+.hk-tabs-trigger-actions {
+  /* Overlaid at the trigger's inline-end edge — a hover reveal that
+     never shifts layout (the pill's width is the option's track, not
+     the content's). Hidden until hover/focus-within; on touch there is
+     no hover, so the reachable path is the option's contextMenu
+     long-press binding (pair the two when touch matters). */
+  position: absolute;
+  inset-inline-end: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-short) ease;
+}
+
+.hk-tabs-cell:hover > .hk-tabs-trigger-actions,
+.hk-tabs-cell:focus-within > .hk-tabs-trigger-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* A whole-strip disabled render has no live actions to reveal. */
+.hk-tabs-cell[data-disabled] > .hk-tabs-trigger-actions {
+  display: none;
+}
+
+.hk-tabs-trigger-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(var(--color-muted));
+  cursor: pointer;
+  outline: none;
+  transition: color var(--duration-short) ease,
+              background-color var(--duration-short) ease;
+
+  &:hover:not([disabled]) {
+    color: rgb(var(--color-text));
+    background: rgb(var(--color-primary) / 8%);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: -2px;
+  }
+
+  &[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 /* === The one shared sliding indicator (every variant) ===
  * Starts transparent: the first measured frame only fades it in (no
  * pop-in from a stale corner), later frames slide via left/width. */
@@ -284,6 +380,8 @@
 
 .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-trigger,
 .hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-trigger,
+.hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-cell,
+.hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-cell,
 .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-merged,
 .hk-tabs-scroller .hk-tabs-list[data-variant="segmented"][data-block="true"][data-slots] > .hk-tabs-merged {
   grid-column: span var(--hk-tabs-span, 1) / span var(--hk-tabs-span, 1);
@@ -297,6 +395,7 @@
 @media (prefers-reduced-motion: reduce) {
   .hk-tabs-trigger,
   .hk-tabs-indicator,
+  .hk-tabs-trigger-actions,
   .hk-tabs-swap-enter-active,
   .hk-tabs-swap-leave-active {
     transition: none;

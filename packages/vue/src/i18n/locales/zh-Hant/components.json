@@ -389,5 +389,10 @@
   "hikari::notificationCenter.clearAll": "全部清空",
   "hikari::notificationCenter.dismiss": "消除",
   "hikari::slideConfirm.drag": "按住搖桿，沿通道拖到最右側",
-  "hikari::slideConfirm.success": "已確認"
+  "hikari::slideConfirm.success": "已確認",
+  "hikari::contextmenu.title": "編輯",
+  "hikari::contextmenu.copy": "複製",
+  "hikari::contextmenu.cut": "剪下",
+  "hikari::contextmenu.paste": "貼上",
+  "hikari::contextmenu.selectAll": "全選"
 }

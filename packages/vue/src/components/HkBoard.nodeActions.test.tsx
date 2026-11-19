@@ -93,9 +93,16 @@ const boardScss = (await import("node:fs")).readFileSync(
 describe("HkBoard nodeActions dock styles", () => {
   it("docks the actions to the node's bottom-end corner above the body", () => {
     const block = boardScss.slice(boardScss.indexOf("&-actions {"));
+    // Values, not just property names (sweep round-2): the corner dock
+    // rides the shared inset token and sits ABOVE the body (z-index 6 —
+    // a name-only match let `bottom: auto` / `z-index: 1` stay green).
     expect(block.slice(0, 400)).toMatch(/position:\s*absolute/);
-    expect(block.slice(0, 400)).toMatch(/inset-inline-end/);
-    expect(block.slice(0, 400)).toMatch(/bottom:/);
-    expect(block.slice(0, 400)).toMatch(/z-index/);
+    expect(block.slice(0, 400)).toMatch(
+      /inset-inline-end:\s*var\(--hk-board-node-action-inset, 4px\)/,
+    );
+    expect(block.slice(0, 400)).toMatch(
+      /bottom:\s*var\(--hk-board-node-action-inset, 4px\)/,
+    );
+    expect(block.slice(0, 400)).toMatch(/z-index:\s*6/);
   });
 });

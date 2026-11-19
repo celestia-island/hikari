@@ -771,7 +771,10 @@ describe("HkTable section band stylesheet", () => {
       ".hk-table-lg .hk-table-section-cell",
     ]) {
       const body = ruleBody(selector);
-      expect(body.trim()).toMatch(/^padding:/);
+      // The VALUE is pinned per rung (sweep round-2): a bare /^padding:/
+      // let `padding: 0` keep the sm rung green while the lg pin stayed
+      // satisfied by the other rule.
+      expect(body.trim()).toMatch(/^padding:\s*var\(--space-/);
       expect(body).not.toContain("font-size");
       expect(body).not.toContain("font-weight");
     }

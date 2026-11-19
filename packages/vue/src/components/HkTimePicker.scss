@@ -156,6 +156,8 @@
 /* The segmented control is hikari's HkPillToggleGroup; only the clock
  * panel's own alignment/icon scale lives here. */
 .hk-tp-period {
+  /* The track hugs since HkPillToggleGroup's width change (2026-11-19); center the hugged track in the panel column. */
+  align-self: center;
   justify-content: center;
   cursor: default;
   touch-action: manipulation;

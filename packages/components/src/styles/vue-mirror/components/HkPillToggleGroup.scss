@@ -25,7 +25,22 @@
 @use "../styles/polyfill" as *;
 
 .hk-pill-group {
-  display: flex;
+  /* HUG, DON'T STRETCH (2026-11-19 report: "the group has mysterious
+   * padding" — a bordered EMPTY BOX trailing the last pill in a ~148px
+   * table cell). The track is a block-level div, so a `display: flex`
+   * track filled its container and the chrome framed blank space to the
+   * right of a short option set. `inline-flex` + `width: fit-content`
+   * makes the track exactly as wide as its pills; the pairing is NOT
+   * redundant — a flex item is display-blockified (inline-flex → flex),
+   * so only the definite `fit-content` width stops a column flex parent's
+   * `align-items: stretch` from re-filling the lane.
+   *
+   * `max-width: 100%` is what keeps the pannable strip intact: a pill
+   * set too wide for the lane still clamps to the lane, so
+   * `scrollWidth > clientWidth` (the data-h-overflow fade sensing in
+   * useOptionStrip) and the wheel/drag pan behave exactly as before. */
+  display: inline-flex;
+  width: fit-content;
   flex-wrap: nowrap;
   max-width: 100%;
   gap: var(--space-4, 4px);

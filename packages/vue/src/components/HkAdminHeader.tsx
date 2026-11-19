@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, watch, type PropType, type VNode } from "vue";
+import { computed, defineComponent, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
@@ -11,8 +11,34 @@ export interface LocaleOption {
   label: string;
 }
 
+/**
+ * Scoped payload of the `avatar-modal` slot — the exact object the header
+ * passes when it mounts the avatar crop modal (known-live-issues L39:
+ * consumers hand-copied this shape as local interfaces; single-sourced here).
+ */
+export interface HkAdminHeaderAvatarModalSlot {
+  open: boolean;
+  onUpdateOpen: (value: boolean) => void;
+}
+
+/**
+ * The header's whole slot surface, in `SlotsType` form. `identity`,
+ * `center`, `emergency-stop-extra` and `theme-toggle` take no params; the
+ * slots the header NEVER invokes (any other name) are not part of this
+ * contract — see L39's record of the erp-side `locale-picker` /
+ * `user-menu-extra` aspirational slots.
+ */
+export type HkAdminHeaderSlots = SlotsType<{
+  identity?: () => VNode[];
+  center?: () => VNode[];
+  "emergency-stop-extra"?: () => VNode[];
+  "theme-toggle"?: () => VNode[];
+  "avatar-modal"?: (params: HkAdminHeaderAvatarModalSlot) => VNode[];
+}>;
+
 export const HkAdminHeader = defineComponent({
   name: "HkAdminHeader",
+  slots: Object as HkAdminHeaderSlots,
   props: {
     /** Page title rendered beside the avatar — the view the console is
      *  currently ON (dashboard, providers, …). The signed-in nickname

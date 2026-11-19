@@ -1,4 +1,4 @@
-import { computed, defineComponent, provide, ref, watch, type PropType } from "vue";
+import { computed, defineComponent, provide, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useSidebarRail } from "../composables/useSidebarRail";
@@ -168,8 +168,64 @@ export function mobileSideGutterFree(value: string): string {
  * footer, the fixed footer band and its injection-driven height
  * reservation, the overlays slot — behaves identically in both modes.
  */
+/**
+ * Scoped payload of the `header` slot — the exact object every render site
+ * passes (known-live-issues L39: consumers hand-copied subsets of this shape
+ * as local interfaces; the export makes the contract single-sourced).
+ */
+export interface HkFaceShellHeaderSlot {
+  /** Viewport at or above `mobileBreakpoint` (the desktop layout). */
+  isDesktop: boolean;
+  /** True on the mobile layout — the hamburger button should render. */
+  showHamburger: boolean;
+  /** True below `mobileBreakpoint` — the drawer is the only nav surface. */
+  compact: boolean;
+  /** Toggles the mobile hamburger drawer. */
+  onHamburger: () => void;
+  /** Opens the mobile nav drawer directly (e.g. the avatar's drawer mode). */
+  onOpenDrawer: () => void;
+}
+
+/**
+ * Scoped payload of the `sidebar` slot. Desktop renders it twice — expanded
+ * panel and (opt-in) the icon-rail hover peek; mobile renders a third copy
+ * inside the drawer. `peeking` is only set on the rail peek copy, `inDrawer`
+ * only on the mobile drawer copy; both stay optional so one body serves all.
+ */
+export interface HkFaceShellSidebarSlot {
+  /** The icon-rail dress (true only on the collapsed rail outside a peek). */
+  collapsed: boolean;
+  /** Call after any in-sidebar navigation so the mobile drawer closes. */
+  onNavigate: () => void;
+  /** True while the collapsed rail shows its hover-peek overlay (desktop). */
+  peeking?: boolean;
+  /** Set on the mobile drawer copy: the slot should fill its full width. */
+  inDrawer?: boolean;
+}
+
+/** Scoped payload of the `userPanel` slot (the drawer footer). */
+export interface HkFaceShellUserPanelSlot {
+  /** Call after any in-panel navigation so the mobile drawer closes. */
+  onNavigate: () => void;
+}
+
+/**
+ * The shell's whole slot surface, in `SlotsType` form so a host can type its
+ * own wrapper with `slots: Object as HkFaceShellSlots` and get per-slot
+ * param checking for free. `content` / `footer` / `overlays` take no params.
+ */
+export type HkFaceShellSlots = SlotsType<{
+  header?: (params: HkFaceShellHeaderSlot) => VNode[];
+  sidebar?: (params: HkFaceShellSidebarSlot) => VNode[];
+  userPanel?: (params: HkFaceShellUserPanelSlot) => VNode[];
+  content?: () => VNode[];
+  footer?: () => VNode[];
+  overlays?: () => VNode[];
+}>;
+
 export const HkFaceShell = defineComponent({
   name: "HkFaceShell",
+  slots: Object as HkFaceShellSlots,
   props: {
     sidebarCollapsed: { type: Boolean, default: false },
     sidebarWidth: { type: String, default: "224px" },

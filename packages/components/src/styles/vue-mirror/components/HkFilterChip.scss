@@ -85,10 +85,10 @@
   text-overflow: ellipsis;
 }
 
-.hk-filter-chip-caret {
-  opacity: 0.6;
-  flex: 0 0 auto;
-}
+/* The trigger renders NO caret (2026-11-19): a facet chip reads as the
+ * same solid-surface family as the bespoke chips beside it, and the
+ * disclosure state rides aria-expanded. Host suffixes (a direction
+ * arrow) seat through renderChipTrailing and carry their own classes. */
 
 .hk-filter-chip-body {
   display: flex;

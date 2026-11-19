@@ -142,7 +142,6 @@ fn pairs() -> Vec<Pair> {
                 "hk-filter-chip-text",
                 "hk-filter-chip-anchor",
                 "hk-filter-chip-body",
-                "hk-filter-chip-caret",
                 "hk-filter-chip-hint",
                 "hk-filter-chip--on",
                 // Cross-family render emissions (the chip rows are built

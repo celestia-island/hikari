@@ -40,9 +40,10 @@ import { useClipboard } from "../runtime/useClipboard";
  *  the event; returning null defers to later contributors (and
  *  ultimately to suppression). */
 export interface ContextMenuDefaultContribution {
-  /** Stable identity — re-registering an id REPLACES the earlier
-   *  entry (HMR / re-mount safety), and the returned function
-   *  unregisters whatever is currently registered under it. */
+  /** Stable identity — re-registering an id REPLACES the earlier entry
+   *  (HMR / re-mount safety). The returned unregister removes THIS
+   *  registration by object identity, so a stale handle can never evict a
+   *  newer registration that reused the id. */
   id: string;
   /** Run order, ascending. Equal orders keep registration order.
    *  Default 100; the built-in clipboard menu sits at 0. */
@@ -105,6 +106,14 @@ const TEXT_INPUT_TYPES = new Set([
   "", "text", "search", "url", "tel", "email", "password", "number",
 ]);
 
+/** A `<input type="number">` accepts the clipboard menu (copy / cut / select
+ *  all are fine) but NOT paste: HTML value-sanitization turns arbitrary text
+ *  into "", so a paste would dispatch `input` with an EMPTY value and the
+ *  host model would commit the wipe — native paste inserts nothing instead. */
+function acceptsPaste(el: HTMLElement): boolean {
+  return !(el instanceof HTMLInputElement && el.type === "number");
+}
+
 function isTextLikeInput(el: HTMLInputElement): boolean {
   return TEXT_INPUT_TYPES.has((el.getAttribute("type") ?? "").toLowerCase());
 }
@@ -149,7 +158,8 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
       ? field.readOnly || field.disabled
       : editable.isContentEditable === false;
     const canPaste = typeof navigator !== "undefined"
-      && typeof navigator.clipboard?.readText === "function";
+      && typeof navigator.clipboard?.readText === "function"
+      && acceptsPaste(editable);
 
     // ── Snapshot the selection NOW ──────────────────────────────────
     const sel = document.getSelection();
@@ -203,7 +213,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
     const doCut = async () => {
       if (!stillAttached()) return;
       if (!(await doCopy())) return; // never delete text that was not copied
-      if (isReadOnly) return;
+      if (isReadOnly || !stillAttached()) return; // the target may have left while copying
       if (field) {
         const start = field.selectionStart ?? 0;
         const end = field.selectionEnd ?? 0;
@@ -224,6 +234,7 @@ export const clipboardContextMenuDefault: ContextMenuDefaultContribution = {
         return; // clipboard-read denied (some webviews): shortcut still works
       }
       if (!text) return;
+      if (!stillAttached()) return; // the target may have left while reading
       restore();
       if (field) {
         const start = field.selectionStart ?? field.value.length;

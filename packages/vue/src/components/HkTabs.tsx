@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNodeChild } from "vue";
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onBeforeUpdate, onMounted, onUpdated, ref, watch, TransitionGroup, type ComponentPublicInstance, type PropType, type VNodeChild } from "vue";
 import { Ellipsis } from "lucide-vue-next";
 
 import "./HkTabs.scss";
@@ -567,6 +567,13 @@ export default defineComponent({
       }
     });
 
+    // Post-patch prune: the `props.tabs` watcher runs BEFORE Vue patches
+    // the DOM, so an element this very update detaches still reports
+    // itself connected there. After the patch it is genuinely gone.
+    onUpdated(() => {
+      pruneDetachedBindings();
+    });
+
     onBeforeUnmount(() => {
       resizeObserver?.disconnect();
       resizeObserver = null;
@@ -580,7 +587,6 @@ export default defineComponent({
     watch(() => props.tabs, () => {
       triggerRefs.value.clear();
       cellRefs.value.clear();
-      pruneDetachedBindings();
       nextTick(refreshGeometry);
     }, { deep: true });
 
@@ -702,7 +708,9 @@ export default defineComponent({
           // Attached actions have no trigger to attach to while the run
           // is collapsed — documented ignore, loud ONCE in DEV (a render
           // function repeats, a drift alarm must not).
-          warnOnce(`merged-actions:${tab.key}`, "[HkTabs] actions on a merged tab are ignored:", tab.key);
+          if (tab.actions?.length) {
+            warnOnce(`merged-actions:${tab.key}`, "[HkTabs] actions on a merged tab are ignored:", tab.key);
+          }
           // The merged run renders as ONE combined cell at its first
           // option's position — a real in-flow child of the track (joins
           // layout and the swap/indicator animation context), never an
@@ -778,7 +786,20 @@ export default defineComponent({
               if (!props.disabled && !disabled && tab.key !== props.modelValue) emit("update:modelValue", tab.key);
             }}
           >
-            {slots[`trigger-${tab.key}`]?.({ tab }) ?? (
+            {(() => {
+              const triggerSlot = slots[`trigger-${tab.key}`];
+              if (triggerSlot) {
+                if (tab.icon != null || tab.badge) {
+                  warnOnce(
+                    `trigger-slot-drops-decor:${tab.key}`,
+                    "[HkTabs] trigger-<key> slot replaces the icon and badge of:",
+                    tab.key,
+                  );
+                }
+                return triggerSlot({ tab });
+              }
+              return null;
+            })() ?? (
               <>
                 {icon}
                 {/* The badge anchors the LABEL (inside the trigger's own
@@ -814,6 +835,7 @@ export default defineComponent({
             <div
               key={tab.key}
               class="hk-tabs-cell"
+              role="presentation"
               ref={(el) => setCellRef(el, idx)}
               // The CELL mutes for the same reasons its trigger does: the
               // strip's own flag OR this option's `disabled` (a disabled

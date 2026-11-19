@@ -181,6 +181,28 @@ describe("clipboard contributor", () => {
     expect(() => request.onSelect!("selectAll", request.items[3]!)).not.toThrow();
   });
 
+  it("keeps the menu on a number input but refuses paste there", () => {
+    // `<input type="number">` sanitizes arbitrary text to "" — a paste would
+    // dispatch `input` with an EMPTY value and wipe the host model. Copy /
+    // cut / select-all stay useful, so the menu is claimed and only the
+    // paste row reports the refusal.
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText: vi.fn(), readText: vi.fn() },
+      configurable: true,
+    });
+    const number = document.createElement("input");
+    number.type = "number";
+    number.value = "42";
+    // A number input has no selection API (`setSelectionRange` throws), and
+    // the contributor must not depend on one to build its rows.
+    const request = editableMenu(number);
+    // The menu is still claimed (select-all is useful on a number field),
+    // and only paste reports the refusal.
+    expect(request).toBeTruthy();
+    expect(request.items.find((i) => i.key === "paste")!.disabled).toBe(true);
+    expect(request.items.find((i) => i.key === "selectAll")!.disabled).toBeFalsy();
+  });
+
   it("declines non-editable targets", () => {
     expect(clipboardContextMenuDefault.build(point(document.createElement("div")))).toBeNull();
     expect(clipboardContextMenuDefault.build(point(null))).toBeNull();

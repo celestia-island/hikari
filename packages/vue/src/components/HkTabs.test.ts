@@ -944,6 +944,86 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     }
   });
 
+  it("does not alarm for merged options that carry no actions", () => {
+    // The theme panel's DEFAULT auto mode merges light/dark with no
+    // actions attached — that must stay silent (it alarmed once per option
+    // before the guard).
+    _resetTabsWarnOnceForTests();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const Wrapper = defineComponent({
+        setup() {
+          return () => h(
+            HkTabs,
+            {
+              variant: "segmented",
+              block: true,
+              modelValue: "a",
+              mergeKeys: ["b", "c"],
+              renderPanels: false,
+              tabs: [
+                { key: "a", label: "Auto" },
+                { key: "b", label: "Light" },
+                { key: "c", label: "Dark" },
+              ] as TabItem[],
+            },
+            { merged: () => h("span", "altitude") },
+          );
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      expect(warn.mock.calls.some((args) => String(args[0]).includes("merged"))).toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it("marks the cell as presentation (a layout wrapper around real controls)", () => {
+    const onSelect = vi.fn();
+    const { container } = mountWithOptions([
+      { key: "a", label: "Alpha", actions: [{ key: "dot", label: "Configure", onSelect }] },
+      { key: "b", label: "Beta" },
+    ]);
+    const cell = container.querySelector<HTMLElement>(".hk-tabs-cell")!;
+    expect(cell.getAttribute("role")).toBe("presentation");
+  });
+
+  it("alarms in DEV when a trigger slot swallows the icon or badge", () => {
+    _resetTabsWarnOnceForTests();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      containers.push(container);
+      const Wrapper = defineComponent({
+        setup() {
+          return () => h(
+            HkTabs,
+            {
+              modelValue: "a",
+              renderPanels: false,
+              tabs: [{ key: "a", label: "Alpha", badge: { count: 3 } }] as TabItem[],
+            },
+            { "trigger-a": () => h("em", "custom") },
+          );
+        },
+      });
+      const app = createApp(Wrapper);
+      mounts.push(app);
+      app.mount(container);
+      expect(
+        warn.mock.calls.some((args) => String(args[0]).includes("replaces the icon and badge")),
+      ).toBe(true);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it("exposes a per-option content slot that replaces the icon+label render", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);

@@ -83,7 +83,7 @@ export default defineComponent({
      * host rebuilds the returned vnode when its state moves, nothing is
      * cached here. */
     renderTrailing: {
-      type: Function as PropType<(value: string | null) => VNode>,
+      type: Function as PropType<(value: string | null) => VNode | undefined>,
       default: undefined,
     },
   },

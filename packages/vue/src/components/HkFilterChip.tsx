@@ -85,13 +85,17 @@ export default defineComponent({
      * the two closes would fight; mobile keeps its scrim either way. */
     closeOnBackdrop: { type: Boolean, default: true },
     /** Trigger-suffix renderer — the seat for a host's direction arrow.
-     * Re-evaluated every render; render nothing while disengaged. */
-    renderChipTrailing: { type: Function as PropType<() => VNode>, default: undefined },
+     * Re-evaluated every render; render nothing while disengaged (an
+     * undefined return seats nothing — the disengaged state is the norm). */
+    renderChipTrailing: {
+      type: Function as PropType<() => VNode | undefined>,
+      default: undefined,
+    },
     /** Popup pill-suffix renderer, forwarded to the pill group — a null
      * value scopes the all-pill, a value scopes that option. Ignored
      * while the default slot replaces the pill group. */
     renderPillTrailing: {
-      type: Function as PropType<(value: string | null) => VNode>,
+      type: Function as PropType<(value: string | null) => VNode | undefined>,
       default: undefined,
     },
   },

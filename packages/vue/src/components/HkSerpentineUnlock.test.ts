@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 type FrameCb = (ctx: { delta: number; elapsed: number; now: number }) => void;
 
@@ -173,7 +173,7 @@ describe("HkSerpentineUnlock (mounted)", () => {
 
   it("announces twenty-percent bands (40% renders as forty, not worse)", async () => {
     // Walk to ~40%: the aria-live hint must read "(40%)" — the band
-    // formula is floor(v*5)*20; a 5x-off formula renders hundreds.
+    // formula is round(v*5)*20; a 2x-off formula renders hundreds.
     const el = mountGate();
     const path = generateSerpentinePath(600, 96, 42);
     const start = path.points[0]!;
@@ -197,6 +197,50 @@ describe("HkSerpentineUnlock (mounted)", () => {
     pointer(el, "pointermove", sixty.x, sixty.y);
     pointer(el, "pointerup", sixty.x, sixty.y);
     for (let i = 0; i < 40; i++) frameBus.tick(64); // spring settles
+    await nextTick();
+    pointer(el, "pointerdown", start.x, start.y);
+    const ten = projectOntoPath(path.points, path.totalLength * 0.1);
+    pointer(el, "pointermove", ten.x, ten.y);
+    await nextTick();
+    const hint = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
+    const pct = Number(hint.match(/\((\d+)%\)/)?.[1] ?? "0");
+    expect(pct).toBeLessThanOrEqual(20);
+  });
+
+  it("resetKey mid-tracking resets the announcer with the progress", async () => {
+    // Own harness: the resetKey prop must be reactive to bump mid-test.
+    const resetKey = ref(0);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp(defineComponent({
+      setup() {
+        return () =>
+          h(HkSerpentineUnlock, {
+            label: "Delete workspace",
+            grabHint: "grab hint",
+            trackingHint: "keep going",
+            seed: 42,
+            resetKey: resetKey.value,
+          });
+      },
+    }));
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+    const el = container.querySelector<HTMLElement>(".hk-serpentine")!;
+
+    const path = generateSerpentinePath(600, 96, 42);
+    const start = path.points[0]!;
+    pointer(el, "pointerdown", start.x, start.y);
+    const sixty = projectOntoPath(path.points, path.totalLength * 0.6);
+    pointer(el, "pointermove", sixty.x, sixty.y);
+    await nextTick();
+    // 60% tracks: announced band sits at 60.
+    const tracked = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
+    expect(tracked).toContain("60%");
+    // Bump resetKey: progress zeroes AND the announcer goes with it — the
+    // next walk must announce from zero, not carry the 60% band.
+    resetKey.value += 1;
     await nextTick();
     pointer(el, "pointerdown", start.x, start.y);
     const ten = projectOntoPath(path.points, path.totalLength * 0.1);

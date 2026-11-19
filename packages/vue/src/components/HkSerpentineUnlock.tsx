@@ -145,8 +145,9 @@ export default defineComponent({
 
     // ── pointer tracking ─────────────────────────────────────────────
     /** Kill any running spring and its bus registrations, and reset the
-     *  announcer — every progress-zeroing path routes through here, so the
-     *  aria-live hint can never show a stale percent. */
+     *  announcer. Every user-reachable progress-zeroing path routes through
+     *  here (Escape / resetKey / reduced-motion snap / spring settle); the
+     *  one exception is regenerate(), which only runs at mount time. */
     function stopSpring() {
       frameHandle?.disconnect();
       frameHandle = null;

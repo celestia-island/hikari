@@ -68,6 +68,7 @@ export default defineComponent({
   },
   setup(props, { emit }) {
     const viewport = ref<HTMLElement | null>(null);
+    const stage = ref<HTMLElement | null>(null);
     const seed = ref<number>(props.seed ?? Math.floor(Math.random() * 1e9));
     const path = ref<SerpentinePath>(generateSerpentinePath(600, 96, seed.value));
 
@@ -84,8 +85,8 @@ export default defineComponent({
     const laneHeight = ref(96);
 
     function regenerate() {
-      laneWidth.value = viewport.value?.clientWidth || 600;
-      laneHeight.value = viewport.value?.clientHeight || 96;
+      laneWidth.value = stage.value?.clientWidth || 600;
+      laneHeight.value = stage.value?.clientHeight || 96;
       path.value = generateSerpentinePath(
         laneWidth.value,
         laneHeight.value,
@@ -274,7 +275,7 @@ const TRACKING_TOLERANCE = 30;
 
     // Lane regenerates per mount (fresh maze each time).
     watch(
-      () => viewport.value,
+      () => stage.value,
       (el) => {
         if (el) regenerate();
       },
@@ -315,33 +316,35 @@ const TRACKING_TOLERANCE = 30;
           onPointerup={onPointerUp}
           onPointercancel={onPointerCancel}
         >
-          <svg
-            class="hk-serpentine-svg"
-            viewBox={`0 0 ${laneWidth.value} ${laneHeight.value}`}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <polyline
-              class="hk-serpentine-lane"
-              points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
-            />
-            <polyline
-              class="hk-serpentine-travelled"
-              points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+          <div class="hk-serpentine-stage" ref={stage}>
+            <svg
+              class="hk-serpentine-svg"
+              viewBox={`0 0 ${laneWidth.value} ${laneHeight.value}`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polyline
+                class="hk-serpentine-lane"
+                points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+              />
+              <polyline
+                class="hk-serpentine-travelled"
+                points={pts.map((p) => `${p.x},${p.y}`).join(" ")}
+                style={{
+                  strokeDasharray: `${path.value.totalLength}`,
+                  strokeDashoffset: `${path.value.totalLength * (1 - progress.value)}`,
+                }}
+              />
+            </svg>
+            <div
+              class="hk-serpentine-handle"
               style={{
-                strokeDasharray: `${path.value.totalLength}`,
-                strokeDashoffset: `${path.value.totalLength * (1 - progress.value)}`,
+                left: `${handlePos.x}px`,
+                top: `${handlePos.y}px`,
               }}
+              aria-hidden="true"
             />
-          </svg>
-          <div
-            class="hk-serpentine-handle"
-            style={{
-              left: `${handlePos.x}px`,
-              top: `${handlePos.y}px`,
-            }}
-            aria-hidden="true"
-          />
+          </div>
           <span class="hk-serpentine-hint" aria-live="polite">
             {confirmed.value
               ? "✓"

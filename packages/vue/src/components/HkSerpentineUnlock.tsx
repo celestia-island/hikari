@@ -116,6 +116,7 @@ export default defineComponent({
       if (event.key === "Escape") {
         keyboardGrabbed.value = false;
         emit("cancel", progress.value);
+        stopSpring();
         progress.value = 0;
         return;
       }
@@ -143,7 +144,9 @@ export default defineComponent({
     }
 
     // ── pointer tracking ─────────────────────────────────────────────
-    /** Kill any running spring and its bus registrations. */
+    /** Kill any running spring and its bus registrations, and reset the
+     *  announcer — every progress-zeroing path routes through here, so the
+     *  aria-live hint can never show a stale percent. */
     function stopSpring() {
       frameHandle?.disconnect();
       frameHandle = null;
@@ -151,20 +154,23 @@ export default defineComponent({
       transitionHandle = null;
       springState = null;
       snapping.value = false;
+      announced.value = 0;
     }
 
     function onPointerDown(event: PointerEvent) {
       if (props.disabled || confirmed.value) return;
-      // A re-grab mid-snap-back wins over the spring: stop it first, or the
-      // two inputs fight over progress for up to a second.
-      stopSpring();
-      failed.value = null;
       const box = viewport.value?.getBoundingClientRect();
       if (!box) return;
       const start = path.value.points[0]!;
       const dx = event.clientX - (box.left + start.x);
       const dy = event.clientY - (box.top + start.y);
+      // Proximity gate FIRST: a stray click elsewhere on the lane must not
+      // kill a running spring (that froze progress mid-lane with no cancel).
       if (Math.hypot(dx, dy) > 24) return;
+      // The pointer IS on the resting handle: a re-grab mid-snap-back wins
+      // over the spring — stop it, or the two inputs fight over progress.
+      stopSpring();
+      failed.value = null;
       try {
         (event.target as HTMLElement).setPointerCapture(event.pointerId);
       } catch {
@@ -282,9 +288,10 @@ export default defineComponent({
     );
 
     const announce = (value: number) => {
-      // Twenty-percent bands, recomputed in both directions so a backward
-      // drag lowers the announced value instead of sticking high.
-      announced.value = Math.floor(value * 20) * 20;
+      // Twenty-percent bands (0/20/40/60/80/100), recomputed in both
+      // directions. ROUNDED, not floored: the projection's float noise
+      // otherwise drops an exact 40% to the band below.
+      announced.value = Math.round(value * 5) * 20;
     };
 
     // ── render ───────────────────────────────────────────────────────

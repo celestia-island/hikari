@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h } from "vue";
+import { createApp, defineComponent, h, nextTick } from "vue";
 
 type FrameCb = (ctx: { delta: number; elapsed: number; now: number }) => void;
 
@@ -144,7 +144,7 @@ describe("HkSerpentineUnlock (mounted)", () => {
     frameBus.tick(16);
   });
 
-  it("stops a running spring when the handle is re-grabbed", () => {
+  it("stops a running spring when the handle is re-grabbed", async () => {
     // Drag, release mid-lane (the spring starts), then put the pointer back
     // on the resting handle and grab: the spring must be disconnected
     // IMMEDIATELY — no frame handle may survive, and ticking frames must
@@ -161,17 +161,34 @@ describe("HkSerpentineUnlock (mounted)", () => {
 
     pointer(el, "pointerdown", start.x, start.y); // re-grab at rest
     expect(frameBus.activeCount()).toBe(0); // the spring died with the grab
+    await nextTick();
     frameBus.tick(16);
     frameBus.tick(16);
-    // The re-grab put the pointer at the start; progress stays there
-    // regardless of how many stale spring frames fire.
+    await nextTick();
+    // The re-grab put the pointer at the start; stale spring frames must
+    // not have moved the handle (the old spring is dead — this is the
+    // regression pin for the re-grab fight).
     expect((el.querySelector(".hk-serpentine-handle") as HTMLElement).style.left).toBe("0px");
+  });
+
+  it("announces twenty-percent bands (40% renders as forty, not worse)", async () => {
+    // Walk to ~40%: the aria-live hint must read "(40%)" — the band
+    // formula is floor(v*5)*20; a 5x-off formula renders hundreds.
+    const el = mountGate();
+    const path = generateSerpentinePath(600, 96, 42);
+    const start = path.points[0]!;
+    pointer(el, "pointerdown", start.x, start.y);
+    const forty = projectOntoPath(path.points, path.totalLength * 0.4);
+    pointer(el, "pointermove", forty.x, forty.y);
+    await nextTick();
+    const hint = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
+    expect(hint).toContain("(40%)");
   });
 
   it("zeroing paths reset the announcer (no stale percent)", async () => {
     // Walk to ~60%, release (spring), let the spring settle to zero via
-    // ticks, then re-grab and walk: the hint must announce from 0, not
-    // carry the old 60% band.
+    // ticks, then re-grab and walk to ~10%: the hint must read ten-or-less,
+    // not carry the old 60% band (stopSpring resets the announcer).
     const el = mountGate();
     const path = generateSerpentinePath(600, 96, 42);
     const start = path.points[0]!;
@@ -180,9 +197,11 @@ describe("HkSerpentineUnlock (mounted)", () => {
     pointer(el, "pointermove", sixty.x, sixty.y);
     pointer(el, "pointerup", sixty.x, sixty.y);
     for (let i = 0; i < 40; i++) frameBus.tick(64); // spring settles
+    await nextTick();
     pointer(el, "pointerdown", start.x, start.y);
     const ten = projectOntoPath(path.points, path.totalLength * 0.1);
     pointer(el, "pointermove", ten.x, ten.y);
+    await nextTick();
     const hint = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
     const pct = Number(hint.match(/\((\d+)%\)/)?.[1] ?? "0");
     expect(pct).toBeLessThanOrEqual(20);

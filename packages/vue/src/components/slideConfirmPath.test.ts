@@ -7,11 +7,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   generateSlidePath,
-  slideAdvanceT,
   slideLaneY,
   slidePathLength,
   slidePixelPoints,
   slidePointAtT,
+  slideSegmentDistance,
 } from "./slideConfirmPath";
 
 describe("generateSlidePath", () => {
@@ -117,6 +117,18 @@ describe("pixel mapping and arc-length", () => {
     expect(last.x).toBe(252);
   });
 
+  it("slideSegmentDistance measures point-to-segment honestly", () => {
+    const a = { x: 0, y: 0 };
+    const b = { x: 100, y: 0 };
+    // On the segment (between the endpoints): the perpendicular foot.
+    expect(slideSegmentDistance({ x: 50, y: 12 }, a, b)).toBe(12);
+    // Before/after the segment: the endpoint distance (clamped foot).
+    expect(slideSegmentDistance({ x: -30, y: 0 }, a, b)).toBe(30);
+    expect(slideSegmentDistance({ x: 150, y: 0 }, a, b)).toBe(50);
+    // A zero-length segment degrades to the point distance.
+    expect(slideSegmentDistance({ x: 3, y: 4 }, a, a)).toBe(5);
+  });
+
   it("pointAtT walks the endpoints and keeps arc length honest", () => {
     const start = slidePointAtT(pixel, 0);
     expect(start.x).toBeCloseTo(pixel[0]!.x, 5);
@@ -142,28 +154,4 @@ describe("pixel mapping and arc-length", () => {
     expect(Math.abs(walked - slidePathLength(pixel))).toBeLessThan(slidePathLength(pixel) * 0.001);
   });
 
-  it("slideAdvanceT advances only inside the corridor and rejects off-lane pointers", () => {
-    // Corridor = half a lane height + slack (the component's constant,
-    // over the INNER height).
-    const corridor = 72 / 6 + 4;
-    const nearStart = slidePointAtT(pixel, 0);
-    // A pointer ON the lane advances.
-    const advanced = slideAdvanceT(pixel, 0, nearStart.x + 5, nearStart.y, corridor);
-    expect(advanced).not.toBeNull();
-    expect(advanced!).toBeGreaterThan(0);
-    // A pointer far off the lane (top edge) finds nothing.
-    const off = slideAdvanceT(pixel, 0, nearStart.x, 2, corridor);
-    expect(off).toBeNull();
-  });
-
-  it("slideAdvanceT is monotonic: never retreats below fromT", () => {
-    const corridor = 72 / 6 + 4;
-    const from = 0.5;
-    const anchor = slidePointAtT(pixel, from);
-    // Even a pointer parked at the START of the lane cannot pull the
-    // knob back — the scan begins at fromT.
-    const result = slideAdvanceT(pixel, from, pixel[0]!.x, pixel[0]!.y, corridor);
-    if (result !== null) expect(result).toBeGreaterThanOrEqual(from);
-    void anchor;
-  });
 });

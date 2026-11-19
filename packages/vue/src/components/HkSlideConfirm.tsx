@@ -11,10 +11,10 @@ import {
 import { useI18n } from "../i18n/context";
 import {
   generateSlidePath,
-  slideAdvanceT,
   slidePathLength,
   slidePixelPoints,
   slidePointAtT,
+  slideSegmentDistance,
   type SlidePath,
   type SlidePoint,
 } from "./slideConfirmPath";
@@ -27,17 +27,15 @@ const COMPLETE_T = 0.995;
 /** The lane keeps a knob-radius margin from the track edges. */
 const TRACK_PAD = 24;
 
-/** Pointer corridor: HALF A LANE SPACING + slack, computed from the
- *  INNER lane height (the frame the lane actually lives in — the outer
- *  box would inflate the radius to a full lane spacing and a single
- *  straight drag could ride it across turns). */
+/** Pointer corridor: HALF A LANE SPACING minus a small slack, computed
+ *  from the INNER lane height (the frame the lane lives in). Slack must
+ *  stay NEGATIVE: at +4px the radius passes the half-spacing bound and a
+ *  straight horizontal drag rides one lane's corridor straight through
+ *  routes that only ever visit two adjacent lanes (the R3 probe: 62/600
+ *  seeds defeatable at +4, 0/600 at −2). */
 function corridorRadius(innerHeight: number): number {
-  return innerHeight / 6 + 4;
+  return innerHeight / 6 - 2;
 }
-
-/** The knob's px radius (2.4rem box / 2) — the pointer may lead the knob
- *  center by up to this much before the trace is considered lost. */
-const KNOB_RADIUS = 19;
 
 /** Follow-walk resolution: the lane is sampled at this many arc-length
  *  steps per advance scan (fine enough that a corner is never chorded). */
@@ -213,6 +211,11 @@ export default defineComponent({
      *  the whole trace by that edge and lets a straight drag ride a lane
      *  it never turned onto. */
     let grabOffset: SlidePoint = { x: 0, y: 0 };
+    /** The pointer's last swept position in the lane frame — each move
+     *  sweeps a SEGMENT from here to the new position, and lane samples
+     *  count as traced only if that segment passes within the corridor
+     *  (a fast drag sweeps a line, not a point). */
+    let lastTrace: SlidePoint | null = null;
 
     function onKnobPointerdown(e: PointerEvent) {
       // The house drag-family guard: only the primary button traces.
@@ -231,17 +234,22 @@ export default defineComponent({
       box.value = { width: 0, height: 0, left: 0, top: 0 }; // re-measure per gesture
       measure();
       const b = box.value;
+      const inner = b.height - TRACK_PAD * 2;
+      if (inner < 24) return; // no meaningful three-lane band
       const start = slidePointAtT(pixelPolyline(), progress.value);
       grabOffset = {
         x: e.clientX - b.left - TRACK_PAD - start.x,
         y: e.clientY - b.top - TRACK_PAD - start.y,
       };
+      lastTrace = { ...start };
       status.value = "dragging";
     }
 
     function onKnobPointermove(e: PointerEvent) {
       if (status.value !== "dragging") return;
       const b = box.value;
+      const inner = b.height - TRACK_PAD * 2;
+      if (inner < 24) return;
       const pixel = pixelPolyline();
       const total = slidePathLength(pixel);
       if (total <= 0) return;
@@ -250,35 +258,50 @@ export default defineComponent({
       // the grab offset (the knob CENTER is the traced point).
       const tx = e.clientX - b.left - TRACK_PAD - grabOffset.x;
       const ty = e.clientY - b.top - TRACK_PAD - grabOffset.y;
-      const tolerance = corridorRadius(b.height - TRACK_PAD * 2);
+      const sweepFrom = lastTrace ?? { x: tx, y: ty };
+      const tolerance = corridorRadius(inner);
 
-      // Stop-at-first-gap walk: advance from the current progress while
-      // each successive lane sample stays inside the corridor of the
-      // traced point. Teleporting past a turn requires steering THROUGH
-      // it — a straight pull dies at the first corner because the walk
-      // never skips a gap.
+      // Sweep-segment walk: advance from the current progress while each
+      // successive lane sample stays within the corridor of the SEGMENT
+      // the pointer swept since the last event. A fast honest drag sweeps
+      // a line along the lane and every sample under it counts; a corner
+      // stops the walk (the sweep line never reaches the jumped lane), so
+      // progress requires actual steering — and a straight pull held one
+      // lane off can never chord through a turn.
       const from = progress.value;
       let advanced: number | null = null;
-      let lost = false;
       for (let i = 0; i <= SCAN_STEPS; i++) {
         const t = (from * SCAN_STEPS + i) / SCAN_STEPS;
         if (t > 1) break;
         const p = slidePointAtT(pixel, t);
-        if (Math.hypot(p.x - tx, p.y - ty) <= tolerance) {
+        if (slideSegmentDistance(p, sweepFrom, { x: tx, y: ty }) <= tolerance) {
           advanced = t;
         } else {
-          lost = true;
           break;
         }
       }
+      lastTrace = { x: tx, y: ty };
       if (advanced === null) {
-        // Not even the current position corresponds to the traced point:
-        // the pointer no longer represents the knob.
+        // The sweep never touched the lane: the pointer no longer
+        // represents the knob.
         snapBack();
         return;
       }
+      // Commit the advance FIRST — completion reads the new progress (the
+      // knob lands at the lane's very end, aria-valuenow 100).
       progress.value = advanced;
-      if (advanced >= COMPLETE_T) complete();
+      if (advanced >= COMPLETE_T) {
+        complete();
+        return;
+      }
+      // Runaway check: the walk stopped at a gap AND the pointer's final
+      // position is far from where the knob ended up — the pointer has
+      // left the lane for good (corridor exit). Snap instead of freezing.
+      const knobPoint = slidePointAtT(pixel, advanced);
+      if (Math.hypot(tx - knobPoint.x, ty - knobPoint.y) > tolerance) {
+        snapBack();
+        return;
+      }
     }
 
     function onKnobPointerup() {

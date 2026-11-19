@@ -149,7 +149,7 @@ describe("HkSlideConfirm", () => {
     // offset is zero — the traced point is the knob center.
     pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
     // Trace halfway along the lane in real drag steps.
-    trace(handle, pixel, 0, 0.5, 12);
+    trace(handle, pixel, 0, 0.5, 40);
     await nextTick();
     expect(now()).toBeGreaterThan(0);
     pointer(handle, "pointerup", 24, 24);
@@ -167,7 +167,7 @@ describe("HkSlideConfirm", () => {
     const pixel = lane42();
     pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
     // Trace the first quarter of the lane to arm progress.
-    trace(handle, pixel, 0, 0.25, 8);
+    trace(handle, pixel, 0, 0.25, 24);
     await nextTick();
     expect(now()).toBeGreaterThan(0);
     // …then teleport far off the lane: the corridor is gone → snap.
@@ -192,6 +192,56 @@ describe("HkSlideConfirm", () => {
     pointer(handle, "pointermove", 276, y);
     await nextTick();
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("a straight pull at the lane height never completes (small honest steps)", async () => {
+    // The R3 probe: an 8px-step straight pull ON the start lane rides the
+    // corridor through the first run, freezes at the first turn, and can
+    // never reach the end — no emit, progress visibly stuck below 100.
+    const onConfirm = vi.fn();
+    mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+    injectRect(root(), 300, 120);
+    const handle = knob();
+    const pixel = lane42();
+    pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+    const y = 24 + pixel[0]!.y;
+    for (let x = 25; x <= 276; x += 8) pointer(handle, "pointermove", x, y);
+    await nextTick();
+    expect(onConfirm).not.toHaveBeenCalled();
+    expect(now()).toBeLessThan(100);
+  });
+
+  it("a straight pull one lane off snaps back immediately", async () => {
+    // dy = ±12 (a full lane spacing) is OUTSIDE the 10px corridor: the
+    // first honest pointermove is already a refusal.
+    const onConfirm = vi.fn();
+    for (const dy of [-12, 12]) {
+      mounts.length = 0;
+      document.body.innerHTML = "";
+      mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+      injectRect(root(), 300, 120);
+      const handle = knob();
+      const pixel = lane42();
+      pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+      for (let x = 25; x <= 276; x += 8) pointer(handle, "pointermove", x, 24 + pixel[0]!.y + dy);
+      await nextTick();
+      expect(onConfirm, `dy=${dy}`).not.toHaveBeenCalled();
+    }
+  });
+
+  it("a fast first event (20px sweep) still advances — no speed cliff", async () => {
+    // The sweep-segment walk measures the segment the pointer SWEPT, so
+    // one coalesced 20px event along the lane advances honestly (the old
+    // point-anchored walk aborted on it — the S1 speed cliff).
+    const onConfirm = vi.fn();
+    mount(() => h(HkSlideConfirm, { seed: 42, onConfirm }));
+    injectRect(root(), 300, 120);
+    const handle = knob();
+    const pixel = lane42();
+    pointer(handle, "pointerdown", 24 + pixel[0]!.x, 24 + pixel[0]!.y);
+    pointer(handle, "pointermove", 24 + pixel[0]!.x + 20, 24 + pixel[0]!.y);
+    await nextTick();
+    expect(now()).toBeGreaterThan(0);
   });
 
   it("completing the lane by pointer emits confirm once", async () => {

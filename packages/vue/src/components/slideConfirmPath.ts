@@ -162,27 +162,18 @@ export function slidePointAtT(
   return { ...pixel[pixel.length - 1]! };
 }
 
-/**
- * The FURTHEST arc-length fraction the knob may advance to while staying
- * within `tolerancePx` of the pointer, scanning from `fromT` (monotonic:
- * the knob never retreats by following). Returns null when the pointer is
- * outside the corridor entirely — the component treats that as a failed
- * attempt (snap-back), per the contract that the knob must trace the lane.
- */
-export function slideAdvanceT(
-  pixel: SlidePoint[],
-  fromT: number,
-  pointerX: number,
-  pointerY: number,
-  tolerancePx: number,
-): number | null {
-  const steps = 240;
-  let best: number | null = null;
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    if (t < fromT) continue;
-    const p = slidePointAtT(pixel, t);
-    if (Math.hypot(p.x - pointerX, p.y - pointerY) <= tolerancePx) best = t;
-  }
-  return best;
+/** Distance from a point to a SEGMENT (the pointer's swept path between
+ *  two events — a fast drag sweeps a line, not a point, and the trace
+ *  check must honor the sweep or honest fast drags die at corners). */
+export function slideSegmentDistance(
+  p: SlidePoint,
+  a: SlidePoint,
+  b: SlidePoint,
+): number {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(p.x - a.x, p.y - a.y);
+  const f = Math.min(1, Math.max(0, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq));
+  return Math.hypot(p.x - (a.x + dx * f), p.y - (a.y + dy * f));
 }

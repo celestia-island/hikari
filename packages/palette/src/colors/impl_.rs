@@ -187,7 +187,7 @@ impl Color {
     #[must_use]
     pub fn readable_on(&self, bgs: &[&Self], target: f64) -> Self {
         if bgs.iter().all(|bg| self.contrast_ratio(bg) >= target) {
-            return self.clone();
+            return *self;
         }
         let (l0, c0, h0) = self.oklch();
         let mut best: Option<(f64, Self)> = None;

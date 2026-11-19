@@ -48,8 +48,20 @@ export interface HkTableSection {
   key: string;
   /** Default band text; the `section` slot overrides the whole band content. */
   label?: string;
-  rows: Record<string, unknown>[];
+  rows: readonly HkTableRow[];
 }
+
+/**
+ * The row shape `HkTable` accepts (L38): any object, interfaces included.
+ * The old `Record<string, unknown>` forced every consumer whose rows are an
+ * `interface` (no implicit index signature) through a downstream assertion
+ * bridge — chest carried 43. Indexing is the library's business, not the
+ * consumer's, so the prop side is `object` and the ONE `as Record` cast per
+ * pipeline entry lives inside this file (search `L38 confinement`); the
+ * out-direction payloads (emits, `HkRowManageGate`) stay
+ * `Record<string, unknown>` so existing bridges keep compiling.
+ */
+export type HkTableRow = object;
 
 /** A section's live display state: the sorted rows plus the flat offset
  *  its first row occupies in the concatenation of every section's rows
@@ -108,7 +120,7 @@ export default defineComponent({
   name: "HkTable",
   props: {
     columns: { type: Array as PropType<Column[]>, required: true },
-    rows: { type: Array as PropType<Record<string, unknown>[]>, default: () => [] },
+    rows: { type: Array as PropType<readonly HkTableRow[]>, default: () => [] },
     /** Grouped mode: when provided, `rows` is unused and the body renders
      *  ONE `<tbody class="hk-table-section-body">` per section, each led by
      *  a band row (`<th scope="rowgroup">`, `colspan` = total columns).
@@ -349,7 +361,7 @@ export default defineComponent({
       });
     }
 
-    const sortedRows = computed(() => sortRows(props.rows));
+    const sortedRows = computed(() => sortRows(props.rows as Record<string, unknown>[])); // ts-escape-ok: L38 confinement — the ONE cast on the unsectioned rows entry (interface rows carry no index signature; indexing is ours, not the consumer's)
 
     /** The sectioned display plan: each section's rows sorted WITHIN the
      *  section, section order untouched, plus the flat offset its first row
@@ -359,7 +371,7 @@ export default defineComponent({
       if (!props.sections) return [];
       let offset = 0;
       return props.sections.map((section, index) => {
-        const rows = sortRows(section.rows);
+        const rows = sortRows(section.rows as Record<string, unknown>[]); // ts-escape-ok: L38 confinement — the ONE cast on the sectioned rows entry
         const view: SectionView = { section, index, rows, offset };
         offset += rows.length;
         return view;

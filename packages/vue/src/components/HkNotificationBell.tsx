@@ -163,6 +163,9 @@ export default defineComponent({
     // is the group's face (time/state/actions); the tally is the member
     // count; dismiss forgets every DISMISSABLE member of the group.
     interface HkNotificationGroup {
+      /** Stable content key — the row's vue key, so a new member joining
+       *  (or the face changing) does not remount the row under the cursor. */
+      key: string;
       members: HkNotificationEntry[];
       head: HkNotificationEntry;
     }
@@ -175,7 +178,7 @@ export default defineComponent({
         if (hit) {
           hit.members.push(e);
         } else {
-          const group: HkNotificationGroup = { members: [e], head: e };
+          const group: HkNotificationGroup = { key, members: [e], head: e };
           byKey.set(key, group);
           out.push(group);
         }
@@ -220,15 +223,31 @@ export default defineComponent({
     }
 
     function renderRow(group: HkNotificationGroup) {
-      // The NEWEST member is the group's face — time, state chip and the
-      // actions lane all answer "what happened most recently".
+      // The NEWEST member is the group's face — time, code/detail and the
+      // tone all answer "what happened most recently".
       const entry = group.head;
       const Icon = TONE_ICONS[entry.tone] ?? Info;
-      const isLive = entry.kind === "emergency" && entry.state !== "cleared";
-      const resummonable = entry.onResummon !== undefined && entry.state === "snoozed";
+      // The actions lane is MEMBER-SCANNED, not head-only (round-3 S2,
+      // proven by probe): a same-content toast joining a snoozed
+      // emergency's group becomes the face, and a head-only read would
+      // hide the emergency's ONLY restore affordance while the journal
+      // still holds it — exactly the loss the record-time merge was
+      // rejected for, at the view layer instead.
+      const isLive = group.members.some(
+        (m) => m.kind === "emergency" && m.state !== "cleared",
+      );
+      const restorable = group.members.find(
+        (m) => m.onResummon !== undefined && m.state === "snoozed",
+      );
+      // State chip: the head's own state wins; otherwise any member's
+      // Hidden/Resolved state still deserves its chip.
+      const chip =
+        entry.state === "snoozed" || entry.state === "cleared"
+          ? entry
+          : group.members.find((m) => m.state === "snoozed" || m.state === "cleared");
       const tally = group.members.length;
       return (
-        <li key={entry.id} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
+        <li key={group.key} class={["hk-notification-row", `is-${entry.tone}`, `is-${entry.state}`]}>
           {/* The row glyph renders through h(Icon, …): Vue's Component
               union is not a valid JSX element type, so `<Icon />` is
               not available here — both this tone glyph and the row
@@ -246,6 +265,7 @@ export default defineComponent({
               <span
                 class="hk-notification-row__icon-count"
                 title={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
+                aria-label={`${tally} ${t("hikari::toast.msgs", "msgs")}`}
               >
                 {tally > 99 ? "99+" : tally}
               </span>
@@ -259,14 +279,14 @@ export default defineComponent({
               {/* The state word is a flex:none SIBLING of the clipping
                   title (round-2 review: inside the span, ellipsis ate it
                   first for exactly the long titles where it matters). */}
-              {(entry.state === "snoozed" || entry.state === "cleared") && (
+              {chip && (
                 <span class="hk-notification-row__title-state">
                   {"· "}
                   {t(
-                    entry.state === "snoozed"
+                    chip.state === "snoozed"
                       ? "hikari::notificationCenter.stateHidden"
                       : "hikari::notificationCenter.stateResolved",
-                    entry.state === "snoozed" ? "Hidden" : "Resolved",
+                    chip.state === "snoozed" ? "Hidden" : "Resolved",
                   )}
                 </span>
               )}
@@ -320,12 +340,12 @@ export default defineComponent({
                 {{ icon: () => <X size={14} /> }}
               </HkIconButton>
             )}
-            {resummonable && (
+            {restorable && (
               <HkIconButton
                 size={24}
                 variant="ghost"
                 aria-label={t("hikari::emergencyAlert.restore", "Show again")}
-                onClick={() => entry.onResummon?.()}
+                onClick={() => restorable.onResummon?.()}
               >
                 {{ icon: () => h(RotateCcw, { size: 14 }) }}
               </HkIconButton>

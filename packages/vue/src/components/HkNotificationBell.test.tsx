@@ -392,6 +392,49 @@ describe("panel rows", () => {
     expect(rows()).toHaveLength(0);
   });
 
+  it("a toast joining a snoozed emergency's group does NOT dissolve the Restore", async () => {
+    // Round-3 S2, proven by probe: the group's FACE is its newest member
+    // (the toast), so head-only action gating hid the emergency's only
+    // restore affordance while the journal still held the callback — the
+    // same loss the record-time merge was rejected for, at the view
+    // layer. The actions lane scans members instead.
+    await setLocale("en");
+    raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out" });
+    snoozeEmergencyAlert("quota");
+    recordNotification({
+      id: "toast:same",
+      kind: "toast",
+      tone: "warning",
+      title: "quota out",
+      state: "active",
+    });
+    const { entries } = useNotificationCenter();
+    expect(entries).toHaveLength(2);
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(1);
+    const row = rows()[0]!;
+    // Restore is STILL offered (member scan), and the Hidden chip shows.
+    const restore = row.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]',
+    );
+    expect(restore, "the emergency's restore survives the grouping").toBeTruthy();
+    expect(row.querySelector(".hk-notification-row__title-state")?.textContent).toContain(
+      "Hidden",
+    );
+    // The tally counts both members.
+    expect(row.querySelector(".hk-notification-row__icon-count")?.textContent).toBe("2");
+    // And the restore still works through the journal's resummon path.
+    restore!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(
+      row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]'),
+    ).toBeFalsy();
+    expect(row.classList.contains("is-active")).toBe(true);
+  });
+
   it("the open panel carries the overlay scrollbar tracks; closing detaches them", async () => {
     // The list keeps native overflow MECHANICS with the suppression pair,
     // so the overlay engine is the only chrome it can ever show (user

@@ -157,3 +157,8 @@ registerCssAnimation("hk-edge-glow-breathe", { infinite: true });
 // band and drops the loops (house pattern, see HkSkeleton).
 registerCssAnimation("hk-emergency-breathe", { infinite: true });
 registerCssAnimation("hk-emergency-signal", { infinite: true });
+// components/HkSerpentineUnlock.scss — the deliberate-action gate's fail
+// shake (plays once): horizontal refusal feedback when the pointer drifts
+// off the lane. Reduced motion swaps it for a static error outline (the
+// gate never moves anything under reduced motion).
+registerCssAnimation("hk-serpentine-shake");

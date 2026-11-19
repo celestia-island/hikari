@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   lane:
-    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@bcf5ed8f3caebe8dbf0a528ab9deecb6d42cf211
+    uses: celestia-island/celestia-devtools/.github/workflows/cnb-overflow.yml@c45f1881e00cb55d0a2a1fcf57b28734ece119bb
     with:
       target_repo: ${{ github.event.repository.name }}
       target_sha: ${{ inputs.target_sha || github.event.pull_request.head.sha || github.sha }}

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
 import HkNotificationBell from "./HkNotificationBell";
@@ -13,9 +13,12 @@ import { setLocale } from "../i18n/context";
  * - clicking the bell opens the panel (HkPopover panel mounts) and
  *   opening IS the read receipt (dot goes dark)
  * - rows render title / time / detail / code chip
+ * - error/warning rows carry the toast-family copy button (user
+ *   direction 2026-11-19) and copy the FULL record to the clipboard;
+ *   the other tones stay non-copyable like their surfaces
  * - a snoozed emergency entry shows the Hidden state chip and its
  *   restore button unsnoozes through the journal's resummon path
- * - Clear all empties the journal
+ * - Clear all (icon + label) empties the journal
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -48,6 +51,16 @@ function panel(): HTMLElement | null {
 
 function rows(): HTMLElement[] {
   return Array.from(document.querySelectorAll<HTMLElement>(".hk-notification-row"));
+}
+
+/** The toast family's clipboard write, stubbed at navigator level
+ *  (same shape HkTable/HkErrorLanding tests use) — jsdom has no
+ *  clipboard, and the fallback execCommand path would not tell us
+ *  WHAT text was copied. */
+function stubClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+  return writeText;
 }
 
 afterEach(() => {
@@ -122,6 +135,77 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__time")).toBeTruthy();
   });
 
+  it("error AND warning rows carry the toast's copy button; the payload is the FULL record", async () => {
+    // User direction 2026-11-19: beside dismiss, error/warning rows get
+    // the toast family's own copy affordance (same button shape, same
+    // `hikari::toast.copy` label, same clipboard write). The row clips
+    // its text, so the copied payload must be the complete record —
+    // title / code / detail, whatever fields exist, one per line.
+    // BOTH tones are pinned positively (round-2 review): dropping the
+    // warning arm of rowCopyable must go red here, not just the error
+    // arm.
+    await setLocale("en");
+    const writeText = stubClipboard();
+    recordNotification({
+      id: "toast:e:1:1",
+      kind: "toast",
+      tone: "error",
+      title: "billing.quota.snapshot: billing.quota.bad_gate",
+      detail: "The gate returned an unrecoverable verdict",
+      code: "billing.quota.bad_gate",
+    });
+    recordNotification({ id: "toast:w:1:2", kind: "toast", tone: "warning", title: "disk almost full" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const byLabel = (row: HTMLElement, label: string) =>
+      row.querySelector<HTMLButtonElement>(
+        `.hk-notification-row__actions .hk-icon-button[aria-label="${label}"]`,
+      );
+    const errorRow = rows().find((r) => r.textContent?.includes("billing.quota"))!;
+    const copy = byLabel(errorRow, "Copy");
+    expect(copy, "copy button renders on an error row").toBeTruthy();
+    // LEFT of dismiss: the copy button is the actions lane's first child.
+    expect(copy!.parentElement!.firstElementChild).toBe(copy);
+    copy!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(writeText).toHaveBeenCalledTimes(1);
+    expect(writeText).toHaveBeenCalledWith(
+      "billing.quota.snapshot: billing.quota.bad_gate\nbilling.quota.bad_gate\nThe gate returned an unrecoverable verdict",
+    );
+
+    // The warning arm: same button, and the title-only payload proves
+    // the optional code/detail guards skip MISSING fields instead of
+    // joining empty lines.
+    const warningRow = rows().find((r) => r.textContent?.includes("disk almost full"))!;
+    const warningCopy = byLabel(warningRow, "Copy");
+    expect(warningCopy, "copy button renders on a warning row").toBeTruthy();
+    warningCopy!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(writeText).toHaveBeenCalledTimes(2);
+    expect(writeText).toHaveBeenLastCalledWith("disk almost full");
+    // The toast seat's hover hint rides along (claim pin — round-3
+    // mutant M3 deleted it green): aria-label AND title, same key.
+    expect(copy!.getAttribute("title")).toBe("Copy");
+  });
+
+  it("tones the toast family treats as non-copyable get NO copy button", async () => {
+    await setLocale("en");
+    stubClipboard();
+    recordNotification({ id: "s1", kind: "toast", tone: "success", title: "saved" });
+    recordNotification({ id: "i1", kind: "toast", tone: "info", title: "heads up" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(rows()).toHaveLength(2);
+    expect(
+      document.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Copy"]'),
+      "success/info records stay non-copyable, like their surfaces",
+    ).toBeNull();
+  });
+
   it("a snoozed emergency shows Hidden + a working restore button", async () => {
     await setLocale("en");
     raiseEmergencyAlert({ id: "quota", severity: "warning", title: "quota out" });
@@ -159,6 +243,13 @@ describe("panel rows", () => {
     expect(row.classList.contains("is-active")).toBe(true);
     expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     expect(row.querySelector(".hk-notification-row__state")).toBeFalsy();
+    // Emergency records inherit the copy affordance through their tone
+    // (round-3 intent-drift pin): a warning-severity emergency IS a
+    // copyable diagnostic record — its whole action lane is exactly
+    // [Copy] (live episodes carry no dismiss, and an active band has
+    // no restore).
+    expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Copy"]')).toBeTruthy();
+    expect(row.querySelectorAll(".hk-notification-row__actions .hk-icon-button")).toHaveLength(1);
   });
 
   it("an emergency row carries NO dismiss button (live episode is not user-dismissable)", async () => {
@@ -217,9 +308,12 @@ describe("panel rows", () => {
     expect(row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Show again"]')).toBeFalsy();
     // R10 (PR #1333): the state-scoped gate means a CLEARED emergency
     // row IS dismissable — this is the pin that was lost in eb492e44's
-    // wrong-sibling deletion.
+    // wrong-sibling deletion. Pinned by LABEL (round-2 review): the row
+    // now also carries a copy button, and a bare `.hk-icon-button`
+    // first-match resolves to THAT, so dropping the dismiss gate would
+    // have stayed green.
     expect(
-      row.querySelector(".hk-notification-row__actions .hk-icon-button"),
+      row.querySelector('.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]'),
       "a resolved record is dismissable",
     ).not.toBeNull();
   });
@@ -237,7 +331,9 @@ describe("panel rows", () => {
     await settle();
     expect(rows()).toHaveLength(2);
     const dropRow = rows().find((r) => r.textContent?.includes("drop me"))!;
-    const dismiss = dropRow.querySelector<HTMLButtonElement>(".hk-notification-row__actions .hk-icon-button")!;
+    const dismiss = dropRow.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+    )!;
     expect(dismiss.getAttribute("aria-label")).toBe("Dismiss");
     dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
@@ -260,9 +356,11 @@ describe("panel rows", () => {
     const titles = rows().map((r) => r.querySelector(".hk-notification-row__title")?.textContent);
     expect(titles).toEqual(["newer", "older"]);
 
-    (document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!).dispatchEvent(
-      new MouseEvent("click", { bubbles: true }),
-    );
+    // The clear-all affordance announces itself by its glyph (user
+    // direction 2026-11-19): a leading icon inside the label button.
+    const clearBtn = document.querySelector<HTMLButtonElement>(".hk-notification-center__foot .hk-btn")!;
+    expect(clearBtn.querySelector(".hk-btn-icon")).toBeTruthy();
+    clearBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
     expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
     expect(rows()).toHaveLength(0);

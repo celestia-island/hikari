@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
@@ -105,5 +108,18 @@ describe("HkExpansionPanel", () => {
     await nextTick();
     expect(panel.getAttribute("data-open")).toBeNull();
     expect(onToggle).not.toHaveBeenCalled();
+  });
+});
+
+describe("HkExpansionPanel body padding contract (2026-11-19)", () => {
+  // The BODY padding belongs to the panel (user direction 2026-11-19: a
+  // flush expanded body read as a host bug, and hosts that hand-padded
+  // doubled once the panel grew its own). The stylesheet contract keeps
+  // the inset from being dropped again.
+  it("owns the body inset in the stylesheet (header-aligned inline + bottom)", () => {
+    const scss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkExpansionPanel.scss"), "utf8");
+    expect(scss).toMatch(
+      /\.hk-expansion-panel-content\s*{[^}]*padding:\s*var\(--space-8\)\s+var\(--space-12\)\s+var\(--space-12\)/,
+    );
   });
 });

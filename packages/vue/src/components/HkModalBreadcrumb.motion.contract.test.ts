@@ -212,12 +212,16 @@ describe("strip surface enter/leave (window choreography)", () => {
       CENTERING,
     ]);
 
-    // Known-positive probe: the sweep is worthless if it matches no rule at
-    // all (hikari #1325's first sweep shipped vacuous exactly that way), so
-    // assert the ride rules really are in the compiled sheet.
-    for (const sel of [".hk-modal-breadcrumb-enter-from", ".hk-modal-breadcrumb-leave-to"]) {
-      expect(rule(breadcrumb, sel)).toContain("transform:");
-    }
+    // Vacuity guard (hikari #1325's first sweep shipped vacuous exactly
+    // that way): the sweep's own subject is the centring longhand, so the
+    // positive control asserts THAT is present in the base rule — the
+    // enter-from/leave-to transforms are value-pinned by the arrive/leave
+    // cases above (POSE_FROM/POSE_TO), which supersede the old bare
+    // `transform:` probe (2026-11-19 sweep: presence-only, redundant).
+    expect(
+      topLevelBaseTranslate,
+      "the sweep must see the base rule it exists to police",
+    ).toEqual([CENTERING]);
   });
 
   it("has no keyframe animation on the base class (no double entrance)", () => {

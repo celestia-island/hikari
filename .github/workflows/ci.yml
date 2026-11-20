@@ -25,9 +25,16 @@ jobs:
 
   type-escapes:
     name: Type escape hatches
-    uses: celestia-island/celestia-devtools/.github/workflows/type-escapes.yml@46e95519848940ebbaae60023dc03bb7a114c5ec
+    # Pinned to the devtools merge that exposes the `baseline` input (#299,
+    # 2026-11-21): the ratchet needs a reusable-workflow door, not just the
+    # CLI flag — the previous pin predated it, which is why this job had been
+    # switched off rather than wired.
+    uses: celestia-island/celestia-devtools/.github/workflows/type-escapes.yml@49da70dbd86edac909fce786a4e080b02a56d0c1
     with:
-      devtools-ref: 46e95519848940ebbaae60023dc03bb7a114c5ec
+      devtools-ref: 49da70dbd86edac909fce786a4e080b02a56d0c1
+      # The ratchet: existing debt may not grow, new files may not introduce
+      # any. The baseline is the one #1443 committed (paid down to 2134).
+      baseline: .type-escapes-baseline.json
   family-versions:
     name: Family dependency identity
     uses: celestia-island/celestia-devtools/.github/workflows/family-versions.yml@c45f1881e00cb55d0a2a1fcf57b28734ece119bb

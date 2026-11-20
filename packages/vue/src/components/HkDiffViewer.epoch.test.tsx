@@ -3,9 +3,13 @@ import { createApp, defineComponent, h } from "vue";
 
 // Mock the wasm module at the top level: the composable's lazy import()
 // resolves to this factory, exactly like the real module landing after
-// the first plaintext render.
+// the first plaintext render. The shape is the real ABI — the binding
+// returns `HighlightResult = { html?: string }`, NOT a bare string
+// (packages/vue/src/wasm/highlight/hikari_wasm_highlight.d.ts). A string
+// mock here hid the seam that fed the record to `v-html`, so every row
+// rendered "[object Object]"; the adapter test pins that separately.
 vi.mock("../wasm/highlight/hikari_wasm_highlight.js", () => ({
-  highlight: (text: string, lang: string) => `<wasm>${lang}:${text}</wasm>`,
+  highlight: (text: string, lang: string) => ({ html: `<wasm>${lang}:${text}</wasm>` }),
 }));
 
 import HkDiffViewer from "./HkDiffViewer";

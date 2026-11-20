@@ -56,6 +56,18 @@ describe("HkNotificationBell composition contract", () => {
     expect(src).not.toContain("useToast");
   });
 
+  it("the hold timer is released when the bell goes away", () => {
+    const src = body();
+    // Round-5 finding, M10: dropping the unmount cleanup stayed green
+    // repo-wide. A source pin (the same convention the rest of this file
+    // uses): the timer-queue cannot isolate OUR timer from the primitive's
+    // transition report, so the structural fact is pinned here, and the
+    // behaviour it protects is "no write into a dead instance".
+    const unmountPath = src.slice(src.indexOf("onUnmounted("));
+    expect(unmountPath, "an unmount hook exists").not.toBe("");
+    expect(unmountPath).toContain("clearTimeout(holdTimer)");
+  });
+
   it("the journal is the ONLY data source", () => {
     const src = body();
     expect(src).toContain("useNotificationCenter");

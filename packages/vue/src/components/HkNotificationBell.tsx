@@ -34,14 +34,15 @@
  *
  * Motion (user direction 2026-11-20): list rows pop in and out through
  * HkListTransition — the library's own list choreography primitive (the
- * one HkModalBreadcrumb, HkTagInput, HkPasswordSurface, HkAffixPicker,
- * HkWaterfall, HkJsonTree, HkLocalizedInput and HkCrossfade already
- * ride) — which reports every enter/leave batch to the runtime animation
- * context (reportTransition on the frame bus) and whose own reduced-motion
- * / global-CSS-switch rules collapse the motion. `pop` is that primitive's
- * fade-and-settle list signature; `move` lets the remaining rows FLIP-glide
- * into the space a dismissed one frees. No bespoke row transition lives
- * here (contract test pins this).
+ * one HkModalBreadcrumb, HkTagInput, HkPasswordSurface, HkAffixPicker and
+ * HkWaterfall actually render; HkJsonTree/HkLocalizedInput/HkCrossfade
+ * only document the same contract, they do not use it) — which reports
+ * every enter/leave batch to the runtime animation context
+ * (reportTransition on the frame bus) and whose own reduced-motion /
+ * global-CSS-switch rules collapse the motion. `pop` is that primitive's
+ * fade-and-settle list signature; `move` lets the remaining rows
+ * FLIP-glide into the space a dismissed one frees. No bespoke row
+ * transition lives here (contract test pins this).
  *
  * Two structural consequences of riding it:
  *  - the list wrap stays mounted across the empty swap, because a
@@ -79,6 +80,7 @@ import {
   type HkNotificationEntry,
   type HkNotificationTone,
 } from "../runtime/notificationCenter";
+import { isAnimationParked } from "../runtime/animationBus";
 import { useClipboard } from "../runtime/useClipboard";
 import HkIconButton from "./HkIconButton";
 import HkButton from "./HkButton";
@@ -243,23 +245,47 @@ export default defineComponent({
     const LEAVE_MS = 320;
     const listHoldHeight = ref<number | null>(null);
     let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Reduced motion / the global CSS switch end the choreography in one
+     *  frame, so the hold would only leave a blank box behind — skip it
+     *  and hand the caption over immediately (2026-11-20 review, S3). */
+    function motionCollapsed(): boolean {
+      if (isAnimationParked()) return true;
+      return (
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      );
+    }
+    let prevRowCount = groups.value.length;
     watch(
-      () => groups.value.length === 0,
-      (empty) => {
+      () => groups.value.length,
+      (count) => {
+        const previous = prevRowCount;
+        prevRowCount = count;
         if (holdTimer) {
           clearTimeout(holdTimer);
           holdTimer = null;
         }
-        if (!empty) {
-          // Rows are back: release the hold immediately so the first
-          // arriving row animates into a natural-height list.
+        // Rows arriving (or an unrelated change): release immediately so
+        // the new row animates into a natural-height list.
+        if (count >= previous) {
           listHoldHeight.value = null;
           return;
         }
-        // Measured HERE, in the pre-flush watcher: the DOM still holds the
-        // rows, and the measured value lands in the same patch that starts
-        // the leaves (no one-frame collapse). A measurement taken in
-        // onBeforeUpdate would be too late — pre-watchers run first.
+        // Rows LEFT. The hold is not an empty-state nicety — it is what
+        // keeps the last row of ANY removal visible: a pinned ghost is
+        // positioned inside the scroller at its pre-patch offset, so the
+        // moment the box shrinks by one row the bottom-most ghost falls
+        // outside the scrollport and is clipped away for the whole fade
+        // (the empty case is just the extreme). Measured in real Chrome,
+        // 2026-11-20; the round-4 review generalised it from "only when
+        // the list empties" to every shrink.
+        if (motionCollapsed()) {
+          listHoldHeight.value = null;
+          return;
+        }
+        // Measured in the pre-flush watcher: the DOM still holds the rows,
+        // and the value lands in the same patch that starts the leaves.
         const listEl = listHostRef.value?.$el as HTMLElement | undefined;
         const measured = listEl?.offsetHeight ?? 0;
         listHoldHeight.value = measured > 0 ? measured : null;

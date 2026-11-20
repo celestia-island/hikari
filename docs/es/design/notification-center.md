@@ -58,7 +58,7 @@ punto de ruptura seguro en vivo.
 La entrada y la salida de filas las coreografía `HkListTransition` —la
 primitiva de listas de la biblioteca, la misma que ya usan las migas de
 los modales, el campo de etiquetas, la superficie de contraseña, el
-selector de afijos, el waterfall y el árbol JSON— en su variante `pop`
+selector de afijos y el waterfall— en su variante `pop`
 (un fundido que se posa desde un leve escalado) con desplazamientos
 FLIP: las filas que quedan se deslizan al espacio que libera la
 descartada. Dos propiedades vienen de la primitiva y de la plataforma,

@@ -49,8 +49,8 @@ a bottom sheet on phones, safe to cross the breakpoint live.
 
 Row add and remove are choreographed by `HkListTransition` — the
 library's own list primitive, the one the modal breadcrumbs, the tag
-input, the password surface, the affix picker, the waterfall and the
-JSON tree already ride — in its `pop` variant (a fade that settles from
+input, the password surface, the affix picker and the waterfall
+already ride — in its `pop` variant (a fade that settles from
 a slight scale) with FLIP moves, so the rows that remain glide into the
 space a dismissed one frees. Two properties come from the primitive and
 the platform rather than from the bell: it REPORTS every enter/leave

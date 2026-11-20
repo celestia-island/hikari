@@ -60,8 +60,7 @@ franchissement de point de rupture sûr en direct.
 L'ajout et le retrait d'une ligne sont chorégraphiés par
 `HkListTransition` — la primitive de liste de la bibliothèque, celle que
 le fil d'Ariane des modales, le champ d'étiquettes, la surface de mot de
-passe, le sélecteur d'affixes, le waterfall et l'arbre JSON utilisent
-déjà — dans sa variante `pop` (un fondu qui se pose depuis une légère
+passe, le sélecteur d'affixes et le waterfall utilisent déjà — dans sa variante `pop` (un fondu qui se pose depuis une légère
 mise à l'échelle) avec des déplacements FLIP : les lignes restantes
 glissent dans l'espace libéré par celle qui disparaît. Deux propriétés
 viennent de la primitive et de la plateforme, pas de la cloche : elle

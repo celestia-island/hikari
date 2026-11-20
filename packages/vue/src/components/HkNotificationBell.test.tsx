@@ -607,6 +607,44 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
+  it("a PARTIAL dismiss holds the list height too (the bottom ghost is not cropped)", async () => {
+    // Round-4 finding, S1: the hold is not an empty-state nicety. A pinned
+    // ghost sits at its pre-patch offset inside the scroller, so ANY shrink
+    // crops the bottom-most one — dismiss the last row of three and the
+    // fade was invisible. (happy-dom has no layout, so the pre-patch height
+    // read is stubbed; the real-browser behaviour is recorded in the PR.)
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "two" });
+    recordNotification({ id: "c", kind: "toast", tone: "error", title: "three" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    Object.defineProperty(document.querySelector(".hk-notification-center__list")!, "offsetHeight", {
+      value: 72,
+      configurable: true,
+    });
+    const last = rows().find((r) => r.textContent?.includes("three"))!;
+    last.querySelector<HTMLButtonElement>(
+      '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+    )!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    // Rows remain (partial), and the list still holds its pre-patch height.
+    expect(rows().length).toBeGreaterThanOrEqual(2);
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+    ).toBe("72px");
+    // No caption during the window: the journal is not empty.
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
+    await new Promise((r) => setTimeout(r, 400));
+    await nextTick();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+    ).toBe("");
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
+  });
+
   it("clear-all fades every row, then the empty caption takes over", async () => {
     // The whole list leaving at once is the case the persistent wrap and
     // the hold window exist for: a branch swap would unmount the

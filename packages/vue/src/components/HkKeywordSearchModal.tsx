@@ -1,6 +1,7 @@
 import HkIconButton from "./HkIconButton";
 
 import { computed, defineComponent, onBeforeUnmount, ref, watch, type PropType } from "vue";
+import { Search, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 
@@ -221,19 +222,7 @@ export default defineComponent({
       >
         <div class="hk-kw-search">
           <div class="hk-kw-search-box">
-            <svg
-              class="hk-kw-search-icon"
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <Search class="hk-kw-search-icon" size={15} />
             <input
               class="hk-kw-search-input"
               type="text"
@@ -254,20 +243,7 @@ export default defineComponent({
                   semanticResults.value = [];
                 }}
               >
-                {{ icon: () => (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                ) }}
+                {{ icon: () => <X size={14} /> }}
               </HkIconButton>
             )}
           </div>

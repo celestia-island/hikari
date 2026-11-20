@@ -1,4 +1,5 @@
-import { defineComponent, ref, watch, type PropType } from "vue";
+import { defineComponent, type PropType } from "vue";
+import { useAvatarImage } from "./avatarImage";
 
 /**
  * HkAvatarButton — the avatar trigger button, ONE component for every
@@ -40,13 +41,9 @@ export const HkAvatarButton = defineComponent({
     click: (_e: MouseEvent) => true,
   },
   setup(props, { emit }) {
-    const avatarFailed = ref(false);
     // A new URL deserves a fresh attempt (account switch, avatar upload)
-    // — the same self-heal the identity chips apply.
-    watch(
-      () => props.avatarUrl,
-      () => { avatarFailed.value = false; },
-    );
+    // — the shared failed-load latch owns the reset (avatarImage.ts).
+    const avatar = useAvatarImage(() => props.avatarUrl);
 
     return () => (
       <button
@@ -56,12 +53,12 @@ export const HkAvatarButton = defineComponent({
         aria-expanded={props.expanded}
         onClick={(e: MouseEvent) => { emit("click", e); }}
       >
-        {props.avatarUrl && !avatarFailed.value ? (
+        {avatar.src.value ? (
           <img
-            src={props.avatarUrl}
+            src={avatar.src.value}
             alt={props.username}
             class="s-admin-header-avatar-img"
-            onError={() => { avatarFailed.value = true; }}
+            onError={avatar.onError}
           />
         ) : (
           // Letter fallback on the shared avatar primitive — the same

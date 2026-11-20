@@ -1,4 +1,5 @@
 import { defineComponent } from "vue";
+import { useAvatarImage } from "./avatarImage";
 import "./HkMenuIdentityItem.scss";
 
 /**
@@ -18,11 +19,19 @@ export default defineComponent({
     avatarAlt: { type: String, default: "" },
   },
   setup(props, { slots }) {
+    // Same failed-load latch as HkAvatar: a stored URL that 404s must not
+    // leave the browser's broken-picture glyph in the menu header.
+    const avatar = useAvatarImage(() => props.avatarUrl);
     return () => (
       <div class="hk-menu-identity-item" role="presentation">
         <div class="hk-menu-identity-item__avatar" aria-hidden="true">
-          {props.avatarUrl ? (
-            <img src={props.avatarUrl} alt={props.avatarAlt || props.name} class="hk-menu-identity-item__img" />
+          {avatar.src.value ? (
+            <img
+              src={avatar.src.value}
+              alt={props.avatarAlt || props.name}
+              class="hk-menu-identity-item__img"
+              onError={avatar.onError}
+            />
           ) : (
             <span class="hk-menu-identity-item__fallback">
               {(props.name || "?").charAt(0).toUpperCase()}

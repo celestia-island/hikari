@@ -95,6 +95,8 @@ describe("HkDeleteGateWindow", () => {
     // and release: the window must emit confirm (the parent performs the
     // delete) AND close itself (update:open=false). A short release must
     // NOT close — it only emits cancel with the progress.
+    confirmSpy.mockClear();
+    cancelSpy.mockClear();
     const onUpdate = vi.fn();
     const c = mountWindow("<p>msg</p>", {
       "onUpdate:open": onUpdate,
@@ -103,22 +105,33 @@ describe("HkDeleteGateWindow", () => {
       onCancel: (p: number) => cancelSpy(p),
     });
     const el = c.querySelector(".hk-serpentine")!;
-    const down = new PointerEvent("pointerdown", { bubbles: true, clientX: 24, clientY: 48, pointerId: 1 });
-    el.dispatchEvent(down);
+    // Fresh event objects per gesture: an Event instance is effectively
+    // single-use — re-dispatching the same object is engine-dependent (the
+    // CI runner ignores the second dispatch, so the walk below never
+    // started there and the confirm assertion saw zero calls).
+    const press = (clientX: number, clientY: number) =>
+      el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientX, clientY, pointerId: 1 }));
+    const move = (clientX: number, clientY: number) =>
+      el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX, clientY, pointerId: 1 }));
+    const release = (clientX: number, clientY: number) =>
+      el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientX, clientY, pointerId: 1 }));
+
+    press(24, 48);
     // Mid-lane release: cancel only.
-    const mid = new PointerEvent("pointermove", { bubbles: true, clientX: 300, clientY: 48, pointerId: 1 });
-    el.dispatchEvent(mid);
-    const up = new PointerEvent("pointerup", { bubbles: true, clientX: 300, clientY: 48, pointerId: 1 });
-    el.dispatchEvent(up);
+    move(300, 48);
+    release(300, 48);
+    await nextTick();
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(cancelSpy).toHaveBeenCalled();
     expect(onUpdate).not.toHaveBeenCalled(); // stays open
     // Re-open state is already open; a full walk then confirms and closes.
-    el.dispatchEvent(down);
+    await nextTick();
+    press(24, 48);
     for (let x = 30; x <= 600; x += 10) {
-      el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: x, clientY: 48, pointerId: 1 }));
+      move(x, 48);
     }
-    el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientX: 600, clientY: 48, pointerId: 1 }));
+    release(600, 48);
+    await nextTick();
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     expect(onUpdate).toHaveBeenCalledWith(false);
   });

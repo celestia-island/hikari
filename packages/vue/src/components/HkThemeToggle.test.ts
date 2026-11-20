@@ -230,9 +230,12 @@ describe("HkThemeToggle color-mode group", () => {
     expect(cell!.parentElement!.getAttribute("data-slots")).toBe("");
     expect(document.body.querySelector(".hk-tabs-overlay")).toBeNull();
     // The merged Light/Dark triggers leave the radio order entirely —
-    // the strip is the single pointer surface while auto is active.
+    // the strip is the single pointer surface while auto is active. The
+    // swap commits after the transition settles; poll instead of trusting
+    // one fixed sleep window (a loaded CI runner still saw the old
+    // three-way order when the merge had not landed yet).
+    await vi.waitFor(() => expect(modeSegments()).toHaveLength(1));
     const segments = modeSegments();
-    expect(segments).toHaveLength(1);
     expect(segments[0].textContent).toContain("Auto");
     expect(segments[0].getAttribute("aria-checked")).toBe("true");
   });

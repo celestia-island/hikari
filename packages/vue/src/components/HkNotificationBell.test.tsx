@@ -628,7 +628,7 @@ describe("panel rows", () => {
       addListener: () => {},
       removeListener: () => {},
       dispatchEvent: () => false,
-    })) as unknown as typeof window.matchMedia;
+    })) as typeof window.matchMedia;
     const cases: Array<[string, () => void, () => void]> = [
       ["bus parked", () => setReducedMotion(true), () => setReducedMotion(false)],
       [

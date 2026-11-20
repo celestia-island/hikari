@@ -6,6 +6,7 @@ import {
   type PropType,
   watch,
 } from "vue";
+import { asPropType } from "../utils/typing";
 
 import {
   DEFAULT_TURNS,
@@ -62,7 +63,7 @@ export default defineComponent({
      * higher-stakes deletions can ask for more turns.
      */
     turns: {
-      type: Array as unknown as PropType<[number, number]>,
+      type: asPropType<[number, number]>(Array),
       default: null,
     },
     /** Danger tone (delete-class actions) vs neutral. */

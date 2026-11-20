@@ -1,4 +1,5 @@
-import { defineComponent, h, type PropType, type VNode } from "vue";
+import { defineComponent, h, type VNode } from "vue";
+import { asPropType } from "../utils/typing";
 
 import HkSerpentineUnlock from "./HkSerpentineUnlock";
 import HkModal from "./HkModal";
@@ -36,7 +37,7 @@ export default defineComponent({
     trackingHint: { type: String, required: true },
     /** Corner-count range `[min, max]` — higher stakes, more turns. */
     turns: {
-      type: Array as unknown as PropType<[number, number]>,
+      type: asPropType<[number, number]>(Array),
       default: null,
     },
     /** Deterministic lane seed (tests / design review). */

@@ -64,10 +64,10 @@ impl MermaidDiagram {
         shape: Option<NodeShape>,
     ) {
         if map.contains_key(id) {
-            if let (Some(lbl), Some(&idx)) = (label, map.get(id)) {
-                if !lbl.is_empty() {
-                    nodes[idx].label = lbl.to_string();
-                }
+            if let (Some(lbl), Some(&idx)) = (label, map.get(id))
+                && !lbl.is_empty()
+            {
+                nodes[idx].label = lbl.to_string();
             }
             if let (Some(s), Some(&idx)) = (shape, map.get(id)) {
                 nodes[idx].shape = s;

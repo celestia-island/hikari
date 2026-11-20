@@ -237,7 +237,7 @@ pub fn FilterChip(props: FilterChipProps) -> Element {
         || props
             .chip_text
             .as_deref()
-            .map_or(false, |text| text != props.all_label)
+            .is_some_and(|text| text != props.all_label)
     {
         format!("{}: {}", props.label, chip_text)
     } else {

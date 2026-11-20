@@ -129,28 +129,28 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
             continue;
         }
 
-        if in_body {
-            if let Some(ref mut cls) = current {
-                if line == "}" {
-                    brace_depth -= 1;
-                    if brace_depth == 0 {
-                        in_body = false;
-                        classes.push(cls.clone());
-                        current = None;
-                        continue;
-                    }
+        if in_body && let Some(ref mut cls) = current {
+            if line == "}" {
+                brace_depth -= 1;
+                if brace_depth == 0 {
+                    in_body = false;
+                    classes.push(cls.clone());
+                    current = None;
+                    continue;
                 }
-                if brace_depth > 0 && !line.is_empty() && !line.starts_with('%') {
-                    if let Some(member) = parse_member(line) {
-                        if member.is_method {
-                            cls.methods.push(member);
-                        } else {
-                            cls.attributes.push(member);
-                        }
-                    }
-                }
-                continue;
             }
+            if brace_depth > 0
+                && !line.is_empty()
+                && !line.starts_with('%')
+                && let Some(member) = parse_member(line)
+            {
+                if member.is_method {
+                    cls.methods.push(member);
+                } else {
+                    cls.attributes.push(member);
+                }
+            }
+            continue;
         }
 
         if line.starts_with("class ") && line.contains('{') {
@@ -191,10 +191,10 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
     }
 
     // Unterminated block: keep it if it gathered anything.
-    if let Some(cls) = current {
-        if !cls.attributes.is_empty() || !cls.methods.is_empty() {
-            classes.push(cls);
-        }
+    if let Some(cls) = current
+        && (!cls.attributes.is_empty() || !cls.methods.is_empty())
+    {
+        classes.push(cls);
     }
 
     if classes.is_empty() {

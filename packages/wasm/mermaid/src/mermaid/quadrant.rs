@@ -63,16 +63,16 @@ pub fn parse_quadrant(source: &str) -> Option<MermaidQuadrantDoc> {
         if let Some(colon) = line.find(':') {
             let label = line[..colon].trim().to_string();
             let rest = line[colon + 1..].trim();
-            if let (Some(open), Some(close)) = (rest.find('['), rest.find(']')) {
-                if open < close {
-                    let coords = rest[open + 1..close].trim();
-                    let parts: Vec<&str> = coords.split(',').collect();
-                    if parts.len() == 2 {
-                        let x: f64 = parts[0].trim().parse().unwrap_or(f64::NAN);
-                        let y: f64 = parts[1].trim().parse().unwrap_or(f64::NAN);
-                        if x.is_finite() && y.is_finite() && !label.is_empty() {
-                            points.push(QuadrantPoint { label, x, y });
-                        }
+            if let (Some(open), Some(close)) = (rest.find('['), rest.find(']'))
+                && open < close
+            {
+                let coords = rest[open + 1..close].trim();
+                let parts: Vec<&str> = coords.split(',').collect();
+                if parts.len() == 2 {
+                    let x: f64 = parts[0].trim().parse().unwrap_or(f64::NAN);
+                    let y: f64 = parts[1].trim().parse().unwrap_or(f64::NAN);
+                    if x.is_finite() && y.is_finite() && !label.is_empty() {
+                        points.push(QuadrantPoint { label, x, y });
                     }
                 }
             }

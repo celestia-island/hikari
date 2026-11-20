@@ -108,12 +108,8 @@ pub mod native {
             _ => EcLevel::M,
         };
         let code = if version > 0 {
-            QrCode::with_version(
-                text.as_bytes(),
-                qrcode::Version::Normal(version as i16),
-                level,
-            )
-            .map_err(|e| format!("{e}"))?
+            QrCode::with_version(text.as_bytes(), qrcode::Version::Normal(version), level)
+                .map_err(|e| format!("{e}"))?
         } else {
             QrCode::with_error_correction_level(text.as_bytes(), level)
                 .map_err(|e| format!("{e}"))?

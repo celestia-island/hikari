@@ -53,7 +53,11 @@ vi.mock("./HkMenu", async () => {
           }
         };
         flatten(props.items);
-        return h("div", { class: "menu-stub" }, [...(slots.header?.() ?? []), ...rows]);
+        return h("div", { class: "menu-stub" }, [
+          ...(slots.header?.() ?? []),
+          ...rows,
+          ...(slots.footer?.() ?? []),
+        ]);
       };
     },
   });
@@ -354,5 +358,76 @@ describe("HkAdminHeader chrome face drag region (2026-11-12)", () => {
   it("leaves the content-face header out of the drag contract", () => {
     const c = mount(headerNode({}));
     expect(c.querySelector("header")!.hasAttribute("data-tauri-drag-region")).toBe(false);
+  });
+});
+
+describe("HkAdminHeader host slots (L39 ruling-a revival)", () => {
+  const LOCALES = [
+    { code: "en", label: "English" },
+    { code: "zh-Hans", label: "简体中文" },
+  ];
+
+  async function openMenu(c: HTMLElement) {
+    await click(avatarButton(c));
+    return c.querySelector(".menu-stub") as HTMLElement | null;
+  }
+
+  it("renders user-menu-extra rows in the dropdown tail and close() dismisses the menu", async () => {
+    const c = mount(
+      headerNode({ logoutLabel: "Log out" }, {
+        "user-menu-extra": ({ close }: { close?: () => void }) =>
+          h("button", { class: "menu-stub-row extra-row", onClick: () => close?.() }, "Account center"),
+      }),
+    );
+    const menu = await openMenu(c);
+    // The host row rides AFTER the built-in rows (tail), inside the menu.
+    const rows = menuRows(c);
+    expect(rows[rows.length - 1].textContent).toBe("Account center");
+    // close() dismisses the dropdown — a navigating entry leaves no
+    // orphaned menu behind.
+    await click(rows[rows.length - 1]);
+    expect(c.querySelector(".menu-stub")).toBeNull();
+  });
+
+  it("renders the locale-picker popup when the Language row is selected", async () => {
+    const c = mount(
+      headerNode(
+        { localeOptions: LOCALES, localeMenuLabel: "Language" },
+        {
+          "locale-picker": ({ open }: { open: boolean }) =>
+            h("div", { class: "locale-popup", "data-open": String(open) }, "picker"),
+        },
+      ),
+    );
+    // Popup starts closed.
+    expect(c.querySelector(".locale-popup")?.getAttribute("data-open")).toBe("false");
+    const menu = await openMenu(c);
+    // Slot mode: the Language row is a leaf (no built-in cascade rows).
+    expect(menu!.querySelector('[data-key="locale:en"]')).toBeNull();
+    expect(menu!.querySelector('[data-key="locale:zh-Hans"]')).toBeNull();
+    await click(menu!.querySelector('[data-key="locale"]'));
+    // Selecting the Language row opens the host popup (the payload's
+    // open flips true; the real assertion is the rendered data-open).
+    expect(c.querySelector(".locale-popup")?.getAttribute("data-open")).toBe("true");
+  });
+
+  it("keeps the built-in cascade when no locale-picker slot is supplied", async () => {
+    // NEGATIVE CONTROL (hosts like chest pass localeOptions and nothing
+    // else): the Language row keeps its built-in children exactly as
+    // before the revival.
+    const c = mount(headerNode({ localeOptions: LOCALES, localeMenuLabel: "Language" }));
+    const menu = await openMenu(c);
+    expect(menu!.querySelector('[data-key="locale:en"]')).not.toBeNull();
+    expect(menu!.querySelector('[data-key="locale:zh-Hans"]')).not.toBeNull();
+    expect(menu!.querySelector('[data-key="locale"]')).not.toBeNull();
+  });
+
+  it("renders neither host surface when neither slot is supplied", () => {
+    // NEGATIVE CONTROL: existing hosts (chest-shaped) see zero change —
+    // no tail rows, no popup mount, the exact DOM they always had.
+    const c = mount(headerNode({ localeOptions: LOCALES }));
+    expect(c.querySelector(".menu-stub")).toBeNull();
+    expect(c.querySelector(".locale-popup")).toBeNull();
+    expect(c.textContent).not.toContain("Account center");
   });
 });

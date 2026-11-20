@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
+import { computed, defineComponent, ref, watch, type PropType, type Ref, type SlotsType, type VNode } from "vue";
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
@@ -22,16 +22,39 @@ export interface HkAdminHeaderAvatarModalSlot {
 }
 
 /**
+ * Scoped payload of the `user-menu-extra` slot — host-owned rows the
+ * header appends to the user dropdown's TAIL (above nothing, below every
+ * built-in row). `close` dismisses the dropdown so a navigating entry
+ * (account center, …) leaves no orphaned menu behind. Mirrors the erp-side
+ * `AdminHeaderUserMenuExtraSlot` contract verbatim (L39 ruling a: the slot
+ * is consumed since this header grew the wiring).
+ */
+export interface HkAdminHeaderUserMenuExtraSlot {
+  close?: () => void;
+}
+
+/**
+ * Scoped payload of the `locale-picker` slot — the host-owned locale
+ * popup. When the slot is supplied, the menu's Language row becomes a
+ * plain trigger for this popup (the built-in children cascade stands
+ * down); `triggerRef` anchors the popup to the avatar trigger so it
+ * opens where the menu was. Mirrors the erp-side
+ * `AdminHeaderLocalePickerSlot` contract verbatim.
+ */
+export interface HkAdminHeaderLocalePickerSlot {
+  open: boolean;
+  onUpdateOpen: (value: boolean) => void;
+  triggerRef: Ref<HTMLElement | null> | HTMLElement | null;
+}
+
+/**
  * The header's whole slot surface, in `SlotsType` form. `identity`,
  * `center`, `emergency-stop-extra` and `theme-toggle` take no params.
  *
- * NOT part of this contract: the erp-side `locale-picker` / `user-menu-extra`
- * names (L39, lead ruling 2026-11-19) — declared by celestia-erp's local
- * interfaces but NEVER consumed by hikari's HkAdminHeader, so the slot bodies
- * erp passes have never rendered. Whether hikari should grow the consumption
- * (reviving erp's invisible account-center menu entries) or erp should delete
- * the dead bodies is ⏳ pending a user decision; until then neither name may
- * appear in this aggregate.
+ * `user-menu-extra` (rows appended to the dropdown tail) and
+ * `locale-picker` (host locale popup replacing the built-in cascade) were
+ * consumed as of the L39 ruling-a revival (2026-11-20): the erp bodies
+ * that had sat invisible since 0.55.241 now render.
  */
 export type HkAdminHeaderSlots = SlotsType<{
   identity?: () => VNode[];
@@ -39,6 +62,8 @@ export type HkAdminHeaderSlots = SlotsType<{
   "emergency-stop-extra"?: () => VNode[];
   "theme-toggle"?: () => VNode[];
   "avatar-modal"?: (params: HkAdminHeaderAvatarModalSlot) => VNode[];
+  "user-menu-extra"?: (params: HkAdminHeaderUserMenuExtraSlot) => VNode[];
+  "locale-picker"?: (params: HkAdminHeaderLocalePickerSlot) => VNode[];
 }>;
 
 export const HkAdminHeader = defineComponent({
@@ -132,6 +157,11 @@ export const HkAdminHeader = defineComponent({
     const userMenuOpen = ref(false);
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
+    // The host-owned locale popup's open state (L39 ruling a): when the
+    // `locale-picker` slot is supplied, the menu's Language row triggers
+    // THIS popup instead of the built-in children cascade — anchored to
+    // the avatar trigger, so the popup opens exactly where the menu was.
+    const localePickerOpen = ref(false);
     // The DROPDOWN identity image's own failed-load latch, with the same
     // URL-change reset the trigger's latch has inside HkAvatarButton —
     // an avatar re-upload or account switch must heal BOTH faces (R2's
@@ -197,11 +227,19 @@ export const HkAdminHeader = defineComponent({
           key: "locale",
           label: props.localeMenuLabel ?? t("hikari::adminHeader.language", "Language"),
           icon: Languages,
-          children: props.localeOptions.map((o) => ({
-            key: `locale:${o.code}`,
-            label: o.label,
-            checked: o.code === props.currentLocale,
-          })),
+          // A host-supplied `locale-picker` slot turns this row into a
+          // plain trigger for the host popup — the built-in cascade
+          // stands down (two locale surfaces in one menu would read as
+          // duplicated controls). Select routing is in onUserMenuSelect.
+          ...(slots["locale-picker"]
+            ? {}
+            : {
+                children: props.localeOptions.map((o) => ({
+                  key: `locale:${o.code}`,
+                  label: o.label,
+                  checked: o.code === props.currentLocale,
+                })),
+              }),
         });
       }
       // Frontend link — mirrors the drawer user panel's "go to frontend"
@@ -224,6 +262,10 @@ export const HkAdminHeader = defineComponent({
     function onUserMenuSelect(key: string) {
       if (key === "avatar") {
         avatarModalOpen.value = true;
+      } else if (key === "locale" && slots["locale-picker"]) {
+        // Host-popup mode: the menu closes around the select (HkMenu's
+        // own behaviour) and the popup takes over the anchor's spot.
+        localePickerOpen.value = true;
       } else if (key.startsWith("locale:")) {
         emit("localeSelect", key.slice("locale:".length));
       } else if (key === "go-to-frontend") {
@@ -377,6 +419,14 @@ export const HkAdminHeader = defineComponent({
                 </div>
               )
             ),
+            /* Host-owned tail rows (L39 ruling a): appended AFTER every
+             * built-in row — the account-center / change-password entries
+             * erp has been passing since 0.55.241. `close` dismisses the
+             * dropdown so a navigating entry leaves no orphaned menu. */
+            footer: () =>
+              slots["user-menu-extra"]?.({
+                close: () => { userMenuOpen.value = false; },
+              }) ?? [],
           }}
         </HkMenu>
 
@@ -426,6 +476,16 @@ export const HkAdminHeader = defineComponent({
         {slots["avatar-modal"]?.({
           open: avatarModalOpen.value,
           onUpdateOpen: (v: boolean) => { avatarModalOpen.value = v; },
+        })}
+
+        {/* Host-owned locale popup (L39 ruling a): the Language row's
+         * trigger target. Anchored to the avatar trigger — the popup
+         * opens where the dropdown was, so the handoff reads as the
+         * menu sliding into a picker rather than a second surface. */}
+        {slots["locale-picker"]?.({
+          open: localePickerOpen.value,
+          onUpdateOpen: (v: boolean) => { localePickerOpen.value = v; },
+          triggerRef: userTriggerRef.value ?? null,
         })}
       </header>
     );

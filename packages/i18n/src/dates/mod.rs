@@ -12,7 +12,7 @@
 //! the design system drew the calendar.
 //!
 //! The table is generated from CLDR by `scripts/gen-date-names.mjs` and frozen
-//! in `names.golden.toml`; `tests/date_vocabulary.rs` fails when the compiled
+//! in `names.golden.toml`; `tests/date_vocabulary_tests.rs` fails when the compiled
 //! table and the golden snapshot drift apart, so a CLDR change has to be
 //! reviewed as the user-visible text change it is.
 //!
@@ -60,9 +60,10 @@ pub struct DateVocabulary {
     weekday_narrow: &'static [&'static str],
 }
 
-/// Months in the table (`names.rs` asserts this in tests).
+/// Months per row — `tests/date_vocabulary_tests.rs` pins the generated rows to
+/// this length, so a truncated table cannot pass as a shorter month list.
 const MONTHS: usize = 12;
-/// Weekdays in the table.
+/// Weekdays per row — pinned by the same guard.
 const WEEKDAYS: usize = 7;
 
 impl DateVocabulary {

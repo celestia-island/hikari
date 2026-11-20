@@ -49,6 +49,11 @@ const SHAPES: [(&str, NameAccessor); 7] = [
 ];
 
 fn golden() -> BTreeMap<String, GoldenRow> {
+    assert_eq!(
+        SHAPES.len(),
+        7,
+        "every name shape must be compared; a shape missing here is a shape unguarded"
+    );
     let document: toml::Value = toml::from_str(GOLDEN).expect("names.golden.toml parses as TOML");
     let table = document
         .as_table()
@@ -122,6 +127,14 @@ fn vocabulary_matches_the_frozen_cldr_snapshot() {
         for (shape, accessor) in SHAPES {
             let expected = &row.shapes[shape];
             let months = shape.starts_with("month");
+            // Pin the snapshot row's length: the loop below iterates the
+            // snapshot, so a truncated row would otherwise leave the table's
+            // tail cells uncompared and still pass.
+            assert_eq!(
+                expected.len(),
+                if months { 12 } else { 7 },
+                "{code}.{shape}: snapshot row is truncated or over-long"
+            );
             for (index, want) in expected.iter().enumerate() {
                 // Months are 1-based, weekdays 0-based — the accessors' contract.
                 let key = if months {
@@ -156,12 +169,20 @@ fn every_language_has_a_complete_vocabulary() {
         "one date-vocabulary row per Language, no more, no less"
     );
 
-    for language in Language::ALL {
+    for (index, language) in Language::ALL.iter().enumerate() {
         let vocabulary = date_vocabulary(*language);
         assert_eq!(
             vocabulary.language,
             *language,
             "{:?} resolves its own row",
+            language.code()
+        );
+        // `all_vocabularies()` promises `Language::ALL` order; a reordered
+        // generator or enum would otherwise diverge from its doc silently.
+        assert_eq!(
+            rows[index].language,
+            *language,
+            "all_vocabularies()[{index}] must be {:?}",
             language.code()
         );
         assert!(

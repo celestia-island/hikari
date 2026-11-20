@@ -1024,15 +1024,21 @@ export default defineComponent({
                   icon-less group has no expanded cell to pair with, so
                   its placeholder caret simply dissolves — pairing needs
                   both ends, and the flight never invents one. */}
+              {/* 2026-11-20 user direction (ERP media rail): the STATE CARET
+                  is the rail group button's primary glyph — expandability is
+                  what the rail communicates — and the group icon demotes to
+                  a small bottom-end corner badge. data-flip-icon rides the
+                  corner span so the density flip still pairs icon ↔ icon. */}
               <span
                 class="hk-menu-item-icon"
-                data-flip-icon={item.key}
                 data-fallback={item.icon ? undefined : true}
               >
-                {item.icon ? h(item.icon, { size: 16 }) : railCaret(expanded, 16)}
+                {railCaret(expanded, 16)}
               </span>
               {item.icon && (
-                <span class="hk-menu-rail-caret-corner">{railCaret(expanded, 10)}</span>
+                <span class="hk-menu-rail-glyph-corner" data-flip-icon={item.key}>
+                  {h(item.icon, { size: 10 })}
+                </span>
               )}
               {item.badge && (
                 <span

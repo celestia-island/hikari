@@ -376,7 +376,7 @@ describe("HkMenu sidebar icon rail", () => {
     expect(c.querySelector(".hk-menu-sidebar-rail-children")).toBeNull();
   });
 
-  it("uses the group icon as its glyph and parks the state caret in the corner", async () => {
+  it("makes the state caret the primary glyph and demotes the group icon to the corner", async () => {
     const c = mountMenu(
       [
         {
@@ -389,27 +389,32 @@ describe("HkMenu sidebar icon rail", () => {
       { collapsed: true },
     );
 
-    // A declared icon owns the glyph cell; the state caret moves out of
-    // the column into the corner so the icon stays rail-centered.
+    // 2026-11-20 (ERP media rail): expandability is what the rail
+    // communicates, so the CARET owns the glyph cell and the declared
+    // group icon demotes to the bottom-end corner badge (still paired by
+    // data-flip-icon for the density flight).
     const group = groupRows(c)[0]!;
     const glyph = group.querySelector(".hk-menu-item-icon")!;
-    expect(glyph.querySelector("svg"), "the declared icon is the glyph").toBeTruthy();
     expect(
       glyph.querySelector(".hk-menu-rail-caret"),
-      "no placeholder caret in the glyph cell",
-    ).toBeNull();
-    const corner = group.querySelector(".hk-menu-rail-caret-corner .hk-menu-rail-caret");
-    expect(corner, "the state caret parks in the corner").toBeTruthy();
-    expect(corner!.classList.contains("lucide-chevron-right")).toBe(true);
+      "the state caret is the primary glyph",
+    ).toBeTruthy();
+    expect(glyph.classList.contains("lucide-chevron-right")).toBe(false);
+    const corner = group.querySelector(".hk-menu-rail-glyph-corner svg")!;
+    expect(corner, "the declared icon parks in the corner").toBeTruthy();
 
-    // Opening swaps the corner glyph to ChevronDown; the icon stays put.
+    // Opening swaps the caret glyph to ChevronDown; the icon stays put.
     group.click();
     await nextTick();
     expect(
       groupRows(c)[0]!
-        .querySelector(".hk-menu-rail-caret-corner .hk-menu-rail-caret")!
+        .querySelector(".hk-menu-item-icon .hk-menu-rail-caret")!
         .classList.contains("lucide-chevron-down"),
     ).toBe(true);
+    expect(
+      groupRows(c)[0]!.querySelector(".hk-menu-rail-glyph-corner"),
+      "the icon corner persists after opening",
+    ).toBeTruthy();
   });
 
   it("falls back to the label initial for icon-less LEAF rows", () => {

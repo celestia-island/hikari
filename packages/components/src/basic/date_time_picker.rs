@@ -103,8 +103,9 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
 use crate::basic::date_picker::{
-    DateLocale, DatePickerNavGlyph, date_locale, date_picker_nav, is_disabled_day, month_grid,
-    parse_iso_date, to_iso_date, year_block_start,
+    DateLocale, DatePickerNavGlyph, date_locale, date_picker_nav, day_view_month_label,
+    is_disabled_day, locale_month_grid, month_pick_label, parse_iso_date, to_iso_date,
+    year_block_start,
 };
 use crate::basic::date_tag::{active_language, date_tag_parse_value};
 use crate::platform;
@@ -948,7 +949,7 @@ fn dtp_build_header(
             let year_wiring = wiring.clone();
             let prev_wiring = wiring.clone();
             let next_wiring = wiring.clone();
-            let month_name = locale.month_long_standalone(view_month);
+            let month_name = day_view_month_label(locale, view_month);
             rsx! {
                 div { class: "hk-dtp-header",
                     div { class: "hk-dtp-header-side",
@@ -1019,7 +1020,7 @@ fn dtp_build_content(
                 if is_now {
                     class.push_str(" is-today");
                 }
-                let label = locale.month_short_standalone(month);
+                let label = month_pick_label(locale, month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1085,7 +1086,7 @@ fn dtp_build_content(
                 })
                 .collect();
 
-            let cells = month_grid(view_year, view_month, locale.first_weekday());
+            let cells = locale_month_grid(locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;

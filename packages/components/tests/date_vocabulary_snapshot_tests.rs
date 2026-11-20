@@ -22,7 +22,9 @@
 
 #[cfg(test)]
 mod tests {
-    use hikari_components::basic::date_picker::{date_locale, parse_iso_date};
+    use hikari_components::basic::date_picker::{
+        date_locale, day_view_month_label, locale_month_grid, month_pick_label, parse_iso_date,
+    };
     use hikari_components::data::calendar_heatmap::{heatmap_month_label, heatmap_weekday_label};
     use hikari_i18n::Language;
 
@@ -159,6 +161,45 @@ mod tests {
                 "{code}: weekday grid order"
             );
         }
+    }
+
+    /// The render must ask the LOCALE for its first weekday, not pass a
+    /// constant — zh-Hans is Monday-first while English is Sunday-first, and
+    /// 2024-10-01 is a Tuesday, so the two grids open one day apart.
+    #[test]
+    fn the_day_grid_opens_on_the_locales_first_weekday() {
+        let chinese = date_locale(Language::ChineseSimplified);
+        let cells = locale_month_grid(&chinese, 2024, 10);
+        assert_eq!(cells.len(), 42, "six rows of seven cells");
+        assert_eq!(
+            cells[0],
+            parse_iso_date("2024-09-30").unwrap(),
+            "zh-Hans opens on Monday"
+        );
+        let english = date_locale(Language::English);
+        assert_eq!(
+            locale_month_grid(&english, 2024, 10)[0],
+            parse_iso_date("2024-09-29").unwrap(),
+            "English opens on Sunday"
+        );
+    }
+
+    /// The month-picker cells and the day-view title are BARE months, so they
+    /// must read the standalone shapes; German is where the two CLDR shapes
+    /// differ visibly ("Jan" vs "Jan.", "Oktober" vs "Oktober").
+    #[test]
+    fn bare_month_labels_use_the_standalone_shapes() {
+        let german = date_locale(Language::German);
+        assert_eq!(month_pick_label(&german, 1), "Jan");
+        assert_eq!(german.month_short_format(1), "Jan.");
+        let russian = date_locale(Language::Russian);
+        assert_eq!(day_view_month_label(&russian, 10), "октябрь");
+        assert_eq!(russian.month_long_format(10), "октября");
+        // A composed date would use the format shape; the title must not.
+        assert_ne!(
+            day_view_month_label(&russian, 10),
+            russian.month_long_format(10)
+        );
     }
 
     /// The heatmap's month markers are BARE months, so they must read the

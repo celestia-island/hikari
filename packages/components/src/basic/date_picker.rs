@@ -406,6 +406,26 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
     cells
 }
 
+/// The 42 day cells of a locale's month grid (Vue: the `cells` computed, one
+/// to one). A thin adapter on purpose: the render asks the LOCALE for its
+/// first weekday instead of passing a constant, and a test can pin that
+/// choice without mounting the component.
+pub fn locale_month_grid(locale: &DateLocale, year: i32, month: u32) -> Vec<NaiveDate> {
+    month_grid(year, month, locale.first_weekday())
+}
+
+/// A month cell's label in the month picker — a BARE month, so the CLDR
+/// STANDALONE short shape (a composed date would use the format one).
+pub fn month_pick_label(locale: &DateLocale, month: u32) -> String {
+    locale.month_short_standalone(month)
+}
+
+/// The day view's title month — a BARE month, so the CLDR STANDALONE long
+/// shape. The year is a separate control, the same split Vue renders.
+pub fn day_view_month_label(locale: &DateLocale, month: u32) -> String {
+    locale.month_long_standalone(month)
+}
+
 /// Decide what a native `<input type=date>` `change` should emit.
 ///
 /// Returns what the event should emit, or `None` when the event must NOT
@@ -1308,7 +1328,7 @@ fn build_content(
                 if is_today {
                     class.push_str(" is-today");
                 }
-                let label = locale.month_short_standalone(month);
+                let label = month_pick_label(&locale, month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1372,7 +1392,7 @@ fn build_content(
                 })
                 .collect();
 
-            let cells = month_grid(view_year, view_month, locale.first_weekday());
+            let cells = locale_month_grid(&locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;

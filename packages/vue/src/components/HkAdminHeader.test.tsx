@@ -337,6 +337,165 @@ describe("HkAdminHeader", () => {
     const actions = c.querySelector(".s-admin-header-actions");
     expect(actions?.className).toContain("s-header-wing-end");
   });
+
+  it("leaves the left wing shape untouched when no brand is provided (additive gate)", () => {
+    // THE zero-change pin for the brand slot: hosts that never pass
+    // brandSrc / brand (chest today) must get the exact wing they always
+    // had — avatar trigger then title, no brand node anywhere. Pinned as
+    // a structural shape so a future left-wing refactor that disturbs
+    // non-branded hosts trips HERE, not in a downstream repo.
+    const c = mount(headerNode({ title: "Providers", userEmail: "alice@example.com" }));
+    const wing = c.querySelector(".s-admin-header-user");
+    if (wing === null) throw new Error("the wing must render");
+    const shape = [...wing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
+    expect(shape).toEqual([
+      "button.s-admin-header-avatar",
+      "span.s-admin-header-title",
+    ]);
+    expect(c.querySelector(".s-admin-header-brand")).toBeNull();
+
+    // The byte-identical claim covers the DRAWER wing's children too:
+    // avatar trigger (the drawer opener) then the reserved ws-slot
+    // blank, in that order, brand node absent.
+    const drawer = mount(headerNode({ avatarAction: "drawer", userEmail: "alice@example.com" }));
+    const drawerWing = drawer.querySelector(".s-admin-header-user");
+    if (drawerWing === null) throw new Error("the drawer wing must render");
+    const drawerShape = [...drawerWing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
+    expect(drawerShape).toEqual([
+      "button.s-admin-header-avatar",
+      "span.s-admin-header-ws-slot",
+    ]);
+    expect(drawer.querySelector(".s-admin-header-brand")).toBeNull();
+  });
+});
+
+describe("HkAdminHeader brand slot (opt-in site mark)", () => {
+  it("renders the static brand mark in place of the identity trigger on the desktop face", () => {
+    // Identity props are PRESENT on purpose: the mark REPLACES the
+    // trigger, it does not wait for an absent identity.
+    const c = mount(headerNode({
+      title: "Providers",
+      userEmail: "alice@example.com",
+      brandSrc: "https://example.invalid/logo.png",
+      brandAlt: "Lagrange",
+    }));
+    const brand = c.querySelector(".s-admin-header-brand");
+    expect(brand, "the brand mark must render").not.toBeNull();
+    const found = brand?.querySelector("img.hk-logo-img");
+    const img = found instanceof HTMLImageElement ? found : null;
+    expect(img?.getAttribute("src")).toBe("https://example.invalid/logo.png");
+    expect(img?.getAttribute("alt")).toBe("Lagrange");
+    expect(avatarButton(c), "the identity trigger must be replaced").toBeNull();
+    // The WHERE title keeps its node — the mark replaces the identity,
+    // not the page title beside it.
+    expect(c.querySelector(".s-admin-header-title")?.textContent).toBe("Providers");
+  });
+
+  it("keeps the mark free of button semantics (an identity, not a control)", () => {
+    // No hamburger on this mount: the branded wing must hold NO button
+    // at all — the account entry moved to the host's own surface, and
+    // the mark itself is a span around a div/img, not a control.
+    const c = mount(headerNode({ brandSrc: "https://example.invalid/logo.png" }));
+    expect(c.querySelector(".s-admin-header-user button")).toBeNull();
+    expect(c.querySelector(".s-admin-header-brand button")).toBeNull();
+    // SEMANTIC pins, not shape pins: a future re-render that wraps the
+    // mark in an anchor (href), or sprinkles tabindex/role="button" on
+    // it, turns the identity into a control no matter what the class
+    // list looks like. The scan covers the mark's WHOLE PATH: the node
+    // itself (a re-render may move the class onto an anchor), its
+    // ancestors up to the wing (an anchor WRAPPING the mark sits outside
+    // any descendant query — descendant-only pins are blind to it), and
+    // everything inside it.
+    const brandEl = c.querySelector(".s-admin-header-brand");
+    if (brandEl === null) throw new Error("the brand mark must render");
+    const brandPath: Element[] = [brandEl];
+    let cursor: Element | null = brandEl;
+    while (cursor && !cursor.classList.contains("s-admin-header-user")) {
+      cursor = cursor.parentElement;
+      if (cursor) brandPath.push(cursor);
+    }
+    const controlHits = [...brandPath, ...brandEl.querySelectorAll("*")].filter((el) =>
+      el.matches('a[href], [tabindex], [role="button"]'),
+    );
+    expect(controlHits, "the brand path must carry no control semantics").toEqual([]);
+  });
+
+  it("renders ZERO account surface on the branded desktop face (the replacement contract)", () => {
+    // The replacement clause, pinned end to end: identity props AND the
+    // account carrier slots are ALL supplied, yet the branded header
+    // exposes no account trigger, no popup, and none of the slot bodies
+    // — the dropdown (and identity / user-menu-extra / avatar-modal /
+    // locale-picker inside it) does not mount at all. This is the pin
+    // that keeps a future edit from "helpfully" wiring the menu back.
+    const c = mount(headerNode({
+      title: "Providers",
+      username: "alice",
+      userEmail: "alice@example.com",
+      logoutLabel: "Log out",
+      brandSrc: "https://example.invalid/logo.png",
+    }, {
+      identity: () => h("div", { class: "host-identity" }, "host identity"),
+      "user-menu-extra": () => h("div", { class: "host-extra" }, "host extra"),
+      "avatar-modal": () => h("div", { class: "host-modal" }, "host modal"),
+      "locale-picker": () => h("div", { class: "host-locale" }, "host locale"),
+    }));
+    // No interactive surface anywhere in the header...
+    expect(c.querySelector("header button")).toBeNull();
+    expect(c.querySelector("header [aria-haspopup]")).toBeNull();
+    // ...the dropdown is not mounted (its stub renders nothing)...
+    expect(c.querySelector(".menu-stub")).toBeNull();
+    // ...and none of the account carrier slots render their bodies.
+    expect(c.querySelector(".host-identity")).toBeNull();
+    expect(c.querySelector(".host-extra")).toBeNull();
+    expect(c.querySelector(".host-modal")).toBeNull();
+    expect(c.querySelector(".host-locale")).toBeNull();
+    // The brand mark itself is the only thing the wing gained.
+    expect(c.querySelector(".s-admin-header-brand")).not.toBeNull();
+  });
+
+  it("prefers the brand slot over brandSrc when both are supplied", () => {
+    const c = mount(headerNode(
+      { brandSrc: "https://example.invalid/logo.png" },
+      { brand: () => h("span", { class: "host-brand-mark" }, "host mark") },
+    ));
+    expect(c.querySelector(".host-brand-mark")?.textContent).toBe("host mark");
+    expect(c.querySelector(".hk-logo")).toBeNull();
+    expect(avatarButton(c)).toBeNull();
+  });
+
+  // The slot is the FIRST of the two opt-in channels, so it must work ALONE:
+  // the dual-channel case above cannot see `brandMounted` losing its slot leg
+  // (`!!props.brandSrc` survives the whole suite with this case missing —
+  // review round R2'' mutation M-A).
+  it("mounts the brand face from the slot alone, without brandSrc", () => {
+    const c = mount(headerNode(
+      {},
+      { brand: () => h("span", { class: "slot-only-mark" }, "slot only") },
+    ));
+    expect(c.querySelector(".slot-only-mark")?.textContent).toBe("slot only");
+    // The brand face replaced the avatar identity trigger…
+    expect(avatarButton(c)).toBeNull();
+    // …and no fallback logo renders — the slot IS the brand, not a default.
+    expect(c.querySelector(".hk-logo")).toBeNull();
+  });
+
+  it("never renders the brand on the drawer face and keeps the drawer path alive", async () => {
+    const clicks: number[] = [];
+    const c = mount(headerNode({
+      avatarAction: "drawer",
+      userEmail: "alice@example.com",
+      brandSrc: "https://example.invalid/logo.png",
+      onAvatarClick: () => clicks.push(1),
+    }));
+    // The mark is absent AND the avatar trigger still opens the drawer —
+    // that trigger is the drawer's only opener, so the mobile path is
+    // invariant under the brand props.
+    expect(c.querySelector(".s-admin-header-brand")).toBeNull();
+    const btn = avatarButton(c);
+    expect(btn?.getAttribute("aria-haspopup")).toBe("dialog");
+    await click(btn);
+    expect(clicks).toHaveLength(1);
+  });
 });
 
 describe("HkAdminHeader chrome face drag region (2026-11-12)", () => {

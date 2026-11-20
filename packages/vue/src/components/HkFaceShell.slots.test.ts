@@ -118,4 +118,24 @@ describe("the public slot-type contract (L39)", () => {
     expect(faceSlots).toEqual({});
     expect(headerSlots).toEqual({});
   });
+
+  it("the brand slot is a zero-param render (the static-mark contract)", () => {
+    // Both legs of the contract bite at COMPILE time, through the
+    // COMPONENT's unwrapped slots type — the aggregate alias itself is
+    // a symbol-keyed container (SlotsType<T> = { [SlotSymbol]?: T }),
+    // where `{} as HkAdminHeaderSlots` compiles regardless of the inner
+    // optionality, so the alias-level pins are blind to it:
+    // - REQUIRED-SLOT leg: `undefined extends typeof slots.brand` holds
+    //   only while `brand` keeps its undefined member (optional). Making
+    //   the slot required flips the conditional to `never`, and the
+    //   `const ... : never = true` line fails vue-tsc on THIS file.
+    // - ZERO-PARAM leg: the call must still typecheck with no arguments
+    //   — a payload parameter would be a contract change, not an
+    //   addition (a static site mark has no state to hand down).
+    // The type alias keeps the extraction purely type-level — no
+    // value-side cast for the escape ratchet to count (review R2''' S1).
+    type HeaderSlots = InstanceType<typeof barrel.HkAdminHeader>["$slots"];
+    const brandStaysOptional: undefined extends HeaderSlots["brand"] ? true : never = true;
+    expect(brandStaysOptional).toBe(true);
+  });
 });

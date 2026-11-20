@@ -118,4 +118,16 @@ describe("the public slot-type contract (L39)", () => {
     expect(faceSlots).toEqual({});
     expect(headerSlots).toEqual({});
   });
+
+  it("the brand slot is a zero-param render (the static-mark contract)", () => {
+    // Compile-level pin, read through the COMPONENT's unwrapped slots
+    // type: the aggregate alias itself is a symbol-keyed container
+    // (SlotsType), so its payload is only reachable via the instance's
+    // $slots. `brand` must stay optional and callable with NO arguments
+    // — a payload parameter would be a contract change, not an addition
+    // (a static site mark has no state to hand down). A signature drift
+    // breaks THIS file's vue-tsc, not a downstream repo's build.
+    const slots = {} as InstanceType<typeof barrel.HkAdminHeader>["$slots"];
+    expect(slots.brand?.()).toBeUndefined();
+  });
 });

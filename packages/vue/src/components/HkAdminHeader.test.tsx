@@ -337,6 +337,81 @@ describe("HkAdminHeader", () => {
     const actions = c.querySelector(".s-admin-header-actions");
     expect(actions?.className).toContain("s-header-wing-end");
   });
+
+  it("leaves the left wing shape untouched when no brand is provided (additive gate)", () => {
+    // THE zero-change pin for the brand slot: hosts that never pass
+    // brandSrc / brand (chest today) must get the exact wing they always
+    // had — avatar trigger then title, no brand node anywhere. Pinned as
+    // a structural shape so a future left-wing refactor that disturbs
+    // non-branded hosts trips HERE, not in a downstream repo.
+    const c = mount(headerNode({ title: "Providers", userEmail: "alice@example.com" }));
+    const wing = c.querySelector(".s-admin-header-user")!;
+    const shape = [...wing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
+    expect(shape).toEqual([
+      "button.s-admin-header-avatar",
+      "span.s-admin-header-title",
+    ]);
+    expect(c.querySelector(".s-admin-header-brand")).toBeNull();
+  });
+});
+
+describe("HkAdminHeader brand slot (opt-in site mark)", () => {
+  it("renders the static brand mark in place of the identity trigger on the desktop face", () => {
+    // Identity props are PRESENT on purpose: the mark REPLACES the
+    // trigger, it does not wait for an absent identity.
+    const c = mount(headerNode({
+      title: "Providers",
+      userEmail: "alice@example.com",
+      brandSrc: "https://example.invalid/logo.png",
+      brandAlt: "Lagrange",
+    }));
+    const brand = c.querySelector(".s-admin-header-brand");
+    expect(brand, "the brand mark must render").not.toBeNull();
+    const img = brand?.querySelector("img.hk-logo-img") as HTMLImageElement | null;
+    expect(img?.getAttribute("src")).toBe("https://example.invalid/logo.png");
+    expect(img?.getAttribute("alt")).toBe("Lagrange");
+    expect(avatarButton(c), "the identity trigger must be replaced").toBeNull();
+    // The WHERE title keeps its node — the mark replaces the identity,
+    // not the page title beside it.
+    expect(c.querySelector(".s-admin-header-title")?.textContent).toBe("Providers");
+  });
+
+  it("keeps the mark free of button semantics (an identity, not a control)", () => {
+    // No hamburger on this mount: the branded wing must hold NO button
+    // at all — the account entry moved to the host's own surface, and
+    // the mark itself is a span around a div/img, not a control.
+    const c = mount(headerNode({ brandSrc: "https://example.invalid/logo.png" }));
+    expect(c.querySelector(".s-admin-header-user button")).toBeNull();
+    expect(c.querySelector(".s-admin-header-brand button")).toBeNull();
+  });
+
+  it("prefers the brand slot over brandSrc when both are supplied", () => {
+    const c = mount(headerNode(
+      { brandSrc: "https://example.invalid/logo.png" },
+      { brand: () => h("span", { class: "host-brand-mark" }, "host mark") },
+    ));
+    expect(c.querySelector(".host-brand-mark")?.textContent).toBe("host mark");
+    expect(c.querySelector(".hk-logo")).toBeNull();
+    expect(avatarButton(c)).toBeNull();
+  });
+
+  it("never renders the brand on the drawer face and keeps the drawer path alive", async () => {
+    const clicks: number[] = [];
+    const c = mount(headerNode({
+      avatarAction: "drawer",
+      userEmail: "alice@example.com",
+      brandSrc: "https://example.invalid/logo.png",
+      onAvatarClick: () => clicks.push(1),
+    }));
+    // The mark is absent AND the avatar trigger still opens the drawer —
+    // that trigger is the drawer's only opener, so the mobile path is
+    // invariant under the brand props.
+    expect(c.querySelector(".s-admin-header-brand")).toBeNull();
+    const btn = avatarButton(c);
+    expect(btn?.getAttribute("aria-haspopup")).toBe("dialog");
+    await click(btn);
+    expect(clicks).toHaveLength(1);
+  });
 });
 
 describe("HkAdminHeader chrome face drag region (2026-11-12)", () => {

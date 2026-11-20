@@ -6,6 +6,7 @@ import { CHROME_BAND_DRAG_REGION } from "../runtime/windowChrome";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 import { HkAvatarButton } from "./HkAvatarButton";
 import { useAvatarImage } from "./avatarImage";
+import HkLogo from "./HkLogo";
 
 export interface LocaleOption {
   code: string;
@@ -49,8 +50,18 @@ export interface HkAdminHeaderLocalePickerSlot {
 }
 
 /**
- * The header's whole slot surface, in `SlotsType` form. `identity`,
- * `center`, `emergency-stop-extra` and `theme-toggle` take no params.
+ * The header's whole slot surface, in `SlotsType` form. `brand`,
+ * `identity`, `center`, `emergency-stop-extra` and `theme-toggle` take
+ * no params.
+ *
+ * `brand` (opt-in site mark): when supplied — or when the `brandSrc`
+ * prop is set — the DESKTOP face (avatarAction "menu") renders the
+ * static site logo in place of the avatar identity trigger. The mark
+ * is an identity, not a control: no href, no button semantics. The
+ * drawer face never renders it — the avatar trigger is the drawer's
+ * only opener there, and the drawer path stays untouched. The host
+ * that swaps the identity trigger away owns the account surface
+ * elsewhere (its own action rows or menu).
  *
  * `user-menu-extra` (rows appended to the dropdown tail) and
  * `locale-picker` (host locale popup replacing the built-in cascade) were
@@ -58,6 +69,7 @@ export interface HkAdminHeaderLocalePickerSlot {
  * that had sat invisible since 0.55.241 now render.
  */
 export type HkAdminHeaderSlots = SlotsType<{
+  brand?: () => VNode[];
   identity?: () => VNode[];
   center?: () => VNode[];
   "emergency-stop-extra"?: () => VNode[];
@@ -144,6 +156,32 @@ export const HkAdminHeader = defineComponent({
      *  panels without a consumer-facing face simply omit the prop and
      *  keep the menu at avatar/language/logout. */
     goToFrontendLabel: { type: String, default: undefined },
+    /** Static site logo URL for the header's BRAND slot (opt-in). When
+     *  set — or when the `brand` slot is supplied (the slot wins) — the
+     *  DESKTOP face (avatarAction "menu") renders the site mark in place
+     *  of the avatar identity trigger: one static identity at the wing
+     *  head, where the account trigger used to sit.
+     *
+     *  Contract, three clauses:
+     *  - REPLACEMENT, not augmentation: the avatar trigger does not
+     *    render on the branded desktop face. The host that opts in owns
+     *    the account surface elsewhere (its own action rows or a menu) —
+     *    the header ships no substitute account entry for it.
+     *  - DESKTOP ONLY: the drawer face (avatarAction "drawer") never
+     *    renders the mark and keeps the avatar trigger untouched — that
+     *    trigger is the drawer's only opener, so the mobile drawer path
+     *    is invariant under this prop.
+     *  - NON-INTERACTIVE: the mark is an identity, not a control. It is
+     *    rendered through the div variant of HkLogo (no href), carries no
+     *    button semantics, and the face pins the pointer cursor off.
+     *
+     *  Rendered at HkLogo's "sm" step — the closest visual weight to the
+     *  28px trigger it replaces, inside the header's 48px band. */
+    brandSrc: { type: String, default: undefined },
+    /** Accessible name for the static brand mark (the logo image's alt).
+     *  Provide it: a site logo names the site, and an unnamed image is
+     *  announced as bare graphics. */
+    brandAlt: { type: String, default: "" },
   },
   emits: {
     logout: () => true,
@@ -187,6 +225,13 @@ export const HkAdminHeader = defineComponent({
         props.signingInLabel !== undefined ||
         props.onForceSignOut !== undefined,
     );
+
+    // The brand mark is opt-in through EITHER channel: the host `brand`
+    // slot (arbitrary mark nodes) or the `brandSrc` prop (a plain site
+    // logo URL rendered through HkLogo). See the prop contract above for
+    // the replacement semantics — the desktop face swaps the identity
+    // trigger for the mark, the drawer face ignores the brand entirely.
+    const brandMounted = computed(() => !!(slots.brand || props.brandSrc));
 
     function onAvatarClick(e: MouseEvent) {
       e.stopPropagation();
@@ -315,7 +360,7 @@ export const HkAdminHeader = defineComponent({
               <Menu size={20} class="s-admin-header-hamburger-icon" />
             </HButton>
           )}
-          {identityMounted.value && (
+          {identityMounted.value && !(brandMounted.value && props.avatarAction === "menu") && (
             <HkAvatarButton
               avatarUrl={props.avatarUrl}
               username={props.username}
@@ -324,6 +369,21 @@ export const HkAdminHeader = defineComponent({
               expanded={props.avatarAction === "menu" ? userMenuOpen.value : undefined}
               onClick={onAvatarClick}
             />
+          )}
+          {/* The brand mark (opt-in brandSrc / brand slot, desktop face
+           * only): the static site logo takes the identity trigger's
+           * spot — an identity, not a control (div-variant HkLogo, no
+           * href, no button semantics; the pointer cursor is pinned off
+           * in admin-tokens). The drawer face never renders it — the
+           * avatar trigger above IS the drawer path there, so that wing
+           * stays byte-identical. The slot wins when both channels are
+           * supplied. */}
+          {brandMounted.value && props.avatarAction === "menu" && (
+            <span class="s-admin-header-brand">
+              {slots.brand ? slots.brand() : (
+                <HkLogo src={props.brandSrc} alt={props.brandAlt} size="sm" />
+              )}
+            </span>
           )}
           {/* The reserved workspace-switcher slot (drawer face only).
               The chat header's left wing is avatar + ws-trigger button,

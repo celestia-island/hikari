@@ -666,6 +666,25 @@
   flex-shrink: 0;
 }
 
+/* The brand slot's static site mark (HkAdminHeader, opt-in brandSrc /
+ * brand slot, desktop face). It takes the avatar trigger's spot in the
+ * left wing, so it behaves like the box it replaced: a fixed flex item
+ * that never shrinks and never grows. The mark is an identity, NOT a
+ * control — HkLogo's div variant carries a click emit for standalone
+ * hosts, so the header face pins the pointer cursor off, and it drops
+ * the container rounding: site marks ship their own shape, and a
+ * radius here would clip wordmark corners that were drawn edge-to-edge. */
+.s-admin-header-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.s-admin-header-brand .hk-logo {
+  cursor: default;
+  border-radius: 0;
+}
+
 /* The old hover camera veil ("change avatar" affordance) is gone: the
  * avatar trigger opens the account MENU — the avatar edit is the Camera
  * item inside it — so the veil promised an action the click never

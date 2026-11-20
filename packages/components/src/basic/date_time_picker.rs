@@ -84,8 +84,8 @@
 //   * the `trigger` slot is a `Option<Element>` prop — a host passes the same
 //     vnode it would have written into the slot.
 //   * `Intl.DateTimeFormat` does not exist on wasm32-wasip2: month / weekday
-//     NAMES come from chrono's locale data and the segment order from a
-//     per-language table — the full delta list lives on
+//     NAMES come from `hikari_i18n::dates` (CLDR) and the segment order from a
+//     per-language table — the context and accessor list lives on
 //     [`crate::basic::date_picker::DateLocale`]. One shape is specific to this
 //     component: the trigger label is the medium date PLUS a 24-hour clock
 //     ("Oct 6, 2024, 09:05"). Vue's Intl pattern for that label is
@@ -948,7 +948,7 @@ fn dtp_build_header(
             let year_wiring = wiring.clone();
             let prev_wiring = wiring.clone();
             let next_wiring = wiring.clone();
-            let month_name = locale.month_long(view_month);
+            let month_name = locale.month_long_standalone(view_month);
             rsx! {
                 div { class: "hk-dtp-header",
                     div { class: "hk-dtp-header-side",
@@ -1019,7 +1019,7 @@ fn dtp_build_content(
                 if is_now {
                     class.push_str(" is-today");
                 }
-                let label = locale.month_short(month);
+                let label = locale.month_short_standalone(month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1085,7 +1085,7 @@ fn dtp_build_content(
                 })
                 .collect();
 
-            let cells = month_grid(view_year, view_month, locale.first_weekday);
+            let cells = month_grid(view_year, view_month, locale.first_weekday());
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;

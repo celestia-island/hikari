@@ -43,12 +43,13 @@
 //     clock-injectable; `None` falls back to the host's UTC today, which is
 //     exactly Vue's behaviour.
 //   * `Intl.DateTimeFormat` is replaced by the SAME locale layer the mirrored
-//     `DatePicker`/`DateTag` use (`basic::DateLocale`, chrono `LC_TIME`):
-//     weekday names come from `%a` anchored on 2024-01-01 (a Monday, the same
-//     anchor Vue uses), month markers from `month_short`, and the cell title's
+//     `DatePicker`/`DateTag` use (`basic::DateLocale`, backed by the
+//     CLDR-generated `hikari_i18n::dates` vocabulary): weekday names come from
+//     the Monday-anchored rail (Vue's `Date.UTC(2024, 0, 1 + index)`), month
+//     markers from the STANDALONE short month, and the cell title's
 //     `dateStyle: "medium"` from `DateLocale::display_text`. Digits stay
-//     Latin, and a locale whose chrono data differs from ICU's for a shape
-//     inherits the Delta list `DateLocale` already documents.
+//     Latin, and the vocabulary is the same cell-by-cell table the Vue side's
+//     `Intl` reads, so a locale no longer differs between the two halves.
 //   * `language` is an explicit prop (`None` = the i18n context's active
 //     language) so a host and its tests can pin the locale.
 //   * The i18n strings resolve through `hikari_i18n::t` with the same
@@ -462,14 +463,13 @@ pub fn heatmap_legend_swatch_style(level: u8) -> String {
 
 // ── labels (the locale layer) ──────────────────────────────────────────
 
-/// A Monday-first weekday name (Vue formats `Date.UTC(2024, 0, 1 + index)` —
-/// 2024-01-01 IS a Monday, so the anchor is the same).
+/// A Monday-first abbreviated weekday name (Vue formats `Date.UTC(2024, 0,
+/// 1 + index)` — 2024-01-01 IS a Monday, so the anchor is the same). The
+/// vocabulary is Sunday-first, hence the `+ 1` rotation for a Monday anchor.
 pub fn heatmap_weekday_label(locale: &DateLocale, index: usize) -> String {
-    match NaiveDate::from_ymd_opt(2024, 1, 1 + index as u32) {
-        Some(date) => date
-            .format_localized("%a", locale.chrono_locale)
-            .to_string(),
-        None => String::new(),
+    match u32::try_from(index) {
+        Ok(index) if index < 7 => locale.weekday_short((index + 1) % 7),
+        _ => String::new(),
     }
 }
 
@@ -477,7 +477,7 @@ pub fn heatmap_weekday_label(locale: &DateLocale, index: usize) -> String {
 /// number); an empty marker renders the empty slot.
 pub fn heatmap_month_label(locale: &DateLocale, marker: &str) -> String {
     match marker.parse::<u32>() {
-        Ok(month) if (1..=12).contains(&month) => locale.month_short(month),
+        Ok(month) if (1..=12).contains(&month) => locale.month_short_standalone(month),
         _ => String::new(),
     }
 }

@@ -84,9 +84,10 @@
 //     watcher, and [`DatePickerProps::on_view_state_change`] is how the host
 //     writes the result back.
 //   * `Intl.DateTimeFormat` does not exist on wasm32-wasip2: month and
-//     weekday NAMES come from chrono's locale data ([`DateLocale`]), and the
-//     segment order / separators from a per-language table. See the
-//     [`DateLocale`] delta list for the two shapes that differ from Intl.
+//     weekday NAMES come from `hikari_i18n::dates` — a table generated from
+//     CLDR, the same data `Intl` reads — and the segment order / separators
+//     from a per-language table. See [`DateLocale`] for which CLDR context
+//     (standalone vs format) each surface asks for.
 //   * `min` / `max` compare as ISO day keys, exactly Vue's string comparison
 //     (both props are normalized through the parser first, so an unparseable
 //     bound drops out instead of pinning the whole grid).
@@ -105,7 +106,8 @@
 // API exposed that Vue does not have is gone; hosts that need a formatter keep
 // it on their side.
 
-use chrono::{Datelike, Locale, NaiveDate};
+use chrono::{Datelike, NaiveDate};
+use hikari_i18n::dates::{DateVocabulary, date_vocabulary};
 use hikari_i18n::{Language, t};
 use hikari_icons::{Icon, MdiIcon};
 
@@ -482,77 +484,92 @@ pub enum DateOrder {
 /// `Intl.Locale#weekInfo.firstDay`). wasm32-wasip2 has no `Intl`, so the
 /// mirror splits the two halves:
 ///
-///   * NAMES (month short/long, weekday long/short) come from chrono's locale
-///     data — `NaiveDate::format_localized("%b" / "%B" / "%a" / "%A")` — for
-///     the nine `hikari_i18n::Language` values. That data is the glibc
-///     `LC_TIME` set, so it matches Intl for en / zh / ja / ko / fr / ru and
-///     differs in two documented places: Spanish June/July abbreviations are
-///     `jun`/`jul` (Intl: `jun`/`jul`), the Spanish weekday narrow forms come
-///     from the abbreviated name (`m` for `miércoles`, where Intl uses `X`),
-///     and Russian month names are the genitive form (`октября`), which is
-///     what `%d %B` needs but makes the month-only header read
-///     "октября 2024" instead of Intl's nominative "октябрь 2024 г.".
+///   * NAMES and FIRST WEEKDAY come from [`hikari_i18n::dates`] — a table
+///     generated from CLDR (the same data `Intl` reads), frozen in the crate.
+///     That replaced chrono's glibc `LC_TIME` mirror, which disagreed with
+///     `Intl` in 154 cells across the eleven languages (leading spaces on nine
+///     zh-Hant/ja/ko month abbreviations, genitive Russian months, Portuguese
+///     abbreviations missing their dot, Arabic abbreviations collapsed to a
+///     single letter) — the same locale rendered differently depending on
+///     which half of the design system drew the calendar.
 ///   * ORDER and SEPARATORS come from the small per-language table this
 ///     module carries ([`DateOrder`] plus the CJK/Korean glue), transcribed
 ///     from `Intl.DateTimeFormat`'s output for `dateStyle: "medium"` / the
 ///     `{year, month}` header.
+///
+/// Context matters for the names: a header is a *standalone* month
+/// ("октябрь 2024"), a composed date is the *format* shape ("6 октября
+/// 2024"), and this type exposes one accessor per shape rather than letting a
+/// call site pick the wrong one.
 ///
 /// Digits stay Latin (Intl's `ar` locale formats Arabic-Indic digits), and no
 /// era / day-period suffix is emitted.
 #[derive(Clone, Copy, Debug)]
 pub struct DateLocale {
     pub language: Language,
-    /// The chrono locale whose `LC_TIME` data supplies the names.
-    pub chrono_locale: Locale,
-    /// 0 = Sunday … 6 = Saturday (`Intl.Locale#weekInfo.firstDay`).
-    pub first_weekday: u32,
+    /// The CLDR vocabulary: month / weekday names in both contexts, plus the
+    /// locale's first weekday. `hikari_i18n::dates` owns the data.
+    vocabulary: &'static DateVocabulary,
     pub order: DateOrder,
 }
 
 impl DateLocale {
-    /// Abbreviated month name (Vue: `{month: "short"}`).
-    pub fn month_short(&self, month: u32) -> String {
-        self.month_name(month, "%b")
+    /// The locale's first weekday: 0 = Sunday … 6 = Saturday
+    /// (`Intl.Locale#weekInfo.firstDay`, generated from CLDR).
+    pub fn first_weekday(&self) -> u32 {
+        self.vocabulary.first_weekday
     }
 
-    /// Full month name (Vue: `{month: "long"}`).
-    pub fn month_long(&self, month: u32) -> String {
-        self.month_name(month, "%B")
+    /// Abbreviated month name standing on its own (a month picker cell, a
+    /// chart axis marker): the CLDR *standalone* shape.
+    pub fn month_short_standalone(&self, month: u32) -> String {
+        self.vocabulary.month_short_standalone(month).to_string()
     }
 
-    fn month_name(&self, month: u32, fmt: &str) -> String {
-        // 2024-<month>-15: any day inside the month names it.
-        match NaiveDate::from_ymd_opt(2024, clamp_month(month), 15) {
-            Some(date) => date.format_localized(fmt, self.chrono_locale).to_string(),
-            None => String::new(),
-        }
+    /// Full month name standing on its own — the calendar header
+    /// ("октябрь 2024"): the CLDR *standalone* shape.
+    pub fn month_long_standalone(&self, month: u32) -> String {
+        self.vocabulary.month_long_standalone(month).to_string()
     }
 
-    /// The seven weekday labels of the grid's header row — Vue builds them
-    /// from 2024-01-07 (a Sunday) offset by the locale's first weekday, and
-    /// `narrow` picks the single-character form (`{weekday: "narrow"}`) over
-    /// the abbreviated one (`{weekday: "short"}`).
+    /// Abbreviated month name inside a composed date ("6 окт. 2024"): the
+    /// CLDR *format* shape.
+    pub fn month_short_format(&self, month: u32) -> String {
+        self.vocabulary.month_short_format(month).to_string()
+    }
+
+    /// Full month name inside a composed date ("6 октября 2024"): the CLDR
+    /// *format* shape.
+    pub fn month_long_format(&self, month: u32) -> String {
+        self.vocabulary.month_long_format(month).to_string()
+    }
+
+    /// The seven weekday labels of the grid's header row, rotated so the
+    /// locale's first weekday comes first. `narrow` picks CLDR's narrow forms
+    /// (`{weekday: "narrow"}`) over the abbreviations (`{weekday: "short"}`);
+    /// the narrow forms are their own CLDR data, not the first letter of the
+    /// abbreviation (Spanish Wednesday is `X`, not `m` — `m` collides with
+    /// Tuesday).
     pub fn weekday_labels(&self, narrow: bool) -> Vec<String> {
-        (0..7)
-            .map(|index| {
-                // 2024-01-07 … 2024-01-13 are Sunday … Saturday.
-                let day_of_month = 7 + (self.first_weekday + index) % 7;
-                let name = match NaiveDate::from_ymd_opt(2024, 1, day_of_month) {
-                    Some(date) => date.format_localized("%a", self.chrono_locale).to_string(),
-                    None => String::new(),
-                };
-                if narrow {
-                    name.chars().next().map(String::from).unwrap_or_default()
-                } else {
-                    name
-                }
-            })
+        self.vocabulary
+            .weekday_labels(narrow)
+            .into_iter()
+            .map(str::to_string)
             .collect()
+    }
+
+    /// The abbreviated weekday name of one weekday, `0 = Sunday … 6 = Saturday`
+    /// — an INDEX, unlike its sibling [`Self::weekday_long`], which takes a
+    /// date. Callers come from the heatmap rail, where the anchor is Monday.
+    pub fn weekday_short(&self, weekday: u32) -> String {
+        self.vocabulary.weekday_short(weekday).to_string()
     }
 
     /// The full weekday name of one date (Vue: `dateStyle: "full"`).
     pub fn weekday_long(&self, date: NaiveDate) -> String {
-        date.format_localized("%A", self.chrono_locale).to_string()
+        self.vocabulary
+            .weekday_long(date.weekday().num_days_from_sunday())
+            .to_string()
     }
 
     /// The header title (Vue: `{year: "numeric", month: "long"}`).
@@ -563,13 +580,13 @@ impl DateLocale {
                 format!("{year}年{month}月")
             }
             Language::Korean => format!("{year}년 {month}월"),
-            _ => format!("{} {year}", self.month_long(month)),
+            _ => format!("{} {year}", self.month_long_standalone(month)),
         }
     }
 
     /// The trigger's display text (Vue: `dateStyle: "medium"`).
     pub fn display_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short(date.month());
+        let month = self.month_short_format(date.month());
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}年{}月{}日", date.year(), date.month(), date.day())
@@ -592,7 +609,7 @@ impl DateLocale {
     /// The MONTH + DAY medium text WITHOUT a year (Vue's `triggerDateTime`
     /// formatter: `{month: "short", day: "numeric"}`).
     pub fn short_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short(date.month());
+        let month = self.month_short_format(date.month());
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}月{}日", date.month(), date.day())
@@ -610,7 +627,7 @@ impl DateLocale {
     /// The day cell's `aria-label` (Vue: `dateStyle: "full"`).
     pub fn full_text(&self, date: NaiveDate) -> String {
         let weekday = self.weekday_long(date);
-        let month = self.month_long(date.month());
+        let month = self.month_long_format(date.month());
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!(
@@ -645,29 +662,32 @@ impl DateLocale {
 
 /// The locale snapshot of one hikari language.
 pub fn date_locale(language: Language) -> DateLocale {
-    let (chrono_locale, first_weekday, order) = match language {
-        Language::English => (Locale::en_US, 0, DateOrder::MonthDayYear),
-        Language::ChineseSimplified => (Locale::zh_CN, 0, DateOrder::YearMonthDay),
-        Language::ChineseTraditional => (Locale::zh_TW, 0, DateOrder::YearMonthDay),
-        Language::Japanese => (Locale::ja_JP, 0, DateOrder::YearMonthDay),
-        Language::Korean => (Locale::ko_KR, 0, DateOrder::YearMonthDay),
-        Language::French => (Locale::fr_FR, 1, DateOrder::DayMonthYear),
-        Language::German => (Locale::de_DE, 1, DateOrder::DayMonthYear),
-        Language::Spanish => (Locale::es_ES, 1, DateOrder::DayMonthYear),
-        Language::Portuguese => (Locale::pt_BR, 0, DateOrder::DayMonthYear),
-        Language::Russian => (Locale::ru_RU, 1, DateOrder::DayMonthYear),
-        Language::Arabic => (Locale::ar_SA, 0, DateOrder::DayMonthYear),
+    // Only the SEGMENT ORDER lives here: it is grammar (which field first,
+    // which glue character), not vocabulary. The names and the first weekday
+    // come from the generated CLDR table, which is the single source the Vue
+    // side's `Intl` shares.
+    let order = match language {
+        Language::English => DateOrder::MonthDayYear,
+        Language::ChineseSimplified => DateOrder::YearMonthDay,
+        Language::ChineseTraditional => DateOrder::YearMonthDay,
+        Language::Japanese => DateOrder::YearMonthDay,
+        Language::Korean => DateOrder::YearMonthDay,
+        Language::French => DateOrder::DayMonthYear,
+        Language::German => DateOrder::DayMonthYear,
+        Language::Spanish => DateOrder::DayMonthYear,
+        Language::Portuguese => DateOrder::DayMonthYear,
+        Language::Russian => DateOrder::DayMonthYear,
+        Language::Arabic => DateOrder::DayMonthYear,
         // `Language` is `#[non_exhaustive]`: a future variant compiles through
-        // here and keeps the English snapshot until its own row is added. No
+        // here and keeps the English order until its own row is added. No
         // in-tree test can reach this arm — an unlisted variant cannot be
         // constructed from outside the defining crate; the first language
         // added after this PR is its natural test.
-        _ => (Locale::en_US, 0, DateOrder::MonthDayYear),
+        _ => DateOrder::MonthDayYear,
     };
     DateLocale {
         language,
-        chrono_locale,
-        first_weekday,
+        vocabulary: date_vocabulary(language),
         order,
     }
 }
@@ -1288,7 +1308,7 @@ fn build_content(
                 if is_today {
                     class.push_str(" is-today");
                 }
-                let label = locale.month_short(month);
+                let label = locale.month_short_standalone(month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1352,7 +1372,7 @@ fn build_content(
                 })
                 .collect();
 
-            let cells = month_grid(view_year, view_month, locale.first_weekday);
+            let cells = month_grid(view_year, view_month, locale.first_weekday());
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;
@@ -1678,9 +1698,12 @@ mod tests {
     #[test]
     fn date_picker_locale_names_and_shapes() {
         let english = date_locale(Language::English);
-        assert_eq!(english.first_weekday, 0);
-        assert_eq!(english.month_short(10), "Oct");
-        assert_eq!(english.month_long(10), "October");
+        assert_eq!(english.first_weekday(), 0);
+        assert_eq!(english.month_short_standalone(10), "Oct");
+        assert_eq!(english.month_long_standalone(10), "October");
+        // In a composed date English keeps the same shapes.
+        assert_eq!(english.month_short_format(10), "Oct");
+        assert_eq!(english.month_long_format(10), "October");
         assert_eq!(english.header_label(2024, 10), "October 2024");
         assert_eq!(english.display_text(date(2024, 10, 6)), "Oct 6, 2024");
         assert_eq!(
@@ -1693,8 +1716,12 @@ mod tests {
             vec!["S", "M", "T", "W", "T", "F", "S"]
         );
 
-        // zh: year first, no separators inside the header.
+        // zh-Hans: year first, no separators inside the header. The grid is
+        // MONDAY-first — CLDR says so, and the Vue side reads the same value
+        // from `Intl.Locale#weekInfo`, so this used to disagree with Vue.
         let chinese = date_locale(Language::ChineseSimplified);
+        assert_eq!(chinese.first_weekday(), 1);
+        assert_eq!(chinese.weekday_labels(false)[0], "周一");
         assert_eq!(chinese.header_label(2024, 10), "2024年10月");
         assert_eq!(chinese.display_text(date(2024, 10, 6)), "2024年10月6日");
         assert!(
@@ -1703,19 +1730,31 @@ mod tests {
                 .starts_with("2024年10月6日")
         );
 
-        // fr: Monday-first, day-first date.
+        // fr: Monday-first, day-first date. Narrow names are CLDR's, so they
+        // are upper case (`L` for lundi) — glibc gave lower case.
         let french = date_locale(Language::French);
-        assert_eq!(french.first_weekday, 1);
-        assert_eq!(french.weekday_labels(true)[0], "l");
+        assert_eq!(french.first_weekday(), 1);
+        assert_eq!(french.weekday_labels(true)[0], "L");
         assert_eq!(french.display_text(date(2024, 10, 6)), "6 oct. 2024");
 
         // ko: dotted medium form.
         let korean = date_locale(Language::Korean);
         assert_eq!(korean.display_text(date(2024, 10, 6)), "2024. 10. 6.");
 
-        // ru: dot-separated day-first.
+        // ru: day-first, and the abbreviation carries CLDR's dot ("окт." —
+        // glibc gave the bare "окт"). The header uses the STANDALONE month
+        // while a composed date uses the FORMAT one: "октябрь 2024" vs
+        // "6 октября 2024" — glibc only had the genitive, which is what made
+        // the header read "октября 2024".
         let russian = date_locale(Language::Russian);
-        assert_eq!(russian.display_text(date(2024, 10, 6)), "6 окт 2024");
+        assert_eq!(russian.display_text(date(2024, 10, 6)), "6 окт. 2024");
+        assert_eq!(russian.header_label(2024, 10), "октябрь 2024");
+        assert!(russian.full_text(date(2024, 10, 6)).contains("октября"));
+
+        // es: CLDR's narrow Wednesday is `X` (disambiguated from `M` martes),
+        // not the first letter of the abbreviation.
+        let spanish = date_locale(Language::Spanish);
+        assert_eq!(spanish.weekday_labels(true)[2], "X");
     }
 
     #[test]

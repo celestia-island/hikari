@@ -1,6 +1,7 @@
 mod basic_components_tests;
 mod collapse_tests;
 mod data_components_tests;
+mod date_vocabulary_snapshot_tests;
 mod display_components_tests;
 mod entry_components_tests;
 mod feedback_components_tests;

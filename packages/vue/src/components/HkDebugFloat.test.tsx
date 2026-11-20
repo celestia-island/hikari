@@ -440,6 +440,85 @@ describe("HkDebugFloat headerless chrome", () => {
   });
 });
 
+describe("HkDebugFloat chrome ownership (closable / interactive)", () => {
+  it("drops the header close when closable is false", () => {
+    mount(() => h(HkDebugFloat, { closable: false }, () => "fps 60"));
+    const win = floatWindow()!;
+    expect(win.querySelector(".hk-debug-float-close")).toBeNull();
+    // The header itself stays: the title and the drag handle are chrome
+    // the host did not ask to surrender.
+    expect(win.querySelector("[data-el='header']")).toBeTruthy();
+  });
+
+  it("keeps the header close by default", () => {
+    mount(() => h(HkDebugFloat, null, () => "fps 60"));
+    expect(
+      floatWindow()!.querySelector("[data-el='header'] .hk-debug-float-close"),
+    ).toBeTruthy();
+  });
+
+  it("drops the headerless close and its empty overlay when closable is false", () => {
+    mount(() => h(HkDebugFloat, { chrome: "none", closable: false }, () => "fps 60"));
+    const win = floatWindow()!;
+    // No close left to hold open → no empty hover chrome box either.
+    expect(win.querySelector("[data-el='overlay']")).toBeNull();
+    expect(win.querySelector(".hk-debug-float-close")).toBeNull();
+    expect(win.getAttribute("data-chrome")).toBe("none");
+  });
+
+  it("keeps the overlay when sections are set, even without a close", () => {
+    mount(() =>
+      h(HkDebugFloat, {
+        chrome: "none",
+        closable: false,
+        sections: [{ key: "timing", label: "timing" }],
+      }),
+    );
+    const overlay = floatWindow()!.querySelector("[data-el='overlay']");
+    expect(overlay).toBeTruthy();
+    expect(overlay!.querySelector("button.hk-debug-float-section")).toBeTruthy();
+    expect(overlay!.querySelector(".hk-debug-float-close")).toBeNull();
+  });
+
+  it("suspends hover yield and drag while interactive is false", async () => {
+    mount(() => h(HkDebugFloat, { chrome: "none", interactive: false }, () => "fps 60"));
+    const win = floatWindow()!;
+    expect(win.getAttribute("data-interactive")).toBe("");
+    dispatchMouse("pointerenter", win);
+    await nextTick();
+    expect(win.hasAttribute("data-hovered")).toBe(false);
+    dispatchMouse("pointerdown", win, { clientX: 100, clientY: 100, button: 0, buttons: 1 });
+    await nextTick();
+    expect(win.hasAttribute("data-dragging")).toBe(false);
+    expect(win.style.left).toBe("");
+  });
+
+  it("drops the yielded state when the lock engages mid-hover", async () => {
+    const interactive = ref(true);
+    mount(() =>
+      h(HkDebugFloat, { chrome: "none", interactive: interactive.value }, () => "fps 60"),
+    );
+    const win = floatWindow()!;
+    dispatchMouse("pointerenter", win);
+    await nextTick();
+    expect(win.hasAttribute("data-hovered")).toBe(true);
+    interactive.value = false;
+    await nextTick();
+    expect(win.hasAttribute("data-hovered")).toBe(false);
+    expect(win.getAttribute("data-interactive")).toBe("");
+  });
+
+  it("keeps a host-marked unlock control addressable while locked", () => {
+    mount(() =>
+      h(HkDebugFloat, { chrome: "none", interactive: false }, () =>
+        h("button", { "data-hk-debug-float-pointer": "", class: "pin" }, "pin"),
+      ),
+    );
+    const pin = floatWindow()!.querySelector("button.pin")!;
+    expect(pin.hasAttribute("data-hk-debug-float-pointer")).toBe(true);
+  });
+});
+
 describe("HkDebugFloat width", () => {
   it("marks the auto seat and drops the inline px width", () => {
     mount(() => h(HkDebugFloat, { width: "auto" }));
@@ -784,6 +863,22 @@ describe("HkDebugFloat stylesheet contract", () => {
     expect(css).toMatch(/\.hk-debug-float\[data-auto-width\]\s*\{[^}]*width:\s*max-content;/);
     expect(css).toMatch(
       /\.hk-debug-float\[data-auto-width\]\s*\{[^}]*max-width:\s*calc\(100vw - 2 \* var\(--hk-debug-float-offset,\s*16px\)\);/,
+    );
+  });
+
+  it("locks the window out of the pointer layer when non-interactive", () => {
+    // interactive={false}: the whole window stops taking pointers, and a
+    // host-marked subtree re-enables hit testing explicitly so exactly
+    // one control (the unlock affordance) stays live.
+    expect(css).toMatch(
+      /\.hk-debug-float\[data-interactive=false\]\s*\{\s*pointer-events:\s*none;/,
+    );
+    expect(css).toMatch(
+      /\.hk-debug-float\[data-interactive=false\] \[data-hk-debug-float-pointer\]\s*\{\s*pointer-events:\s*auto;/,
+    );
+    // The lock is static — a click-through window has no hover to fade on.
+    expect(css).toMatch(
+      /\.hk-debug-float\[data-interactive=false\] \[data-el=fade\]\s*\{\s*transition:\s*none;/,
     );
   });
 

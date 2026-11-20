@@ -46,6 +46,27 @@
   }
 }
 
+/* ---------- click-through lock (host-driven `interactive={false}`) ---------- */
+/* The window suspends every pointer affordance of its own — hover yield,
+ * drag, close, overlay reveal — and lets pointers fall through to the page
+ * it measures. Clicks outside the window already passed through; this makes
+ * the window itself pass through too. A subtree the host marks
+ * `data-hk-debug-float-pointer` re-enables pointer-events explicitly
+ * (descendants may re-enable under a none ancestor), so exactly the host's
+ * own unlock control stays live (the wowsp pin button). The locked visual is
+ * the host's: its content fades itself (a static lock, not a hover fade). */
+.hk-debug-float[data-interactive="false"] {
+  pointer-events: none;
+
+  & [data-el="fade"] {
+    transition: none;
+  }
+
+  & [data-hk-debug-float-pointer] {
+    pointer-events: auto;
+  }
+}
+
 /* ---------- the card (visual chrome + the hover fade) ---------- */
 .hk-debug-float [data-el="fade"] {
   overflow: hidden;

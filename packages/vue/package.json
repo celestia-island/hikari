@@ -38,6 +38,7 @@
   "./styles/*": "./src/styles/*",
   "./theme/*": "./src/theme/*",
   "./components/*": "./src/components/*",
+  "./composables/*": "./src/composables/*",
   "./plugins": {
    "import": "./src/plugins/index.ts",
    "types": "./src/plugins/index.ts"

@@ -48,8 +48,10 @@
 //     the Monday-anchored rail (Vue's `Date.UTC(2024, 0, 1 + index)`), month
 //     markers from the STANDALONE short month, and the cell title's
 //     `dateStyle: "medium"` from `DateLocale::display_text`. Digits stay
-//     Latin, and the vocabulary is the same cell-by-cell table the Vue side's
-//     `Intl` reads, so a locale no longer differs between the two halves.
+//     Latin. The NAMES are the same CLDR data the Vue side's `Intl` reads, so
+//     the two halves can no longer disagree on a month or weekday name — the
+//     composition around them (glue, particles, digit shape) is still this
+//     crate's own transcription and is tracked separately.
 //   * `language` is an explicit prop (`None` = the i18n context's active
 //     language) so a host and its tests can pin the locale.
 //   * The i18n strings resolve through `hikari_i18n::t` with the same

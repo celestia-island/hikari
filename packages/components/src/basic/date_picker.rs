@@ -513,9 +513,11 @@ pub enum DateOrder {
 ///     single letter) — the same locale rendered differently depending on
 ///     which half of the design system drew the calendar.
 ///   * ORDER and SEPARATORS come from the small per-language table this
-///     module carries ([`DateOrder`] plus the CJK/Korean glue), transcribed
-///     from `Intl.DateTimeFormat`'s output for `dateStyle: "medium"` / the
-///     `{year, month}` header.
+///     module carries ([`DateOrder`] plus the CJK/Korean glue). That table is
+///     an approximation of `Intl`'s `dateStyle: "medium"` / `{year, month}`
+///     shapes, not a transcription: locales whose Intl form is numeric (de,
+///     ja) or carries particles ("de", " г.") render the simplified shape
+///     this crate has always rendered.
 ///
 /// Context matters for the names: a header is a *standalone* month
 /// ("октябрь 2024"), a composed date is the *format* shape ("6 октября

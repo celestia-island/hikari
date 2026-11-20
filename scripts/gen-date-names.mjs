@@ -41,16 +41,16 @@ import { fileURLToPath } from "node:url";
  * Order = hikari_i18n::Language::ALL.
  */
 const LOCALES = {
-  en: "en-US",
-  "zh-Hans": "zh-CN",
-  "zh-Hant": "zh-TW",
-  ja: "ja-JP",
-  ko: "ko-KR",
-  fr: "fr-FR",
-  de: "de-DE",
-  es: "es-ES",
-  pt: "pt-BR",
-  ru: "ru-RU",
+  en: "en",
+  "zh-Hans": "zh-hans",
+  "zh-Hant": "zh-hant",
+  ja: "ja",
+  ko: "ko",
+  fr: "fr",
+  de: "de",
+  es: "es",
+  pt: "pt",
+  ru: "ru",
   ar: "ar",
 };
 

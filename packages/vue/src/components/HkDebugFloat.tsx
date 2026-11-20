@@ -57,7 +57,18 @@
  * - **Close (×)** emits `update:open` (v-model:open) and persists the
  *   closed state. With `persistKey` set, open-state, dragged position
  *   and hidden sections round-trip via localStorage under
- *   `hk-debug-float:<key>`; reopening restores them.
+ *   `hk-debug-float:<key>`; reopening restores them. `closable={false}`
+ *   drops the in-window close entirely (header × and the headerless
+ *   hover close) for hosts that own their chrome — the wowsp perf HUD
+ *   replaces it with a pin control and closes from its own content.
+ * - **Click-through lock (`interactive={false}`).** The window suspends
+ *   every pointer affordance of its own — hover yield, drag, close,
+ *   overlay reveal — and paints `pointer-events: none`, so pointers
+ *   fall through to the page it measures. A subtree the host marks
+ *   `data-hk-debug-float-pointer` keeps `pointer-events: auto`
+ *   (descendants may re-enable under a none ancestor), so exactly the
+ *   host's own unlock control stays live — the wowsp pin button. The
+ *   host owns the locked visual (its content fades itself).
  * - The window intercepts pointers ONLY on its own box (no backdrop,
  *   no inset-0 overlay) — clicks outside it always reach the page.
  */
@@ -118,6 +129,18 @@ export default defineComponent({
     width: { type: [Number, String] as PropType<number | "auto">, default: 280 },
     /** Opacity the window fades to while hovered, 0..1. */
     hoverOpacity: { type: Number, default: 0.45 },
+    /** Whether the window renders its own close affordance — the header
+     *  × or the headerless hover close. Hosts that own their chrome (the
+     *  wowsp perf HUD replaces it with a pin control) pass false and
+     *  close through v-model:open themselves. */
+    closable: { type: Boolean, default: true },
+    /** Interactive pointer mode. When false the window suspends ALL of
+     *  its own pointer handling — hover yield, drag, close, overlay
+     *  reveal — and paints pointer-events: none, letting pointers fall
+     *  through to the page (a click-through HUD lock). Subtrees marked
+     *  `data-hk-debug-float-pointer` keep pointer-events: auto so the
+     *  host's own unlock control stays clickable. */
+    interactive: { type: Boolean, default: true },
     /** Uncontrolled initial open state (superseded by any persisted one). */
     defaultOpen: { type: Boolean, default: true },
     /** When set: open-state + position (+ hidden sections) persist under
@@ -243,6 +266,7 @@ export default defineComponent({
     function onDragPointerDown(e: PointerEvent): void {
       // Primary button only; interactive chrome (close, section chips,
       // producer content controls) keeps its own pointer semantics.
+      if (!props.interactive) return;
       if (e.button !== 0) return;
       if ((e.target as HTMLElement).closest("button, a, input, select, textarea")) return;
       const el = windowEl.value;
@@ -297,12 +321,23 @@ export default defineComponent({
 
     // -- hover → yield --
     function onPointerEnter(): void {
+      // A locked (click-through) window has no hover affordance.
+      if (!props.interactive) return;
       hovered.value = true;
     }
 
     function onPointerLeave(): void {
       hovered.value = false;
     }
+
+    // Locking mid-hover must drop the yielded state: the pointer leaves a
+    // click-through window without a leave event (it never received one).
+    watch(
+      () => props.interactive,
+      (interactive) => {
+        if (!interactive) hovered.value = false;
+      },
+    );
 
     // A restored position clamps once the real box is measurable.
     onMounted(() => {
@@ -358,7 +393,11 @@ export default defineComponent({
             onPointerup: endDrag,
             onPointercancel: endDrag,
           };
-      const showOverlay = props.sections != null || !headered;
+      // The hover chrome renders only when it has something to hold: the
+      // section chips, or (headerless) the close — drop the empty box for
+      // a closable={false} HUD that carries no sections.
+      const hasSectionChips = (props.sections ?? []).length > 0;
+      const showOverlay = hasSectionChips || (!headered && props.closable);
       return (
         // Directly to <body> — NOT into #hk-overlay-root: this window
         // is not a functional popup (no popup-manager band, no scroll
@@ -370,6 +409,7 @@ export default defineComponent({
             class="hk-debug-float"
             data-corner={props.position}
             data-chrome={props.chrome}
+            data-interactive={props.interactive ? undefined : ""}
             data-auto-width={props.width === "auto" ? "" : undefined}
             data-hovered={hovered.value ? "" : undefined}
             data-dragging={dragging.value ? "" : undefined}
@@ -386,15 +426,17 @@ export default defineComponent({
               {headered && (
                 <div ref={headerEl} data-el="header" {...handleProps}>
                   <span data-el="title">{slots.title ? slots.title() : titleText.value}</span>
-                  <HIconButton
-                    class="hk-debug-float-close"
-                    size={24}
-                    variant="ghost"
-                    aria-label={t("hikari::alert.close", "Close")}
-                    onClick={() => setOpen(false)}
-                  >
-                    {{ icon: () => <X aria-hidden="true" /> }}
-                  </HIconButton>
+                  {props.closable && (
+                    <HIconButton
+                      class="hk-debug-float-close"
+                      size={24}
+                      variant="ghost"
+                      aria-label={t("hikari::alert.close", "Close")}
+                      onClick={() => setOpen(false)}
+                    >
+                      {{ icon: () => <X aria-hidden="true" /> }}
+                    </HIconButton>
+                  )}
                 </div>
               )}
               <div data-el="body">
@@ -432,7 +474,7 @@ export default defineComponent({
                     </button>
                   );
                 })}
-                {!headered && (
+                {!headered && props.closable && (
                   <HIconButton
                     class="hk-debug-float-close"
                     size={24}

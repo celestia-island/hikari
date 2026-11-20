@@ -33,6 +33,7 @@ interface MountOptions {
   confirmRemove?: boolean;
   disabled?: boolean;
   tagValues?: Record<string, string>;
+  options?: HkAffixOption[];
 }
 
 function mountPicker(opts: MountOptions = {}) {
@@ -47,7 +48,7 @@ function mountPicker(opts: MountOptions = {}) {
   const app = createApp({
     render: () =>
       h(HkAffixPicker, {
-        options: OPTIONS,
+        options: opts.options ?? OPTIONS,
         mode: opts.mode ?? "single",
         selected: opts.selected ?? "",
         activeKey: opts.activeKey,
@@ -492,5 +493,82 @@ describe("affix side → popup placement contract", () => {
     expect(src).toContain(
       'props.side === "suffix" ? "bottom-end" : "bottom-start"',
     );
+  });
+});
+
+describe("HkAffixPicker badge capsule", () => {
+  /** Provider-roster fixture (the shape GroupEditModal ships): a
+   *  textual ordinal rides `badge` — the standard capsule slot — and
+   *  never the emoji-font `flag` glyph slot (2026-11-20 user report:
+   *  `flag: "#1"` rendered bare unstyled text). */
+  const BADGED: HkAffixOption[] = [
+    { key: "llama-local", label: "llama-local", badge: "#1", keywords: "llama-local" },
+    { key: "deepseek", label: "deepseek", badge: "#2", keywords: "deepseek" },
+    { key: "bare", label: "bare provider" },
+  ];
+
+  it("renders the badge as a standard capsule before the label; flag slot stays empty", async () => {
+    const { container } = mountPicker({ options: BADGED, selected: "llama-local" });
+    await openPopup(container);
+    const badges = [...document.querySelectorAll<HTMLElement>(".hk-affix-row-badge")];
+    expect(badges.map((b) => b.textContent)).toEqual(["#1", "#2"]);
+    // The capsule IS the standard badge chrome — primary wash, mono face,
+    // small size, squared pill — not just any span wearing the class
+    // (R2: a props-degraded mutant must turn red here).
+    for (const b of badges) {
+      expect(b.classList.contains("hk-badge-primary")).toBe(true);
+      expect(b.dataset.size).toBe("sm");
+      expect(b.dataset.mono).toBe("");
+      expect(b.dataset.pill).toBe("false");
+    }
+    // Textual ordinals must not leak into the emoji-flag glyph span.
+    expect(document.querySelector(".hk-affix-row-flag")).toBeNull();
+    // Capsule precedes the label inside its row (the row grammar's own
+    // 8px menu-item gap provides the spacing — no hand-tuned margins).
+    const row = rows()[0];
+    const badgeEl = row.querySelector(".hk-affix-row-badge");
+    const labelEl = row.querySelector(".hk-affix-row-label");
+    expect(
+      badgeEl &&
+        labelEl &&
+        !!(badgeEl.compareDocumentPosition(labelEl) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ).toBe(true);
+  });
+
+  it("multi mode keeps the badge on selected tags and remaining rows alike", async () => {
+    const { container } = mountPicker({
+      options: BADGED,
+      mode: "multi",
+      selected: ["deepseek"],
+    });
+    await openPopup(container);
+    const t = tag("deepseek");
+    expect(t, "selected tag renders").toBeTruthy();
+    expect(t!.querySelector(".hk-affix-tag-badge")?.textContent).toBe("#2");
+    // The not-yet-selected rows keep their capsules; a badge-less row
+    // (bare) renders no badge node at all.
+    expect(
+      rows().map((r) => r.querySelector(".hk-affix-row-badge")?.textContent),
+    ).toEqual(["#1", undefined]);
+  });
+
+  it("options without a badge render no badge nodes", async () => {
+    // MULTI mode on purpose (R2: single mode never renders tags, so a
+    // `.hk-affix-tag-badge` assertion there is vacuous): both surfaces
+    // — remaining rows AND selected tags — must stay badge-free for a
+    // badge-less option.
+    const { container } = mountPicker({
+      options: BADGED,
+      mode: "multi",
+      selected: ["bare"],
+    });
+    await openPopup(container);
+    const t = tag("bare provider");
+    expect(t, "selected tag renders").toBeTruthy();
+    expect(t!.querySelector(".hk-affix-tag-badge")).toBeNull();
+    // The remaining rows are the two BADGED options — theirs render.
+    expect(
+      rows().map((r) => r.querySelector(".hk-affix-row-badge")?.textContent),
+    ).toEqual(["#1", "#2"]);
   });
 });

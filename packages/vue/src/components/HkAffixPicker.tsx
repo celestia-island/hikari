@@ -11,6 +11,7 @@ import { ChevronDown, Plus, Search, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 
+import HBadge from "./HkBadge";
 import HkInput from "./HkInput";
 import HkListTransition from "./HkListTransition";
 import HkMenu from "./HkMenu";
@@ -27,6 +28,16 @@ export interface HkAffixOption {
   meta?: string;
   /** Optional leading glyph (flag emoji or any short symbol). */
   flag?: string;
+  /** Standard leading CAPSULE: a small primary mono badge (`HBadge`,
+   *  primary / sm / mono / square) — the visual language of the model
+   *  tag's `#N` number segment downstream (shittim-chest kit
+   *  `HkModelTag`, which renders its ordinal as exactly this badge
+   *  shape) — rendered after the flag, before the label, separated by
+   *  the row's own gap. Roster ordinals, short codes. A TEXTUAL
+   *  ordinal never belongs in `flag`: that span is an emoji-font glyph
+   *  slot, and an `#N` inside it renders as bare unstyled text
+   *  (2026-11-20 user report). */
+  badge?: string;
   /** Extra haystack for the search filter (aliases, codes, digits). */
   keywords?: string;
   disabled?: boolean;
@@ -60,6 +71,10 @@ function isSubsequence(query: string, text: string): boolean {
  *   - the option rows themselves: single mode shows every option and
  *     closes on pick; multi mode lists the NOT-yet-selected options and
  *     stays open for batch adds;
+ *   - a row (or tag) can carry a `badge` — the standard leading capsule
+ *     (primary mono, the model-tag num-segment language) for roster
+ *     ordinals and short codes; `flag` stays the emoji glyph slot and
+ *     the two never swap jobs;
  *   - with `allowCustom`, a trailing "Use <query>" row appears whenever
  *     the typed query is not an exact label match — free-text entries
  *     without leaving the keyboard flow (Enter picks the first row, or
@@ -420,6 +435,17 @@ export const HkAffixPicker = defineComponent({
                                     {tag.flag}
                                   </span>
                                 )}
+                                {tag.badge && (
+                                  <HBadge
+                                    variant="primary"
+                                    size="sm"
+                                    mono
+                                    pill={false}
+                                    class="hk-affix-tag-badge"
+                                  >
+                                    {tag.badge}
+                                  </HBadge>
+                                )}
                                 <span
                                   class="hk-affix-tag-text"
                                   data-unset={valueDriven && !value ? "" : undefined}
@@ -510,6 +536,17 @@ export const HkAffixPicker = defineComponent({
                             <span class="hk-affix-row-flag" aria-hidden="true">
                               {option.flag}
                             </span>
+                          )}
+                          {option.badge && (
+                            <HBadge
+                              variant="primary"
+                              size="sm"
+                              mono
+                              pill={false}
+                              class="hk-affix-row-badge"
+                            >
+                              {option.badge}
+                            </HBadge>
                           )}
                           <span class="hk-affix-row-label">{option.label}</span>
                           {option.meta && (

@@ -80,6 +80,15 @@ describe("HkAvatar", () => {
     expect(retry!.getAttribute("src")).toBe("/b.webp");
   });
 
+  it("treats a whitespace-only src as absent", () => {
+    // The shared latch normalizes the URL; master rendered `<img src=" ">`
+    // (a broken glyph) for a padded value. Pinned so the trim stays
+    // deliberate rather than accidental.
+    const c = mount(h(HkAvatar, { name: "yuzu", src: "   " }));
+    expect(c.querySelector("img")).toBeNull();
+    expect(c.querySelector(".hk-avatar-fallback")?.textContent).toBe("Y");
+  });
+
   it("falls back to ? when the name is absent", () => {
     const c = mount(h(HkAvatar, {}));
     expect(c.querySelector(".hk-avatar-fallback")?.textContent).toBe("?");

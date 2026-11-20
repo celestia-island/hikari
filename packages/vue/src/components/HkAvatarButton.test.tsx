@@ -182,6 +182,43 @@ describe("HkAdminHeader × HkAvatarButton / identity slot", () => {
     expect(c.querySelector(".s-admin-header-user")).toBeTruthy();
   });
 
+  it("heals the dropdown identity image with the shared latch", async () => {
+    // The fourth copy R2 caught: HkAdminHeader's in-menu identity image
+    // used its own failed-load ref. It must behave exactly like the trigger
+    // — an error shows the letter chip, and a URL change retries on the
+    // SAME mounted header (account switch / avatar re-upload).
+    const url = ref("/a.png");
+    const Host = defineComponent({
+      setup: () => () => h(HkAdminHeader, { username: "yuzu", avatarUrl: url.value, title: "D" }),
+    });
+    const c = mount(h(Host));
+    trigger(c).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    await nextTick();
+    const first = document.body.querySelector(
+      ".s-user-header--profile img.s-user-avatar-img",
+    ) as HTMLImageElement | null;
+    expect(first, "the dropdown identity image renders").toBeTruthy();
+    first!.dispatchEvent(new Event("error"));
+    await nextTick();
+    expect(
+      document.body.querySelector(".s-user-header--profile img.s-user-avatar-img"),
+      "a broken identity image leaves the letter chip, not a broken glyph",
+    ).toBeNull();
+    expect(
+      document.body.querySelector(".s-user-header--profile .s-user-avatar")?.textContent,
+    ).toBe("Y");
+
+    url.value = "/b.png";
+    await nextTick();
+    await nextTick();
+    const retry = document.body.querySelector(
+      ".s-user-header--profile img.s-user-avatar-img",
+    ) as HTMLImageElement | null;
+    expect(retry, "the latch reset — the new URL gets a fresh attempt").toBeTruthy();
+    expect(retry!.getAttribute("src")).toBe("/b.png");
+  });
+
   it("an identity slot replaces the built-in dropdown block; the pending branch stays built-in", async () => {
     const opened = h(HkAdminHeader, {
       username: "yuzu",

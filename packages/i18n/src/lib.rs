@@ -10,6 +10,8 @@
 //! - [`I18nKeys`] — a translation table (dotted-path keys).
 //! - [`I18nContext`] / [`provide_i18n`] / [`use_i18n`] — a thread-local active
 //!   locale, for component integration.
+//! - [`dates`] — the localized date vocabulary (month / weekday names and
+//!   the first day of the week), generated from CLDR.
 //! - [`loader`] / [`macros`] — TOML loading and the `i18n!` helper.
 //!
 //! ## Quick start
@@ -24,6 +26,7 @@
 //! println!("Language: {} ({})", i18n.language.native_name(), i18n.language.code());
 //! ```
 
+pub mod dates;
 pub mod loader;
 pub mod macros;
 

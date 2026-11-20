@@ -141,6 +141,10 @@ describe("panel rows", () => {
     expect(row.querySelector(".hk-notification-row__detail-text")?.textContent).toBe("充值后立即可用");
     expect(row.querySelector(".hk-notification-row__code")?.textContent).toBe("QUOTA_EXHAUSTED");
     expect(row.querySelector(".hk-notification-row__time")).toBeTruthy();
+    // The empty caption is gated on a row-less journal — with rows on
+    // screen it must not render beside them (the persistent wrap makes
+    // "always render it" a one-character mutation away).
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
   });
 
   it("error AND warning rows carry the toast's copy button; the payload is the FULL record", async () => {

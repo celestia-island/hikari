@@ -2,7 +2,7 @@
  "version": 1,
  "rules": {
   "as-assert": 2134,
-  "nonnull-assert": 4251
+  "nonnull-assert": 4255
  },
  "files": {
   "packages/default_theme/src/StatusTrayDecor.tsx": {
@@ -1074,6 +1074,9 @@
   },
   "packages/vue/src/components/HkScrollProgressDock.tsx": {
    "as-assert": 3
+  },
+  "packages/vue/src/components/HkSearchInput.icons.test.tsx": {
+   "nonnull-assert": 4
   },
   "packages/vue/src/components/HkSearchInput.tsx": {
    "as-assert": 6

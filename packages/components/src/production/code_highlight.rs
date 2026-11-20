@@ -52,7 +52,7 @@ export function copyToClipboard(text, onResult) {
     }
 }
 "#)]
-#[allow(unsafe)]
+#[allow(unsafe_code)]
 unsafe extern "C" {
     fn copyToClipboard(text: &str, on_result: &js_sys::Function);
 }

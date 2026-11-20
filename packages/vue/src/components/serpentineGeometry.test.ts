@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFAULT_TURNS,
   generateSerpentinePath,
   pathLength,
   projectOntoPath,
   TRACK_PAD,
+  type TurnRange,
   type PathPoint,
 } from "./serpentineGeometry";
 
@@ -111,6 +113,25 @@ describe("generateSerpentinePath", () => {
     }
     expect(up).toBeGreaterThan(0);
     expect(down).toBeGreaterThan(0);
+  });
+
+  it("honours the requested turn RANGE (sensitive deletes can walk more)", () => {
+    // [5,7] must never produce a 3-corner lane; [3,5] must never produce 7.
+    const countCorners = (seed: number, range: TurnRange) =>
+      generateSerpentinePath(W, H, seed, range).points.length - 2;
+    for (let seed = 0; seed < 60; seed++) {
+      expect(countCorners(seed, { min: 5, max: 7 })).toBeGreaterThanOrEqual(5);
+      expect(countCorners(seed, { min: 5, max: 7 })).toBeLessThanOrEqual(7);
+      expect(countCorners(seed, DEFAULT_TURNS)).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("clamps even requests DOWN to the odd value below (at-most semantics)", () => {
+    // corners = interior vertices = points.length - 2; an even max (4) can
+    // only ever be satisfied as 3 (the lane's final leg is structural).
+    const corners = generateSerpentinePath(W, H, 11, { min: 4, max: 4 })
+      .points.length - 2;
+    expect(corners).toBe(3);
   });
 
   it("stays inside the canvas on narrow widths (the budget guard)", () => {

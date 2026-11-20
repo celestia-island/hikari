@@ -47,6 +47,7 @@
 - [Cascader](./components/layer2/cascader.md)
 - [Data](./components/layer2/data.md)
 - [Feedback](./components/layer2/feedback.md)
+- [Delete Gate Window](./components/layer2/delete_gate_window.md)
 - [Form](./components/layer2/form.md)
 - [Navigation](./components/layer2/navigation.md)
 - [Pagination](./components/layer2/pagination.md)

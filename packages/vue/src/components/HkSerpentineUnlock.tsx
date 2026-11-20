@@ -8,11 +8,13 @@ import {
 } from "vue";
 
 import {
+  DEFAULT_TURNS,
   generateSerpentinePath,
   nearestOnPath,
   projectOntoPath,
   type PathPoint,
   type SerpentinePath,
+  type TurnRange,
 } from "./serpentineGeometry";
 import "./HkSerpentineUnlock.scss";
 import { onFrame, reportTransition, type AnimationHandle } from "../runtime/animationBus";
@@ -52,6 +54,17 @@ export default defineComponent({
      * for tests and design review.
      */
     seed: { type: Number, default: null },
+    /**
+     * Corner-count range `[min, max]` (inclusive). The actual count is a
+     * seeded draw inside the range, snapped to a constructible odd value —
+     * the lane's final leg is structural, so only odd counts exist and an
+     * even request clamps DOWN (at-most semantics). Default [3, 5];
+     * higher-stakes deletions can ask for more turns.
+     */
+    turns: {
+      type: Array as unknown as PropType<[number, number]>,
+      default: null,
+    },
     /** Danger tone (delete-class actions) vs neutral. */
     tone: {
       type: String as PropType<"default" | "danger">,
@@ -70,7 +83,9 @@ export default defineComponent({
     const viewport = ref<HTMLElement | null>(null);
     const stage = ref<HTMLElement | null>(null);
     const seed = ref<number>(props.seed ?? Math.floor(Math.random() * 1e9));
-    const path = ref<SerpentinePath>(generateSerpentinePath(600, 96, seed.value));
+    const path = ref<SerpentinePath>(
+      generateSerpentinePath(600, 96, seed.value, toRange(props.turns)),
+    );
 
     const tracking = ref(false);
     /** Progress along the lane, 0..1 (arc-length fraction). */
@@ -91,6 +106,7 @@ export default defineComponent({
         laneWidth.value,
         laneHeight.value,
         seed.value,
+        toRange(props.turns),
       );
       progress.value = 0;
     }
@@ -107,6 +123,15 @@ export default defineComponent({
     // ── keyboard path ────────────────────────────────────────────────
     const keyboardGrabbed = ref(false);
     const keyboardStep = 1 / 20;
+
+function toRange(turns: [number, number] | null): TurnRange {
+  // A malformed tuple (too short) falls back to the default rather than
+  // poisoning the corner math with undefined → NaN lanes.
+  if (!turns || turns.length < 2 || !Number.isFinite(turns[0]) || !Number.isFinite(turns[1])) {
+    return DEFAULT_TURNS;
+  }
+  return { min: turns[0], max: turns[1] };
+}
 
 /** Pointer-to-lane distance the tracking forgives (px): inside it the knob
  *  follows the projection; outside it the knob holds (no reset). Generous

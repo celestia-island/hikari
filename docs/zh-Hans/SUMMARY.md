@@ -46,6 +46,7 @@
 - [Cascader 级联选择](./components/layer2/cascader.md)
 - [Data 数据组件](./components/layer2/data.md)
 - [Feedback 反馈组件](./components/layer2/feedback.md)
+- [删除确认窗](./components/layer2/delete_gate_window.md)
 - [Form 表单组件](./components/layer2/form.md)
 - [Navigation 导航组件](./components/layer2/navigation.md)
 - [Pagination 分页](./components/layer2/pagination.md)

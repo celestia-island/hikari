@@ -1,0 +1,9 @@
+// The delete confirmation window's message area: facts block on top, gate
+// below, hint inside the gate (in flow per the stage split).
+
+.hk-delete-gate-message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 8px);
+  margin-block-end: var(--space-12, 12px);
+}

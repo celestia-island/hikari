@@ -54,8 +54,13 @@
  * `data-hk-debug-float-pointer` re-enables pointer-events explicitly
  * (descendants may re-enable under a none ancestor), so exactly the host's
  * own unlock control stays live (the wowsp pin button). The locked visual is
- * the host's: its content fades itself (a static lock, not a hover fade). */
-.hk-debug-float[data-interactive="false"] {
+ * the host's: its content fades itself (a static lock, not a hover fade).
+ *
+ * The marker is the attribute's PRESENCE — the house convention shared with
+ * HkModelCard: `interactive={false}` emits `data-interactive` with an EMPTY
+ * value, so only a presence selector can match it (an equal-value selector
+ * would silently never apply — this block shipped that way once). */
+.hk-debug-float[data-interactive] {
   pointer-events: none;
 
   & [data-el="fade"] {

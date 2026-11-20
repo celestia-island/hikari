@@ -19,6 +19,11 @@ import { setLocale } from "../i18n/context";
  * - a snoozed emergency entry shows the Hidden state chip and its
  *   restore button unsnoozes through the journal's resummon path
  * - Clear all (icon + label) empties the journal
+ * - row add/remove animates through HkListTransition (user direction
+ *   2026-11-20): a dismissed row lingers as a pinned pop ghost and then
+ *   resolves; clear-all fades every row while the empty caption coexists;
+ *   a record landing on the open panel pops in; the foot keeps its
+ *   empty-hides rule
  *
  * (Repo test convention: raw createApp + document queries, no
  * @vue/test-utils dependency.)
@@ -37,7 +42,10 @@ function mountBell() {
 
 async function settle() {
   await nextTick();
-  await new Promise((r) => setTimeout(r, 30));
+  // 80ms: list rows now resolve their enter/leave through HkListTransition,
+  // which removes a leaving element only after Vue's double-rAF class swap
+  // plus the (zero-duration in jsdom) finish — 30ms raced that window.
+  await new Promise((r) => setTimeout(r, 80));
   await nextTick();
 }
 
@@ -554,5 +562,80 @@ describe("panel rows", () => {
     await settle();
     expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
     expect(rows()).toHaveLength(0);
+  });
+
+  // ── row motion (user direction 2026-11-20) ──────────────────────────
+  // Rows ride HkListTransition: add pops in, remove fades out as a pinned
+  // ghost while siblings FLIP-glide. jsdom applies no stylesheets, so the
+  // classes + the primitive's own inline pins ARE the observable contract.
+
+  it("a dismissed row fades out through the list transition, then resolves", async () => {
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "keep me" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "drop me" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const dismiss = rows()
+      .find((r) => r.textContent?.includes("drop me"))!
+      .querySelector<HTMLButtonElement>(
+        '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+      )!;
+    dismiss.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    // The leaving row rides HkListTransition's pop leave (the ghost
+    // pin/absolute-lift branch is geometry-gated and covered by the
+    // primitive's own stubbed-layout suite; jsdom has no layout, so the
+    // observable contract here is the leave machinery itself).
+    const ghost = rows().find((r) => r.textContent?.includes("drop me"));
+    expect(ghost, "the ghost lingers for the fade").toBeTruthy();
+    expect(ghost!.className).toContain("hk-list-pop-leave-active");
+    await settle();
+    expect(rows(), "the ghost resolved, one row remains").toHaveLength(1);
+    expect(rows()[0].textContent).toContain("keep me");
+  });
+
+  it("clear-all fades every row while the empty caption coexists", async () => {
+    // The whole list leaving at once is the case the persistent wrap
+    // exists for: a branch swap would unmount the TransitionGroup and
+    // cancel every ghost mid-flight (a snap instead of a fade).
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "two" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const clearBtn = Array.from(
+      document.querySelectorAll<HTMLButtonElement>(".hk-notification-center__foot .hk-btn"),
+    ).find((b) => b.textContent?.includes("Clear all"))!;
+    clearBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(document.querySelectorAll(".hk-list-pop-leave-active")).toHaveLength(2);
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    // The foot keeps its empty-hides rule (unchanged semantics).
+    expect(document.querySelector(".hk-notification-center__foot")).toBeNull();
+    await settle();
+    expect(rows()).toHaveLength(0);
+  });
+
+  it("a record landing on the open panel pops in through the list transition", async () => {
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "first" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "second" });
+    await nextTick();
+    const fresh = rows().find((r) => r.textContent?.includes("second"));
+    expect(fresh, "the new row rendered").toBeTruthy();
+    expect(fresh!.className).toContain("hk-list-pop-enter-active");
+    await settle();
+    // Settled: the entrance classes resolved and the row stays.
+    const settledRow = rows().find((r) => r.textContent?.includes("second"));
+    expect(settledRow).toBeTruthy();
+    expect(settledRow!.className).not.toContain("hk-list-pop-enter");
   });
 });

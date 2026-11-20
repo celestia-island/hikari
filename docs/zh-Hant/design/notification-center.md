@@ -36,6 +36,22 @@ HeaderEndCluster），帶額外視窗控制鈕的桌面殼不受影響（它們�
 觸發鈕是尺寸階梯上的 `HkIconButton`；面板是 `sheetOnMobile` 的
 `HkPopover`——寬螢幕為錨定彈層，手機為底部 sheet，跨斷點即時切換安全。
 
+## 動效
+
+列的增刪由 `HkListTransition`（程式庫自身的清單原語）編排——採 `pop` 變體
+（toast 家族的淡入 + 縮放簽名）並開啟 FLIP 位移，餘下的列滑入被關閉列讓出的空間。
+因為該原語會把每一批 enter/leave **上報**給執行期動畫上下文
+（`runtime/animationBus.ts`），減少動效與全域 CSS 動畫開關
+（`html[data-css-animations="0"]`）能整體收斂這套編排，鈴鐺無需自己再實作一次；
+toast 堆疊、模態麵包屑堆疊與宿主清單騎的都是同一個原語。
+
+兩條可核對的後果：
+
+- 開啟面板**不會**重播清單的入場（`appear` 保持關閉）——只有真正抵達或離開的列才動。
+- 清單外層容器跨過空態切換而存活：沒有列的帳本仍把空清單掛在空態文案旁邊，
+  因為拆掉 transition group 會在半途取消正在離開的 ghost
+  （「清空全部」與關掉最後一列會變成瞬斷而不是淡出）。
+
 ## 參考實作
 
 `runtime/notificationCenter.ts`（帳本與各源記帳掛鉤）+

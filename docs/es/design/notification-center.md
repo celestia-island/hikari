@@ -53,6 +53,31 @@ chrome; la superficie es un `HkPopover` con `sheetOnMobile` — flotante
 anclada en pantallas anchas, hoja inferior en teléfonos, con cruce del
 punto de ruptura seguro en vivo.
 
+## Movimiento
+
+La entrada y la salida de filas las coreografía `HkListTransition` —la
+primitiva de listas de la propia biblioteca— en su variante `pop` (la
+firma de fundido + escala de la familia toast) con desplazamientos
+FLIP: las filas que quedan se deslizan al espacio que libera la
+descartada. Como la primitiva **reporta** cada lote de entrada/salida al
+contexto de animación en tiempo de ejecución
+(`runtime/animationBus.ts`), la reducción de movimiento y el interruptor
+global de animaciones CSS (`html[data-css-animations="0"]`) pliegan
+toda la coreografía sin que la campana reimplemente ninguna de las dos.
+Es la misma primitiva que ya usan la pila de toasts, la pila de migas de
+los modales y las listas anfitrionas.
+
+Dos consecuencias comprobables:
+
+- Abrir el panel **no** reproduce la entrada de la lista (`appear`
+  permanece desactivado): solo se animan las filas que de verdad llegan
+  o se van.
+- El contenedor de la lista sobrevive al cambio a estado vacío: un diario
+  sin filas mantiene la lista vacía montada junto al texto de estado
+  vacío, porque desmontar un grupo de transiciones cancela sus fantasmas
+  salientes en pleno vuelo («Borrar todo» y cerrar la última fila
+  cortarían en seco en lugar de desvanecerse).
+
 ## Implementación de referencia
 
 `runtime/notificationCenter.ts` (el diario y sus ganchos fuente) +

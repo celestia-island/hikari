@@ -63,4 +63,29 @@ describe("HkNotificationBell composition contract", () => {
     expect(src).not.toContain("sessionStorage");
     expect(src).not.toContain("localStorage");
   });
+
+  it("row add/remove animates through HkListTransition on the animation context", () => {
+    const src = body();
+    // The rows ride the library's own list choreography primitive — the
+    // pop variant (the toast family's fade+scale signature) with FLIP
+    // moves — which reports every enter/leave batch to the runtime
+    // animation bus itself. No second transition implementation may grow
+    // beside it (the same rule that keeps a second notification UI from
+    // growing beside the bell).
+    expect(src).toContain("HkListTransition");
+    expect(src).toContain('variant="pop"');
+    expect(src).toMatch(/\bmove\b/);
+    expect(src).not.toContain("TransitionGroup");
+    expect(src).not.toContain("useSurfaceTransition");
+    // Mount-time children stay silent: opening the panel must not replay
+    // the whole list's entrance (the primitive's `appear` defaults false;
+    // flipping it on would re-animate every row on every open).
+    expect(src).not.toContain("appear");
+    // The list wrap outlives the empty swap — a torn-down group cancels
+    // its ghosts mid-flight, so the empty caption must live INSIDE the
+    // wrap (after the group), not in a branch that replaces it.
+    expect(src.indexOf("hk-notification-center__list-wrap")).toBeLessThan(
+      src.indexOf("hk-notification-center__empty"),
+    );
+  });
 });

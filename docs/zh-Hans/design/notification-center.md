@@ -36,6 +36,22 @@ HeaderEndCluster），带额外窗口控制钮的桌面壳不受影响（它们�
 触发钮是尺寸阶梯上的 `HkIconButton`；面板是 `sheetOnMobile` 的
 `HkPopover`——宽屏为锚定弹层，手机为底部 sheet，跨断点实时切换安全。
 
+## 动效
+
+行的增删由 `HkListTransition`（库自身的列表原语）编排——取 `pop` 变体
+（toast 家族的淡入 + 缩放签名）并开启 FLIP 位移，剩下的行滑入被关闭行让出的空间。
+因为该原语会把每一批 enter/leave **上报**给运行时动画上下文
+（`runtime/animationBus.ts`），减少动效与全局 CSS 动画开关
+（`html[data-css-animations="0"]`）能整体收敛这套编排，铃铛无需自己再实现一遍；
+toast 栈、模态面包屑栈与宿主列表骑的都是同一个原语。
+
+两条可核对的后果：
+
+- 打开面板**不会**重放列表的入场（`appear` 保持关闭）——只有真正到达或离开的行才动。
+- 列表外层容器跨过空态切换而存活：没有行的账本仍把空列表挂在空态文案旁边，
+  因为拆掉 transition group 会在半途取消正在离开的 ghost
+  （「清空全部」与关掉最后一行会变成瞬断而不是淡出）。
+
 ## 参考实现
 
 `runtime/notificationCenter.ts`（账本与各源挂账钩子）+

@@ -55,6 +55,32 @@ chrome ; la surface est un `HkPopover` avec `sheetOnMobile` — flyout
 ancré sur les écrans larges, feuille inférieure sur téléphone, avec un
 franchissement de point de rupture sûr en direct.
 
+## Animation
+
+L'ajout et le retrait d'une ligne sont chorégraphiés par
+`HkListTransition` — la primitive de liste de la bibliothèque — dans sa
+variante `pop` (la signature fondu + échelle de la famille toast) avec
+des déplacements FLIP : les lignes restantes glissent dans l'espace
+libéré par celle qui disparaît. Comme la primitive **signale** chaque
+lot d'entrée/sortie au contexte d'animation d'exécution
+(`runtime/animationBus.ts`), la réduction des animations et
+l'interrupteur global d'animations CSS
+(`html[data-css-animations="0"]`) replient toute la chorégraphie sans
+que la cloche n'en réimplémente une seule partie. C'est la même
+primitive que la pile de toasts, la pile de fil d'Ariane des modales et
+les listes hôtes utilisent déjà.
+
+Deux conséquences vérifiables :
+
+- Ouvrir le panneau ne **rejoue pas** l'entrée de la liste (`appear`
+  reste désactivé) — seules les lignes qui arrivent ou partent réellement
+  s'animent.
+- Le conteneur de la liste survit au basculement vers l'état vide : un
+  journal sans ligne garde la liste vide montée à côté du texte d'état
+  vide, car démonter un groupe de transitions annule ses fantômes
+  sortants en plein vol (« Tout effacer » et la fermeture de la dernière
+  ligne casseraient net au lieu de s'estomper).
+
 ## Implémentation de référence
 
 `runtime/notificationCenter.ts` (le journal et ses crochets sources) +

@@ -32,6 +32,16 @@
  * clips its text, so the clipboard is the only place the whole thing
  * still exists.
  *
+ * Motion (user direction 2026-11-20): list rows pop in and out through
+ * HkListTransition — the library's own list choreography primitive, which
+ * reports every enter/leave batch to the runtime animation context
+ * (reportTransition on the frame bus) and collapses under reduced motion /
+ * the global CSS-animation switch. `pop` keeps the toast family's
+ * fade+scale signature; `move` lets siblings FLIP-glide into the freed
+ * space. No bespoke row transition lives here (contract test pins this).
+ * The list wrap stays mounted across the empty swap for the same reason —
+ * a torn-down TransitionGroup cancels its ghosts mid-flight.
+ *
  * Renders nothing extra while the journal is empty beyond the bell
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
@@ -62,6 +72,7 @@ import {
 import { useClipboard } from "../runtime/useClipboard";
 import HkIconButton from "./HkIconButton";
 import HkButton from "./HkButton";
+import HkListTransition from "./HkListTransition";
 import HkPopover from "./HkPopover";
 import "./HkNotificationBell.scss";
 
@@ -110,7 +121,10 @@ export default defineComponent({
     // to content"), which is why the bell owns this one. Same shape as
     // HkDrawer: a wrapper that wraps EXACTLY the viewport is the track
     // host, attach on open, detach on close/unmount.
-    const listRef = ref<HTMLUListElement | null>(null);
+    // The ul itself is rendered BY HkListTransition (the row enter/exit
+    // choreography, motion section below), so the viewport element is
+    // resolved off the component instance's $el instead of a direct ref.
+    const listHostRef = ref<{ $el?: Element } | null>(null);
     const listWrapRef = ref<HTMLDivElement | null>(null);
     let listScrollbar: OverlayScrollbarHandle | null = null;
     function detachListScrollbar() {
@@ -127,12 +141,13 @@ export default defineComponent({
      *  both modalities. */
     function syncListScrollbar() {
       nextTick(() => {
-        if (!open.value || !listRef.value) {
+        const listEl = listHostRef.value?.$el as HTMLUListElement | undefined;
+        if (!open.value || !listEl) {
           detachListScrollbar();
           return;
         }
         if (!listScrollbar) {
-          listScrollbar = attachOverlayScrollbars(listRef.value, {
+          listScrollbar = attachOverlayScrollbars(listEl, {
             axis: "vertical",
             host: listWrapRef.value ?? undefined,
           });
@@ -396,27 +411,40 @@ export default defineComponent({
             title={label}
           >
             <div class="hk-notification-center">
-              {sorted.value.length === 0 ? (
-                <p class="hk-notification-center__empty">
-                  {t("hikari::notificationCenter.empty", "No notifications yet")}
-                </p>
-              ) : (
-                <>
-                  <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
-                    <ul class="hk-notification-center__list" role="list" ref={listRef}>
-                      {groups.value.map(renderRow)}
-                    </ul>
-                  </div>
-                  <div class="hk-notification-center__foot">
-                    {/* The wipe glyph reads before the label is parsed —
-                        a destructive affordance announced by its icon
-                        (user direction 2026-11-19), from the same lucide
-                        family the row glyphs already speak. */}
-                    <HkButton variant="ghost" size="sm" icon="Trash2" onClick={() => reset()}>
-                      {t("hikari::notificationCenter.clearAll", "Clear all")}
-                    </HkButton>
-                  </div>
-                </>
+              {/* The list wrap stays MOUNTED while the panel is open — the
+                  empty caption lives inside it, beside the (row-less) list.
+                  Tearing the TransitionGroup down on the empty swap would
+                  cancel the leave choreography mid-flight (Vue runs child
+                  leave transitions only while the group itself stays
+                  mounted), so "Clear all" and a last-row dismiss would snap
+                  instead of fading. The foot keeps its empty-hides rule. */}
+              <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
+                <HkListTransition
+                  tag="ul"
+                  variant="pop"
+                  move
+                  class="hk-notification-center__list"
+                  {...{ role: "list" }}
+                  ref={listHostRef}
+                >
+                  {groups.value.map(renderRow)}
+                </HkListTransition>
+                {groups.value.length === 0 && (
+                  <p class="hk-notification-center__empty">
+                    {t("hikari::notificationCenter.empty", "No notifications yet")}
+                  </p>
+                )}
+              </div>
+              {groups.value.length > 0 && (
+                <div class="hk-notification-center__foot">
+                  {/* The wipe glyph reads before the label is parsed —
+                      a destructive affordance announced by its icon
+                      (user direction 2026-11-19), from the same lucide
+                      family the row glyphs already speak. */}
+                  <HkButton variant="ghost" size="sm" icon="Trash2" onClick={() => reset()}>
+                    {t("hikari::notificationCenter.clearAll", "Clear all")}
+                  </HkButton>
+                </div>
               )}
             </div>
           </HkPopover>

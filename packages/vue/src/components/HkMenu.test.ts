@@ -1124,4 +1124,103 @@ describe("HkMenu cascade against an app-chrome band", () => {
     await settle();
     expect(popoutHosts()[0]?.style.left).toBe("1016px"); // frame.x + gutter
   });
+  it("animates the group body open and closed (WAAPI height fold)", async () => {
+    // happy-dom has no WAAPI and reports scrollHeight 0; stub both so the
+    // disclosure hooks take their animated path and we can inspect the
+    // keyframes they build.
+    const frames: Keyframe[][] = [];
+    const stubbed = vi.fn((keyframes: Keyframe[]) => {
+      frames.push(keyframes);
+      const animation = {
+        onfinish: null as null | (() => void),
+        cancel: vi.fn(),
+      };
+      // Fire the finish callback on the next macrotask so the Transition
+      // settles exactly like a real browser completing the fold.
+      setTimeout(() => animation.onfinish?.(), 0);
+      return animation as unknown as Animation;
+    });
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: stubbed,
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollHeight", {
+      configurable: true,
+      get: () => 120,
+    });
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: [
+            {
+              key: "system",
+              label: "System",
+              children: [{ key: "general", label: "General" }],
+            },
+          ],
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    const toggle = container.querySelector(
+      ".hk-menu-sidebar-group-toggle",
+    ) as HTMLButtonElement;
+    toggle.click();
+    await settle();
+
+    expect(stubbed, "opening folds the body with a height tween").toHaveBeenCalled();
+    expect(frames[0]?.[0]).toEqual({ height: "0px" });
+    expect(frames[0]?.[1]).toEqual({ height: "120px" });
+
+    toggle.click();
+    await settle();
+    expect(stubbed.mock.calls.length, "closing folds it back").toBeGreaterThan(1);
+    expect(frames.at(-1)?.[1]).toEqual({ height: "0px" });
+
+    // Restore the environment for the other tests in this file.
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).animate;
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollHeight;
+  });
+
+  it("skips the fold animation under the global animation switch", async () => {
+    const stubbed = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "animate", {
+      configurable: true,
+      value: stubbed,
+    });
+    document.documentElement.setAttribute("data-css-animations", "0");
+
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const app = createApp({
+      render: () =>
+        h(HkMenu, {
+          variant: "sidebar",
+          open: true,
+          items: [
+            { key: "system", label: "System", children: [{ key: "general", label: "General" }] },
+          ],
+        }),
+    });
+    mounts.push(app);
+    app.mount(container);
+    await settle();
+
+    (container.querySelector(".hk-menu-sidebar-group-toggle") as HTMLButtonElement).click();
+    await settle();
+
+    expect(stubbed, "the veto makes the fold instant").not.toHaveBeenCalled();
+    document.documentElement.removeAttribute("data-css-animations");
+    delete (HTMLElement.prototype as unknown as Record<string, unknown>).animate;
+  });
+
 });

@@ -417,6 +417,29 @@ describe("HkMenu sidebar icon rail", () => {
     ).toBeTruthy();
   });
 
+  it("marks the rail group CORNER badge so the flight hides it (no duplicate glyph)", () => {
+    // 2026-11-20: the rail group renders the caret as its glyph and the
+    // declared icon as a demoted corner chip. The chip carries
+    // data-flip-icon so useRailIconFlight pairs it with the expanded
+    // icon — and the single-glyph hide rule must cover BOTH cell classes
+    // (the corner chip is not a .hk-menu-item-icon), or the old icon
+    // stays painted through the whole flight.
+    const c = mountMenu(
+      [
+        {
+          key: "admin",
+          label: "Administration",
+          icon: Settings,
+          children: [{ key: "users", label: "Users", icon: Home }],
+        },
+      ],
+      { collapsed: true },
+    );
+    const corner = groupRows(c)[0]!.querySelector<HTMLElement>(".hk-menu-rail-glyph-corner");
+    expect(corner, "the demoted icon chip renders").toBeTruthy();
+    expect(corner!.getAttribute("data-flip-icon"), "the chip opts into the flight").toBe("admin");
+  });
+
   it("falls back to the label initial for icon-less LEAF rows", () => {
     const c = mountMenu(ITEMS, { collapsed: true });
     const glyph = rowNamed(c, "Docs")!.querySelector(".hk-menu-item-icon")!;
@@ -434,10 +457,15 @@ describe("HkMenu sidebar icon rail", () => {
       // welding that turns a literal drift in HkMenu's JSX (or the JS
       // pairing vocabulary) into a red test instead of a silently dead
       // flight chain (2026-11-02 review).
+      // 2026-11-20 rail grammar: the group's icon is the DEMOTED corner
+      // chip (.hk-menu-rail-glyph-corner) while the caret owns the glyph
+      // cell — so the rail-side query must cover BOTH cell classes.
       const iconKeys = (root: ParentNode): string[] =>
-        [...root.querySelectorAll<HTMLElement>(`.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}]`)].map((el) =>
-          el.getAttribute(RAIL_FLIP_ICON_ATTR) ?? "",
-        );
+        [
+          ...root.querySelectorAll<HTMLElement>(
+            `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}], .hk-menu-rail-glyph-corner[${RAIL_FLIP_ICON_ATTR}]`,
+          ),
+        ].map((el) => el.getAttribute(RAIL_FLIP_ICON_ATTR) ?? "");
 
     // An icon on the group exercises the group-toggle sites; the
     // icon-less leaf exercises the asymmetry the flight tolerates: the

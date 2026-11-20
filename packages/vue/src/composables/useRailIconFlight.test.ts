@@ -373,7 +373,7 @@ describe("useRailIconFlight", () => {
     expect(homeClone.style.width).toBe("8px");
     const home = animations.find((a) => a.el.textContent === "H")!;
     expect(home.keyframes.at(-1)!.transform, "travel halves at zoom 2").toBe(
-      "translate(-6px, 0px)",
+      "translate(-6px, 0px) scale(1, 1)",
     );
   });
 
@@ -413,7 +413,7 @@ describe("useRailIconFlight", () => {
     );
     // The travel stays PHYSICAL: the icon moves 12px left, same as LTR.
     const home = animations.find((a) => a.el.textContent === "H")!;
-    expect(home.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
+    expect(home.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px) scale(1, 1)");
     vi.mocked(window.getComputedStyle).mockRestore();
   });
 
@@ -439,7 +439,7 @@ describe("useRailIconFlight", () => {
     expect(h.swap().getAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe("");
     for (const a of animations) {
       expect(a.keyframes.at(-1)!.transform, `${a.el.textContent} flies right`).toBe(
-        "translate(12px, 0px)",
+        "translate(12px, 0px) scale(1, 1)",
       );
     }
     expect(animations).toHaveLength(2);
@@ -643,27 +643,6 @@ describe("useRailIconFlight", () => {
     expect(layers, "exactly one flight layer").toHaveLength(1);
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(true);
   });
-  it("marks the rail CORNER badge so it hides with the flight (no duplicate glyph)", async () => {
-    const c = mountMenu(
-      [
-        {
-          key: "admin",
-          label: "Administration",
-          icon: Settings,
-          children: [{ key: "users", label: "Users", icon: Home }],
-        },
-      ],
-      { collapsed: true },
-    );
-    // The rail group renders the caret as its glyph and the declared icon
-    // as the demoted corner chip — THAT chip is the flight's rail end.
-    const group = groupRows(c)[0]!;
-    const corner = group.querySelector<HTMLElement>(".hk-menu-rail-glyph-corner")!;
-    expect(corner.getAttribute("data-flip-icon"), "the corner chip opts into the flight").toBe(
-      "admin",
-    );
-  });
-
   it("tweens SIZE across the flip (center-aligned) instead of snapping it", async () => {
     const h = mountSwap();
     await h.set(true);

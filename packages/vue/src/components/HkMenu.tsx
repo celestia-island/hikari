@@ -8,6 +8,7 @@ import {
   type Component,
   type PropType,
   type VNode,
+  Transition,
 } from "vue";
 
 import { Check, ChevronDown, ChevronRight } from "lucide-vue-next";
@@ -790,6 +791,97 @@ export default defineComponent({
       }
     }
 
+    /** ── Group-body disclosure animation (2026-11-20 user direction) ──
+     *
+     * The children subtree STAYS mount/unmount (every consumer and test
+     * depends on a collapsed group not existing in the DOM), so the fold
+     * rides Vue's <Transition> hooks instead of a CSS-only technique: on
+     * enter the wrapper is measured and grown 0 → content height, on
+     * leave it shrinks to 0 and only then unmounts. WAAPI on the wrapper
+     * — the same compositor path the rail flight uses — with the theme's
+     * own --duration-normal so a retuned theme retunes the fold, and the
+     * house motion vetoes (reduced motion / the global animation switch /
+     * no WAAPI) degrade to an instant swap rather than a broken frame.
+     */
+    const foldAnimations = new WeakMap<HTMLElement, Animation>();
+
+    function foldMotionAllowed(): boolean {
+      if (typeof document === "undefined" || typeof HTMLElement === "undefined") return false;
+      if (document.documentElement.getAttribute("data-css-animations") === "0") return false;
+      if (typeof HTMLElement.prototype.animate !== "function") return false;
+      return !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    /** The theme duration, parsed once per call from the live element. */
+    function foldDuration(el: HTMLElement): number {
+      const raw = getComputedStyle(el).getPropertyValue("--duration-normal").trim();
+      if (!raw) return 200;
+      const ms = /^([\d.]+)(ms|s)$/.exec(raw);
+      if (!ms) return 200;
+      const value = Number.parseFloat(ms[1]);
+      return ms[2] === "s" ? value * 1000 : value;
+    }
+
+    function foldEnter(el: Element, done: () => void): void {
+      const node = el as HTMLElement;
+      foldAnimations.get(node)?.cancel();
+      if (!foldMotionAllowed()) {
+        done();
+        return;
+      }
+      const target = node.scrollHeight;
+      if (!target) {
+        done();
+        return;
+      }
+      node.style.overflow = "hidden";
+      const animation = node.animate(
+        [{ height: "0px" }, { height: `${target}px` }],
+        {
+          duration: foldDuration(node),
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "forwards",
+        },
+      );
+      foldAnimations.set(node, animation);
+      animation.onfinish = () => {
+        // Hand the height back to layout (auto) so later content changes
+        // never get clipped by a stale measured pixel value.
+        animation.cancel();
+        node.style.height = "";
+        node.style.overflow = "";
+        foldAnimations.delete(node);
+        done();
+      };
+    }
+
+    function foldLeave(el: Element, done: () => void): void {
+      const node = el as HTMLElement;
+      foldAnimations.get(node)?.cancel();
+      if (!foldMotionAllowed()) {
+        done();
+        return;
+      }
+      const from = node.getBoundingClientRect().height;
+      node.style.overflow = "hidden";
+      const animation = node.animate(
+        [{ height: `${from}px` }, { height: "0px" }],
+        {
+          duration: foldDuration(node),
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+          fill: "forwards",
+        },
+      );
+      foldAnimations.set(node, animation);
+      animation.onfinish = () => {
+        animation.cancel();
+        node.style.height = "";
+        node.style.overflow = "";
+        foldAnimations.delete(node);
+        done();
+      };
+    }
+
     function isGroupExpanded(key: string): boolean {
       const choice = userGroupChoice(key);
       // Table-of-contents mode (defaultExpandGroups): open IS the default
@@ -908,11 +1000,13 @@ export default defineComponent({
             {item.badge && <span class="hk-menu-sidebar-badge">{item.badge}</span>}
             <ChevronRight size={14} class="hk-menu-more" />
           </button>
-          {expanded && (
-            <div class="hk-menu-sidebar-children">
-              {item.children!.map((child) => renderSidebarItem(child, depth + 1))}
-            </div>
-          )}
+          <Transition name="hk-menu-fold" onEnter={foldEnter} onLeave={foldLeave}>
+            {expanded && (
+              <div class="hk-menu-sidebar-children">
+                {item.children!.map((child) => renderSidebarItem(child, depth + 1))}
+              </div>
+            )}
+          </Transition>
         </div>
       );
     }
@@ -1048,11 +1142,13 @@ export default defineComponent({
               )}
             </button>
           </HkTooltip>
-          {expanded && (
-            <div class="hk-menu-sidebar-children hk-menu-sidebar-rail-children">
-              {item.children!.map((child) => renderSidebarRailItem(child))}
-            </div>
-          )}
+          <Transition name="hk-menu-fold" onEnter={foldEnter} onLeave={foldLeave}>
+            {expanded && (
+              <div class="hk-menu-sidebar-children hk-menu-sidebar-rail-children">
+                {item.children!.map((child) => renderSidebarRailItem(child))}
+              </div>
+            )}
+          </Transition>
         </div>
       );
     }

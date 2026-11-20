@@ -100,16 +100,23 @@ describe("HkSidebarRail geometry contract", () => {
     expect(host, "the host width transition IS the intended motion").toContain("transition: width");
   });
 
-  it("the host carries the sidebar z band ALWAYS (the stacking-trap contract)", () => {
+  it("the host carries the DOCKED sidebar z band ALWAYS (the stacking-trap contract)", () => {
     // The band lives on the host rule itself, not under [data-peeking]:
     // the toggle's overhanging half must paint above the content column in
     // every state, and a host whose panel carries its own stacking context
     // (wowsp's glass backdrop-filter) demotes the toggle's local z below
     // plain positioned content painted later in tree order. There is no
     // bare peeking z rule left to tie the elevation to the peek state.
+    //
+    // 2026-11-20: the DOCKED rail uses its own band, not the drawer's 900 —
+    // the header/footer chrome must paint (and cast shadows) OVER a docked
+    // sidebar; only the temporary drawer outranks the chrome.
     const host = ruleBody(css, ".hk-sidebar-rail-host {") ?? ruleBody(css, ".hk-sidebar-rail-host");
     expect(host, "the host rule exists").not.toBeNull();
-    expect(host).toContain("z-index: var(--hk-z-sidebar, 900)");
+    expect(host).toContain("z-index: var(--hk-z-sidebar-docked, 20)");
+    expect(host, "the drawer band no longer dresses the docked host").not.toContain(
+      "var(--hk-z-sidebar, 900)",
+    );
     expect(css).not.toContain(".hk-sidebar-rail-host[data-peeking] {");
     // The peek shadow survives on the panel-scoped rules.
     expect(css).toContain(".hk-sidebar-rail-host[data-peeking] .hk-sidebar-rail-panel");

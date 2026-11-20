@@ -293,9 +293,23 @@ export function useRailIconFlight(
     const stage = collectStage(host);
     if (!stage || !stage.pairs.length) return;
     const { pairs } = stage;
-    // Identical positions (a host whose densities don't move the icon
-    // column): the dissolve alone is already continuous — no layer.
-    if (!pairs.some(({ from, to }) => from.left !== to.left || from.top !== to.top)) return;
+    // Identical geometry (a host whose densities move NEITHER the icon
+    // column NOR its size): the dissolve alone is already continuous —
+    // no layer. 2026-11-20: size is part of the comparison, because the
+    // rail group's icon is a demoted corner badge (10px) while the
+    // expanded row's icon is the 16px glyph — position-only pairing
+    // would skip the very flight that must carry that growth.
+    if (
+      !pairs.some(
+        ({ from, to }) =>
+          from.left !== to.left ||
+          from.top !== to.top ||
+          from.width !== to.width ||
+          from.height !== to.height,
+      )
+    ) {
+      return;
+    }
 
     // Timing is TOKEN-DERIVED: the flight window reads the theme's
     // --duration-normal (the very variable the dissolve consumes), plus
@@ -350,8 +364,21 @@ export function useRailIconFlight(
       const inlineOffset = rtl
         ? origin.right - pair.from.right
         : pair.from.left - origin.left;
-      const dx = (pair.to.left - pair.from.left) / scale.x;
-      const dy = (pair.to.top - pair.from.top) / scale.y;
+      // CENTER-ALIGNED travel + SIZE TWEEN (2026-11-20 user direction):
+      // a glyph whose density size differs (the rail group's demoted
+      // corner badge) must grow/shrink CONTINUOUSLY. The clone is painted
+      // at the leaving size; transform-origin is the default center, so
+      // the translate is the CENTER delta — and the close: both images
+      // center-align, so the scale lands the clone's box exactly on the
+      // destination instead of drifting by half the size difference.
+      const fromCenterX = pair.from.left + pair.from.width / 2;
+      const fromCenterY = pair.from.top + pair.from.height / 2;
+      const toCenterX = pair.to.left + pair.to.width / 2;
+      const toCenterY = pair.to.top + pair.to.height / 2;
+      const dx = (toCenterX - fromCenterX) / scale.x;
+      const dy = (toCenterY - fromCenterY) / scale.y;
+      const sx = pair.from.width ? pair.to.width / pair.from.width : 1;
+      const sy = pair.from.height ? pair.to.height / pair.from.height : 1;
       const clone = pair.template.cloneNode(true) as HTMLElement;
       // Neutralize identity: the clone must never match a future pairing
       // query nor the hide rule — it is the flight layer's own citizen.
@@ -367,10 +394,16 @@ export function useRailIconFlight(
       // frame that slips past finish still shows the clone AT the
       // landing rect (same-geometry overlap with the real icon reads
       // as one glyph) instead of snapping back to the origin.
+      // Travel + size, full opacity the whole way, `fill: forwards` so a
+      // frame that slips past finish still shows the clone AT the landing
+      // rect and SIZE (same-geometry overlap with the real icon reads as
+      // one glyph) instead of snapping back to the origin — the old
+      // translate-only pass snapped the size at landing, which is the
+      // double-glyph the 2026-11-20 direction caught.
       const anim = clone.animate(
         [
-          { transform: "translate(0, 0)" },
-          { transform: `translate(${dx}px, ${dy}px)` },
+          { transform: "translate(0px, 0px) scale(1, 1)" },
+          { transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
         ],
         {
           duration: flightMs,

@@ -141,6 +141,8 @@
   margin-top: var(--space-2, 2px);
 }
 
+
+
 .hk-menu-sidebar-badge {
   margin-inline-start: auto;
   display: inline-flex;
@@ -213,15 +215,19 @@
     opacity: 0.55;
   }
 
-  /* Groups that DO carry an icon: the state caret parks in the
-   * inline-end corner (opposite the badge dot, which sits at the block
-   * start) so the icon glyph keeps its rail-centered column. */
-  .hk-menu-rail-caret-corner {
+
+  /* 2026-11-20 (ERP media rail): the demoted GROUP ICON badge —
+   * mirrors the old caret corner slot. The caret is now the row's
+   * primary glyph (icon cell), and the group icon shrinks into the
+   * inline-end corner so the rail reads expandability first,
+   * affiliation second. */
+  .hk-menu-rail-glyph-corner {
     position: absolute;
     inset-block-end: var(--space-2, 2px);
-    inset-inline-end: var(--space-4, 4px);
+    inset-inline-end: var(--space-2, 2px);
     display: inline-flex;
     pointer-events: none;
+    opacity: 0.75;
   }
 }
 

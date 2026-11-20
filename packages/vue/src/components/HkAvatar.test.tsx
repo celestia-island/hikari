@@ -80,10 +80,21 @@ describe("HkAvatar", () => {
     expect(retry!.getAttribute("src")).toBe("/b.webp");
   });
 
+  it("renders the NORMALIZED src, not the raw prop", () => {
+    // Pins the BINDING (mirrors the other two call sites): a padded URL
+    // must reach the <img> trimmed. A revert to the raw prop renders the
+    // padded value and fails this test — a whitespace-ONLY input cannot
+    // discriminate, because the guard hides the <img> in both
+    // implementations.
+    const c = mount(h(HkAvatar, { name: "yuzu", src: "  /a.webp  " }));
+    const img = c.querySelector("img") as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img!.getAttribute("src")).toBe("/a.webp");
+  });
+
   it("treats a whitespace-only src as absent", () => {
     // The shared latch normalizes the URL; master rendered `<img src=" ">`
-    // (a broken glyph) for a padded value. Pinned so the trim stays
-    // deliberate rather than accidental.
+    // (a broken glyph) for a padded value.
     const c = mount(h(HkAvatar, { name: "yuzu", src: "   " }));
     expect(c.querySelector("img")).toBeNull();
     expect(c.querySelector(".hk-avatar-fallback")?.textContent).toBe("Y");

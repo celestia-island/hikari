@@ -2,7 +2,7 @@
 // Shared avatar image state
 // ------
 //
-// ONE failed-load latch for every avatar primitive in the library. An
+// ONE failed-load latch for every avatar surface in the library. An
 // `<img>` that 404s renders the browser's broken-picture glyph — the exact
 // "missing image" look 2026-11-20 user report called out for the workspace
 // roster (demiurge's `/static/avatars/…` blob had gone stale; the component
@@ -14,7 +14,8 @@
 // The latch is per-URL: a new `src` (account switch, avatar re-upload) gets a
 // fresh attempt, or one broken URL would poison the chip for the rest of the
 // component's life. Same contract as HkAvatarButton's hand-rolled latch
-// (2026-10-29), now shared so the three primitives cannot drift.
+// (2026-10-29), now shared so the four call sites cannot drift (HkAvatar,
+// HkAvatarButton, HkMenuIdentityItem, HkAdminHeader's dropdown image).
 
 import { computed, ref, watch, type ComputedRef } from "vue";
 

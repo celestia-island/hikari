@@ -20,6 +20,18 @@
 .s-theme-mode-extra {
   margin-top: var(--space-8, 0.5rem);
   width: 100%;
+  /* 2026-11-20: the strip owns the ONE rhythm between its children. Host
+   * cards (the solar card, an expansion panel) already carry their own
+   * border/padding; letting their block margins stack on top of the
+   * panel's gap is the "mysterious extra margin" users keep reporting
+   * under the DPI card. Normalise here so every host composes cleanly. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+
+  > * {
+    margin: 0;
+  }
 }
 
 .s-theme-menu {

@@ -512,6 +512,15 @@ describe("HkAffixPicker badge capsule", () => {
     await openPopup(container);
     const badges = [...document.querySelectorAll<HTMLElement>(".hk-affix-row-badge")];
     expect(badges.map((b) => b.textContent)).toEqual(["#1", "#2"]);
+    // The capsule IS the standard badge chrome — primary wash, mono face,
+    // small size, squared pill — not just any span wearing the class
+    // (R2: a props-degraded mutant must turn red here).
+    for (const b of badges) {
+      expect(b.classList.contains("hk-badge-primary")).toBe(true);
+      expect(b.dataset.size).toBe("sm");
+      expect(b.dataset.mono).toBe("");
+      expect(b.dataset.pill).toBe("false");
+    }
     // Textual ordinals must not leak into the emoji-flag glyph span.
     expect(document.querySelector(".hk-affix-row-flag")).toBeNull();
     // Capsule precedes the label inside its row (the row grammar's own
@@ -544,9 +553,22 @@ describe("HkAffixPicker badge capsule", () => {
   });
 
   it("options without a badge render no badge nodes", async () => {
-    const { container } = mountPicker({ selected: "bare" });
+    // MULTI mode on purpose (R2: single mode never renders tags, so a
+    // `.hk-affix-tag-badge` assertion there is vacuous): both surfaces
+    // — remaining rows AND selected tags — must stay badge-free for a
+    // badge-less option.
+    const { container } = mountPicker({
+      options: BADGED,
+      mode: "multi",
+      selected: ["bare"],
+    });
     await openPopup(container);
-    expect(document.querySelector(".hk-affix-row-badge")).toBeNull();
-    expect(document.querySelector(".hk-affix-tag-badge")).toBeNull();
+    const t = tag("bare provider");
+    expect(t, "selected tag renders").toBeTruthy();
+    expect(t!.querySelector(".hk-affix-tag-badge")).toBeNull();
+    // The remaining rows are the two BADGED options — theirs render.
+    expect(
+      rows().map((r) => r.querySelector(".hk-affix-row-badge")?.textContent),
+    ).toEqual(["#1", "#2"]);
   });
 });

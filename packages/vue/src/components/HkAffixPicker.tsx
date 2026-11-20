@@ -28,12 +28,15 @@ export interface HkAffixOption {
   meta?: string;
   /** Optional leading glyph (flag emoji or any short symbol). */
   flag?: string;
-  /** Standard leading CAPSULE: a small primary mono badge — the same
-   *  num-segment language the model tag's `#N` rides — rendered after
-   *  the flag, before the label, separated by the row's own gap.
-   *  Roster ordinals, short codes. A TEXTUAL ordinal never belongs in
-   *  `flag`: that span is an emoji-font glyph slot, and an `#N` inside
-   *  it renders as bare unstyled text (2026-11-20 user report). */
+  /** Standard leading CAPSULE: a small primary mono badge (`HBadge`,
+   *  primary / sm / mono / square) — the visual language of the model
+   *  tag's `#N` number segment downstream (shittim-chest kit
+   *  `HkModelTag`, which renders its ordinal as exactly this badge
+   *  shape) — rendered after the flag, before the label, separated by
+   *  the row's own gap. Roster ordinals, short codes. A TEXTUAL
+   *  ordinal never belongs in `flag`: that span is an emoji-font glyph
+   *  slot, and an `#N` inside it renders as bare unstyled text
+   *  (2026-11-20 user report). */
   badge?: string;
   /** Extra haystack for the search filter (aliases, codes, digits). */
   keywords?: string;

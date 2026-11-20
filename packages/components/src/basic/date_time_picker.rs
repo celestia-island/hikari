@@ -1513,6 +1513,45 @@ mod tests {
         assert!(html.contains("Oct 6, 09:05"), "{html}");
     }
 
+    /// The render (not just the adapter) must ask for the standalone shapes:
+    /// the day-view title is a bare month ("октябрь"), a composed date would
+    /// read "октября"; the month picker's cells are bare months too ("Jan",
+    /// not the in-date "Jan."). Each test thread gets its own i18n context.
+    #[test]
+    fn date_time_picker_renders_bare_months_in_the_standalone_shape() {
+        hikari_i18n::provide_i18n(hikari_i18n::Language::Russian, hikari_i18n::I18nKeys::new());
+        let day_view = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            day_view.contains("октябрь"),
+            "the title is the standalone month"
+        );
+        assert!(
+            !day_view.contains("октября"),
+            "the in-date genitive must not reach the title"
+        );
+
+        hikari_i18n::provide_i18n(hikari_i18n::Language::German, hikari_i18n::I18nKeys::new());
+        let state = DateTimePickerViewState::anchored(moment(2024, 10, 6, 9, 5).date())
+            .drill(DateTimePickerView::Months);
+        let months = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            view_state: Some(state),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(months.contains(">Jan<"), "German month cell is standalone");
+        assert!(
+            !months.contains(">Jan.<"),
+            "the in-date shape must not reach the month picker"
+        );
+    }
+
     #[test]
     fn date_time_picker_renders_the_month_and_year_grids() {
         let state = DateTimePickerViewState::anchored(moment(2024, 10, 6, 9, 5).date())

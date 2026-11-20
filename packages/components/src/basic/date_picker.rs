@@ -1779,6 +1779,60 @@ mod tests {
         assert_eq!(spanish.weekday_labels(true)[2], "X");
     }
 
+    /// The RENDER asks the locale for these shapes — the adapter unit tests
+    /// pin the choice, this pins that the render actually calls them. The
+    /// thread-local i18n context is set for this test thread only (libtest
+    /// gives each test its own thread), so the German names cannot leak into
+    /// the English cases around it.
+    #[test]
+    fn date_picker_renders_the_months_view_in_the_active_locale() {
+        hikari_i18n::provide_i18n(hikari_i18n::Language::German, hikari_i18n::I18nKeys::new());
+        let html = DatePicker(DatePickerProps {
+            model_value: Some("2024-10-06".to_string()),
+            open: true,
+            view_state: Some(
+                DatePickerViewState::anchored(date(2024, 10, 6)).drill(DatePickerView::Months),
+            ),
+            ..Default::default()
+        })
+        .render_to_html();
+        // Standalone short months: the cell for January is "Jan", never the
+        // in-date "Jan." — a bypassed adapter would print the latter.
+        assert!(
+            html.contains(">Jan<"),
+            "German month cell must use the standalone shape"
+        );
+        assert!(
+            !html.contains(">Jan.<"),
+            "the in-date shape must not reach the month grid"
+        );
+
+        // The day grid asks the locale for its first weekday: zh-Hans is
+        // Monday-first, so October 2024 opens on 2024-09-30, not 09-29.
+        hikari_i18n::provide_i18n(
+            hikari_i18n::Language::ChineseSimplified,
+            hikari_i18n::I18nKeys::new(),
+        );
+        let grid = DatePicker(DatePickerProps {
+            model_value: Some("2024-10-06".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(2024, 10, 6))),
+            ..Default::default()
+        })
+        .render_to_html();
+        // Each cell carries the day's full date as its aria-label, so the
+        // grid's opening cell is observable: Monday-first opens on 2024-09-30
+        // and therefore contains no 2024-09-29 cell at all.
+        assert!(
+            grid.contains("2024年9月30日"),
+            "zh-Hans grid contains its Monday-first opening cell"
+        );
+        assert!(
+            !grid.contains("2024年9月29日"),
+            "a Sunday-first grid would start on 2024-09-29"
+        );
+    }
+
     #[test]
     fn date_picker_renders_the_closed_trigger() {
         let html = DatePicker(DatePickerProps {

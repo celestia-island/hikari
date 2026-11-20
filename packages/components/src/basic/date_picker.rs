@@ -1328,7 +1328,7 @@ fn build_content(
                 if is_today {
                     class.push_str(" is-today");
                 }
-                let label = month_pick_label(&locale, month);
+                let label = month_pick_label(locale, month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1392,7 +1392,7 @@ fn build_content(
                 })
                 .collect();
 
-            let cells = locale_month_grid(&locale, view_year, view_month);
+            let cells = locale_month_grid(locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;

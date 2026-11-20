@@ -28,7 +28,18 @@ import { writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** Language code → BCP-47 locale. Order = hikari_i18n::Language::ALL. */
+/**
+ * Language code → the locale tag handed to `Intl`.
+ *
+ * These MUST be the tags the Vue side passes at runtime: `activeLocale()`
+ * returns the i18n directory code (`en`, `zh-Hans`, …, `ar`), and `Intl`
+ * resolves a region-less tag to CLDR's default region — which is not always the
+ * one a region-tagged locale would pick (`ar` → Saturday-first, `ar-SA` →
+ * Sunday-first). A region tag here would make the Rust grid open one day apart
+ * from the Vue grid in that language.
+ *
+ * Order = hikari_i18n::Language::ALL.
+ */
 const LOCALES = {
   en: "en-US",
   "zh-Hans": "zh-CN",
@@ -40,7 +51,7 @@ const LOCALES = {
   es: "es-ES",
   pt: "pt-BR",
   ru: "ru-RU",
-  ar: "ar-SA",
+  ar: "ar",
 };
 
 /** A date inside each month / on each weekday; UTC keeps the host tz out. */

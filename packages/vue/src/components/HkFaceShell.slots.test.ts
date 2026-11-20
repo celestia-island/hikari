@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as barrel from "../index";
 import { asIndexable } from "../utils/typing";
-import type { HkAdminHeaderAvatarModalSlot, HkAdminHeaderSlots, HkFaceShellHeaderSlot, HkFaceShellSidebarSlot, HkFaceShellSlots, HkFaceShellUserPanelSlot } from "../index";
+import type { HkAdminHeaderAvatarModalSlot, HkAdminHeaderLocalePickerSlot, HkAdminHeaderSlots, HkAdminHeaderUserMenuExtraSlot, HkFaceShellHeaderSlot, HkFaceShellSidebarSlot, HkFaceShellSlots, HkFaceShellUserPanelSlot } from "../index";
 
 /**
  * The L39 slot-type contract pins. The exported slot types are what chest and
@@ -46,6 +46,22 @@ function avatarModalBody(params: HkAdminHeaderAvatarModalSlot) {
   return { open, onUpdateOpen };
 }
 
+/** erp AdminLayout shape: the locale-picker destructure (L39 ruling-a
+ * revival — erp passes LocalePickerPopup exactly these members). */
+function localePickerBody(params: HkAdminHeaderLocalePickerSlot) {
+  const { open, onUpdateOpen, triggerRef } = params;
+  onUpdateOpen(!open);
+  return { open, onUpdateOpen, triggerRef };
+}
+
+/** erp AdminLayout shape: the user-menu-extra destructure (close is the
+ * only member; erp's account-center row calls it before navigating). */
+function userMenuExtraBody(params: HkAdminHeaderUserMenuExtraSlot) {
+  const { close } = params;
+  close?.();
+  return { close };
+}
+
 describe("the public slot-type contract (L39)", () => {
   it("exports every slot type name from the barrel", () => {
     // Types are erased at runtime; the pin is the module-record presence of
@@ -80,6 +96,17 @@ describe("the public slot-type contract (L39)", () => {
     const avatar = avatarModalBody({ open: false, onUpdateOpen: (v) => { opened = v; } });
     expect(avatar.open).toBe(false);
     expect(opened).toBe(true);
+    // L39 ruling-a revival shapes: erp's two revived slots destructured
+    // the way AdminLayout does (compile-level pin — a payload member
+    // rename breaks THIS file's vue-tsc, not a downstream repo's build).
+    let flipped = false;
+    const picker = localePickerBody({ open: false, onUpdateOpen: (v) => { flipped = v; }, triggerRef: null });
+    expect(picker.open).toBe(false);
+    expect(flipped).toBe(true);
+    let closed = false;
+    const extra = userMenuExtraBody({ close: () => { closed = true; } });
+    extra.close?.();
+    expect(closed).toBe(true);
   });
 
   it("the aggregate slot types fit a defineComponent slots declaration", () => {

@@ -524,8 +524,10 @@ pub enum DateOrder {
 /// 2024"), and this type exposes one accessor per shape rather than letting a
 /// call site pick the wrong one.
 ///
-/// Digits stay Latin (Intl's `ar` locale formats Arabic-Indic digits), and no
-/// era / day-period suffix is emitted.
+/// Digits stay Latin, which is what the bare `ar` tag resolves to
+/// (`resolvedOptions().numberingSystem` is `latn`; only region tags such as
+/// `ar-SA`/`ar-EG` select Arabic-Indic digits). No era / day-period suffix is
+/// emitted.
 #[derive(Clone, Copy, Debug)]
 pub struct DateLocale {
     pub language: Language,
@@ -1830,6 +1832,26 @@ mod tests {
         assert!(
             !grid.contains("2024年9月29日"),
             "a Sunday-first grid would start on 2024-09-29"
+        );
+
+        // The weekday row asks for the NARROW shape (Vue's `{weekday:narrow}`).
+        // English makes that observable: narrow is "S,M,T,W,T,F,S", short is
+        // "Sun,Mon,…".
+        hikari_i18n::provide_i18n(hikari_i18n::Language::English, hikari_i18n::I18nKeys::new());
+        let english_grid = DatePicker(DatePickerProps {
+            model_value: Some("2024-10-06".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(2024, 10, 6))),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            english_grid.contains("hk-dp-wd"),
+            "the date picker renders a weekday row"
+        );
+        assert!(
+            !english_grid.contains(">Sun<"),
+            "the date picker row is narrow, not short"
         );
     }
 

@@ -87,10 +87,11 @@
 //     NAMES come from `hikari_i18n::dates` (CLDR) and the segment order from a
 //     per-language table — the context and accessor list lives on
 //     [`crate::basic::date_picker::DateLocale`]. One shape is specific to this
-//     component: the trigger label is the medium date PLUS a 24-hour clock
-//     ("Oct 6, 2024, 09:05"). Vue's Intl pattern for that label is
+//     component: the trigger label is the MONTH + DAY text (no year) PLUS a
+//     24-hour clock ("Oct 6, 09:05"), joined with a hard-coded ", ". Vue's Intl
+//     pattern for that label is
 //     `{month, day, hour, minute, hourCycle: "h23"}`, i.e. no year — the
-//     mirror keeps the year so the trigger cannot be ambiguous across years.
+//     mirror matches that (a year-less trigger is what Vue ships).
 //   * the trigger's `.hk-dtp-trigger-icon` / `.hk-dtp-trigger-chev` classes
 //     land on the crate's `div.hk-icon` glyph wrapper (Vue puts them on the
 //     lucide `<svg>` directly) — the same `hikari_icons::Icon` delta
@@ -1549,6 +1550,36 @@ mod tests {
         assert!(
             !months.contains(">Jan.<"),
             "the in-date shape must not reach the month picker"
+        );
+
+        // The day grid asks the locale for its first weekday (Russian is
+        // Monday-first: October 2024 opens on 2024-09-30, so a Sunday-first
+        // grid would additionally contain a 2024-09-29 cell).
+        hikari_i18n::provide_i18n(hikari_i18n::Language::Russian, hikari_i18n::I18nKeys::new());
+        let grid = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            ..Default::default()
+        })
+        .render_to_html();
+        // The dtp cell carries only its day number, so read the grid's first
+        // cell: Russian is Monday-first, which makes October 2024 open on the
+        // 30th (a Sunday-first grid would open on the 29th).
+        let first_cell = grid
+            .split("hk-dtp-grid")
+            .nth(1)
+            .and_then(|tail| tail.split("hk-dtp-cell-num").nth(1))
+            .and_then(|tail| tail.split('>').nth(1))
+            .map(|text| text.split('<').next().unwrap_or("").trim().to_string())
+            .unwrap_or_default();
+        assert_eq!(first_cell, "30", "ru dtp grid opens on Monday 2024-09-30");
+
+        // The weekday row asks for the SHORT shape (Vue's `{weekday:"short"}`);
+        // the date picker asks for the narrow one. Swapping them must be
+        // visible, so pin both.
+        assert!(
+            grid.contains("пн"),
+            "datetime picker row uses the short weekday names"
         );
     }
 

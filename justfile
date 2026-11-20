@@ -154,6 +154,21 @@ clippy:
     @echo "  →  Running Clippy..."
     @cargo clippy --all-targets --all-features -- -D warnings
 
+# Counted type-escape ratchet (L907 follow-up): the CI lane enforces the
+# zero-escape rules; this LOCAL lane pins the counted assertions
+# (as-assert / nonnull-assert) to .type-escapes-baseline.json — the count
+# may only go DOWN. CI wiring waits until the fleet devtools pin carries
+# `type-escapes --baseline` (master v0.14.2-67+ has it; the current
+# 46e9551 pin predates the flag).
+type-escape-ratchet:
+    @echo "  →  Type-escape ratchet (counted tier)..."
+    @celestia-devtools type-escapes --baseline .type-escapes-baseline.json
+
+# Lower the ratchet deliberately: fix debt, then regenerate the ledger.
+type-escape-ratchet-update:
+    @echo "  →  Regenerating .type-escapes-baseline.json..."
+    @celestia-devtools type-escapes --update-baseline .type-escapes-baseline.json
+
 # ------
 # Cleaning
 # ------

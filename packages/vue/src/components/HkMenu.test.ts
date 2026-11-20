@@ -1131,14 +1131,17 @@ describe("HkMenu cascade against an app-chrome band", () => {
     const frames: Keyframe[][] = [];
     const stubbed = vi.fn((keyframes: Keyframe[]) => {
       frames.push(keyframes);
-      const animation = {
-        onfinish: null as null | (() => void),
-        cancel: vi.fn(),
+      // Type the stub as the zero-arg slice it really implements, so the
+      // single cast below is a structural subset (legal without
+      // double-casting) and the onfinish call site stays zero-arg.
+      const animation: { onfinish: (() => void) | null; cancel: () => void } = {
+        onfinish: null,
+        cancel: vi.fn(() => {}),
       };
       // Fire the finish callback on the next macrotask so the Transition
       // settles exactly like a real browser completing the fold.
       setTimeout(() => animation.onfinish?.(), 0);
-      return animation as unknown as Animation;
+      return animation as Animation;
     });
     Object.defineProperty(HTMLElement.prototype, "animate", {
       configurable: true,
@@ -1186,8 +1189,8 @@ describe("HkMenu cascade against an app-chrome band", () => {
     expect(frames.at(-1)?.[1]).toEqual({ height: "0px" });
 
     // Restore the environment for the other tests in this file.
-    delete (HTMLElement.prototype as unknown as Record<string, unknown>).animate;
-    delete (HTMLElement.prototype as unknown as Record<string, unknown>).scrollHeight;
+    delete (HTMLElement.prototype as { animate?: unknown }).animate;
+    delete (HTMLElement.prototype as { scrollHeight?: unknown }).scrollHeight;
   });
 
   it("skips the fold animation under the global animation switch", async () => {
@@ -1220,7 +1223,7 @@ describe("HkMenu cascade against an app-chrome band", () => {
 
     expect(stubbed, "the veto makes the fold instant").not.toHaveBeenCalled();
     document.documentElement.removeAttribute("data-css-animations");
-    delete (HTMLElement.prototype as unknown as Record<string, unknown>).animate;
+    delete (HTMLElement.prototype as { animate?: unknown }).animate;
   });
 
 });

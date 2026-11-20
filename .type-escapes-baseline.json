@@ -1,0 +1,2081 @@
+{
+ "version": 1,
+ "rules": {
+  "as-assert": 2134,
+  "nonnull-assert": 4251
+ },
+ "files": {
+  "packages/default_theme/src/StatusTrayDecor.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/demo/verify.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/DemoApp.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/board3dSurface.test.ts": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkAboutBody.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkAboutModal.styles.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkAboutModal.test.tsx": {
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkAboutModal.tsx": {
+   "as-assert": 12
+  },
+  "packages/vue/src/components/HkAdaptiveDialog.test.tsx": {
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkAdaptiveDialog.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkAdaptiveTabs.test.tsx": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkAdaptiveTabs.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkAddTile.test.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkAddTile.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkAdminHeader.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkAdminHeader.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkAdminShell.test.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkAdminShell.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkAdminTablePage.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkAdminTablePage.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkAdminWidgets.test.ts": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkAffixPicker.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/components/HkAffixPicker.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkAlert.pad.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkAlert.role.test.tsx": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkAlert.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkAltSignIn.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkAltSignIn.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkAmbientLayer.test.tsx": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkAmbientLayer.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkAuthCard.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkAuthMethodList.test.tsx": {
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkAuthSubmitButton.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkAvatar.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkAvatar.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkAvatarButton.test.tsx": {
+   "as-assert": 7,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkAvatarButton.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkBadge.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkBarChart.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkBlankCanvas.test.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkBlankCanvas.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkBlockingToast.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 27
+  },
+  "packages/vue/src/components/HkBlockingToast.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkBoard.fitCap.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkBoard.nodeActions.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkBoard.scale.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkBoard.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkBoard3D.controls.test.tsx": {
+   "nonnull-assert": 33
+  },
+  "packages/vue/src/components/HkBoard3D.test.tsx": {
+   "as-assert": 21,
+   "nonnull-assert": 152
+  },
+  "packages/vue/src/components/HkBoard3D.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/components/HkBreadcrumb.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkButton.glyphGuard.contract.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkButton.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkButton.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkCalendarHeatmap.test.tsx": {
+   "as-assert": 33,
+   "nonnull-assert": 15
+  },
+  "packages/vue/src/components/HkCalendarHeatmap.tsx": {
+   "as-assert": 8
+  },
+  "packages/vue/src/components/HkCaptchaModal.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkCaptchaWidget.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkCard.pad.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkCard.scrollable.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkCard.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkCardList.rowactions-touch.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkCardList.rowactions.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkCardList.test.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkCardList.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkCheckbox.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkCheckbox.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkColorPicker.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkColorPickerTouch.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkColorSchemeDialog.test.ts": {
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkColorSchemeDialog.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkColorSchemeEditor.initTheme.test.ts": {
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkColorSchemeEditor.test.ts": {
+   "as-assert": 15,
+   "nonnull-assert": 51
+  },
+  "packages/vue/src/components/HkColorSchemeEditor.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkConfirmDialog.test.tsx": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkConnectionStatus.shell.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkConnectionStatus.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkContextMenuProvider.content.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkContextMenuProvider.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkCookieConsent.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkCopyBadge.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkCopyBadge.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkCornerBadge.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 12
+  },
+  "packages/vue/src/components/HkCornerBadge.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkCrossfade.test.tsx": {
+   "nonnull-assert": 27
+  },
+  "packages/vue/src/components/HkCrossfade.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkCurrencySelect.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 28
+  },
+  "packages/vue/src/components/HkCurrencySelect.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkDatePicker.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkDatePicker.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkDateTag.test.tsx": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkDateTag.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkDateTimePicker.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkDateTimePicker.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkDebugFloat.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 72
+  },
+  "packages/vue/src/components/HkDebugFloat.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkDeleteGateWindow.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkDeleteGateWindow.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkDiffViewer.test.tsx": {
+   "as-assert": 12,
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/components/HkDiffViewer.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkDivider.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkDockBar.styles.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkDockBar.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkDockBar.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkDonutChart.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkDonutChart.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkDraggableGrid.tsx": {
+   "as-assert": 8
+  },
+  "packages/vue/src/components/HkDraggableList.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkDraggableList.test.tsx": {
+   "as-assert": 30,
+   "nonnull-assert": 20
+  },
+  "packages/vue/src/components/HkDraggableList.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkDrawer.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkDrawer.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkEdgeGlow.test.tsx": {
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkEdgeGlow.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkEditableTable.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkEditableTable.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkEmergencyAlert.layering.contract.test.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkEmergencyAlert.test.tsx": {
+   "nonnull-assert": 15
+  },
+  "packages/vue/src/components/HkEmptyState.test.tsx": {
+   "as-assert": 9
+  },
+  "packages/vue/src/components/HkEmptyState.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkErrorBoundary.test.tsx": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkErrorBoundary.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkErrorLanding.test.tsx": {
+   "nonnull-assert": 24
+  },
+  "packages/vue/src/components/HkErrorLanding.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkExpansionPanel.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkFab.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkFab.tsx": {
+   "as-assert": 7,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkFaceShell.rail.test.tsx": {
+   "as-assert": 13,
+   "nonnull-assert": 25
+  },
+  "packages/vue/src/components/HkFaceShell.slots.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkFaceShell.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 12
+  },
+  "packages/vue/src/components/HkFaceShell.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkFileBrowserDialog.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkFileBrowserDialog.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkFileField.test.tsx": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkFileField.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkFilePickerField.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkFilePickerField.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkFilterBar.test.tsx": {
+   "as-assert": 8,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkFilterBar.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkFilterChip.test.tsx": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkFilterChip.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkFilterOperatorIcon.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkFilterPanel.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 36
+  },
+  "packages/vue/src/components/HkFilterPanel.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkFilterTrigger.mobile.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkFilterTrigger.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 25
+  },
+  "packages/vue/src/components/HkFilterTrigger.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkFloatingLayer.test.tsx": {
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkFloatingLayer.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkHeaderPicker.test.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkHeaderPicker.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkHoverRevealAction.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkHoverRevealAction.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkIcon.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkIconButton.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/HkIconButton.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkIconButtonGroup.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 30
+  },
+  "packages/vue/src/components/HkIconButtonGroup.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkIconChip.test.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkIconChip.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkImageLightbox.test.tsx": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkImagePreview.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkImagePreview.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkImageViewer.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkImageViewerTouch.test.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkInfiniteTail.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkInfiniteTail.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkInput.affix.test.ts": {
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkInput.enter.test.ts": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkInput.field.test.tsx": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkInput.hideLabel.test.tsx": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkInput.number.test.tsx": {
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/components/HkInput.password.test.tsx": {
+   "as-assert": 15,
+   "nonnull-assert": 136
+  },
+  "packages/vue/src/components/HkInput.tsx": {
+   "as-assert": 10
+  },
+  "packages/vue/src/components/HkJsonTree.edit.test.tsx": {
+   "as-assert": 14,
+   "nonnull-assert": 67
+  },
+  "packages/vue/src/components/HkJsonTree.fold.test.ts": {
+   "as-assert": 19,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkJsonTree.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 18
+  },
+  "packages/vue/src/components/HkJsonTree.tsx": {
+   "as-assert": 20
+  },
+  "packages/vue/src/components/HkKanban.test.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkKanban.tsx": {
+   "as-assert": 9
+  },
+  "packages/vue/src/components/HkKbd.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkKeywordSearchModal.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkLabel.test.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkLabel.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkListTransition.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/components/HkListTransition.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkLoadMore.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkLoadMore.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkLocalePicker.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkLocalePickerPopup.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkLocalizedInput.test.tsx": {
+   "as-assert": 8,
+   "nonnull-assert": 27
+  },
+  "packages/vue/src/components/HkLocalizedInput.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkLogWindow.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkLogo.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkMarkdownRenderer.chips.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkMarkdownRenderer.mermaid.test.tsx": {
+   "as-assert": 15
+  },
+  "packages/vue/src/components/HkMarkdownRenderer.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkMasonry.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkMasonry.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkMediaPlayer.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkMediaSlider.test.tsx": {
+   "as-assert": 11
+  },
+  "packages/vue/src/components/HkMediaSlider.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkMediaVisualizer.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkMenu.rail.test.tsx": {
+   "nonnull-assert": 58
+  },
+  "packages/vue/src/components/HkMenu.test.ts": {
+   "as-assert": 22,
+   "nonnull-assert": 40
+  },
+  "packages/vue/src/components/HkMenu.tsx": {
+   "as-assert": 16,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkMenuIdentityItem.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkMenuPanel.test.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkMenuSection.test.tsx": {
+   "nonnull-assert": 18
+  },
+  "packages/vue/src/components/HkMenuSection.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkMermaidDiagram.test.tsx": {
+   "as-assert": 9
+  },
+  "packages/vue/src/components/HkMermaidDiagram.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkMessageBox.test.tsx": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkMessageBox.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkMfaVerifyCard.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkMfaVerifyCard.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkMinimap.collapse.test.tsx": {
+   "as-assert": 13,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkMinimap.scale.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkMinimap.test.tsx": {
+   "as-assert": 14
+  },
+  "packages/vue/src/components/HkMinimap.toolbarOnly.test.tsx": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkMinimap.tsx": {
+   "as-assert": 9
+  },
+  "packages/vue/src/components/HkMinimap3D.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 18
+  },
+  "packages/vue/src/components/HkMinimap3D.tsx": {
+   "as-assert": 8
+  },
+  "packages/vue/src/components/HkModal.autofollow.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkModal.contenthold.test.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkModal.enter-watchdog.test.tsx": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkModal.footerLead.test.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkModal.leavepin.test.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkModal.open-close-scale.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkModal.stepflowswap.test.tsx": {
+   "as-assert": 10,
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkModal.test.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 40
+  },
+  "packages/vue/src/components/HkModal.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkModal.width.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkModalBreadcrumb.blur.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkModalBreadcrumb.motion.contract.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkModalBreadcrumb.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 68
+  },
+  "packages/vue/src/components/HkModalBreadcrumb.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkModelCard.test.tsx": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkModelCard.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkMoneyInput.test.tsx": {
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkMoneyInput.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkNavItem.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkNavSidebar.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkNodeCanvas.base.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkNodeCanvas.edges.test.tsx": {
+   "as-assert": 16,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkNodeCanvas.gestures.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkNodeCanvas.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 101
+  },
+  "packages/vue/src/components/HkNodeCanvas.tsx": {
+   "as-assert": 13
+  },
+  "packages/vue/src/components/HkNotificationBell.barrel.test.ts": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkNotificationBell.contract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkNotificationBell.scrollTarget.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkNotificationBell.styles.test.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkNotificationBell.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 56
+  },
+  "packages/vue/src/components/HkNotificationBell.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkNumberInput.affix.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkNumberInput.test.tsx": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkNumberInput.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkNumberSteppers.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkNumberSteppers.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkOtpInput.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkOtpInput.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 100
+  },
+  "packages/vue/src/components/HkOtpInput.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkPageHeader.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkPageHeader.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkPaneHolder.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkPasswordSurface.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkPasswordSurface.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkPersistentToast.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkPersistentToast.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkPersistentToastGroup.test.tsx": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkPersistentToastGroup.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkPhaseTransition.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkPhoneInput.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkPhoneInput.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkPillToggleGroup.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkPillToggleGroup.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkPlaceholderMarquee.test.ts": {
+   "as-assert": 25,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkPlaceholderMarquee.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkPopover.closed.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkPopover.escape.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkPopover.hover.test.tsx": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkPopover.rootzoom.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkPopover.shield.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkPopover.surfacevars.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkPopover.tsx": {
+   "as-assert": 7,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkPopoverSheet.test.tsx": {
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/components/HkPopupSelect.mobile.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkPopupSelect.test.tsx": {
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/components/HkPopupSelect.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkPrice.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkPrice.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkProgressBar.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkProgressBar.test.tsx": {
+   "as-assert": 18,
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkProgressBar.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkProgressRing.test.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkProgressRing.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkProtocolModal.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkQrCode.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkQrCode.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkQuote.test.tsx": {
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkQuote.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkRadio.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 21
+  },
+  "packages/vue/src/components/HkRadio.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkRangeRibbon.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 186
+  },
+  "packages/vue/src/components/HkRangeRibbon.tsx": {
+   "as-assert": 8,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkRemoteInputDock.test.tsx": {
+   "nonnull-assert": 29
+  },
+  "packages/vue/src/components/HkRemoteInputDock.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkRollingNumber.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkRollingNumber.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkRowActions.test.tsx": {
+   "as-assert": 5,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkRowActions.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkScreenIdentifyCard.test.tsx": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/HkScreenIdentifyCard.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkScreenIdentifyHost.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkScreenIdentifyHost.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkScrollContainer.dock.test.tsx": {
+   "as-assert": 16,
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkScrollContainer.dockRide.test.tsx": {
+   "as-assert": 21,
+   "nonnull-assert": 51
+  },
+  "packages/vue/src/components/HkScrollContainer.fade.contract.test.ts": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkScrollContainer.selectionHint.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 20
+  },
+  "packages/vue/src/components/HkScrollContainer.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkScrollContainer.tsx": {
+   "as-assert": 12,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkScrollPin.scrollcontract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkScrollPin.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkScrollPin.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkScrollProgressDock.test.tsx": {
+   "as-assert": 18,
+   "nonnull-assert": 56
+  },
+  "packages/vue/src/components/HkScrollProgressDock.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSearchInput.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkSearchTrigger.test.tsx": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkSearchTrigger.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSectionCard.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkSectionCard.test.tsx": {
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/components/HkSectionCard.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkSectionHeader.test.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSectionHeader.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSelect.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkSelect.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSelectPanel.rootzoom.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkSelectPanel.test.tsx": {
+   "as-assert": 15,
+   "nonnull-assert": 53
+  },
+  "packages/vue/src/components/HkSelectPanel.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkSelectSheet.test.tsx": {
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/components/HkSelectionControls.styles.test.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 49
+  },
+  "packages/vue/src/components/HkSelectionGrid.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkSelectionGrid.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkSelectionWaterfall.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkSerpentineUnlock.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 12
+  },
+  "packages/vue/src/components/HkSerpentineUnlock.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkSettingsDialog.test.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkSettingsDialog.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkSidebar.rail.test.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 29
+  },
+  "packages/vue/src/components/HkSidebar.styles.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkSidebar.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSidebarRail.styles.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkSidebarRailSwap.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 21
+  },
+  "packages/vue/src/components/HkSidebarRailSwap.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSidebarRailToggle.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkSignInCard.test.ts": {
+   "as-assert": 13
+  },
+  "packages/vue/src/components/HkSignInCard.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSkeleton.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSkeletonList.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSlider.test.tsx": {
+   "as-assert": 12
+  },
+  "packages/vue/src/components/HkSlider.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkSliderField.test.tsx": {
+   "as-assert": 22,
+   "nonnull-assert": 19
+  },
+  "packages/vue/src/components/HkSliderField.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSolarLocationEditor.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkSolarLocationSetting.test.tsx": {
+   "nonnull-assert": 23
+  },
+  "packages/vue/src/components/HkSpinner.test.tsx": {
+   "as-assert": 7
+  },
+  "packages/vue/src/components/HkSpinner.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSplash.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkStarSystem.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkStarSystem.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkStatCard.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkStatCard.variants.test.tsx": {
+   "as-assert": 18
+  },
+  "packages/vue/src/components/HkStatusBar.test.tsx": {
+   "as-assert": 10,
+   "nonnull-assert": 45
+  },
+  "packages/vue/src/components/HkStatusBar.tsx": {
+   "as-assert": 8
+  },
+  "packages/vue/src/components/HkStatusPill.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkStatusRow.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkStepFlow.slide.contract.test.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkStepFlow.test.tsx": {
+   "as-assert": 12,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkStepFlow.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkStepGuide.test.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkStepGuide.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkSupplementInset.test.tsx": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkSupplementInset.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkSvgVarPresentation.test.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkSwitch.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkSwitch.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkTable.drag.test.tsx": {
+   "as-assert": 8,
+   "nonnull-assert": 44
+  },
+  "packages/vue/src/components/HkTable.interactions.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 34
+  },
+  "packages/vue/src/components/HkTable.rows.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkTable.sections.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 37
+  },
+  "packages/vue/src/components/HkTable.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkTabs.test.ts": {
+   "as-assert": 10,
+   "nonnull-assert": 77
+  },
+  "packages/vue/src/components/HkTabs.tsx": {
+   "as-assert": 8
+  },
+  "packages/vue/src/components/HkTag.test.tsx": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkTag.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkTagDotRow.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkTagDotRow.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkTagInput.test.tsx": {
+   "as-assert": 9,
+   "nonnull-assert": 61
+  },
+  "packages/vue/src/components/HkTagInput.tsx": {
+   "as-assert": 12
+  },
+  "packages/vue/src/components/HkTemplateField.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkTemplateField.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 57
+  },
+  "packages/vue/src/components/HkTemplateField.tsx": {
+   "as-assert": 10,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkTemplateText.test.tsx": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkTemplateText.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkTerminal.test.tsx": {
+   "as-assert": 11,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkTerminal.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkTextarea.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkThemeDecor.test.tsx": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkThemeDecor.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkThemePanelContent.solar.contract.test.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkThemePanelContent.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkThemeToggle.contract.test.ts": {
+   "nonnull-assert": 27
+  },
+  "packages/vue/src/components/HkThemeToggle.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 35
+  },
+  "packages/vue/src/components/HkThemeToggle.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkThirdPartySignInCard.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/HkTimePicker.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 18
+  },
+  "packages/vue/src/components/HkTimePicker.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkTimeZoneGlobe.board.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/components/HkTimeZoneGlobe.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/HkTimeZonePicker.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/components/HkTimeZonePicker.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkTimeline.bondcell.contract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkTimeline.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkTimeline.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkTitleBar.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkToast.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 25
+  },
+  "packages/vue/src/components/HkToast.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkTokenInput.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkTooltip.styles.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkTooltip.test.tsx": {
+   "as-assert": 8,
+   "nonnull-assert": 16
+  },
+  "packages/vue/src/components/HkTooltip.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkTransitionContainer.test.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkTransitionContainer.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkTree.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkTreemap.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 33
+  },
+  "packages/vue/src/components/HkTreemap.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/HkTreemapStage.test.tsx": {
+   "as-assert": 16,
+   "nonnull-assert": 39
+  },
+  "packages/vue/src/components/HkTreemapStage.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkTrendChart.test.tsx": {
+   "as-assert": 6,
+   "nonnull-assert": 23
+  },
+  "packages/vue/src/components/HkTrendChart.tsx": {
+   "as-assert": 6
+  },
+  "packages/vue/src/components/HkUsageFlow.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/HkUsageFlow.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkUserPicker.test.tsx": {
+   "nonnull-assert": 25
+  },
+  "packages/vue/src/components/HkUserPicker.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkVirtualCursor.test.tsx": {
+   "nonnull-assert": 13
+  },
+  "packages/vue/src/components/HkVirtualCursor.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkWallpaperBackdrop.styles.contract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/HkWallpaperBackdrop.test.tsx": {
+   "as-assert": 7,
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/components/HkWallpaperBackdrop.tsx": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/HkWaterfall.test.tsx": {
+   "as-assert": 2,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/HkWaterfall.tsx": {
+   "as-assert": 5
+  },
+  "packages/vue/src/components/HkWeekdayPicker.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/HkWeekdayPicker.tsx": {
+   "as-assert": 4
+  },
+  "packages/vue/src/components/HkWindowControls.test.tsx": {
+   "as-assert": 3,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/HkWindowControls.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/HkWindowedItem.scale.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/HkWindowedItem.tsx": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/StatusTrayDecor.size.test.ts": {
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/StatusTrayDecor.test.tsx": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/__tests__/hkMarkdownLinks.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/__tests__/hkMermaidLayout.test.ts": {
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/components/__tests__/hkMermaidParse.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/_menu-item.contract.test.ts": {
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/components/board3dHoverBox.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/board3dHoverBox.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/components/calendarGrid.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 15
+  },
+  "packages/vue/src/components/calendarGrid.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/components/chromeBand.contract.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/closeFamily.contract.test.tsx": {
+   "as-assert": 4,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/componentSelfSufficiency.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/components/debugFloat.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/components/inlineChips.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/jsonTreeEdit.test.ts": {
+   "as-assert": 23
+  },
+  "packages/vue/src/components/jsonTreeEdit.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/components/nativeScrollbar.contract.test.ts": {
+   "nonnull-assert": 9
+  },
+  "packages/vue/src/components/normalizeHkRangeWindow.test.ts": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/revealKinematogram.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/revealKinematogram.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/serpentineGeometry.test.ts": {
+   "nonnull-assert": 8
+  },
+  "packages/vue/src/components/serpentineGeometry.ts": {
+   "nonnull-assert": 11
+  },
+  "packages/vue/src/components/surfaceBlurKnob.contract.test.ts": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/components/templateGrammar.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/components/textClip.contract.test.ts": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/components/treemapSquarify.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/components/treemapSquarify.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/components/usageFlowLayout.test.ts": {
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/components/usageFlowLayout.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/composables/defaultContextMenu.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 32
+  },
+  "packages/vue/src/composables/defaultContextMenu.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/layoutGeometry.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/layoutGeometry.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/composables/messaging/index.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/messaging/messaging.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/composables/useChromeActionSize.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/composables/useContextMenu.test.tsx": {
+   "as-assert": 10,
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/composables/useHighlight.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/composables/useInfinitePages.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/composables/useMeasuredHighlight.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/useOrientationLock.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/composables/useOrientationLock.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/useOverlayScrollbar.scrollMap.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/composables/useOverlayScrollbar.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 30
+  },
+  "packages/vue/src/composables/useOverlayScrollbar.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/usePointerReorder.test.ts": {
+   "as-assert": 5
+  },
+  "packages/vue/src/composables/usePointerReorder.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/composables/useRailIconFlight.test.ts": {
+   "as-assert": 12,
+   "nonnull-assert": 33
+  },
+  "packages/vue/src/composables/useRailIconFlight.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/useRemoteTouchGestures.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/composables/useRemoteTouchGestures.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/composables/useSidebarRail.test.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/composables/useSizeMorph.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 34
+  },
+  "packages/vue/src/composables/useSizeMorph.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/composables/useSurfaceContentHold.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/composables/useSurfaceMachine.test.ts": {
+   "as-assert": 6,
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/composables/useZoomPan.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/composables/useZoomPan.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/demo.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/errorReporting/index.test.tsx": {
+   "as-assert": 1,
+   "nonnull-assert": 25
+  },
+  "packages/vue/src/i18n/context.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/i18n/flatKeyParity.test.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/i18n/timeKeys.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/i18n/usageSurface.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/index.ts": {
+   "as-assert": 23
+  },
+  "packages/vue/src/mermaid/engine.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/mermaid/layout.ts": {
+   "as-assert": 8
+  },
+  "packages/vue/src/mermaid/wasmEngine.test.ts": {
+   "as-assert": 6,
+   "nonnull-assert": 33
+  },
+  "packages/vue/src/mermaid/wasmEngine.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/overlay/hudRoot.styles.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/overlay/overlayRoot.styles.test.ts": {
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/plugins/boot-chrome.install.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/plugins/boot-chrome.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/plugins/boot-recovery.details.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 22
+  },
+  "packages/vue/src/plugins/boot-recovery.diagnostics.test.ts": {
+   "as-assert": 12,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/plugins/boot-recovery.error-context.test.ts": {
+   "as-assert": 26,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/plugins/boot-recovery.external.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/plugins/boot-recovery.install.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/plugins/boot-recovery.locales.test.ts": {
+   "as-assert": 9
+  },
+  "packages/vue/src/plugins/boot-recovery.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/render.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/res/bootChrome.test.ts": {
+   "as-assert": 6,
+   "nonnull-assert": 23
+  },
+  "packages/vue/src/runtime/backStack.test.ts": {
+   "as-assert": 11
+  },
+  "packages/vue/src/runtime/backStack.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/runtime/closeGuard.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/containerPad.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/createAuthGuard.ts": {
+   "as-assert": 4
+  },
+  "packages/vue/src/runtime/credentialAutofill.test.ts": {
+   "as-assert": 7
+  },
+  "packages/vue/src/runtime/cssZoom.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/hasRenderedContent.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/historySafetyNet.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/historySafetyNet.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/runtime/hyperlink.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/imageFallback.test.ts": {
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/runtime/mobileViewport.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/runtime/notificationCenter.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/notificationCenter.ts": {
+   "as-assert": 4
+  },
+  "packages/vue/src/runtime/popupBounds.test.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/runtime/popupBounds.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/runtime/registry.integration.test.ts": {
+   "as-assert": 6,
+   "nonnull-assert": 46
+  },
+  "packages/vue/src/runtime/registry.test.ts": {
+   "nonnull-assert": 20
+  },
+  "packages/vue/src/runtime/surfaceMachine.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/runtime/tooltipBridge.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/runtime/tooltipBridge.ts": {
+   "as-assert": 7
+  },
+  "packages/vue/src/runtime/tooltipPosition.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/runtime/touchHint.test.ts": {
+   "nonnull-assert": 12
+  },
+  "packages/vue/src/runtime/touchHint.ts": {
+   "as-assert": 5
+  },
+  "packages/vue/src/runtime/useMediaQuery.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/runtime/useMediaQuery.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/runtime/useOverlay.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/runtime/usePopupManager.test.ts": {
+   "nonnull-assert": 7
+  },
+  "packages/vue/src/runtime/useToast.test.ts": {
+   "nonnull-assert": 30
+  },
+  "packages/vue/src/runtime/windowChrome.test.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 32
+  },
+  "packages/vue/src/runtime/windowChrome.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/scene3d/__golden.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/scene3d/ground.test.ts": {
+   "as-assert": 13
+  },
+  "packages/vue/src/scene3d/ground.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/scene3d/holographicFleetBody.test.ts": {
+   "as-assert": 21,
+   "nonnull-assert": 17
+  },
+  "packages/vue/src/scene3d/holographicFleetBody.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/scene3d/holographicFleetScene.test.ts": {
+   "as-assert": 9,
+   "nonnull-assert": 52
+  },
+  "packages/vue/src/scene3d/holographicFleetScene.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/scene3d/holographicFleetSpec.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/scene3d/modelLayer.test.ts": {
+   "as-assert": 10,
+   "nonnull-assert": 10
+  },
+  "packages/vue/src/scene3d/modelLayer.ts": {
+   "as-assert": 20
+  },
+  "packages/vue/src/styles/channelFallbacks.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/styles/highlightPalette.contract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/styles/polyfill.contract.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/styles/selectionSheet.test.ts": {
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/styles/sheetCompile.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/styles/tokenInventory.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/test-utils/fakes.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/test-utils/invalid.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/theme/backdropDecor.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/fontContext.ts": {
+   "as-assert": 4
+  },
+  "packages/vue/src/theme/fontStacks.contract.test.ts": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/theme/presets.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/theme/semanticPalette.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/slotKinds.test.ts": {
+   "as-assert": 7,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/theme/solarTimeZoneLocales.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/theme/solarTimeZones.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/solarTimeZones.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/solidInk.contract.test.ts": {
+   "nonnull-assert": 3
+  },
+  "packages/vue/src/theme/standardGroups.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/theme/themeDecor.test.ts": {
+   "as-assert": 1,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/theme/themeDecorSurface.test.ts": {
+   "as-assert": 6,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/themeLoaderContract.test.ts": {
+   "nonnull-assert": 4
+  },
+  "packages/vue/src/theme/tokenGroups.test.ts": {
+   "as-assert": 5,
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/theme/tokenGroups.ts": {
+   "as-assert": 6
+  },
+  "packages/vue/src/theme/useBackgroundLuminance.test.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/theme/useBackgroundLuminance.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/useSolarTime.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/useSolarTime.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/theme/useTheme.test.ts": {
+   "nonnull-assert": 6
+  },
+  "packages/vue/src/theme/useTheme.ts": {
+   "as-assert": 9
+  },
+  "packages/vue/src/theme/useWallpaper.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 2
+  },
+  "packages/vue/src/theme/useWallpaper.ts": {
+   "as-assert": 6
+  },
+  "packages/vue/src/theme/wallpaper.ts": {
+   "as-assert": 8
+  },
+  "packages/vue/src/theme/wallpaperShaderPresets.test.ts": {
+   "nonnull-assert": 14
+  },
+  "packages/vue/src/theme/wallpaperShaderRenderer.test.ts": {
+   "as-assert": 4,
+   "nonnull-assert": 5
+  },
+  "packages/vue/src/theme/wallpaperSingleton.contract.test.ts": {
+   "as-assert": 2,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/theme/wallpaperUpload.ts": {
+   "as-assert": 3
+  },
+  "packages/vue/src/utils/boardEdges.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/utils/currency.test.ts": {
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/utils/currency.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/utils/dom.test.ts": {
+   "as-assert": 3,
+   "nonnull-assert": 1
+  },
+  "packages/vue/src/utils/dom.ts": {
+   "as-assert": 4
+  },
+  "packages/vue/src/utils/healthProbe.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/utils/objectPath.ts": {
+   "as-assert": 8
+  },
+  "packages/vue/src/utils/powNonce.ts": {
+   "as-assert": 2
+  },
+  "packages/vue/src/utils/scene3d.ts": {
+   "as-assert": 1
+  },
+  "packages/vue/src/utils/typing.ts": {
+   "as-assert": 2
+  }
+ }
+}

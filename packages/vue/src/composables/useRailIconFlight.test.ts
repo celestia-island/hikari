@@ -275,9 +275,9 @@ describe("useRailIconFlight", () => {
     const home = animations.find((a) => a.el.textContent === "H");
     expect(home, "the home clone animates").toBeTruthy();
     expect(home!.options.duration).toBe(RAIL_FLIGHT_MS);
-    expect(home!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
+    expect(home!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px) scale(1, 1)");
     const inbox = animations.find((a) => a.el.textContent === "I");
-    expect(inbox!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px)");
+    expect(inbox!.keyframes.at(-1)!.transform).toBe("translate(-12px, 0px) scale(1, 1)");
     // SINGLE GLYPH: pure travel — no opacity keyframe anywhere, the
     // clone holds full opacity to the landing (the old end-fade is what
     // double-exposed it against the dissolving-in entering icon).
@@ -643,4 +643,31 @@ describe("useRailIconFlight", () => {
     expect(layers, "exactly one flight layer").toHaveLength(1);
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(true);
   });
+  it("tweens SIZE across the flip (center-aligned) instead of snapping it", async () => {
+    const h = mountSwap();
+    await h.set(true);
+    const { leaving, entering } = dissolvePair(h, true);
+    stubRect(h.swap(), rect(0, 0, 240, 400));
+    // Collapse: the expanded 16px glyph shrinks into the rail's 10px corner
+    // badge (the 2026-11-20 rail group grammar) at a different rect.
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140, 16, 16));
+    stubIcons(entering, (key) =>
+      key === "home" ? rect(40, 104, 10, 10) : rect(20, 140, 10, 10),
+    );
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    const clone = flightLayer(h)!.querySelector<HTMLElement>(
+      ".hk-sidebar-rail-flight-clone",
+    )!;
+    expect(clone.style.width, "the clone starts at the leaving size").toBe("16px");
+    const anim = animations.find((a) => a.el.textContent === "H")!;
+    // Center delta: from center (40,108) to center (45,109) => +5,+1.
+    // Scale: 10/16 on both axes — the growth is part of the same curve,
+    // so the glyph never snaps between densities.
+    expect(anim.keyframes.at(-1)!.transform).toBe(
+      "translate(5px, 1px) scale(0.625, 0.625)",
+    );
+  });
+
 });

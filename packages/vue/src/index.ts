@@ -1031,6 +1031,8 @@ export { default as HkTreemap } from "./components/HkTreemap";
 export { default as HkTreemapStage } from "./components/HkTreemapStage";
 export { default as HkErrorBoundary } from "./components/HkErrorBoundary";
 export { default as HkDraggableList } from "./components/HkDraggableList";
+export { default as HkDeleteFact } from "./components/HkDeleteFact";
+export { default as HkDeleteGateWindow } from "./components/HkDeleteGateWindow";
 export { default as HkDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";

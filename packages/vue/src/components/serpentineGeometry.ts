@@ -79,6 +79,26 @@ const MIN_H_RUN = 40;
  *  border line and half of its hit area falls outside the gate. */
 export const TRACK_PAD = 24;
 
+export interface TurnRange {
+  /** Inclusive minimum corner count. */
+  min: number;
+  /** Inclusive maximum corner count. */
+  max: number;
+}
+
+/** The default corner range (the brief: 3–5 turns). */
+export const DEFAULT_TURNS: TurnRange = { min: 3, max: 5 };
+
+/**
+ * Snap a requested corner count to a CONSTRUCTIBLE value. The lane always
+ * ends with the horizontal run to the goal, which forces an odd corner
+ * count (3, 5, 7, …) — an even request clamps DOWN to the odd value below
+ * it, so a caller asking for "at most N turns" never gets more than N.
+ */
+export function snapTurnCount(requested: number): number {
+  return requested % 2 === 1 ? requested : requested - 1;
+}
+
 /**
  * Build the serpentine lane for a `width × height` canvas.
  *
@@ -93,16 +113,25 @@ export function generateSerpentinePath(
   width: number,
   height: number,
   seed: number,
+  turns: TurnRange = DEFAULT_TURNS,
 ): SerpentinePath {
   const rand = mulberry32(seed);
   const centre = height / 2;
   const firstRowUp = rand() < 0.5;
   const pad = Math.min(TRACK_PAD, width / 8);
-  // Leg count is EVEN and always ends with the horizontal run to the right
-  // edge: V,H,V,H,...,V,H. Corners (interior vertices) are therefore 3 or 5,
-  // both inside the briefed 3..=5 range; the seeded first V satisfies "the
-  // walk may start upward or downward".
-  const legCount = rand() < 0.5 ? 4 : 6;
+  // Corner count: a seeded draw inside the requested range, snapped to a
+  // constructible (odd) value — higher ranges (sensitive deletions) walk
+  // more corners. Leg count is corners + 1 and always ends with the
+  // horizontal run to the right edge: V,H,V,H,...,V,H. The seeded first V
+  // satisfies "the walk may start upward or downward".
+  const requestedMin = Math.max(3, Math.floor(turns.min));
+  const requestedMax = Math.max(requestedMin, Math.ceil(turns.max));
+  const low = Math.max(3, snapTurnCount(requestedMin));
+  const high = Math.max(low, snapTurnCount(requestedMax));
+  const corners = Math.max(low, Math.min(high, snapTurnCount(
+    low + Math.floor(rand() * (high - low + 1)),
+  )));
+  const legCount = corners + 1;
   const vLegs = legCount / 2;
 
   const rowA = centre - height * ROW_FRACTION;

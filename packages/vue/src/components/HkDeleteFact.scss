@@ -1,0 +1,25 @@
+// One emphasised key fact: a bordered chip pairing a muted label with a
+// strong value. Channels are emitted-theme triplets wrapped in rgb().
+
+.hk-delete-fact {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4, 4px);
+  padding: var(--space-2, 2px) var(--space-6, 6px);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid rgb(var(--color-error) / 35%);
+  background: rgb(var(--color-error) / 6%);
+  font-size: var(--text-xs, 0.75rem);
+  max-width: 100%;
+}
+
+.hk-delete-fact-label {
+  color: rgb(var(--color-muted));
+  flex-shrink: 0;
+}
+
+.hk-delete-fact-value {
+  color: rgb(var(--color-text));
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

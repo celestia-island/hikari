@@ -33,8 +33,10 @@ const CASES: Array<{ name: string; result: HighlightResult; expected: string | n
     expected: null,
   },
   {
-    // `""` is a real answer, so the guard must be `??` and not `||`:
+    // `option<string>` allows `""`, so the guard must be `??` and not `||`:
     // an empty-but-present html is highlighted-and-empty, not "no answer".
+    // (Today's Rust component cannot emit it — `tokens = { token+ }` needs at
+    // least one token — so this row pins the WIT contract, not a live path.)
     name: "html empty string is kept, not coerced to null",
     result: { html: "" },
     expected: "",

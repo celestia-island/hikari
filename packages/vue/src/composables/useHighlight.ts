@@ -75,7 +75,8 @@ function escapeHtml(s: string): string {
  *
  * `string` = highlighted HTML; `null` = "the wasm has no highlighting for
  * this input", which every caller renders as plaintext. The wasm omits
- * `html` for languages it does not know (`{ html: undefined }`) and an
+ * `html` (`{ html: undefined }`) whenever it cannot highlight — an
+ * unregistered language, or a tokenizer failure on a known one — and an
  * empty string is a real answer, so this is `??` — not `||` — and never
  * the record itself. Split out from `highlight()` so the seam can be
  * pinned table-driven, without the lazy-loading mock in the way.

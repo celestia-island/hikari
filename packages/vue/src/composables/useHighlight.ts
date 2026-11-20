@@ -8,8 +8,14 @@
 // module instead of 85 JS grammar chunks).
 
 import { ref } from "vue";
+import type { HighlightResult } from "../wasm/highlight/hikari_wasm_highlight.js";
 
-type WasmHighlightFn = (code: string, language: string) => string | null;
+// The binding trades in a record, not a string: `HighlightResult` is
+// `{ html?: string }` (generated, see hikari_wasm_highlight.d.ts and
+// interfaces/hikari-highlight-types.d.ts). Keeping the generated type
+// here is deliberate — a `(code, lang) => string | null` alias let the
+// record reach `v-html` and every diff row rendered "[object Object]".
+type WasmHighlightFn = (code: string, language: string) => HighlightResult;
 
 // Module-level state: the loaded wasm function (null until loaded).
 let wasmFn: WasmHighlightFn | null = null;
@@ -25,7 +31,7 @@ function ensureLoaded(): Promise<WasmHighlightFn | null> {
   if (!loadPromise) {
     loadPromise = import("../wasm/highlight/hikari_wasm_highlight.js")
       .then((mod) => {
-        wasmFn = mod.highlight as WasmHighlightFn;
+        wasmFn = mod.highlight;
         version.value += 1;
         return wasmFn;
       })
@@ -64,6 +70,20 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+/**
+ * Adapt the generated wasm record to this module's contract.
+ *
+ * `string` = highlighted HTML; `null` = "the wasm has no highlighting for
+ * this input", which every caller renders as plaintext. The wasm omits
+ * `html` for languages it does not know (`{ html: undefined }`) and an
+ * empty string is a real answer, so this is `??` — not `||` — and never
+ * the record itself. Split out from `highlight()` so the seam can be
+ * pinned table-driven, without the lazy-loading mock in the way.
+ */
+export function adaptHighlightResult(result: HighlightResult): string | null {
+  return result.html ?? null;
+}
+
 /** Highlight `code` in `lang`; plain text until the wasm module loads. */
 export function highlight(code: string, lang?: string): string {
   // Establish reactivity — re-runs when the module finishes loading.
@@ -71,8 +91,8 @@ export function highlight(code: string, lang?: string): string {
 
   const name = lang ? normalize(lang) : "";
   if (name && wasmFn) {
-    const result = wasmFn(code, name);
-    if (result !== null) return result;
+    const html = adaptHighlightResult(wasmFn(code, name));
+    if (html !== null) return html;
   }
   // Trigger the lazy load (first call only); render plain text for now.
   if (!wasmFn && !loadPromise) {

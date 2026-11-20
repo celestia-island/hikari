@@ -157,9 +157,9 @@ pub fn rail_toggle_aria_expanded(expanded: bool) -> &'static str {
     if expanded { "true" } else { "false" }
 }
 
-/// Extra seat class for the toggle's button. The standard trio (base + size
-/// + variant) is emitted by `IconButton` itself, so today this is empty —
-/// kept as the single hook if the wrapper ever needs a seat of its own.
+/// Extra seat class for the toggle's button. `IconButton` already emits the
+/// standard trio (base, size, variant), so today this is empty — kept as the
+/// single hook if the wrapper ever needs a seat of its own.
 pub fn rail_toggle_seat_class() -> String {
     // The wrapper carries the positioning seat; the button's standard trio
     // (base + size + variant) is emitted by IconButton itself, so there is

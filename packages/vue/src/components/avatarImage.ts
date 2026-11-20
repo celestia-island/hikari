@@ -27,7 +27,8 @@ export interface AvatarImageState {
   onError: () => void;
 }
 
-/** Failed-load latch shared by HkAvatar / HkAvatarButton / HkMenuIdentityItem. */
+/** Failed-load latch shared by HkAvatar / HkAvatarButton / HkMenuIdentityItem /
+ *  HkAdminHeader's dropdown identity image. */
 export function useAvatarImage(source: () => string | undefined): AvatarImageState {
   const failed = ref(false);
   // A new URL deserves a fresh attempt: reset on every source change. The

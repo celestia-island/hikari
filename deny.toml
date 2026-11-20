@@ -7,8 +7,16 @@ unsound = "workspace"
 # transitively by lazy_static) — pins rkyv ^0.7. rkyv is an internal
 # implementation detail of parcel_sourcemap; hikari never deserializes
 # attacker-controlled archives through it.
+#
+# RUSTSEC-2026-0543 (chrono unmaintained, issued 2026-11-17): chrono is a direct
+# dependency while the family migration to jiff is in flight (plan:
+# _reports/chrono-to-jiff-20261120/PLAN.md). No patched chrono release exists, so
+# the advisory cannot be fixed in-tree; every direct use is being removed wave by
+# wave. Remove this ignore when this repository's last direct chrono declaration
+# is gone. EXPIRY: 2027-01-31.
 ignore = [
     "RUSTSEC-2026-0235",
+    "RUSTSEC-2026-0543",
 ]
 
 [licenses]

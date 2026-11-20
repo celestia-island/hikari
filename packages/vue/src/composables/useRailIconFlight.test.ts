@@ -643,6 +643,27 @@ describe("useRailIconFlight", () => {
     expect(layers, "exactly one flight layer").toHaveLength(1);
     expect(h.swap().hasAttribute(RAIL_FLIP_ACTIVE_ATTR)).toBe(true);
   });
+  it("marks the rail CORNER badge so it hides with the flight (no duplicate glyph)", async () => {
+    const c = mountMenu(
+      [
+        {
+          key: "admin",
+          label: "Administration",
+          icon: Settings,
+          children: [{ key: "users", label: "Users", icon: Home }],
+        },
+      ],
+      { collapsed: true },
+    );
+    // The rail group renders the caret as its glyph and the declared icon
+    // as the demoted corner chip — THAT chip is the flight's rail end.
+    const group = groupRows(c)[0]!;
+    const corner = group.querySelector<HTMLElement>(".hk-menu-rail-glyph-corner")!;
+    expect(corner.getAttribute("data-flip-icon"), "the corner chip opts into the flight").toBe(
+      "admin",
+    );
+  });
+
   it("tweens SIZE across the flip (center-aligned) instead of snapping it", async () => {
     const h = mountSwap();
     await h.set(true);

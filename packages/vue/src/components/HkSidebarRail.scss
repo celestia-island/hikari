@@ -230,7 +230,13 @@
  * it dissolves instead of vanishing without a substitute — the pairing
  * contract. Identity blocks, carets, badges and every other icon keep
  * the plain dissolve. */
-.hk-sidebar-rail-swap[data-flipping] .hk-menu-item-icon[data-flip-flying] {
+.hk-sidebar-rail-swap[data-flipping] .hk-menu-item-icon[data-flip-flying],
+/* 2026-11-20: the rail group's DEMOTED icon badge is NOT a
+ * .hk-menu-item-icon (it is the corner chip), so the original
+ * selector left it visible through the whole flight — the duplicate
+ * glyph the user caught mid-animation. EVERY marked cell must hide,
+ * whatever cell class carries the icon. */
+.hk-sidebar-rail-swap[data-flipping] .hk-menu-rail-glyph-corner[data-flip-flying] {
   visibility: hidden;
 }
 

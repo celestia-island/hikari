@@ -345,7 +345,8 @@ describe("HkAdminHeader", () => {
     // a structural shape so a future left-wing refactor that disturbs
     // non-branded hosts trips HERE, not in a downstream repo.
     const c = mount(headerNode({ title: "Providers", userEmail: "alice@example.com" }));
-    const wing = c.querySelector(".s-admin-header-user")!;
+    const wing = c.querySelector(".s-admin-header-user");
+    if (wing === null) throw new Error("the wing must render");
     const shape = [...wing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
     expect(shape).toEqual([
       "button.s-admin-header-avatar",
@@ -357,7 +358,8 @@ describe("HkAdminHeader", () => {
     // avatar trigger (the drawer opener) then the reserved ws-slot
     // blank, in that order, brand node absent.
     const drawer = mount(headerNode({ avatarAction: "drawer", userEmail: "alice@example.com" }));
-    const drawerWing = drawer.querySelector(".s-admin-header-user")!;
+    const drawerWing = drawer.querySelector(".s-admin-header-user");
+    if (drawerWing === null) throw new Error("the drawer wing must render");
     const drawerShape = [...drawerWing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
     expect(drawerShape).toEqual([
       "button.s-admin-header-avatar",
@@ -379,7 +381,8 @@ describe("HkAdminHeader brand slot (opt-in site mark)", () => {
     }));
     const brand = c.querySelector(".s-admin-header-brand");
     expect(brand, "the brand mark must render").not.toBeNull();
-    const img = brand?.querySelector("img.hk-logo-img") as HTMLImageElement | null;
+    const found = brand?.querySelector("img.hk-logo-img");
+    const img = found instanceof HTMLImageElement ? found : null;
     expect(img?.getAttribute("src")).toBe("https://example.invalid/logo.png");
     expect(img?.getAttribute("alt")).toBe("Lagrange");
     expect(avatarButton(c), "the identity trigger must be replaced").toBeNull();
@@ -403,14 +406,15 @@ describe("HkAdminHeader brand slot (opt-in site mark)", () => {
     // ancestors up to the wing (an anchor WRAPPING the mark sits outside
     // any descendant query — descendant-only pins are blind to it), and
     // everything inside it.
-    const brand = c.querySelector(".s-admin-header-brand")!;
-    const brandPath: Element[] = [brand];
-    let cursor: Element | null = brand;
+    const brandEl = c.querySelector(".s-admin-header-brand");
+    if (brandEl === null) throw new Error("the brand mark must render");
+    const brandPath: Element[] = [brandEl];
+    let cursor: Element | null = brandEl;
     while (cursor && !cursor.classList.contains("s-admin-header-user")) {
       cursor = cursor.parentElement;
       if (cursor) brandPath.push(cursor);
     }
-    const controlHits = [...brandPath, ...brand.querySelectorAll("*")].filter((el) =>
+    const controlHits = [...brandPath, ...brandEl.querySelectorAll("*")].filter((el) =>
       el.matches('a[href], [tabindex], [role="button"]'),
     );
     expect(controlHits, "the brand path must carry no control semantics").toEqual([]);

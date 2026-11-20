@@ -39,8 +39,8 @@
 ## リファレンス実装
 
 chrome は hikari が提供します：`HkAdminHeader` のアクション行、`HkIconButton`、
-`useChromeActionSize`。ホストは上記スロットを描画するアクションバーコンテキスト経由で
-登録します。chest webui の `useActionBar` / `usePageCreateAction` がこの文法の
+`useChromeActionSize`。ホストは上記スロットを描画する `provideActionBar` /
+`useActionBar` コンポーザブル経由で登録します。これがこの文法の
 リファレンス実装です。
 
 ## モバイル折りたたみ

@@ -39,9 +39,9 @@
 ## التنفيذ المرجعي
 
 hikari يوفر الكروم: صف إجراءات `HkAdminHeader` و`HkIconButton` و
-`useChromeActionSize`. يسجّل المضيفون عبر سياق شريط إجراءات يرسم الفتحات أعلاه؛
-`useActionBar` / `usePageCreateAction` في واجهة chest هي التنفيذ المرجعي لهذه
-القواعد.
+`useChromeActionSize`. يسجّل المضيفون عبر زوج الدوال التركيبية
+`provideActionBar` / `useActionBar` الذي يرسم الفتحات أعلاه؛ وهو التنفيذ
+المرجعي لهذه القواعد.
 
 ## الطي على الهواتف
 

@@ -44,9 +44,9 @@
 ## Эталонная реализация
 
 Хром поставляет hikari: ряд действий `HkAdminHeader`, `HkIconButton` и
-`useChromeActionSize`. Хосты регистрируются через контекст панели действий,
-рендерящий слоты выше; `useActionBar` / `usePageCreateAction` в webui chest —
-эталонная реализация этой грамматики.
+`useChromeActionSize`. Хосты регистрируются через пару композаблов
+`provideActionBar` / `useActionBar`, рендерящую слоты выше; она — эталонная
+реализация этой грамматики.
 
 ## Мобильное свёртывание
 

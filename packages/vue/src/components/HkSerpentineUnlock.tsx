@@ -125,7 +125,12 @@ export default defineComponent({
     const keyboardStep = 1 / 20;
 
 function toRange(turns: [number, number] | null): TurnRange {
-  return turns ? { min: turns[0], max: turns[1] } : DEFAULT_TURNS;
+  // A malformed tuple (too short) falls back to the default rather than
+  // poisoning the corner math with undefined → NaN lanes.
+  if (!turns || turns.length < 2 || !Number.isFinite(turns[0]) || !Number.isFinite(turns[1])) {
+    return DEFAULT_TURNS;
+  }
+  return { min: turns[0], max: turns[1] };
 }
 
 /** Pointer-to-lane distance the tracking forgives (px): inside it the knob

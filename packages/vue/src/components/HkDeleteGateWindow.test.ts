@@ -72,8 +72,8 @@ describe("HkDeleteGateWindow", () => {
     const c = mountWindow(
       '<span class="hk-delete-fact"><span class="hk-delete-fact-label">名称</span><span class="hk-delete-fact-value">ml-lab</span></span>',
     );
-    expect(c.querySelector(".delwin-stub-title").textContent).toBe("删除工作区");
-    expect(c.querySelector(".hk-delete-gate-message .hk-delete-fact").textContent).toContain("ml-lab");
+    expect(c.querySelector(".delwin-stub-title")!.textContent).toBe("删除工作区");
+    expect(c.querySelector(".hk-delete-gate-message .hk-delete-fact")!.textContent).toContain("ml-lab");
     expect(c.querySelector(".hk-serpentine")).toBeTruthy();
   });
 
@@ -90,20 +90,37 @@ describe("HkDeleteGateWindow", () => {
     expect(corners).toBeGreaterThanOrEqual(7);
   });
 
-  it("closes itself after the gate confirms", async () => {
+  it("closes itself after the gate confirms and forwards the walk events", async () => {
+    // The gate inside the window is the REAL component; walk it to the goal
+    // and release: the window must emit confirm (the parent performs the
+    // delete) AND close itself (update:open=false). A short release must
+    // NOT close — it only emits cancel with the progress.
     const onUpdate = vi.fn();
-    const c = mountWindow("<p>msg</p>", { "onUpdate:open": onUpdate });
-    const gate = c.querySelector(".hk-serpentine");
-    const path = gate!.getAttribute("data-nothing") ?? "";
-    void path;
-    // Drive the gate's confirm through the component's public surface: the
-    // window closes itself after confirm (the parent performs the delete).
-    const gateComponent = c.querySelector(".hk-serpentine");
-    expect(gateComponent).toBeTruthy();
-    // Simulate the confirm by dispatching through the component instance is
-    // covered in the gate's own suite; here the window's own reaction to
-    // update:open=false is pinned.
-    expect(onUpdate).not.toHaveBeenCalled();
+    const c = mountWindow("<p>msg</p>", {
+      "onUpdate:open": onUpdate,
+      seed: 42,
+      onConfirm: () => confirmSpy(),
+      onCancel: (p: number) => cancelSpy(p),
+    });
+    const el = c.querySelector(".hk-serpentine")!;
+    const down = new PointerEvent("pointerdown", { bubbles: true, clientX: 24, clientY: 48, pointerId: 1 });
+    el.dispatchEvent(down);
+    // Mid-lane release: cancel only.
+    const mid = new PointerEvent("pointermove", { bubbles: true, clientX: 300, clientY: 48, pointerId: 1 });
+    el.dispatchEvent(mid);
+    const up = new PointerEvent("pointerup", { bubbles: true, clientX: 300, clientY: 48, pointerId: 1 });
+    el.dispatchEvent(up);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(cancelSpy).toHaveBeenCalled();
+    expect(onUpdate).not.toHaveBeenCalled(); // stays open
+    // Re-open state is already open; a full walk then confirms and closes.
+    el.dispatchEvent(down);
+    for (let x = 30; x <= 600; x += 10) {
+      el.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, clientX: x, clientY: 48, pointerId: 1 }));
+    }
+    el.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientX: 600, clientY: 48, pointerId: 1 }));
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(onUpdate).toHaveBeenCalledWith(false);
   });
 
   it("key facts carry the emphasis classes", () => {

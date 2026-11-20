@@ -90,10 +90,10 @@ export interface TurnRange {
 export const DEFAULT_TURNS: TurnRange = { min: 3, max: 5 };
 
 /**
- * Snap a requested corner count to a CONSTRUCTIBLE value. The lane always
- * ends with the horizontal run to the goal, which forces an odd corner
- * count (3, 5, 7, …) — an even request clamps DOWN to the odd value below
- * it, so a caller asking for "at most N turns" never gets more than N.
+ * Parity snap: even requests become the odd value below them (the lane's
+ * final leg is structural, so only odd corner counts are constructible).
+ * Callers enforce the ≥3 floor and integer-ness on top of this — this
+ * function alone does NOT guarantee a valid count.
  */
 export function snapTurnCount(requested: number): number {
   return requested % 2 === 1 ? requested : requested - 1;
@@ -119,13 +119,19 @@ export function generateSerpentinePath(
   const centre = height / 2;
   const firstRowUp = rand() < 0.5;
   const pad = Math.min(TRACK_PAD, width / 8);
+  const span = width - pad * 2;
+  const minHRunHoisted = Math.min(MIN_H_RUN, Math.floor(width / 8));
   // Corner count: a seeded draw inside the requested range, snapped to a
   // constructible (odd) value — higher ranges (sensitive deletions) walk
   // more corners. Leg count is corners + 1 and always ends with the
   // horizontal run to the right edge: V,H,V,H,...,V,H. The seeded first V
   // satisfies "the walk may start upward or downward".
   const requestedMin = Math.max(3, Math.floor(turns.min));
-  const requestedMax = Math.max(requestedMin, Math.ceil(turns.max));
+  const maxFitting = Math.max(3, 2 * (Math.floor(span / minHRunHoisted) + 1) - 1);
+  const requestedMax = Math.min(
+    Math.max(requestedMin, Math.ceil(turns.max)),
+    maxFitting,
+  );
   const low = Math.max(3, snapTurnCount(requestedMin));
   const high = Math.max(low, snapTurnCount(requestedMax));
   const corners = Math.max(low, Math.min(high, snapTurnCount(
@@ -137,14 +143,13 @@ export function generateSerpentinePath(
   const rowA = centre - height * ROW_FRACTION;
   const rowB = centre + height * ROW_FRACTION;
   // On narrow canvases the run floor shrinks so the lane still fits.
-  const minHRun = Math.min(MIN_H_RUN, Math.floor(width / 8));
+  const minHRun = minHRunHoisted;
 
   const points: PathPoint[] = [{ x: pad, y: centre }];
   let x = pad;
   // Distribute the horizontal budget across the H legs: every H leg except
   // the last gets a random slice (>= minHRun); the LAST H leg takes the
   // remainder so the walk lands exactly on the right edge.
-  const span = width - pad * 2;
   const hBudget = span - minHRun * (vLegs - 1);
   const hRuns: number[] = [];
   let used = 0;

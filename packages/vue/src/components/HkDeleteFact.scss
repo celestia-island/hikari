@@ -7,19 +7,19 @@
   gap: var(--space-4, 4px);
   padding: var(--space-2, 2px) var(--space-6, 6px);
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid rgb(var(--color-error) / 35%);
-  background: rgb(var(--color-error) / 6%);
+  border: 1px solid rgb(var(--color-error, 166 41 55) / 35%);
+  background: rgb(var(--color-error, 166 41 55) / 6%);
   font-size: var(--text-xs, 0.75rem);
   max-width: 100%;
 }
 
 .hk-delete-fact-label {
-  color: rgb(var(--color-muted));
+  color: rgb(var(--color-muted, 120 120 130));
   flex-shrink: 0;
 }
 
 .hk-delete-fact-value {
-  color: rgb(var(--color-text));
+  color: rgb(var(--color-text, 20 20 24));
   font-weight: 600;
   overflow-wrap: anywhere;
 }

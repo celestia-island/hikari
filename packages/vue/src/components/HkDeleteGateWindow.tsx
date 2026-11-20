@@ -66,7 +66,11 @@ export default defineComponent({
         title: props.title,
       }, {
         default: () => [
-          slots.default?.() as VNode[],
+          // The window renders the message wrapper itself: consumers put
+          // their key-fact chips inside the slot without knowing the class.
+          <div class="hk-delete-gate-message">
+            {slots.default?.() as VNode[]}
+          </div>,
           <HkSerpentineUnlock
             tone="danger"
             label={props.label}

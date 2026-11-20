@@ -730,6 +730,59 @@ describe("panel rows", () => {
     expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
   });
 
+  it("an arrival during the hold does not crop the ghosts still fading", async () => {
+    // Closing review M7: the arrival path must not release a hold while an
+    // earlier batch is still leaving — the release is what crops the ghost.
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "two" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    Object.defineProperty(document.querySelector(".hk-notification-center__list")!, "offsetHeight", {
+      value: 48,
+      configurable: true,
+    });
+    rows()
+      .find((r) => r.textContent?.includes("one"))!
+      .querySelector<HTMLButtonElement>(
+        '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
+      )!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+    ).toBe("48px");
+    // A new record lands INSIDE the window, while the ghost is still fading.
+    expect(document.querySelector('[class*="-leave-active"]'), "a ghost is in flight").toBeTruthy();
+    recordNotification({ id: "c", kind: "toast", tone: "error", title: "three" });
+    await nextTick();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+      "the in-flight ghost keeps its window",
+    ).toBe("48px");
+  });
+
+  it("the row-less list is hidden from AT only while the caption carries the message", async () => {
+    // Closing review M13: `aria-hidden` on the empty list is what stops AT
+    // announcing "list, 0 items" beside "No notifications yet" — and it
+    // must never be set while rows are on screen.
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const list = () => document.querySelector(".hk-notification-center__list")!;
+    expect(list().getAttribute("aria-hidden"), "rows on screen: not hidden").toBeNull();
+    resetNotifications();
+    await new Promise((r) => setTimeout(r, 400));
+    await nextTick();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    expect(list().getAttribute("aria-hidden"), "caption showing: hidden").toBe("true");
+  });
+
   it("closing mid-hold leaves no stale height behind for the next open", async () => {
     // Closing review F5: closing unmounts the panel body, so a surviving
     // hold would greet the next open as a blank panel at the old height

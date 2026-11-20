@@ -47,7 +47,8 @@
  * Three structural consequences of riding it:
  *  - the list wrap stays mounted across the empty swap, because a
  *    torn-down TransitionGroup cancels its leaving ghosts mid-flight;
- *  - on ANY row-count decrease the list holds its pre-patch height for
+ *  - when a row's KEY disappears (a change of the visible content, which
+ *    includes a same-id rewrite) the list holds its pre-patch height for
  *    the leave window. A leaving row is lifted to `position: absolute`
  *    inside the list (which is the scroll container), so as soon as the
  *    box shrinks by one row the bottom-most ghost falls outside the

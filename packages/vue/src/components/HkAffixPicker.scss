@@ -288,6 +288,17 @@
     sans-serif;
 }
 
+/* The standard leading capsule (HkAffixOption.badge): the HBadge base
+ * owns every visual channel (primary wash, mono face, squared pill,
+ * tabular-friendly padding) — here it only opts OUT of the flex
+ * shrink/grow axis and keeps the emoji `flag` from ever crowding it.
+ * The gap to the label is the row grammar's own --hk-menu-item-gap
+ * (8px desktop / sheet inherits), so hosts never hand-tune spacing. */
+.hk-affix-row-badge,
+.hk-affix-tag-badge {
+  flex: none;
+}
+
 .hk-affix-row-label {
   flex: 1;
   min-width: 0;

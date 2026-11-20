@@ -1,10 +1,11 @@
-import { computed, defineComponent, ref, watch, type PropType, type Ref, type SlotsType, type VNode } from "vue";
+import { computed, defineComponent, ref, type PropType, type Ref, type SlotsType, type VNode } from "vue";
 import { Camera, ExternalLink, Languages, LogOut, Menu } from "lucide-vue-next";
 import { HBadge, HButton, HSpinner } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { CHROME_BAND_DRAG_REGION } from "../runtime/windowChrome";
 import HkMenu, { type HkMenuItem } from "./HkMenu";
 import { HkAvatarButton } from "./HkAvatarButton";
+import { useAvatarImage } from "./avatarImage";
 
 export interface LocaleOption {
   code: string;
@@ -154,6 +155,7 @@ export const HkAdminHeader = defineComponent({
   },
   setup(props, { emit, slots }) {
     const { t } = useI18n();
+    const menuAvatar = useAvatarImage(() => props.avatarUrl);
     const userMenuOpen = ref(false);
     const userTriggerRef = ref<HTMLElement>();
     const avatarModalOpen = ref(false);
@@ -162,16 +164,12 @@ export const HkAdminHeader = defineComponent({
     // THIS popup instead of the built-in children cascade — anchored to
     // the avatar trigger, so the popup opens exactly where the menu was.
     const localePickerOpen = ref(false);
-    // The DROPDOWN identity image's own failed-load latch, with the same
-    // URL-change reset the trigger's latch has inside HkAvatarButton —
-    // an avatar re-upload or account switch must heal BOTH faces (R2's
-    // S2 on #909: without the reset, the trigger showed the new image
-    // while the chip stayed on its letter fallback forever).
-    const menuAvatarFailed = ref(false);
-    watch(
-      () => props.avatarUrl,
-      () => { menuAvatarFailed.value = false; },
-    );
+    // The DROPDOWN identity image rides the SAME failed-load latch as the
+    // trigger (HkAvatarButton) and the avatar primitives — an avatar
+    // re-upload or account switch must heal BOTH faces, and one shared
+    // implementation is what keeps them from drifting (R2's S2 on #909
+    // was the missing reset; R2 on #1429 caught this fourth hand-rolled
+    // copy).
 
     // The identity cluster is INJECTED, not assumed (2026-10-24): the
     // trigger renders only when the host actually supplied an identity
@@ -384,12 +382,12 @@ export const HkAdminHeader = defineComponent({
                 // s-user-header profile variant).
                 <div class="s-user-header s-user-header--profile">
                   <span class="s-user-avatar-chip" aria-hidden="true">
-                    {props.avatarUrl && !menuAvatarFailed.value ? (
+                    {menuAvatar.src.value ? (
                       <img
-                        src={props.avatarUrl}
+                        src={menuAvatar.src.value}
                         alt=""
                         class="s-user-avatar-img"
-                        onError={() => { menuAvatarFailed.value = true; }}
+                        onError={menuAvatar.onError}
                       />
                     ) : (
                       <span class="s-user-avatar">

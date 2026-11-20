@@ -30,6 +30,25 @@
 .s-theme-mode-extra {
   margin-top: var(--space-8, 0.5rem);
   width: 100%;
+  /* 2026-11-20: the strip owns the ONE rhythm between its children. Host
+   * cards (the solar card, an expansion panel) already carry their own
+   * border/padding; letting their block margins stack on top of the
+   * panel's gap is the "mysterious extra margin" users keep reporting
+   * under the DPI card. Normalise here so every host composes cleanly. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+
+  /* The margin reset is scoped to the two host cards BY CLASS, not with a
+   * bare `> *` universal: a direct-parent universal that sets margin lands
+   * in the selection contract's pinned rows table (the shape that guards
+   * against moving a checkbox/label from outside), and every host card
+   * added to this strip would then demand a table row. Named children
+   * keep the reset working without touching that contract. */
+  > .hk-solar-setting,
+  > .hk-expansion-panel {
+    margin: 0;
+  }
 }
 
 .s-theme-menu {

@@ -48,9 +48,8 @@ grupo con los helpers compartidos, nunca tamaños clavados a mano.
 
 hikari suministra el cromo: la fila de acciones de `HkAdminHeader`,
 `HkIconButton` y `useChromeActionSize`. Los anfitriones se registran mediante
-un contexto de barra de acciones que renderiza los slots de arriba; el
-`useActionBar` / `usePageCreateAction` del webui de chest es la implementación
-de referencia de esta gramática.
+el par de composables `provideActionBar` / `useActionBar`, que renderiza los
+slots de arriba; es la implementación de referencia de esta gramática.
 
 ## Replegado móvil
 

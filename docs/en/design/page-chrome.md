@@ -42,9 +42,9 @@ cluster from the shared helpers, never hand-pinned sizes.
 ## Reference implementation
 
 hikari supplies the chrome: `HkAdminHeader`'s action row, `HkIconButton`, and
-`useChromeActionSize`. Hosts register through an action-bar context that
-renders the slots above; the chest webui's `useActionBar` /
-`usePageCreateAction` is the reference implementation of this grammar.
+`useChromeActionSize`. Hosts register through the `provideActionBar` /
+`useActionBar` composable pair, which renders the slots above; it is the
+reference implementation of this grammar.
 
 ## Mobile collapse
 

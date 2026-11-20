@@ -38,8 +38,8 @@
 ## 참조 구현
 
 크롬은 hikari가 제공합니다: `HkAdminHeader`의 액션 행, `HkIconButton`,
-`useChromeActionSize`. 호스트는 위 슬롯을 렌더링하는 액션 바 컨텍스트로 등록합니다. chest
-webui의 `useActionBar` / `usePageCreateAction`이 이 문법의 참조 구현입니다.
+`useChromeActionSize`. 호스트는 위 슬롯을 렌더링하는 `provideActionBar` /
+`useActionBar` 컴포저블로 등록합니다. 이것이 이 문법의 참조 구현입니다.
 
 ## 모바일 접힘
 

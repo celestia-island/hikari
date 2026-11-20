@@ -679,8 +679,8 @@ export {
   type HkMfaFactor as MfaFactor,
 } from "./components/HkMfaVerifyCard";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
-export { provideActionBar, useActionBar } from "./composables/useActionBar";
-export type { ActionBarRenderer } from "./composables/useActionBar";
+export { provideActionBar, useActionBar, PageActionSlot, orderActionRegistrations } from "./composables/useActionBar";
+export type { ActionBarRenderer, PageActionSlotValue, ActionBarRegistration } from "./composables/useActionBar";
 export { useChromeActionSize } from "./composables/useChromeActionSize";
 export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./utils/pow";
 export type { PowChallenge, PowSolution } from "./utils/pow";

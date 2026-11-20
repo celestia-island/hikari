@@ -36,8 +36,8 @@
 ## 參考實作
 
 chrome 由 hikari 提供：`HkAdminHeader` 的動作列、`HkIconButton` 與
-`useChromeActionSize`。宿主經渲染上述槽位的動作區上下文註冊；chest webui 的
-`useActionBar` / `usePageCreateAction` 是這套語法的參考實作。
+`useChromeActionSize`。宿主經渲染上述槽位的 `provideActionBar` /
+`useActionBar` composable 對註冊；它是這套語法的參考實作。
 
 ## 行動端摺疊
 

@@ -28,7 +28,11 @@ export type { PaddingSidesScan } from "./HkFaceShell";
  * The one thing the wrapper ADDS is its own action-bar provide: hosts
  * of the pre-extraction contract read the registered actions through
  * the header slot's `actions` param (the bar this shell provides
- * itself). Faces that own their action bar — or their whole content
+ * itself). The param keeps its shape — a flat VNode[] of the current
+ * registrations — while the bar itself went ranked-additive
+ * (PageActionSlot / SLOT_RANK): the array now carries every registered
+ * affordance in slot order instead of the last single renderer's
+ * output. Faces that own their action bar — or their whole content
  * lifecycle, like a canvas stage — consume HkFaceShell directly and
  * provide whatever they want, closest to their pages.
  */
@@ -155,8 +159,10 @@ export const HkAdminShell = defineComponent({
                 ...shellParams,
                 // The legacy channel this wrapper exists to keep: the
                 // actions of the bar provided above, handed to the header
-                // slot exactly as before the extraction.
-                actions: actionBar.actions.value ? actionBar.actions.value() : [],
+                // slot exactly as before the extraction — still a flat
+                // VNode[] (now one entry per registered affordance, in
+                // slot order).
+                actions: actionBar.actions.value.flatMap((render) => render()),
               })
           : undefined,
         sidebar: slots.sidebar,

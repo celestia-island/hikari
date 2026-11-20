@@ -47,10 +47,9 @@ clouées à la main.
 ## Implémentation de référence
 
 hikari fournit le chrome : la rangée d'actions de `HkAdminHeader`,
-`HkIconButton` et `useChromeActionSize`. Les hôtes s'enregistrent via un
-contexte de barre d'actions qui rend les slots ci-dessus ; le `useActionBar` /
-`usePageCreateAction` du webui de chest est l'implémentation de référence de
-cette grammaire.
+`HkIconButton` et `useChromeActionSize`. Les hôtes s'enregistrent via la
+paire de composables `provideActionBar` / `useActionBar`, qui rend les
+slots ci-dessus ; c'est l'implémentation de référence de cette grammaire.
 
 ## Repli mobile
 

@@ -36,8 +36,8 @@
 ## 参考实现
 
 chrome 由 hikari 提供：`HkAdminHeader` 的动作行、`HkIconButton` 与
-`useChromeActionSize`。宿主经渲染上述槽位的动作区上下文注册；chest webui 的
-`useActionBar` / `usePageCreateAction` 是这套语法的参考实现。
+`useChromeActionSize`。宿主经渲染上述槽位的 `provideActionBar` /
+`useActionBar` composable 对注册；它是这套语法的参考实现。
 
 ## 移动端折叠
 

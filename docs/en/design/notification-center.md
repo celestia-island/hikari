@@ -48,23 +48,29 @@ a bottom sheet on phones, safe to cross the breakpoint live.
 ## Motion
 
 Row add and remove are choreographed by `HkListTransition` — the
-library's own list primitive — in its `pop` variant (the toast family's
-fade + scale signature) with FLIP moves, so the rows that remain glide
-into the space a dismissed one frees. Because the primitive REPORTS
-every enter/leave batch to the runtime animation context
-(`runtime/animationBus.ts`), reduced motion and the global CSS-animation
-switch (`html[data-css-animations="0"]`) collapse the whole choreography
-without the bell re-implementing either. It is the same primitive the
-toast stack, the modal breadcrumb stack and host lists already ride.
+library's own list primitive, the one the modal breadcrumbs, the tag
+input, the password surface, the affix picker, the waterfall and the
+JSON tree already ride — in its `pop` variant (a fade that settles from
+a slight scale) with FLIP moves, so the rows that remain glide into the
+space a dismissed one frees. Two properties come from the primitive and
+the platform rather than from the bell: it REPORTS every enter/leave
+batch to the runtime animation context (`runtime/animationBus.ts`, so
+JS peers know a transition is in flight), and its own reduced-motion
+rules together with the global CSS-animation switch
+(`html[data-css-animations="0"]`) collapse the motion.
 
-Two consequences worth checking:
+Three consequences worth checking:
 
 - Opening the panel does NOT replay the list's entrance (`appear` stays
   off) — only rows that really arrive or leave animate.
 - The list wrapper outlives the empty swap: a row-less journal keeps the
-  empty list mounted beside the empty caption, because tearing a
-  transition group down cancels its leaving ghosts mid-flight ("Clear
-  all" and a last-row dismiss would snap instead of fading).
+  list mounted, because tearing a transition group down cancels its
+  leaving ghosts mid-flight.
+- The empty handover takes two beats: while the last row (or "Clear
+  all") fades, the list keeps its last height — a leaving row is
+  positioned INSIDE the scroll container, so a collapsed list would crop
+  its own ghost — and the "No notifications yet" caption only mounts
+  after the leave window.
 
 ## Reference implementation
 

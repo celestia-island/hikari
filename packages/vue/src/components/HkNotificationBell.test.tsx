@@ -522,10 +522,11 @@ describe("panel rows", () => {
     await settle();
     expect(document.querySelector(".hk-notification-center__list-wrap")).toBeNull();
 
-    // Round-2 hole: with the panel OPEN on the empty state the list is
-    // not mounted — a record landing NOW mounts it fresh. The signature
-    // watcher must attach the engine to the NEW viewport (an update() on
-    // a stale handle would leave it scrolling invisibly).
+    // Reopening on a row-less journal (the list stays mounted now — see
+    // the motion section): the engine must (re)attach to the CURRENT
+    // viewport. An update() on the stale handle would leave the list
+    // scrolling invisibly again. (The attach TARGET itself is pinned in
+    // HkNotificationBell.scrollTarget.test.tsx.)
     resetNotifications();
     bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await settle();
@@ -533,8 +534,14 @@ describe("panel rows", () => {
     recordNotification({ id: "late", kind: "toast", tone: "error", title: "late arrival" });
     await settle();
     const wrap2 = document.querySelector(".hk-notification-center__list-wrap");
-    expect(wrap2, "the list mounts under the open panel").toBeTruthy();
+    expect(wrap2, "the list is mounted under the open panel").toBeTruthy();
     expect(wrap2!.querySelectorAll(".hk-scrollbar-track").length).toBeGreaterThan(0);
+    // The semantics the persistent wrap must never cost us (2026-11-20
+    // review M7): `list-style: none` strips list semantics in
+    // Safari/VoiceOver, so the explicit role is load-bearing.
+    expect(
+      document.querySelector(".hk-notification-center__list")!.getAttribute("role"),
+    ).toBe("list");
   });
 
   it("rows sort newest-first and Clear all empties the journal", async () => {
@@ -600,10 +607,13 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
-  it("clear-all fades every row while the empty caption coexists", async () => {
-    // The whole list leaving at once is the case the persistent wrap
-    // exists for: a branch swap would unmount the TransitionGroup and
-    // cancel every ghost mid-flight (a snap instead of a fade).
+  it("clear-all fades every row, then the empty caption takes over", async () => {
+    // The whole list leaving at once is the case the persistent wrap and
+    // the hold window exist for: a branch swap would unmount the
+    // TransitionGroup and cancel every ghost mid-flight (a snap instead
+    // of a fade). The caption must NOT mount beside the ghosts — it would
+    // paint under the first departing row and read "No notifications yet"
+    // through a fading notification (2026-11-20 review, S2).
     await setLocale("en");
     recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
     recordNotification({ id: "b", kind: "toast", tone: "warning", title: "two" });
@@ -614,14 +624,34 @@ describe("panel rows", () => {
     const clearBtn = Array.from(
       document.querySelectorAll<HTMLButtonElement>(".hk-notification-center__foot .hk-btn"),
     ).find((b) => b.textContent?.includes("Clear all"))!;
+    // jsdom has no layout, so the hold's pre-patch height read needs a
+    // stub — otherwise lastListHeight stays 0 and the window below is
+    // unobservable here (the real-browser behaviour is measured in the
+    // PR record; jsdom can only pin the resulting style/caption gates).
+    Object.defineProperty(document.querySelector(".hk-notification-center__list")!, "offsetHeight", {
+      value: 120,
+      configurable: true,
+    });
     clearBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextTick();
     expect(document.querySelectorAll(".hk-list-pop-leave-active")).toHaveLength(2);
-    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    // During the fade: ghosts only — no caption, and the list holds its
+    // last height so the ghosts are not clipped by a collapsed scroller.
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
+    expect(document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight)
+      .toMatch(/^\d+px$/);
     // The foot keeps its empty-hides rule (unchanged semantics).
     expect(document.querySelector(".hk-notification-center__foot")).toBeNull();
     await settle();
     expect(rows()).toHaveLength(0);
+    // After the leave window (LEAVE_MS = 320, slower than settle()'s 80ms)
+    // the caption takes over and the hold releases.
+    await new Promise((r) => setTimeout(r, 400));
+    await nextTick();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+    ).toBe("");
   });
 
   it("a record landing on the open panel pops in through the list transition", async () => {
@@ -641,5 +671,42 @@ describe("panel rows", () => {
     const settledRow = rows().find((r) => r.textContent?.includes("second"));
     expect(settledRow).toBeTruthy();
     expect(settledRow!.className).not.toContain("hk-list-pop-enter");
+  });
+
+  it("the first row into an empty open panel enters (0→1 through the primitive)", async () => {
+    // The mirror of the leave pins: with the caption gone the very first
+    // record must still ARRIVE through the choreography rather than
+    // appearing already-settled.
+    await setLocale("en");
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
+    recordNotification({ id: "first", kind: "toast", tone: "error", title: "the first one" });
+    await nextTick();
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
+    const row = rows()[0];
+    expect(row, "the row rendered").toBeTruthy();
+    expect(row.className).toContain("hk-list-pop-enter-active");
+    await settle();
+    expect(rows()).toHaveLength(1);
+  });
+
+  it("opening the panel does NOT replay the list's entrance (appear stays off)", async () => {
+    // `appear` would re-animate every row on every open — the panel is
+    // opened constantly, so that would be noise, not feedback. Pinned
+    // behaviourally (2026-11-20 review M6): the initial rows must mount
+    // already settled.
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    recordNotification({ id: "b", kind: "toast", tone: "warning", title: "two" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await nextTick();
+    for (const row of rows()) {
+      expect(row.className).not.toContain("hk-list-pop-enter");
+    }
   });
 });

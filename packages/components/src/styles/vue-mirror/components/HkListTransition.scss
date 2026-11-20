@@ -32,6 +32,14 @@
     opacity var(--duration-normal, 0.3s) ease-in,
     transform var(--duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
   position: absolute;
+  /* A dying row must not take clicks (or a drag) while it fades: the
+     bell's rows carry copy / dismiss / restore buttons, and this is the
+     first consumer of the pop variant with interactive rows. The
+     primitive's own pin sets `inert` too, but only when layout metrics
+     exist — this is the CSS belt that still dead-ends a tap in a
+     non-layout environment or when the pin skipped (same relationship
+     the surface variant documents below). */
+  pointer-events: none;
 }
 
 .hk-list-pop-enter-from {

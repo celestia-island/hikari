@@ -114,4 +114,19 @@ describe("HkNotificationBell scss contract", () => {
       scss.match(/--hi-icon-button-icon-color:\s*rgb\(var\(--color-text\) \/ 85%\)/g) ?? [],
     ).toHaveLength(1);
   });
+
+  it("the list is its own containing block for the leaving ghosts", () => {
+    // HkListTransition lifts a leaving row to `position: absolute` and pins
+    // it to its pre-patch box. If the nearest positioned ancestor is the
+    // WRAP (outside the scroller), the ghost escapes the list's clip and is
+    // pinned in LAYOUT coordinates while the viewport is scrolled — real
+    // Chrome measurement (2026-11-20): a row dismissed from a scrolled list
+    // painted 629px away from where the user saw it, i.e. no visible fade.
+    // `position: relative` makes the ghost live inside the scroller, where
+    // it is clipped and moves with the content.
+    const listBlock = scss.match(/^\.hk-notification-center__list \{([^}]*)\}/m);
+    expect(listBlock, "the list rule exists").toBeTruthy();
+    expect(listBlock![1]).toContain("position: relative");
+    expect(listBlock![1], "and it stays the scroll container").toContain("overflow-y: auto");
+  });
 });

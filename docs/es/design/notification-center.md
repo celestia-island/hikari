@@ -56,27 +56,32 @@ punto de ruptura seguro en vivo.
 ## Movimiento
 
 La entrada y la salida de filas las coreografía `HkListTransition` —la
-primitiva de listas de la propia biblioteca— en su variante `pop` (la
-firma de fundido + escala de la familia toast) con desplazamientos
+primitiva de listas de la biblioteca, la misma que ya usan las migas de
+los modales, el campo de etiquetas, la superficie de contraseña, el
+selector de afijos, el waterfall y el árbol JSON— en su variante `pop`
+(un fundido que se posa desde un leve escalado) con desplazamientos
 FLIP: las filas que quedan se deslizan al espacio que libera la
-descartada. Como la primitiva **reporta** cada lote de entrada/salida al
-contexto de animación en tiempo de ejecución
-(`runtime/animationBus.ts`), la reducción de movimiento y el interruptor
-global de animaciones CSS (`html[data-css-animations="0"]`) pliegan
-toda la coreografía sin que la campana reimplemente ninguna de las dos.
-Es la misma primitiva que ya usan la pila de toasts, la pila de migas de
-los modales y las listas anfitrionas.
+descartada. Dos propiedades vienen de la primitiva y de la plataforma,
+no de la campana: **reporta** cada lote de entrada/salida al contexto de
+animación en tiempo de ejecución (`runtime/animationBus.ts`, para que
+los pares JS sepan que hay una transición en curso), y sus propias
+reglas de reducción de movimiento, junto con el interruptor global de
+animaciones CSS (`html[data-css-animations="0"]`), pliegan el
+movimiento.
 
-Dos consecuencias comprobables:
+Tres consecuencias comprobables:
 
-- Abrir el panel **no** reproduce la entrada de la lista (`appear`
-  permanece desactivado): solo se animan las filas que de verdad llegan
-  o se van.
+- Abrir el panel no reproduce la entrada de la lista (`appear` sigue
+  desactivado): solo se animan las filas que de verdad llegan o se van.
 - El contenedor de la lista sobrevive al cambio a estado vacío: un diario
-  sin filas mantiene la lista vacía montada junto al texto de estado
-  vacío, porque desmontar un grupo de transiciones cancela sus fantasmas
-  salientes en pleno vuelo («Borrar todo» y cerrar la última fila
-  cortarían en seco en lugar de desvanecerse).
+  sin filas mantiene la lista montada, porque desmontar un grupo de
+  transiciones cancela sus fantasmas salientes en pleno vuelo.
+- El paso a vacío ocurre en dos tiempos: mientras la última fila (o
+  «Borrar todo») se desvanece, la lista conserva su última altura —una
+  fila saliente se posiciona DENTRO del contenedor de desplazamiento, así
+  que una lista colapsada recortaría su propio fantasma— y el texto
+  «Aún no hay notificaciones» solo aparece al terminar la ventana de
+  salida.
 
 ## Implementación de referencia
 

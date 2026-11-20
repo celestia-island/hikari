@@ -75,6 +75,12 @@
   display: inline-flex;
   flex: none;
   align-items: center;
+  /* 2026-11-20: the icon-only Edit used to sit exactly on the card's
+   * inline-end padding edge, which reads as "pressed against the frame"
+   * once the card is width:100% inside a host strip. One small inset
+   * keeps the affordance visually separate WITHOUT moving the row's
+   * content off center (the summary still flexes to fill). */
+  margin-inline-end: var(--space-4, 0.25rem);
   position: relative;
 }
 

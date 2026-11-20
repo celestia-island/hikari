@@ -98,7 +98,13 @@
   --hk-z-fab: 40;            /* floating action button */
   --hk-z-toolbar: 50;        /* zoom toolbar / local overlay strips */
   --hk-z-header: 100;        /* sticky header */
-  --hk-z-sidebar: 900;       /* sidebar drawer */
+  --hk-z-sidebar: 900;      /* sidebar drawer (temporary/mobile overlay) */
+  /* 2026-11-20: the DOCKED desktop sidebar is chrome-adjacent, not an
+   * overlay: it paints above the content column (the peek/toggle bands
+   * need their own elevation boundary) but BELOW the header and footer
+   * bands, so their shadows stay on top of it. The drawer token above
+   * remains for the temporary overlay. */
+  --hk-z-sidebar-docked: 20;       /* sidebar drawer */
   --hk-z-drag: 950;          /* element being dragged floats above its row */
   --hk-z-breadcrumb: 2500;   /* modal breadcrumb bar */
   --hk-z-float: 3000;        /* floating panels: select popout, popover, anchored layer */

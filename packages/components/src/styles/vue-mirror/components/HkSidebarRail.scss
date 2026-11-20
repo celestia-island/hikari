@@ -108,7 +108,11 @@
    * paints atomically above the content column no matter what contexts
    * exist inside it, so a peek overlay, the pinned expand and the idle
    * toggle all share one rule. */
-  z-index: var(--hk-z-sidebar, 900);
+  /* 2026-11-20 user direction + the z scale: a DOCKED sidebar sits
+   * under the header/footer chrome bands (their shadows must paint over
+   * it). --hk-z-sidebar 900 is the temporary DRAWER's layering, which is
+   * above everything — a different surface with a different band. */
+  z-index: var(--hk-z-sidebar-docked, 20);
   /* The layout animation the PIN window deliberately keeps. */
   transition: width var(--duration-normal, 0.3s) ease;
 }
@@ -241,6 +245,16 @@
  * contract. Identity blocks, carets, badges and every other icon keep
  * the plain dissolve. */
 .hk-sidebar-rail-swap[data-flipping] .hk-menu-item-icon[data-flip-flying] {
+  visibility: hidden;
+}
+
+/* 2026-11-20: the rail group's DEMOTED icon badge is NOT a
+ * .hk-menu-item-icon (it is the corner chip), so the base selector left
+ * it visible through the whole flight — the duplicate glyph caught
+ * mid-animation. Its own rule (not a selector-list append) keeps the
+ * single-glyph contract test's "the welded form is ITS OWN rule" pin
+ * meaningful for both cells. */
+.hk-sidebar-rail-swap[data-flipping] .hk-menu-rail-glyph-corner[data-flip-flying] {
   visibility: hidden;
 }
 

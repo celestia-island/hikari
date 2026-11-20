@@ -49,6 +49,14 @@ const SHAPES: [(&str, NameAccessor); 7] = [
 ];
 
 fn golden() -> BTreeMap<String, GoldenRow> {
+    // R3's M12: an extra `[xx]` section appended to the snapshot used to pass
+    // every test, because the guard only walks `Language::ALL`.
+    let document: toml::Value = toml::from_str(GOLDEN).expect("names.golden.toml parses as TOML");
+    assert_eq!(
+        document.as_table().map(toml::map::Map::len),
+        Some(Language::ALL.len()),
+        "the snapshot must carry exactly one row per Language — no extra section, none missing"
+    );
     assert_eq!(
         SHAPES.len(),
         7,
@@ -86,6 +94,20 @@ fn golden() -> BTreeMap<String, GoldenRow> {
                     (*shape, values)
                 })
                 .collect();
+            // R4's mutation added a `month_narrow` shape to the table, the
+            // golden and `DateVocabulary`: every test stayed green because the
+            // guard walks SHAPES, never the row's own keys. Pin the key set.
+            let expected_keys: std::collections::BTreeSet<&str> =
+                SHAPES.iter().map(|(shape, _)| *shape).collect();
+            let actual_keys: std::collections::BTreeSet<&str> = row
+                .keys()
+                .map(String::as_str)
+                .filter(|key| *key != "first_weekday")
+                .collect();
+            assert_eq!(
+                actual_keys, expected_keys,
+                "{code}: the snapshot carries shapes this guard does not compare"
+            );
             (
                 code.clone(),
                 GoldenRow {
@@ -234,8 +256,35 @@ fn weekday_labels_rotate_from_the_locales_first_day() {
             "{}: the grid starts at the locale's first weekday",
             language.code()
         );
+        // A rotation, not a truncation: seven DISTINCT names. Replacing the
+        // `% 7` with `% 6` yields Sun..Fri plus a repeated Sunday and used to
+        // keep every test green.
+        let mut distinct = labels.clone();
+        distinct.sort_unstable();
+        distinct.dedup();
+        assert_eq!(
+            distinct.len(),
+            7,
+            "{}: the labels are a rotation of seven distinct weekdays",
+            language.code()
+        );
 
+        // The same rotation contract for the narrow forms. Narrow names are
+        // NOT all distinct per language (German is S/M/D/M/D/F/S — only four
+        // letters), so this compares against the seven-step rotation spelled
+        // out with `% 7` rather than counting distinct labels: a `% 6` in the
+        // implementation produced Sun..Fri plus a repeated Sunday and stayed
+        // green before this assertion existed.
         let narrow = vocabulary.weekday_labels(true);
+        let expected_narrow: Vec<&str> = (0..7u32)
+            .map(|offset| vocabulary.weekday_narrow((vocabulary.first_weekday + offset) % 7))
+            .collect();
+        assert_eq!(
+            narrow,
+            expected_narrow,
+            "{}: narrow labels are the seven-step rotation from the first weekday",
+            language.code()
+        );
         assert_eq!(
             narrow[0],
             vocabulary.weekday_narrow(vocabulary.first_weekday)

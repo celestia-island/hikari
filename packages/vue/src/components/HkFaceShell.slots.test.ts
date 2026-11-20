@@ -120,14 +120,21 @@ describe("the public slot-type contract (L39)", () => {
   });
 
   it("the brand slot is a zero-param render (the static-mark contract)", () => {
-    // Compile-level pin, read through the COMPONENT's unwrapped slots
-    // type: the aggregate alias itself is a symbol-keyed container
-    // (SlotsType), so its payload is only reachable via the instance's
-    // $slots. `brand` must stay optional and callable with NO arguments
-    // — a payload parameter would be a contract change, not an addition
-    // (a static site mark has no state to hand down). A signature drift
-    // breaks THIS file's vue-tsc, not a downstream repo's build.
+    // Both legs of the contract bite at COMPILE time, through the
+    // COMPONENT's unwrapped slots type — the aggregate alias itself is
+    // a symbol-keyed container (SlotsType<T> = { [SlotSymbol]?: T }),
+    // where `{} as HkAdminHeaderSlots` compiles regardless of the inner
+    // optionality, so the alias-level pins are blind to it:
+    // - REQUIRED-SLOT leg: `undefined extends typeof slots.brand` holds
+    //   only while `brand` keeps its undefined member (optional). Making
+    //   the slot required flips the conditional to `never`, and the
+    //   `const ... : never = true` line fails vue-tsc on THIS file.
+    // - ZERO-PARAM leg: the call must still typecheck with no arguments
+    //   — a payload parameter would be a contract change, not an
+    //   addition (a static site mark has no state to hand down).
     const slots = {} as InstanceType<typeof barrel.HkAdminHeader>["$slots"];
+    const brandStaysOptional: undefined extends typeof slots.brand ? true : never = true;
+    expect(brandStaysOptional).toBe(true);
     expect(slots.brand?.()).toBeUndefined();
   });
 });

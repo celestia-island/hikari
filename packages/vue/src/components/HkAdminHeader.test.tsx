@@ -352,6 +352,18 @@ describe("HkAdminHeader", () => {
       "span.s-admin-header-title",
     ]);
     expect(c.querySelector(".s-admin-header-brand")).toBeNull();
+
+    // The byte-identical claim covers the DRAWER wing's children too:
+    // avatar trigger (the drawer opener) then the reserved ws-slot
+    // blank, in that order, brand node absent.
+    const drawer = mount(headerNode({ avatarAction: "drawer", userEmail: "alice@example.com" }));
+    const drawerWing = drawer.querySelector(".s-admin-header-user")!;
+    const drawerShape = [...drawerWing.children].map((el) => `${el.tagName.toLowerCase()}.${el.className}`);
+    expect(drawerShape).toEqual([
+      "button.s-admin-header-avatar",
+      "span.s-admin-header-ws-slot",
+    ]);
+    expect(drawer.querySelector(".s-admin-header-brand")).toBeNull();
   });
 });
 
@@ -383,6 +395,58 @@ describe("HkAdminHeader brand slot (opt-in site mark)", () => {
     const c = mount(headerNode({ brandSrc: "https://example.invalid/logo.png" }));
     expect(c.querySelector(".s-admin-header-user button")).toBeNull();
     expect(c.querySelector(".s-admin-header-brand button")).toBeNull();
+    // SEMANTIC pins, not shape pins: a future re-render that wraps the
+    // mark in an anchor (href), or sprinkles tabindex/role="button" on
+    // it, turns the identity into a control no matter what the class
+    // list looks like. The scan covers the mark's WHOLE PATH: the node
+    // itself (a re-render may move the class onto an anchor), its
+    // ancestors up to the wing (an anchor WRAPPING the mark sits outside
+    // any descendant query — descendant-only pins are blind to it), and
+    // everything inside it.
+    const brand = c.querySelector(".s-admin-header-brand")!;
+    const brandPath: Element[] = [brand];
+    let cursor: Element | null = brand;
+    while (cursor && !cursor.classList.contains("s-admin-header-user")) {
+      cursor = cursor.parentElement;
+      if (cursor) brandPath.push(cursor);
+    }
+    const controlHits = [...brandPath, ...brand.querySelectorAll("*")].filter((el) =>
+      el.matches('a[href], [tabindex], [role="button"]'),
+    );
+    expect(controlHits, "the brand path must carry no control semantics").toEqual([]);
+  });
+
+  it("renders ZERO account surface on the branded desktop face (the replacement contract)", () => {
+    // The replacement clause, pinned end to end: identity props AND the
+    // account carrier slots are ALL supplied, yet the branded header
+    // exposes no account trigger, no popup, and none of the slot bodies
+    // — the dropdown (and identity / user-menu-extra / avatar-modal /
+    // locale-picker inside it) does not mount at all. This is the pin
+    // that keeps a future edit from "helpfully" wiring the menu back.
+    const c = mount(headerNode({
+      title: "Providers",
+      username: "alice",
+      userEmail: "alice@example.com",
+      logoutLabel: "Log out",
+      brandSrc: "https://example.invalid/logo.png",
+    }, {
+      identity: () => h("div", { class: "host-identity" }, "host identity"),
+      "user-menu-extra": () => h("div", { class: "host-extra" }, "host extra"),
+      "avatar-modal": () => h("div", { class: "host-modal" }, "host modal"),
+      "locale-picker": () => h("div", { class: "host-locale" }, "host locale"),
+    }));
+    // No interactive surface anywhere in the header...
+    expect(c.querySelector("header button")).toBeNull();
+    expect(c.querySelector("header [aria-haspopup]")).toBeNull();
+    // ...the dropdown is not mounted (its stub renders nothing)...
+    expect(c.querySelector(".menu-stub")).toBeNull();
+    // ...and none of the account carrier slots render their bodies.
+    expect(c.querySelector(".host-identity")).toBeNull();
+    expect(c.querySelector(".host-extra")).toBeNull();
+    expect(c.querySelector(".host-modal")).toBeNull();
+    expect(c.querySelector(".host-locale")).toBeNull();
+    // The brand mark itself is the only thing the wing gained.
+    expect(c.querySelector(".s-admin-header-brand")).not.toBeNull();
   });
 
   it("prefers the brand slot over brandSrc when both are supplied", () => {

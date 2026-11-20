@@ -46,11 +46,20 @@ describe("admin header brand slot contract", () => {
     expect(adminHeader, "the render site must carry the brand class").toContain(
       'class="s-admin-header-brand"',
     );
-    // Drawer-face invariance: the render guard must demand the menu
-    // avatarAction — dropping the guard would put a static mark in front
-    // of the mobile drawer's only opener.
+    // Drawer-face invariance: the face condition lives in ONE computed
+    // (brand mounted AND avatarAction "menu") that BOTH the mark render
+    // and the trigger suppression read — dropping the computed, or
+    // widening it past the menu face, would put a static mark in front
+    // of the mobile drawer's only opener (or strand the trigger beside
+    // the mark). All three legs pinned.
     expect(adminHeader).toMatch(
-      /brandMounted\.value && props\.avatarAction === "menu" && \(\s*<span class="s-admin-header-brand">/,
+      /brandedMenuFace = computed\(\s*\(\) => brandMounted\.value && props\.avatarAction === "menu",?\s*\)/,
+    );
+    expect(adminHeader).toMatch(
+      /brandedMenuFace\.value && \(\s*<span class="s-admin-header-brand">/,
+    );
+    expect(adminHeader).toMatch(
+      /identityMounted\.value && !brandedMenuFace\.value && \(\s*<HkAvatarButton/,
     );
   });
 
@@ -75,6 +84,12 @@ describe("admin header brand slot contract", () => {
     );
     expect(adminTokens).toMatch(
       /\.s-admin-header-brand \.hk-logo\s*\{[^}]*border-radius: 0;/,
+    );
+    // The img carries its OWN radius from HkLogo.scss — the container
+    // pin alone leaves a rounded mark (the .hk-logo rule does not reach
+    // .hk-logo-img). Both layers pinned.
+    expect(adminTokens).toMatch(
+      /\.s-admin-header-brand \.hk-logo-img\s*\{[^}]*border-radius: 0;/,
     );
   });
 });

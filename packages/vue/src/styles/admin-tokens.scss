@@ -685,6 +685,14 @@
   border-radius: 0;
 }
 
+/* The img inside carries its OWN radius from HkLogo.scss — the container
+ * pin above does not reach it, and a rounded img would still clip a
+ * mark that was drawn edge-to-edge. Same identity-not-control family:
+ * this kills the rounding on both layers. */
+.s-admin-header-brand .hk-logo-img {
+  border-radius: 0;
+}
+
 /* The old hover camera veil ("change avatar" affordance) is gone: the
  * avatar trigger opens the account MENU — the avatar edit is the Camera
  * item inside it — so the veil promised an action the click never

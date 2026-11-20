@@ -45,6 +45,37 @@ The trigger is `HkIconButton` on the chrome size ladder; the surface is
 `HkPopover` with `sheetOnMobile` — an anchored flyout on wide screens,
 a bottom sheet on phones, safe to cross the breakpoint live.
 
+## Motion
+
+Row add and remove are choreographed by `HkListTransition` — the
+library's own list primitive, the one the modal breadcrumbs, the tag
+input, the password surface, the affix picker and the waterfall
+already ride — in its `pop` variant (a fade that settles from
+a slight scale) with FLIP moves, so the rows that remain glide into the
+space a dismissed one frees. Two properties come from the primitive and
+the platform rather than from the bell: it REPORTS every enter/leave
+batch to the runtime animation context (`runtime/animationBus.ts`, so
+JS peers know a transition is in flight), and its own reduced-motion
+rules together with the global CSS-animation switch
+(`html[data-css-animations="0"]`) collapse the motion.
+
+Three consequences worth checking:
+
+- Opening the panel does NOT replay the list's entrance (`appear` stays
+  off) — only rows that really arrive or leave animate.
+- The list wrapper outlives the empty swap: a row-less journal keeps the
+  list mounted, because tearing a transition group down cancels its
+  leaving ghosts mid-flight.
+- The empty handover takes two beats: while the last row (or "Clear
+  all") fades, the list keeps its last height — a leaving row is
+  positioned INSIDE the scroll container, so a shrinking list would crop
+  its own ghost (true for the bottom-most row of ANY removal, not just
+  the emptying one) — and the "No notifications yet" caption only mounts
+  after the leave window. A host that collapses motion (the
+  `prefers-reduced-motion` query, the animation bus' park flag, or
+  `html[data-css-animations="0"]`) skips the hold entirely and gets the
+  caption at once.
+
 ## Reference implementation
 
 `runtime/notificationCenter.ts` (the journal and its source hooks) and

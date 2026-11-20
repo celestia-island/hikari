@@ -53,6 +53,40 @@ chrome; la superficie es un `HkPopover` con `sheetOnMobile` — flotante
 anclada en pantallas anchas, hoja inferior en teléfonos, con cruce del
 punto de ruptura seguro en vivo.
 
+## Movimiento
+
+La entrada y la salida de filas las coreografía `HkListTransition` —la
+primitiva de listas de la biblioteca, la misma que ya usan las migas de
+los modales, el campo de etiquetas, la superficie de contraseña, el
+selector de afijos y el waterfall— en su variante `pop`
+(un fundido que se posa desde un leve escalado) con desplazamientos
+FLIP: las filas que quedan se deslizan al espacio que libera la
+descartada. Dos propiedades vienen de la primitiva y de la plataforma,
+no de la campana: **reporta** cada lote de entrada/salida al contexto de
+animación en tiempo de ejecución (`runtime/animationBus.ts`, para que
+los pares JS sepan que hay una transición en curso), y sus propias
+reglas de reducción de movimiento, junto con el interruptor global de
+animaciones CSS (`html[data-css-animations="0"]`), pliegan el
+movimiento.
+
+Tres consecuencias comprobables:
+
+- Abrir el panel no reproduce la entrada de la lista (`appear` sigue
+  desactivado): solo se animan las filas que de verdad llegan o se van.
+- El contenedor de la lista sobrevive al cambio a estado vacío: un diario
+  sin filas mantiene la lista montada, porque desmontar un grupo de
+  transiciones cancela sus fantasmas salientes en pleno vuelo.
+- El paso a vacío ocurre en dos tiempos: mientras la última fila (o
+  «Borrar todo») se desvanece, la lista conserva su última altura —una
+  fila saliente se posiciona DENTRO del contenedor de desplazamiento, así
+  que una lista que se encoge recortaría su propio fantasma (cierto para la
+  fila más baja de CUALQUIER retirada, no solo al vaciarse)— y el texto
+  «Aún no hay notificaciones» solo aparece al terminar la ventana de
+  salida. Un anfitrión que repliega el movimiento (consulta
+  `prefers-reduced-motion`, bandera park del bus o
+  `html[data-css-animations="0"]`) se salta la retención por completo y
+  recibe el texto de inmediato.
+
 ## Implementación de referencia
 
 `runtime/notificationCenter.ts` (el diario y sus ganchos fuente) +

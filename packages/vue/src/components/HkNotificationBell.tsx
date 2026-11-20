@@ -32,6 +32,32 @@
  * clips its text, so the clipboard is the only place the whole thing
  * still exists.
  *
+ * Motion (user direction 2026-11-20): list rows pop in and out through
+ * HkListTransition — the library's own list choreography primitive (the
+ * one HkModalBreadcrumb, HkTagInput, HkPasswordSurface, HkAffixPicker and
+ * HkWaterfall actually render; HkJsonTree/HkLocalizedInput/HkCrossfade
+ * only document the same contract, they do not use it) — which reports
+ * every enter/leave batch to the runtime animation context
+ * (reportTransition on the frame bus) and whose own reduced-motion /
+ * global-CSS-switch rules collapse the motion. `pop` is that primitive's
+ * fade-and-settle list signature; `move` lets the remaining rows
+ * FLIP-glide into the space a dismissed one frees. No bespoke row
+ * transition lives here (contract test pins this).
+ *
+ * Three structural consequences of riding it:
+ *  - the list wrap stays mounted across the empty swap, because a
+ *    torn-down TransitionGroup cancels its leaving ghosts mid-flight;
+ *  - when a row's KEY disappears (a change of the visible content, which
+ *    includes a same-id rewrite) the list holds its pre-patch height for
+ *    the leave window. A leaving row is lifted to `position: absolute`
+ *    inside the list (which is the scroll container), so as soon as the
+ *    box shrinks by one row the bottom-most ghost falls outside the
+ *    scrollport and is cropped — the empty case is only the extreme.
+ *    Measured in real Chrome, 2026-11-20;
+ *  - the empty caption mounts only after that window, and the hold is
+ *    skipped entirely when motion is collapsed (reduced-motion media
+ *    query, the bus park flag, or the global CSS-animation attribute).
+ *
  * Renders nothing extra while the journal is empty beyond the bell
  * itself — an empty notification center still shows its (disabled-
  * looking) trigger so the host chrome never reflows on first use.
@@ -59,9 +85,12 @@ import {
   type HkNotificationEntry,
   type HkNotificationTone,
 } from "../runtime/notificationCenter";
+import { isCssAnimationsEnabled } from "../animation/registerAnimations";
+import { isAnimationParked } from "../runtime/animationBus";
 import { useClipboard } from "../runtime/useClipboard";
 import HkIconButton from "./HkIconButton";
 import HkButton from "./HkButton";
+import HkListTransition from "./HkListTransition";
 import HkPopover from "./HkPopover";
 import "./HkNotificationBell.scss";
 
@@ -110,7 +139,10 @@ export default defineComponent({
     // to content"), which is why the bell owns this one. Same shape as
     // HkDrawer: a wrapper that wraps EXACTLY the viewport is the track
     // host, attach on open, detach on close/unmount.
-    const listRef = ref<HTMLUListElement | null>(null);
+    // The ul itself is rendered BY HkListTransition (the row enter/exit
+    // choreography, motion section below), so the viewport element is
+    // resolved off the component instance's $el instead of a direct ref.
+    const listHostRef = ref<{ $el?: Element } | null>(null);
     const listWrapRef = ref<HTMLDivElement | null>(null);
     let listScrollbar: OverlayScrollbarHandle | null = null;
     function detachListScrollbar() {
@@ -127,12 +159,13 @@ export default defineComponent({
      *  both modalities. */
     function syncListScrollbar() {
       nextTick(() => {
-        if (!open.value || !listRef.value) {
+        const listEl = listHostRef.value?.$el as HTMLUListElement | undefined;
+        if (!open.value || !listEl) {
           detachListScrollbar();
           return;
         }
         if (!listScrollbar) {
-          listScrollbar = attachOverlayScrollbars(listRef.value, {
+          listScrollbar = attachOverlayScrollbars(listEl, {
             axis: "vertical",
             host: listWrapRef.value ?? undefined,
           });
@@ -198,10 +231,122 @@ export default defineComponent({
         .join("|"),
     );
 
+    // ── the empty handover (motion, user direction 2026-11-20) ──────
+    // The list is the scroll container AND the containing block of the
+    // leaving ghosts (pinLeaveGeometry pins them `position: absolute`
+    // inside it — see HkNotificationBell.scss). A ghost is therefore
+    // clipped by the list and scrolls with its content, which is what
+    // keeps the fade where the user saw the row. The price: the content
+    // box shrinks by the leaving row the moment it lifts, so the
+    // BOTTOM-most ghost falls outside the scrollport and is cropped for
+    // its whole fade — measured in real Chrome (2026-11-20), the
+    // last-row dismiss, the bottom-row dismiss and Clear-all all
+    // vanished instantly. So every shrink holds the pre-patch height for
+    // the leave window (the ghosts play inside it); only when the list
+    // ends up empty does the handover go on to the caption, and that
+    // caption must NOT ride the same patch — it would paint under the
+    // first departing ghost and read as "No notifications yet" through a
+    // fading row.
+    //
+    // LEAVE_MS mirrors HkListTransition's own REPORT_MS: the slowest
+    // pop enter/leave runs --duration-normal (0.3s).
+    const LEAVE_MS = 320;
+    const listHoldHeight = ref<number | null>(null);
+    let holdTimer: ReturnType<typeof setTimeout> | null = null;
+    /** Reduced motion, the bus park flag, or the GLOBAL CSS switch — any
+     *  of them ends the choreography in a frame, so the hold would only
+     *  leave a blank, caption-less box behind. All three are checked: the
+     *  attribute is writable directly through the exported
+     *  `setCssAnimationsEnabled` (a documented performance-suspension
+     *  path), which never touches the bus park flag — the house precedents
+     *  (HkTransitionContainer, HkJsonTree) read the attribute for exactly
+     *  this reason (2026-11-20 review, S2). */
+    function motionCollapsed(): boolean {
+      if (!isCssAnimationsEnabled() || isAnimationParked()) return true;
+      return (
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      );
+    }
+    // The hold is keyed on ROW IDENTITY, not on the count: a re-record that
+    // rewrites an existing entry's content key removes one row and adds
+    // another in the SAME patch (the journal upserts by id — pollers call
+    // it every cycle), so a count-based trigger would silently skip the
+    // hold exactly when the bottom row is the one replaced (2026-11-20
+    // closing review, F3).
+    let prevKeys: string[] = groups.value.map((g) => g.key);
+    /** Any ghost still mid-leave? A held list must not be released while
+     *  one is in flight — the release is what crops it (F4). */
+    function hasFadingGhost(): boolean {
+      const listEl = listHostRef.value?.$el as HTMLElement | undefined;
+      return listEl ? listEl.querySelector('[class*="-leave-active"]') !== null : false;
+    }
+    function releaseHold() {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      listHoldHeight.value = null;
+    }
+    function armHoldWindow() {
+      if (holdTimer) clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        listHoldHeight.value = null;
+        holdTimer = null;
+      }, LEAVE_MS);
+    }
+    watch(
+      () => groups.value.map((g) => g.key).join("\u0001"),
+      () => {
+        const keys = groups.value.map((g) => g.key);
+        const previous = prevKeys;
+        prevKeys = keys;
+        // Removed = a key that was here is gone (a replacement counts).
+        const removed = previous.some((k) => !keys.includes(k));
+        if (removed) {
+          // The hold is not an empty-state nicety — it is what keeps the
+          // BOTTOM-most departing row visible: its pinned ghost sits at the
+          // pre-patch offset inside the scroller, so the moment the box
+          // shrinks the ghost falls outside the scrollport and is clipped
+          // for its whole fade. Measured in real Chrome, 2026-11-20.
+          if (motionCollapsed()) {
+            releaseHold();
+            return;
+          }
+          // Measured in the pre-flush watcher: the DOM still holds the
+          // rows, so the value lands in the same patch that starts the
+          // leaves.
+          const listEl = listHostRef.value?.$el as HTMLElement | undefined;
+          const measured = listEl?.offsetHeight ?? 0;
+          if (measured > 0) listHoldHeight.value = measured;
+          armHoldWindow();
+          return;
+        }
+        // No removal: an arrival (or a reorder). Keep holding only while
+        // an earlier batch is still fading; otherwise release at once so
+        // the new row animates into a natural-height list.
+        if (hasFadingGhost() && listHoldHeight.value !== null) {
+          armHoldWindow();
+          return;
+        }
+        releaseHold();
+      },
+    );
+    /** The caption waits for the handover: no rows AND no hold window. */
+    const showEmptyCaption = computed(
+      () => groups.value.length === 0 && listHoldHeight.value === null,
+    );
+
     // Open = read receipt. Watching the flag (not wiring it into the
     // toggle) keeps the receipt honest for sheet-scrim closes too.
     watch(open, (v) => {
       if (v) markAllRead();
+      // Closing unmounts the panel body (ghosts go with it), so a hold that
+      // survived the close would re-mount a row-less list at the stale
+      // height with the caption still suppressed — a blank panel for the
+      // rest of the window (2026-11-20 closing review, F5).
+      releaseHold();
       syncListScrollbar();
     });
     // Rows mount/unmount/change while open too (empty↔list swaps, new
@@ -209,6 +354,12 @@ export default defineComponent({
     // the engine's box ResizeObserver cannot see.
     watch(rowSignature, () => syncListScrollbar());
     onUnmounted(detachListScrollbar);
+    onUnmounted(() => {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+    });
 
     /** The toast's copy affordance, carried over: same clipboard write
      *  path (useClipboard), but the payload is the journal's own shape —
@@ -396,27 +547,50 @@ export default defineComponent({
             title={label}
           >
             <div class="hk-notification-center">
-              {sorted.value.length === 0 ? (
-                <p class="hk-notification-center__empty">
-                  {t("hikari::notificationCenter.empty", "No notifications yet")}
-                </p>
-              ) : (
-                <>
-                  <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
-                    <ul class="hk-notification-center__list" role="list" ref={listRef}>
-                      {groups.value.map(renderRow)}
-                    </ul>
-                  </div>
-                  <div class="hk-notification-center__foot">
-                    {/* The wipe glyph reads before the label is parsed —
-                        a destructive affordance announced by its icon
-                        (user direction 2026-11-19), from the same lucide
-                        family the row glyphs already speak. */}
-                    <HkButton variant="ghost" size="sm" icon="Trash2" onClick={() => reset()}>
-                      {t("hikari::notificationCenter.clearAll", "Clear all")}
-                    </HkButton>
-                  </div>
-                </>
+              {/* The list wrap stays MOUNTED while the panel is open — the
+                  empty caption lives inside it, beside the (row-less) list.
+                  Tearing the TransitionGroup down on the empty swap would
+                  cancel the leave choreography mid-flight (Vue runs child
+                  leave transitions only while the group itself stays
+                  mounted), so "Clear all" and a last-row dismiss would snap
+                  instead of fading. The foot keeps its empty-hides rule. */}
+              <div class="hk-notification-center__list-wrap" ref={listWrapRef}>
+                <HkListTransition
+                  tag="ul"
+                  variant="pop"
+                  move
+                  class="hk-notification-center__list"
+                  {...{
+                    role: "list",
+                    // While the caption carries the message the (row-less)
+                    // list must not be announced as an empty list beside it.
+                    "aria-hidden": showEmptyCaption.value ? "true" : undefined,
+                  }}
+                  style={
+                    listHoldHeight.value === null
+                      ? undefined
+                      : { minHeight: `${listHoldHeight.value}px` }
+                  }
+                  ref={listHostRef}
+                >
+                  {groups.value.map(renderRow)}
+                </HkListTransition>
+                {showEmptyCaption.value && (
+                  <p class="hk-notification-center__empty">
+                    {t("hikari::notificationCenter.empty", "No notifications yet")}
+                  </p>
+                )}
+              </div>
+              {groups.value.length > 0 && (
+                <div class="hk-notification-center__foot">
+                  {/* The wipe glyph reads before the label is parsed —
+                      a destructive affordance announced by its icon
+                      (user direction 2026-11-19), from the same lucide
+                      family the row glyphs already speak. */}
+                  <HkButton variant="ghost" size="sm" icon="Trash2" onClick={() => reset()}>
+                    {t("hikari::notificationCenter.clearAll", "Clear all")}
+                  </HkButton>
+                </div>
               )}
             </div>
           </HkPopover>

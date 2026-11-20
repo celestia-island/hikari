@@ -55,6 +55,40 @@ chrome ; la surface est un `HkPopover` avec `sheetOnMobile` — flyout
 ancré sur les écrans larges, feuille inférieure sur téléphone, avec un
 franchissement de point de rupture sûr en direct.
 
+## Animation
+
+L'ajout et le retrait d'une ligne sont chorégraphiés par
+`HkListTransition` — la primitive de liste de la bibliothèque, celle que
+le fil d'Ariane des modales, le champ d'étiquettes, la surface de mot de
+passe, le sélecteur d'affixes et le waterfall utilisent déjà — dans sa variante `pop` (un fondu qui se pose depuis une légère
+mise à l'échelle) avec des déplacements FLIP : les lignes restantes
+glissent dans l'espace libéré par celle qui disparaît. Deux propriétés
+viennent de la primitive et de la plateforme, pas de la cloche : elle
+**signale** chaque lot d'entrée/sortie au contexte d'animation
+d'exécution (`runtime/animationBus.ts`, pour que les pairs JS sachent
+qu'une transition est en cours), et ses propres règles de réduction des
+animations, avec l'interrupteur global d'animations CSS
+(`html[data-css-animations="0"]`), replient le mouvement.
+
+Trois conséquences vérifiables :
+
+- Ouvrir le panneau ne rejoue pas l'entrée de la liste (`appear` reste
+  désactivé) — seules les lignes qui arrivent ou partent réellement
+  s'animent.
+- Le conteneur de la liste survit au basculement vers l'état vide : un
+  journal sans ligne garde la liste montée, car démonter un groupe de
+  transitions annule ses fantômes sortants en plein vol.
+- La bascule vers l'état vide se fait en deux temps : pendant que la
+  dernière ligne (ou « Tout effacer ») s'estompe, la liste conserve sa
+  dernière hauteur — une ligne sortante est positionnée À L'INTÉRIEUR du
+  conteneur de défilement, donc une liste qui rétrécit rognerait son propre
+  fantôme (vrai pour la ligne la plus basse de N'IMPORTE quel retrait, pas
+  seulement du vidage) — et le texte « Aucune notification » n'apparaît
+  qu'après la fenêtre de sortie. Un hôte qui replie le mouvement (requête
+  `prefers-reduced-motion`, drapeau park du bus, ou
+  `html[data-css-animations="0"]`) saute entièrement ce maintien et reçoit
+  le texte immédiatement.
+
 ## Implémentation de référence
 
 `runtime/notificationCenter.ts` (le journal et ses crochets sources) +

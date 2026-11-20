@@ -50,6 +50,18 @@
   max-height: min(24rem, 55vh);
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The list is ALSO the containing block for HkListTransition's leaving
+     ghosts (rows leaving under the `pop` variant are lifted to
+     `position: absolute` and pinned to their pre-patch box by
+     pinLeaveGeometry). Without this the nearest positioned ancestor is
+     the track-hosting wrapper OUTSIDE the scroller: the ghost then
+     escapes the scroll clip and is pinned in LAYOUT coordinates while
+     the viewport is scrolled — a row dismissed from a scrolled list
+     painted hundreds of pixels away from where the user saw it (real
+     Chrome measurement, 2026-11-20: 629px drift on a 98px viewport).
+     With `relative` the ghost lives inside the scroller, is clipped by
+     it, and moves with the content. */
+  position: relative;
   /* Native-scrollbar invariant (nativeScrollbar.contract.test.ts): the
      list keeps native overflow mechanics, the platform bar never
      paints — overlay scrollbars ride the popup chrome instead. */

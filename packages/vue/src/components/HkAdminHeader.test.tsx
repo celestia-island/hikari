@@ -459,6 +459,22 @@ describe("HkAdminHeader brand slot (opt-in site mark)", () => {
     expect(avatarButton(c)).toBeNull();
   });
 
+  // The slot is the FIRST of the two opt-in channels, so it must work ALONE:
+  // the dual-channel case above cannot see `brandMounted` losing its slot leg
+  // (`!!props.brandSrc` survives the whole suite with this case missing —
+  // review round R2'' mutation M-A).
+  it("mounts the brand face from the slot alone, without brandSrc", () => {
+    const c = mount(headerNode(
+      {},
+      { brand: () => h("span", { class: "slot-only-mark" }, "slot only") },
+    ));
+    expect(c.querySelector(".slot-only-mark")?.textContent).toBe("slot only");
+    // The brand face replaced the avatar identity trigger…
+    expect(avatarButton(c)).toBeNull();
+    // …and no fallback logo renders — the slot IS the brand, not a default.
+    expect(c.querySelector(".hk-logo")).toBeNull();
+  });
+
   it("never renders the brand on the drawer face and keeps the drawer path alive", async () => {
     const clicks: number[] = [];
     const c = mount(headerNode({

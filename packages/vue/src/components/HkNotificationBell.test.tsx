@@ -610,48 +610,154 @@ describe("panel rows", () => {
   });
 
   it("motion-collapsed hosts skip the hold and get the caption at once", async () => {
-    // Round-5 finding, M2: deleting the reduced-motion/switch skip stayed
-    // green repo-wide. The skip must fire for BOTH switches — the bus park
-    // flag (setReducedMotion, what useReducedMotion drives) and the global
-    // CSS attribute (the exported setCssAnimationsEnabled, a documented
-    // performance-suspension path that never touches the bus).
+    // Round-5/round-6 findings: deleting the skip stayed green repo-wide.
+    // All three arms must be exercised INDEPENDENTLY — `setReducedMotion`
+    // also flips the CSS attribute (animationBus.ts), so a "bus parked"
+    // case alone never reaches `isAnimationParked()`, and the media query
+    // arm is a separate host class (a host that never wired
+    // useReducedMotion at boot).
     await setLocale("en");
-    const cases: Array<[string, () => void]> = [
-      ["bus parked", () => setReducedMotion(true)],
-      ["global CSS switch off", () => setCssAnimationsEnabled(false)],
+    const originalMatchMedia = window.matchMedia;
+    let mmMatches = false;
+    window.matchMedia = ((query: string) => ({
+      matches: mmMatches && query.includes("prefers-reduced-motion"),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    const cases: Array<[string, () => void, () => void]> = [
+      ["bus parked", () => setReducedMotion(true), () => setReducedMotion(false)],
+      [
+        "global CSS switch off",
+        () => setCssAnimationsEnabled(false),
+        () => setCssAnimationsEnabled(true),
+      ],
+      // The two flags can diverge: a host re-enabling the attribute while
+      // the bus stays parked reaches the park read on its own.
+      [
+        "bus parked with the attribute re-enabled",
+        () => {
+          setReducedMotion(true);
+          setCssAnimationsEnabled(true);
+        },
+        () => setReducedMotion(false),
+      ],
+      [
+        "OS reduced-motion query",
+        () => {
+          mmMatches = true;
+        },
+        () => {
+          mmMatches = false;
+        },
+      ],
     ];
-    for (const [label, collapse] of cases) {
-      recordNotification({ id: `${label}:a`, kind: "toast", tone: "error", title: `row ${label}` });
-      mountBell();
-      await settle();
-      bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
-      await settle();
-      Object.defineProperty(
-        document.querySelector(".hk-notification-center__list")!,
-        "offsetHeight",
-        { value: 96, configurable: true },
-      );
-      collapse();
-      resetNotifications();
-      await nextTick();
-      // No hold (the CSS has already collapsed the transition) …
-      expect(
-        document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
-        `${label}: the hold is skipped`,
-      ).toBe("");
-      // … and the caption is handed over in the SAME tick.
-      expect(
-        document.querySelector(".hk-notification-center__empty"),
-        `${label}: caption available immediately`,
-      ).toBeTruthy();
+    try {
+      for (const [label, collapse, restore] of cases) {
+        recordNotification({
+          id: `${label}:a`,
+          kind: "toast",
+          tone: "error",
+          title: `row ${label}`,
+        });
+        mountBell();
+        await settle();
+        bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+        await settle();
+        Object.defineProperty(
+          document.querySelector(".hk-notification-center__list")!,
+          "offsetHeight",
+          { value: 96, configurable: true },
+        );
+        collapse();
+        resetNotifications();
+        await nextTick();
+        // No hold (the CSS has already collapsed the transition) …
+        expect(
+          document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+          `${label}: the hold is skipped`,
+        ).toBe("");
+        // … and the caption is handed over in the SAME tick.
+        expect(
+          document.querySelector(".hk-notification-center__empty"),
+          `${label}: caption available immediately`,
+        ).toBeTruthy();
+        restore();
+        setReducedMotion(false);
+        setCssAnimationsEnabled(true);
+        for (const m of mounts.splice(0)) {
+          m.app.unmount();
+          m.container.remove();
+        }
+        document.body
+          .querySelectorAll(".hk-popover-scrim, .hk-popover-panel")
+          .forEach((el) => el.remove());
+      }
+    } finally {
+      // A failing assertion must not leave the global switches flipped for
+      // the rest of the file (the cascade would mask the real signal).
       setReducedMotion(false);
       setCssAnimationsEnabled(true);
-      for (const m of mounts.splice(0)) {
-        m.app.unmount();
-        m.container.remove();
-      }
-      document.body.querySelectorAll(".hk-popover-scrim, .hk-popover-panel").forEach((el) => el.remove());
+      window.matchMedia = originalMatchMedia;
     }
+  });
+
+  it("a same-id re-record that replaces the row still holds the height", async () => {
+    // Closing review F3: the journal upserts BY ID, so a poller rewriting an
+    // entry's content changes the row's identity in place — one key out,
+    // one key in, the COUNT unchanged. A count-keyed hold would skip it and
+    // crop the bottom ghost exactly then.
+    await setLocale("en");
+    recordNotification({ id: "poll", kind: "toast", tone: "error", title: "before" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    Object.defineProperty(document.querySelector(".hk-notification-center__list")!, "offsetHeight", {
+      value: 88,
+      configurable: true,
+    });
+    recordNotification({ id: "poll", kind: "toast", tone: "error", title: "after" });
+    await nextTick();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+      "a content-key replacement holds too",
+    ).toBe("88px");
+    expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
+  });
+
+  it("closing mid-hold leaves no stale height behind for the next open", async () => {
+    // Closing review F5: closing unmounts the panel body, so a surviving
+    // hold would greet the next open as a blank panel at the old height
+    // with the caption still suppressed.
+    await setLocale("en");
+    recordNotification({ id: "a", kind: "toast", tone: "error", title: "one" });
+    mountBell();
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    Object.defineProperty(document.querySelector(".hk-notification-center__list")!, "offsetHeight", {
+      value: 64,
+      configurable: true,
+    });
+    resetNotifications();
+    await nextTick();
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+    ).toBe("64px");
+    // Close (inside the window) and reopen at once.
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await settle();
+    const list = document.querySelector<HTMLElement>(".hk-notification-center__list")!;
+    expect(list, "the list is back").toBeTruthy();
+    expect(list.style.minHeight, "no stale hold").toBe("");
+    expect(document.querySelector(".hk-notification-center__empty")).toBeTruthy();
   });
 
   it("a PARTIAL dismiss holds the list height too (the bottom ghost is not cropped)", async () => {
@@ -714,7 +820,7 @@ describe("panel rows", () => {
     const clearBtn = Array.from(
       document.querySelectorAll<HTMLButtonElement>(".hk-notification-center__foot .hk-btn"),
     ).find((b) => b.textContent?.includes("Clear all"))!;
-    // jsdom has no layout, so the hold's pre-patch height read needs a
+    // happy-dom has no layout, so the hold's pre-patch height read needs a
     // stub — otherwise lastListHeight stays 0 and the window below is
     // unobservable here (the real-browser behaviour is measured in the
     // PR record; jsdom can only pin the resulting style/caption gates).

@@ -268,43 +268,68 @@ export default defineComponent({
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       );
     }
-    let prevRowCount = groups.value.length;
+    // The hold is keyed on ROW IDENTITY, not on the count: a re-record that
+    // rewrites an existing entry's content key removes one row and adds
+    // another in the SAME patch (the journal upserts by id — pollers call
+    // it every cycle), so a count-based trigger would silently skip the
+    // hold exactly when the bottom row is the one replaced (2026-11-20
+    // closing review, F3).
+    let prevKeys: string[] = groups.value.map((g) => g.key);
+    /** Any ghost still mid-leave? A held list must not be released while
+     *  one is in flight — the release is what crops it (F4). */
+    function hasFadingGhost(): boolean {
+      const listEl = listHostRef.value?.$el as HTMLElement | undefined;
+      return listEl ? listEl.querySelector('[class*="-leave-active"]') !== null : false;
+    }
+    function releaseHold() {
+      if (holdTimer) {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+      }
+      listHoldHeight.value = null;
+    }
+    function armHoldWindow() {
+      if (holdTimer) clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => {
+        listHoldHeight.value = null;
+        holdTimer = null;
+      }, LEAVE_MS);
+    }
     watch(
-      () => groups.value.length,
-      (count) => {
-        const previous = prevRowCount;
-        prevRowCount = count;
-        if (holdTimer) {
-          clearTimeout(holdTimer);
-          holdTimer = null;
+      () => groups.value.map((g) => g.key).join("\u0001"),
+      () => {
+        const keys = groups.value.map((g) => g.key);
+        const previous = prevKeys;
+        prevKeys = keys;
+        // Removed = a key that was here is gone (a replacement counts).
+        const removed = previous.some((k) => !keys.includes(k));
+        if (removed) {
+          // The hold is not an empty-state nicety — it is what keeps the
+          // BOTTOM-most departing row visible: its pinned ghost sits at the
+          // pre-patch offset inside the scroller, so the moment the box
+          // shrinks the ghost falls outside the scrollport and is clipped
+          // for its whole fade. Measured in real Chrome, 2026-11-20.
+          if (motionCollapsed()) {
+            releaseHold();
+            return;
+          }
+          // Measured in the pre-flush watcher: the DOM still holds the
+          // rows, so the value lands in the same patch that starts the
+          // leaves.
+          const listEl = listHostRef.value?.$el as HTMLElement | undefined;
+          const measured = listEl?.offsetHeight ?? 0;
+          if (measured > 0) listHoldHeight.value = measured;
+          armHoldWindow();
+          return;
         }
-        // Rows arriving (or an unrelated change): release immediately so
+        // No removal: an arrival (or a reorder). Keep holding only while
+        // an earlier batch is still fading; otherwise release at once so
         // the new row animates into a natural-height list.
-        if (count >= previous) {
-          listHoldHeight.value = null;
+        if (hasFadingGhost() && listHoldHeight.value !== null) {
+          armHoldWindow();
           return;
         }
-        // Rows LEFT. The hold is not an empty-state nicety — it is what
-        // keeps the last row of ANY removal visible: a pinned ghost is
-        // positioned inside the scroller at its pre-patch offset, so the
-        // moment the box shrinks by one row the bottom-most ghost falls
-        // outside the scrollport and is clipped away for the whole fade
-        // (the empty case is just the extreme). Measured in real Chrome,
-        // 2026-11-20; the round-4 review generalised it from "only when
-        // the list empties" to every shrink.
-        if (motionCollapsed()) {
-          listHoldHeight.value = null;
-          return;
-        }
-        // Measured in the pre-flush watcher: the DOM still holds the rows,
-        // and the value lands in the same patch that starts the leaves.
-        const listEl = listHostRef.value?.$el as HTMLElement | undefined;
-        const measured = listEl?.offsetHeight ?? 0;
-        listHoldHeight.value = measured > 0 ? measured : null;
-        holdTimer = setTimeout(() => {
-          listHoldHeight.value = null;
-          holdTimer = null;
-        }, LEAVE_MS);
+        releaseHold();
       },
     );
     /** The caption waits for the handover: no rows AND no hold window. */
@@ -316,6 +341,11 @@ export default defineComponent({
     // toggle) keeps the receipt honest for sheet-scrim closes too.
     watch(open, (v) => {
       if (v) markAllRead();
+      // Closing unmounts the panel body (ghosts go with it), so a hold that
+      // survived the close would re-mount a row-less list at the stale
+      // height with the caption still suppressed — a blank panel for the
+      // rest of the window (2026-11-20 closing review, F5).
+      releaseHold();
       syncListScrollbar();
     });
     // Rows mount/unmount/change while open too (empty↔list swaps, new
@@ -529,7 +559,12 @@ export default defineComponent({
                   variant="pop"
                   move
                   class="hk-notification-center__list"
-                  {...{ role: "list" }}
+                  {...{
+                    role: "list",
+                    // While the caption carries the message the (row-less)
+                    // list must not be announced as an empty list beside it.
+                    "aria-hidden": showEmptyCaption.value ? "true" : undefined,
+                  }}
                   style={
                     listHoldHeight.value === null
                       ? undefined

@@ -870,15 +870,19 @@ describe("HkDebugFloat stylesheet contract", () => {
     // interactive={false}: the whole window stops taking pointers, and a
     // host-marked subtree re-enables hit testing explicitly so exactly
     // one control (the unlock affordance) stays live.
+    // Presence selector (the HkModelCard convention): the attribute is
+    // emitted with an EMPTY value, so an equal-value selector would never
+    // match — the regression this guard exists to catch (it shipped once).
     expect(css).toMatch(
-      /\.hk-debug-float\[data-interactive=false\]\s*\{\s*pointer-events:\s*none;/,
+      /\.hk-debug-float\[data-interactive\]\s*\{\s*pointer-events:\s*none;/,
     );
+    expect(css).not.toMatch(/\[data-interactive="false"\]/);
     expect(css).toMatch(
-      /\.hk-debug-float\[data-interactive=false\] \[data-hk-debug-float-pointer\]\s*\{\s*pointer-events:\s*auto;/,
+      /\.hk-debug-float\[data-interactive\] \[data-hk-debug-float-pointer\]\s*\{\s*pointer-events:\s*auto;/,
     );
     // The lock is static — a click-through window has no hover to fade on.
     expect(css).toMatch(
-      /\.hk-debug-float\[data-interactive=false\] \[data-el=fade\]\s*\{\s*transition:\s*none;/,
+      /\.hk-debug-float\[data-interactive\] \[data-el=fade\]\s*\{\s*transition:\s*none;/,
     );
   });
 

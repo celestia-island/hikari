@@ -44,14 +44,18 @@
  * FLIP-glide into the space a dismissed one frees. No bespoke row
  * transition lives here (contract test pins this).
  *
- * Two structural consequences of riding it:
+ * Three structural consequences of riding it:
  *  - the list wrap stays mounted across the empty swap, because a
  *    torn-down TransitionGroup cancels its leaving ghosts mid-flight;
- *  - the empty caption waits out the leave window AND the list holds its
- *    last height meanwhile. A leaving row is lifted to `position:
- *    absolute` inside the list (which is the scroll container), so the
- *    moment the last row leaves the list's content box collapses to zero
- *    and would crop its own ghost; measured in real Chrome, 2026-11-20.
+ *  - on ANY row-count decrease the list holds its pre-patch height for
+ *    the leave window. A leaving row is lifted to `position: absolute`
+ *    inside the list (which is the scroll container), so as soon as the
+ *    box shrinks by one row the bottom-most ghost falls outside the
+ *    scrollport and is cropped — the empty case is only the extreme.
+ *    Measured in real Chrome, 2026-11-20;
+ *  - the empty caption mounts only after that window, and the hold is
+ *    skipped entirely when motion is collapsed (reduced-motion media
+ *    query, the bus park flag, or the global CSS-animation attribute).
  *
  * Renders nothing extra while the journal is empty beyond the bell
  * itself — an empty notification center still shows its (disabled-
@@ -80,6 +84,7 @@ import {
   type HkNotificationEntry,
   type HkNotificationTone,
 } from "../runtime/notificationCenter";
+import { isCssAnimationsEnabled } from "../animation/registerAnimations";
 import { isAnimationParked } from "../runtime/animationBus";
 import { useClipboard } from "../runtime/useClipboard";
 import HkIconButton from "./HkIconButton";
@@ -230,26 +235,33 @@ export default defineComponent({
     // leaving ghosts (pinLeaveGeometry pins them `position: absolute`
     // inside it — see HkNotificationBell.scss). A ghost is therefore
     // clipped by the list and scrolls with its content, which is what
-    // keeps the fade where the user saw the row. The price: with no
-    // in-flow row left the content box collapses to zero and crops its
-    // own ghost — measured in real Chrome (2026-11-20), the last-row
-    // dismiss and Clear-all both vanished instantly. So the emptying
-    // patch hands over in two beats: the list keeps its last height for
-    // the leave window (the ghosts play inside it), and only then does
-    // the empty caption mount. The caption must NOT ride the same patch
-    // either — it would paint under the first departing ghost and read
-    // as "No notifications yet" through a fading row.
+    // keeps the fade where the user saw the row. The price: the content
+    // box shrinks by the leaving row the moment it lifts, so the
+    // BOTTOM-most ghost falls outside the scrollport and is cropped for
+    // its whole fade — measured in real Chrome (2026-11-20), the
+    // last-row dismiss, the bottom-row dismiss and Clear-all all
+    // vanished instantly. So every shrink holds the pre-patch height for
+    // the leave window (the ghosts play inside it); only when the list
+    // ends up empty does the handover go on to the caption, and that
+    // caption must NOT ride the same patch — it would paint under the
+    // first departing ghost and read as "No notifications yet" through a
+    // fading row.
     //
     // LEAVE_MS mirrors HkListTransition's own REPORT_MS: the slowest
     // pop enter/leave runs --duration-normal (0.3s).
     const LEAVE_MS = 320;
     const listHoldHeight = ref<number | null>(null);
     let holdTimer: ReturnType<typeof setTimeout> | null = null;
-    /** Reduced motion / the global CSS switch end the choreography in one
-     *  frame, so the hold would only leave a blank box behind — skip it
-     *  and hand the caption over immediately (2026-11-20 review, S3). */
+    /** Reduced motion, the bus park flag, or the GLOBAL CSS switch — any
+     *  of them ends the choreography in a frame, so the hold would only
+     *  leave a blank, caption-less box behind. All three are checked: the
+     *  attribute is writable directly through the exported
+     *  `setCssAnimationsEnabled` (a documented performance-suspension
+     *  path), which never touches the bus park flag — the house precedents
+     *  (HkTransitionContainer, HkJsonTree) read the attribute for exactly
+     *  this reason (2026-11-20 review, S2). */
     function motionCollapsed(): boolean {
-      if (isAnimationParked()) return true;
+      if (!isCssAnimationsEnabled() || isAnimationParked()) return true;
       return (
         typeof window !== "undefined" &&
         typeof window.matchMedia === "function" &&

@@ -81,9 +81,13 @@ Trois conséquences vérifiables :
 - La bascule vers l'état vide se fait en deux temps : pendant que la
   dernière ligne (ou « Tout effacer ») s'estompe, la liste conserve sa
   dernière hauteur — une ligne sortante est positionnée À L'INTÉRIEUR du
-  conteneur de défilement, donc une liste écrasée rognerait son propre
-  fantôme — et le texte « Aucune notification » n'apparaît qu'après la
-  fenêtre de sortie.
+  conteneur de défilement, donc une liste qui rétrécit rognerait son propre
+  fantôme (vrai pour la ligne la plus basse de N'IMPORTE quel retrait, pas
+  seulement du vidage) — et le texte « Aucune notification » n'apparaît
+  qu'après la fenêtre de sortie. Un hôte qui replie le mouvement (requête
+  `prefers-reduced-motion`, drapeau park du bus, ou
+  `html[data-css-animations="0"]`) saute entièrement ce maintien et reçoit
+  le texte immédiatement.
 
 ## Implémentation de référence
 

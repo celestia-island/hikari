@@ -68,9 +68,13 @@ Three consequences worth checking:
   leaving ghosts mid-flight.
 - The empty handover takes two beats: while the last row (or "Clear
   all") fades, the list keeps its last height — a leaving row is
-  positioned INSIDE the scroll container, so a collapsed list would crop
-  its own ghost — and the "No notifications yet" caption only mounts
-  after the leave window.
+  positioned INSIDE the scroll container, so a shrinking list would crop
+  its own ghost (true for the bottom-most row of ANY removal, not just
+  the emptying one) — and the "No notifications yet" caption only mounts
+  after the leave window. A host that collapses motion (the
+  `prefers-reduced-motion` query, the animation bus' park flag, or
+  `html[data-css-animations="0"]`) skips the hold entirely and gets the
+  caption at once.
 
 ## Reference implementation
 

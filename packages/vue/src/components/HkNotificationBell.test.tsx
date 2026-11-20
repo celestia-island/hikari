@@ -5,6 +5,8 @@ import HkNotificationBell from "./HkNotificationBell";
 import { recordNotification, resetNotifications, useNotificationCenter } from "../runtime/notificationCenter";
 import { raiseEmergencyAlert, resetEmergencyAlerts, snoozeEmergencyAlert } from "../runtime/useEmergencyAlert";
 import { setLocale } from "../i18n/context";
+import { setReducedMotion } from "../runtime/animationBus";
+import { setCssAnimationsEnabled } from "../animation/registerAnimations";
 
 /**
  * HkNotificationBell behavior tests:
@@ -607,6 +609,51 @@ describe("panel rows", () => {
     expect(rows()[0].textContent).toContain("keep me");
   });
 
+  it("motion-collapsed hosts skip the hold and get the caption at once", async () => {
+    // Round-5 finding, M2: deleting the reduced-motion/switch skip stayed
+    // green repo-wide. The skip must fire for BOTH switches — the bus park
+    // flag (setReducedMotion, what useReducedMotion drives) and the global
+    // CSS attribute (the exported setCssAnimationsEnabled, a documented
+    // performance-suspension path that never touches the bus).
+    await setLocale("en");
+    const cases: Array<[string, () => void]> = [
+      ["bus parked", () => setReducedMotion(true)],
+      ["global CSS switch off", () => setCssAnimationsEnabled(false)],
+    ];
+    for (const [label, collapse] of cases) {
+      recordNotification({ id: `${label}:a`, kind: "toast", tone: "error", title: `row ${label}` });
+      mountBell();
+      await settle();
+      bellButton().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await settle();
+      Object.defineProperty(
+        document.querySelector(".hk-notification-center__list")!,
+        "offsetHeight",
+        { value: 96, configurable: true },
+      );
+      collapse();
+      resetNotifications();
+      await nextTick();
+      // No hold (the CSS has already collapsed the transition) …
+      expect(
+        document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+        `${label}: the hold is skipped`,
+      ).toBe("");
+      // … and the caption is handed over in the SAME tick.
+      expect(
+        document.querySelector(".hk-notification-center__empty"),
+        `${label}: caption available immediately`,
+      ).toBeTruthy();
+      setReducedMotion(false);
+      setCssAnimationsEnabled(true);
+      for (const m of mounts.splice(0)) {
+        m.app.unmount();
+        m.container.remove();
+      }
+      document.body.querySelectorAll(".hk-popover-scrim, .hk-popover-panel").forEach((el) => el.remove());
+    }
+  });
+
   it("a PARTIAL dismiss holds the list height too (the bottom ghost is not cropped)", async () => {
     // Round-4 finding, S1: the hold is not an empty-state nicety. A pinned
     // ghost sits at its pre-patch offset inside the scroller, so ANY shrink
@@ -625,13 +672,18 @@ describe("panel rows", () => {
       value: 72,
       configurable: true,
     });
-    const last = rows().find((r) => r.textContent?.includes("three"))!;
+    // Rows sort newest-first, so the BOTTOM row is the oldest record —
+    // that is the one the hold exists for (its ghost sits at the old
+    // content bottom and would be cropped the moment the box shrinks).
+    const last = rows().find((r) => r.textContent?.includes("one"))!;
     last.querySelector<HTMLButtonElement>(
       '.hk-notification-row__actions .hk-icon-button[aria-label="Dismiss"]',
     )!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextTick();
-    // Rows remain (partial), and the list still holds its pre-patch height.
-    expect(rows().length).toBeGreaterThanOrEqual(2);
+    // Rows remain (partial) — the ghost of the dismissed row still carries
+    // the row class during its leave, so count the LIVE ones.
+    const live = rows().filter((r) => !r.className.includes("-leave-active"));
+    expect(live).toHaveLength(2);
     expect(
       document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
     ).toBe("72px");
@@ -676,8 +728,10 @@ describe("panel rows", () => {
     // During the fade: ghosts only — no caption, and the list holds its
     // last height so the ghosts are not clipped by a collapsed scroller.
     expect(document.querySelector(".hk-notification-center__empty")).toBeNull();
-    expect(document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight)
-      .toMatch(/^\d+px$/);
+    expect(
+      document.querySelector<HTMLElement>(".hk-notification-center__list")!.style.minHeight,
+      "the EXACT pre-patch height is held (a wrong-measurement mutation must red)",
+    ).toBe("120px");
     // The foot keeps its empty-hides rule (unchanged semantics).
     expect(document.querySelector(".hk-notification-center__foot")).toBeNull();
     await settle();

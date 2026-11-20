@@ -33,8 +33,10 @@
     transform var(--duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
   position: absolute;
   /* A dying row must not take clicks (or a drag) while it fades: the
-     bell's rows carry copy / dismiss / restore buttons, and this is the
-     first consumer of the pop variant with interactive rows. The
+     bell's rows carry copy / dismiss / restore buttons — the first
+     IN-LIBRARY pop consumer with interactive rows (chest's WorkspaceModal
+     already runs `pop` with clickable rows downstream, and gains this
+     dead-end for the fade window). The
      primitive's own pin sets `inert` too, but only when layout metrics
      exist — this is the CSS belt that still dead-ends a tap in a
      non-layout environment or when the pin skipped (same relationship

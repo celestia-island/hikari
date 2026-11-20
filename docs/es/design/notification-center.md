@@ -79,9 +79,13 @@ Tres consecuencias comprobables:
 - El paso a vacío ocurre en dos tiempos: mientras la última fila (o
   «Borrar todo») se desvanece, la lista conserva su última altura —una
   fila saliente se posiciona DENTRO del contenedor de desplazamiento, así
-  que una lista colapsada recortaría su propio fantasma— y el texto
+  que una lista que se encoge recortaría su propio fantasma (cierto para la
+  fila más baja de CUALQUIER retirada, no solo al vaciarse)— y el texto
   «Aún no hay notificaciones» solo aparece al terminar la ventana de
-  salida.
+  salida. Un anfitrión que repliega el movimiento (consulta
+  `prefers-reduced-motion`, bandera park del bus o
+  `html[data-css-animations="0"]`) se salta la retención por completo y
+  recibe el texto de inmediato.
 
 ## Implementación de referencia
 

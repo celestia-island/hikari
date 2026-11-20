@@ -182,6 +182,38 @@ describe("HkAdminHeader × HkAvatarButton / identity slot", () => {
     expect(c.querySelector(".s-admin-header-user")).toBeTruthy();
   });
 
+  it("renders the NORMALIZED url in the dropdown identity image", () => {
+    // Pins the BINDING of the admin-header call site (R3 mutation D): a
+    // padded URL must reach the <img> trimmed; a raw-prop revert renders
+    // the padded value and fails this test.
+    const c = mount(h(HkAdminHeader, { username: "yuzu", avatarUrl: "  /a.png  ", title: "D" }));
+    trigger(c).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return Promise.resolve().then(async () => {
+      await nextTick();
+      await nextTick();
+      const img = document.body.querySelector(
+        ".s-user-header--profile img.s-user-avatar-img",
+      ) as HTMLImageElement | null;
+      expect(img).toBeTruthy();
+      expect(img!.getAttribute("src")).toBe("/a.png");
+    });
+  });
+
+  it("treats a whitespace-only avatarUrl as absent — the dropdown <img> never mounts", () => {
+    const c = mount(h(HkAdminHeader, { username: "yuzu", avatarUrl: "   ", title: "D" }));
+    trigger(c).dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    return Promise.resolve().then(async () => {
+      await nextTick();
+      await nextTick();
+      expect(
+        document.body.querySelector(".s-user-header--profile img.s-user-avatar-img"),
+      ).toBeNull();
+      expect(
+        document.body.querySelector(".s-user-header--profile .s-user-avatar")?.textContent,
+      ).toBe("Y");
+    });
+  });
+
   it("heals the dropdown identity image with the shared latch", async () => {
     // The fourth copy R2 caught: HkAdminHeader's in-menu identity image
     // used its own failed-load ref. It must behave exactly like the trigger

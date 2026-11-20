@@ -50,6 +50,24 @@ describe("HkMenuIdentityItem", () => {
     expect(c.querySelector(".hk-menu-identity-item__fallback")?.textContent).toBe("Y");
   });
 
+  it("renders the NORMALIZED url, not the raw prop", () => {
+    // Pins the BINDING, not just the decision (R3 mutation C): a padded
+    // URL must reach the <img> trimmed. A revert to the raw prop renders
+    // `  /a.webp  ` in the src attribute and fails this test (a
+    // whitespace-ONLY input cannot discriminate — the guard hides the img
+    // in both implementations).
+    const c = mount(h(HkMenuIdentityItem, { name: "yuzu", avatarUrl: "  /a.webp  " }));
+    const img = c.querySelector("img.hk-menu-identity-item__img") as HTMLImageElement | null;
+    expect(img).toBeTruthy();
+    expect(img!.getAttribute("src")).toBe("/a.webp");
+  });
+
+  it("treats a whitespace-only avatarUrl as absent — the <img> never mounts", () => {
+    const c = mount(h(HkMenuIdentityItem, { name: "yuzu", avatarUrl: "   " }));
+    expect(c.querySelector("img.hk-menu-identity-item__img")).toBeNull();
+    expect(c.querySelector(".hk-menu-identity-item__fallback")?.textContent).toBe("Y");
+  });
+
   it("retries when the avatar URL changes on the same instance", async () => {
     const url = ref("/a.webp");
     const Host = defineComponent({

@@ -33,8 +33,6 @@ const PLANET_PALETTE: &[&str] = &[
 
 // ── Pure computation helpers ──────────────────────────────────────────────
 
-/// FNV-1a hash → unit interval [0,1). Mirrors hashIdToUnit in scene3d.ts.
-
 /// JavaScript ToUint32: truncate toward zero, then modulo 2^32 (always
 /// non-negative). This is what `>>> 0` does in the TS source.
 fn to_uint32(x: f64) -> u32 {
@@ -47,6 +45,7 @@ fn to_uint32(x: f64) -> u32 {
     }
 }
 
+/// FNV-1a hash → unit interval [0,1). Mirrors hashIdToUnit in scene3d.ts.
 fn hash_id_to_unit(id: &str) -> f64 {
     let mut h: u32 = 0x811c_9dc5;
     for b in id.bytes() {
@@ -175,7 +174,7 @@ pub fn build_fleet_scene_spec(rows: &[FleetRow]) -> FleetSceneSpec {
         0.0
     } else {
         let max_brood = *brood_sizes.iter().max().unwrap_or(&0);
-        ORBIT_BASE + (max_brood.saturating_sub(1)).max(0) as f64 * ORBIT_STEP
+        ORBIT_BASE + (max_brood.saturating_sub(1)) as f64 * ORBIT_STEP
     };
 
     // Stars.

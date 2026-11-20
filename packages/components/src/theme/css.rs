@@ -532,7 +532,7 @@ impl ThemePalette {
         // (the unreadable ~1.1:1 case).
         if let Some(bg) = Color::from_hex(&self.background) {
             // The chip can land on the page background or on a card surface.
-            let surface = Color::from_hex(&self.surface).unwrap_or(bg.clone());
+            let surface = Color::from_hex(&self.surface).unwrap_or(bg);
             for (fill_hex, fg) in [
                 (&self.success, &mut self.success_fg),
                 (&self.warning, &mut self.warning_fg),

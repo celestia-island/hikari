@@ -12,7 +12,6 @@ doctest = false
 [dependencies]
 # Workspace dependencies
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
 anyhow = { workspace = true }
 include_dir = { workspace = true }
 

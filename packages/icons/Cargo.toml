@@ -31,12 +31,12 @@ anyhow = "^1"
 # Tairitsu framework (optional)
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
 tairitsu-vdom = { version = "^0.5", optional = true }
+ron.workspace = true
 tairitsu-hooks = { version = "^0.5", optional = true }
 tairitsu-macros = { version = "^0.5", optional = true }
 
 # Data serialization
 serde.workspace = true
-ron.workspace = true
 
 # WASM dependencies for runtime dynamic icon fetching. Gated on the
 # build-script-emitted cfg, not a Cargo feature.

@@ -391,7 +391,7 @@ mod semantic_tests {
     const CANONICAL_HUES: [f64; 3] = [148.0, 58.0, 20.0];
 
     fn semantic_trio(p: &Palette) -> [Color; 3] {
-        [p.success.clone(), p.warning.clone(), p.danger.clone()]
+        [p.success, p.warning, p.danger]
     }
 
     /// Every semantic fill sits on its canonical hue — the derivation must not

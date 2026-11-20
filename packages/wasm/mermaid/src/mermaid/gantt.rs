@@ -29,10 +29,10 @@ pub fn parse_gantt(source: &str) -> Option<GanttChart> {
             });
             continue;
         }
-        if let Some(task) = parse_task(line) {
-            if let Some(last) = sections.last_mut() {
-                last.tasks.push(task);
-            }
+        if let Some(task) = parse_task(line)
+            && let Some(last) = sections.last_mut()
+        {
+            last.tasks.push(task);
         }
     }
 
@@ -76,12 +76,12 @@ fn parse_task(line: &str) -> Option<GanttTask> {
             && part
                 .chars()
                 .next()
-                .map_or(false, |c| c.is_alphanumeric() || c == '_')
+                .is_some_and(|c| c.is_alphanumeric() || c == '_')
         {
             // Bare positional ID: `task : t1, 2d` → id=t1 (no `id=` prefix).
             task.id = Some(part.to_string());
         } else if task.duration.is_none()
-            && part.chars().next().map_or(false, |c| c.is_ascii_digit())
+            && part.chars().next().is_some_and(|c| c.is_ascii_digit())
             && part.ends_with(|c: char| c.is_ascii_alphabetic())
         {
             // Bare positional duration: `2d`, `1w`, `3h` etc.

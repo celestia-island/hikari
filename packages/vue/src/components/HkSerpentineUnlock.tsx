@@ -371,14 +371,9 @@ const TRACKING_TOLERANCE = 30;
               aria-hidden="true"
             />
           </div>
-          <span
-            class={{
-              "hk-serpentine-hint": true,
-              "hk-serpentine-hint--confirmed-spinner": confirmed.value,
-            }}
-            aria-live="polite">
+          <span class="hk-serpentine-hint" aria-live="polite">
             {confirmed.value
-              ? ""
+              ? "✓"
               : tracking.value || keyboardGrabbed.value
                 ? props.trackingHint
                 : props.grabHint}

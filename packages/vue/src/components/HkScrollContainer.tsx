@@ -121,9 +121,9 @@ export default defineComponent({
      *  (the viewport only scrolls while IT holds focus, so inner inputs,
      *  buttons and links keep their own key handling). */
     keyboardScroll: { type: Boolean, default: true },
-    /** ARIA role for the viewport (`region` needs a label to be announced;
-     *  a log viewer passes "log", a feed passes "feed"). Omitted = no role
-     *  attribute — plain tabbable scrolling, announcement unchanged. */
+    /** ARIA role for the viewport. Use a NON-live role ("region") for
+     *  streaming content — "log"/"feed" carry implicit live semantics and
+     *  would announce every appended line. Omitted = no role attribute. */
     scrollRole: { type: String, default: undefined },
     /** Accessible name for the viewport (announced with the role). */
     scrollLabel: { type: String, default: undefined },

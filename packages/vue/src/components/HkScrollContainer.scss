@@ -574,7 +574,5 @@
 // rides hikari's focus token so it reads as the library's focus, not a UA
 // default — and `focus-visible` keeps pointer users undisturbed.
 .hk-scroll-container-viewport:focus-visible {
-  outline: var(--hk-focus-width, 2px) solid
-    var(--hk-focus-color, color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 70%, transparent));
-  outline-offset: -2px;
+  box-shadow: 0 0 0 2px var(--hi-color-primary, #7aa2f7);
 }

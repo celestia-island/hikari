@@ -47,8 +47,14 @@ describe("HkScrollContainer keyboard scroll contract", () => {
     expect(handler.match(/event\.preventDefault\(\)/g)?.length).toBeGreaterThanOrEqual(3);
   });
 
-  it("focus indicator is :focus-visible with documented token fallbacks", () => {
+  it("focus indicator is :focus-visible with the canonical standalone fallback", () => {
     expect(scss).toContain(".hk-scroll-container-viewport:focus-visible");
-    expect(scss).toContain("--hi-color-primary");
+    // The standalone-render fallback must be the canonical literal (the
+    // token-inventory guard catches non-canonical values — verified by
+    // negative control), and the indicator follows the focus-ring mixin's
+    // box-shadow convention rather than dead custom knobs.
+    expect(scss).toContain("box-shadow: 0 0 0 2px var(--hi-color-primary, #7aa2f7)");
+    expect(scss).not.toContain("--hk-focus-width");
+    expect(scss).not.toContain("--hk-focus-color");
   });
 });

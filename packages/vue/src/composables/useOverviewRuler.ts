@@ -115,17 +115,20 @@ export function attachOverviewRuler(
 
   // ── Promotion (reference-counted; see promotedParents above) ──────────
   let promoted = false;
-  let prevPosition = "";
-  if (getComputedStyle(host).position === "static") {
-    const entry = promotedParents.get(host);
-    if (entry) {
-      entry.count += 1;
-      promoted = true;
-    } else {
-      promotedParents.set(host, { count: 1, saved: host.style.position });
-      host.style.position = "relative";
-      promoted = true;
-    }
+  // Count EVERY handle on this host, even when the host is already
+  // positioned (an earlier ruler promoted it): otherwise ruler A's detach
+  // would strip the positioning out from under a still-live ruler B —
+  // exactly the accident the overlay scrollbar's comment exists to prevent.
+  let entry = promotedParents.get(host);
+  if (!entry) {
+    entry = { count: 0, saved: host.style.position };
+    promotedParents.set(host, entry);
+  }
+  entry.count += 1;
+  promoted = true;
+  const computedPosition = getComputedStyle(host).position;
+  if (entry.count === 1 && (computedPosition === "static" || computedPosition === "")) {
+    host.style.position = "relative";
   }
 
   // ── Chrome ─────────────────────────────────────────────────────────────
@@ -152,6 +155,15 @@ export function attachOverviewRuler(
     if (horizontal) viewport.scrollLeft = v;
     else viewport.scrollTop = v;
   };
+  /** Horizontal RTL: the engine reports scrollLeft descending 0 → −maxScroll
+   *  (useOverlayScrollbar's isRtlAxis exists for exactly this axis). The
+   *  vertical axis and every LTR horizontal engine are unaffected. */
+  const rtlHorizontal = horizontal
+    && typeof getComputedStyle === "function"
+    && getComputedStyle(viewport).direction === "rtl";
+  /** The scroll position in the ruler's positive-fraction domain. */
+  const readScroll = (): number => (rtlHorizontal ? -scrollCoord() : scrollCoord());
+  const writeScroll = (v: number): void => setScrollCoord(rtlHorizontal ? -v : v);
   const contentExtent = (): number =>
     horizontal
       ? Math.max(viewport.scrollWidth, viewport.clientWidth)
@@ -170,7 +182,7 @@ export function attachOverviewRuler(
     const visible = visibleExtent();
     const maxScroll = Math.max(extent - visible, 0);
     const length = Math.min(visible / extent, 1);
-    const progress = maxScroll > 0 ? clamp01(scrollCoord() / maxScroll) : 0;
+    const progress = maxScroll > 0 ? clamp01(readScroll() / maxScroll) : 0;
     return { start: progress * (1 - length), length };
   }
 
@@ -180,7 +192,7 @@ export function attachOverviewRuler(
     const extent = contentExtent();
     const visible = visibleExtent();
     const maxScroll = Math.max(extent - visible, 0);
-    setScrollCoord(clamp01(fraction) * maxScroll);
+    writeScroll(clamp01(fraction) * maxScroll);
   }
 
   /** Strip geometry along the drag axis, for pointer→fraction math. */
@@ -262,22 +274,23 @@ export function attachOverviewRuler(
 
   // ── Pointer steering ───────────────────────────────────────────────────
   let dragging = false;
+  let dragMode: OverviewRulerCursorMode = cursorDrag;
   let dragStartClient = 0;
   let dragStartScroll = 0;
-  let dragStartPointerFraction = 0;
-  /** The cursor's own travel along the strip (strip minus cursor), the
-   *  denominator that makes thumb-drag 1:1 with the pointer. */
-  let cursorTravel = 1;
+  /** The cursor's own travel along the strip in px (strip − cursor box):
+   *  the denominator that makes thumb-drag 1:1 with the pointer — moving
+   *  the pointer the full cursor travel scrolls the full document. */
+  let cursorTravelPx = 1;
 
   function beginDrag(event: PointerEvent, fraction: number) {
     dragging = true;
+    dragMode = cursorDrag;
     dragStartClient = horizontal ? event.clientX : event.clientY;
-    dragStartScroll = scrollCoord();
-    dragStartPointerFraction = fraction;
+    dragStartScroll = readScroll();
     const extent = contentExtent();
     const visible = visibleExtent();
     const length = Math.min(visible / extent, 1);
-    cursorTravel = Math.max(length * stripExtent(), 1);
+    cursorTravelPx = Math.max((1 - length) * stripExtent(), 1);
     strip.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
@@ -295,15 +308,15 @@ export function attachOverviewRuler(
 
   function onPointerMove(event: PointerEvent) {
     if (!dragging) return;
-    const fraction = pointerFraction(event);
-    if (cursorDrag === "thumb") {
-      // 1:1: the pointer's fraction delta over the cursor's own travel.
-      const deltaFraction = fraction - dragStartPointerFraction;
+    if (dragMode === "thumb") {
+      // 1:1 with the pointer: the pointer's px delta over the cursor's own
+      // travel scales to the full scroll range.
+      const deltaPx = (horizontal ? event.clientX : event.clientY) - dragStartClient;
       const maxScroll = Math.max(contentExtent() - visibleExtent(), 0);
-      setScrollCoord(dragStartScroll + deltaFraction * maxScroll);
-    } else {
-      scrollToFraction(fraction);
+      writeScroll(dragStartScroll + (deltaPx / cursorTravelPx) * maxScroll);
+      return;
     }
+    scrollToFraction(pointerFraction(event));
   }
 
   function onPointerUp(event: PointerEvent) {
@@ -341,6 +354,11 @@ export function attachOverviewRuler(
     },
     resampleMs,
   );
+
+  // First frame now — the sampler's first tick is resampleMs away, and a
+  // bare background strip for a quarter second reads as a flash.
+  renderBands();
+  renderCursor();
 
   function detach() {
     viewport.removeEventListener("scroll", onViewportScroll);

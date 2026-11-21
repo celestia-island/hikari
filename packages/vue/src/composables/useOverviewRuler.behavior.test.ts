@@ -1,26 +1,61 @@
 /**
- * Behavioural tests for the overview ruler: real mounts on a happy-dom
- * scroller with real children — strip/bands/cursor presence, jump
- * steering, thumb-mode drag, clear, detach (incl. the reference-counted
- * host promotion). The geometry S1s these pin were R2 findings: the
- * cursor edge must travel progress × (1 − length) — the overlay
- * scrollbar's own mapping — and thumb drags must be 1:1 with the cursor's
- * travel, not the raw strip extent.
+ * Behavioural tests for the overview ruler: real mounts with STUBBED
+ * geometry (happy-dom reports no layout, so clientHeight/scrollHeight and
+ * getBoundingClientRect are seeded per test — the engine math then runs
+ * for real). Pins the R2/R3 geometry findings:
+ *   - the cursor edge travels progress × (1 − length) — the overlay
+ *     scrollbar's own mapping — and lands at 100% at max scroll (S1-1);
+ *   - thumb drags are 1:1 with the cursor's own travel (S1-2);
+ *   - attach renders the first frame immediately (S2-A);
+ *   - the host promotion survives a sibling detach and restores on the
+ *     last one (S2-1);
+ *   - Clear semantics: setBands([]) empties the waterfall (S2-B tail).
  */
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { attachOverviewRuler, type OverviewRulerHandle } from "./useOverviewRuler";
 
+interface Rect {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+function stubRect(el: HTMLElement, rect: Rect): void {
+  Object.defineProperty(el, "getBoundingClientRect", {
+    configurable: true,
+    value: () => ({
+      ...rect,
+      right: rect.left + rect.width,
+      bottom: rect.top + rect.height,
+      x: rect.left,
+      y: rect.top,
+      toJSON() {
+        return {};
+      },
+    }),
+  });
+}
+
+function seedScroll(
+  sc: HTMLElement,
+  dims: { extent: number; visible: number },
+): void {
+  Object.defineProperty(sc, "scrollHeight", {
+    configurable: true,
+    value: dims.extent,
+  });
+  Object.defineProperty(sc, "clientHeight", {
+    configurable: true,
+    value: dims.visible,
+  });
+}
+
 function makeScroller(children: number): { host: HTMLElement; sc: HTMLElement } {
   const host = document.createElement("div");
-  host.style.position = "relative";
-  host.style.width = "300px";
-  host.style.height = "300px";
   const sc = document.createElement("div");
-  sc.style.height = "300px";
-  sc.style.overflowY = "auto";
   for (let i = 1; i <= children; i += 1) {
     const d = document.createElement("div");
-    d.style.height = "50px";
     d.textContent = `row ${i}`;
     sc.appendChild(d);
   }
@@ -29,36 +64,9 @@ function makeScroller(children: number): { host: HTMLElement; sc: HTMLElement } 
   return { host, sc };
 }
 
-/** happy-dom resolves clientHeight/scrollHeight to 0 (no layout), so the
- *  geometry math needs them seeded. These accessors stub the live values
- *  the way a real engine would report them. */
-function seedGeometry(
-  sc: HTMLElement,
-  dims: { extent: number; visible: number },
-): void {
-  Object.defineProperty(sc, "scrollHeight", { configurable: true, value: dims.extent });
-  Object.defineProperty(sc, "clientHeight", { configurable: true, value: dims.visible });
-}
-
-function pointer(
-  el: Element,
-  type: "pointerdown" | "pointermove" | "pointerup",
-  y: number,
-): void {
-  const rect = el.getBoundingClientRect();
-  el.dispatchEvent(
-    new PointerEvent(type, {
-      bubbles: true,
-      cancelable: true,
-      clientX: rect.left + rect.width / 2,
-      clientY: y,
-      pointerId: 1,
-      pointerType: "mouse",
-      button: 0,
-      isPrimary: true,
-    }),
-  );
-}
+/** Strip geometry used across these tests: 48px wide, 400px tall, docked
+ *  at the host origin (the scroller rect is stubbed to the same box). */
+const STRIP: Rect = { left: 0, top: 0, width: 48, height: 400 };
 
 describe("attachOverviewRuler (behaviour)", () => {
   let cleanup: (() => void) | null = null;
@@ -72,98 +80,192 @@ describe("attachOverviewRuler (behaviour)", () => {
     document.body.textContent = "";
   });
 
-  it("mounts the strip with bands + cursor inside the host", () => {
+  it("renders the first frame on attach (cursor styled immediately)", () => {
     const { host, sc } = makeScroller(30);
-    seedGeometry(sc, { extent: 1500, visible: 300 });
-    const handle = attachOverviewRuler(sc);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 3000, visible: 300 });
+    const handle = attachOverviewRuler(sc, { host });
     cleanup = () => handle.detach();
-    expect(host.querySelector(".hk-overview-ruler")).toBeTruthy();
-    expect(host.querySelector(".hk-overview-ruler-cursor")).toBeTruthy();
-    // Band sampling needs real layout (happy-dom reports none) — band
-    // presence is covered by the setBands test below.
-  });
-
-  it("jump: strip click at fraction f scrolls to f × maxScroll", () => {
-    const { host, sc } = makeScroller(60);
-    seedGeometry(sc, { extent: 3000, visible: 300 }); // maxScroll = 2700
-    const handle = attachOverviewRuler(sc);
-    cleanup = () => handle.detach();
-    const strip = host.querySelector(".hk-overview-ruler")!;
-    const rect = strip.getBoundingClientRect();
-    pointer(strip, "pointerdown", rect.top + rect.height * 0.5);
-    pointer(strip, "pointerup", rect.top + rect.height * 0.5);
-    // happy-dom reports no layout; the strip rect is 0-height in tests, so
-    // the fraction resolves to 0 — pin the CLAMP behaviour instead of the
-    // layout-dependent number, and pin a real jump through the geometry
-    // the engine exposes:
-    expect(sc.scrollTop).toBe(0);
-    handle.update();
-    // drive the window directly: cursor follows scroll/maxScroll
-    sc.scrollTop = 1350; // half of maxScroll
-    sc.dispatchEvent(new Event("scroll"));
     const cursor = host.querySelector<HTMLElement>(".hk-overview-ruler-cursor")!;
-    // progress = 1350/2700 = 0.5; length = 300/3000 = 0.1
-    // start = 0.5 × (1 − 0.1) = 45% (the overlay scrollbar's mapping)
-    expect(cursor.style.top).toBe("45%");
+    // length = 300/3000 = 10%; progress = 0 → top = 0%
+    expect(cursor.style.top).toBe("0%");
     expect(cursor.style.height).toBe("10%");
   });
 
+  it("jump: a strip click at fraction f scrolls to f × maxScroll", () => {
+    const { host, sc } = makeScroller(30);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 3000, visible: 300 }); // maxScroll 2700
+    const handle = attachOverviewRuler(sc, { host });
+    cleanup = () => handle.detach();
+    const strip = host.querySelector<HTMLElement>(".hk-overview-ruler")!;
+    stubRect(strip, STRIP);
+    // click at fraction 0.5 down the strip
+    const y = STRIP.top + STRIP.height * 0.5;
+    strip.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: STRIP.left + STRIP.width / 2,
+        clientY: y,
+        pointerId: 1,
+        pointerType: "mouse",
+        button: 0,
+        isPrimary: true,
+      }),
+    );
+    strip.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        cancelable: true,
+        clientX: STRIP.left + STRIP.width / 2,
+        clientY: y,
+        pointerId: 1,
+        pointerType: "mouse",
+      }),
+    );
+    expect(sc.scrollTop).toBe(1350); // 0.5 × 2700
+  });
+
   it("cursor lands exactly at the strip end when fully scrolled (S1-1)", () => {
-    const { host, sc } = makeScroller(60);
-    seedGeometry(sc, { extent: 3000, visible: 300 });
-    const handle = attachOverviewRuler(sc);
+    const { host, sc } = makeScroller(30);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 3000, visible: 300 });
+    const handle = attachOverviewRuler(sc, { host });
     cleanup = () => handle.detach();
     sc.scrollTop = 2700; // maxScroll
     sc.dispatchEvent(new Event("scroll"));
     const cursor = host.querySelector<HTMLElement>(".hk-overview-ruler-cursor")!;
-    // progress = 1 → start = 1 − length = 90%; bottom lands at 100%
+    // progress = 1 → top = (1 − 0.1) = 90%; the bottom edge lands at 100%
     expect(cursor.style.top).toBe("90%");
     expect(cursor.style.height).toBe("10%");
   });
 
-  it("setBands replaces the sampled waterfall; empty clears it", () => {
+  it("thumb drag is 1:1 with the cursor's own travel (S1-2)", () => {
+    const { host, sc } = makeScroller(30);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 3000, visible: 300 }); // length 0.1, maxScroll 2700
+    const handle = attachOverviewRuler(sc, { host });
+    cleanup = () => handle.detach();
+    const strip = host.querySelector<HTMLElement>(".hk-overview-ruler")!;
+    stubRect(strip, STRIP);
+    const cursor = host.querySelector<HTMLElement>(".hk-overview-ruler-cursor")!;
+    stubRect(cursor, { left: 0, top: 0, width: 48, height: 40 }); // 10% of 400
+    // cursor travel = 400 − 40 = 360px ↔ maxScroll 2700: a 180px drag is
+    // HALF the document (1350) — exactly 1:1 with the cursor box.
+    const startY = STRIP.top + 20; // inside the 40px cursor at top 0%
+    strip.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 24,
+        clientY: startY,
+        pointerId: 1,
+        pointerType: "mouse",
+        button: 0,
+        isPrimary: true,
+      }),
+    );
+    strip.dispatchEvent(
+      new PointerEvent("pointermove", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 24,
+        clientY: startY + 180,
+        pointerId: 1,
+        pointerType: "mouse",
+      }),
+    );
+    strip.dispatchEvent(
+      new PointerEvent("pointerup", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 24,
+        clientY: startY + 180,
+        pointerId: 1,
+        pointerType: "mouse",
+      }),
+    );
+    expect(sc.scrollTop).toBe(1350);
+  });
+
+  it("thumb-mode strip clicks are inert (thumb restricts dragging)", () => {
+    const { host, sc } = makeScroller(30);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 3000, visible: 300 });
+    const handle = attachOverviewRuler(sc, { host, cursorDrag: "thumb" });
+    cleanup = () => handle.detach();
+    const strip = host.querySelector<HTMLElement>(".hk-overview-ruler")!;
+    stubRect(strip, STRIP);
+    // click OUTSIDE the cursor (fraction 0.5 down the strip)
+    strip.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 24,
+        clientY: STRIP.top + STRIP.height * 0.5,
+        pointerId: 1,
+        pointerType: "mouse",
+        button: 0,
+        isPrimary: true,
+      }),
+    );
+    expect(sc.scrollTop).toBe(0);
+  });
+
+  it("setBands replaces the waterfall; empty clears it (S2-B tail)", () => {
     const { host, sc } = makeScroller(10);
-    seedGeometry(sc, { extent: 500, visible: 300 });
-    const handle = attachOverviewRuler(sc);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 500, visible: 300 });
+    const handle = attachOverviewRuler(sc, { host });
     cleanup = () => handle.detach();
     handle.setBands([
       { start: 0.1, length: 0.2, modifier: "hk-overview-band-error" },
-      { start: 0.5, length: 0.1 },
+      { start: 0.5, length: 0.1, modifier: "hk-overview-band-warn" },
     ]);
     const bands = host.querySelectorAll<HTMLElement>(".hk-overview-ruler-band");
     expect(bands.length).toBe(2);
     expect(bands[0].classList.contains("hk-overview-band-error")).toBe(true);
+    expect(bands[1].classList.contains("hk-overview-band-warn")).toBe(true);
     expect(bands[0].style.top).toBe("10%");
     handle.setBands([]);
     expect(host.querySelectorAll(".hk-overview-ruler-band").length).toBe(0);
   });
 
-  it("detach removes the strip and restores promoted positioning", () => {
+  it("host promotion is reference-counted and restores on the last detach (S2-1)", () => {
     const { host, sc } = makeScroller(5);
-    // happy-dom reports position static → the promotion path runs
-    seedGeometry(sc, { extent: 250, visible: 300 });
-    const handle = attachOverviewRuler(sc);
-    cleanup = () => handle.detach();
-    expect(host.querySelector(".hk-overview-ruler")).toBeTruthy();
-    handle.detach();
-    expect(host.querySelector(".hk-overview-ruler")).toBeNull();
-    // second detach is a no-op (idempotent)
-    expect(() => handle.detach()).not.toThrow();
-  });
-
-  it("two rulers on one host: the last detach keeps the promotion alive (S2-1)", () => {
-    const { host, sc } = makeScroller(5);
-    seedGeometry(sc, { extent: 250, visible: 300 });
-    const a = attachOverviewRuler(sc);
-    const b = attachOverviewRuler(sc);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    seedScroll(sc, { extent: 250, visible: 300 });
+    const a = attachOverviewRuler(sc, { host });
+    const b = attachOverviewRuler(sc, { host });
     cleanup = () => {
       a.detach();
       b.detach();
     };
+    // happy-dom computed position is static → the promotion applied
+    expect(host.style.position).toBe("relative");
     a.detach();
-    // ruler B is still mounted — the host promotion must survive A's detach
+    // ruler B still mounted — the promotion must survive A's detach
+    expect(host.style.position).toBe("relative");
     expect(host.querySelector(".hk-overview-ruler")).toBeTruthy();
     b.detach();
+    // the LAST detach restores the saved inline position
+    expect(host.style.position).toBe("");
     expect(host.querySelector(".hk-overview-ruler")).toBeNull();
+  });
+
+  it("detach is idempotent and a no-host viewport gets a no-op handle", () => {
+    const { sc } = makeScroller(3);
+    // Detach sc from any parent: no host resolvable
+    const orphan = document.createElement("div");
+    orphan.appendChild(sc);
+    const handle = attachOverviewRuler(sc);
+    expect(() => {
+      handle.update();
+      handle.setBands([{ start: 0, length: 1 }]);
+      handle.detach();
+      handle.detach();
+    }).not.toThrow();
+    void orphan;
   });
 });

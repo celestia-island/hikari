@@ -51,9 +51,18 @@
   background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 28%, transparent);
   border-radius: 1px;
 
-  &[data-axis] {
-    /* axis comes from the strip; bands inherit placement via inline styles */
-  }
+}
+
+// Severity modifiers for log-style waterfalls. The `modifier` option is a
+// caller-owned styling hook — these defaults exist so the documented use
+// ("severity coloring for log lines") works out of the box; unknown
+// modifiers stay unstyled by design.
+.hk-overview-ruler-band.hk-overview-band-error {
+  background: color-mix(in srgb, var(--hi-color-danger, #d4778b) 55%, transparent);
+}
+
+.hk-overview-ruler-band.hk-overview-band-warn {
+  background: color-mix(in srgb, var(--hi-color-warning, #d9a44a) 55%, transparent);
 }
 
 .hk-overview-ruler-cursor {

@@ -390,5 +390,9 @@
   "hikari::contextmenu.copy": "Copiar",
   "hikari::contextmenu.cut": "Cortar",
   "hikari::contextmenu.paste": "Pegar",
-  "hikari::contextmenu.selectAll": "Seleccionar todo"
+  "hikari::contextmenu.selectAll": "Seleccionar todo",
+  "hikari::loginFlow.channelCloud": "Celestia Cloud",
+  "hikari::loginFlow.channelOrg": "Inicio de sesión de organización",
+  "hikari::loginFlow.signInTitle": "Iniciar sesión",
+  "hikari::loginFlow.signInSubtitle": "Bienvenido de nuevo"
 }

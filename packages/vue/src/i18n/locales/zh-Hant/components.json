@@ -394,5 +394,9 @@
   "hikari::contextmenu.copy": "複製",
   "hikari::contextmenu.cut": "剪下",
   "hikari::contextmenu.paste": "貼上",
-  "hikari::contextmenu.selectAll": "全選"
+  "hikari::contextmenu.selectAll": "全選",
+  "hikari::loginFlow.channelCloud": "Celestia 雲",
+  "hikari::loginFlow.channelOrg": "組織登入",
+  "hikari::loginFlow.signInTitle": "登入",
+  "hikari::loginFlow.signInSubtitle": "歡迎回來"
 }

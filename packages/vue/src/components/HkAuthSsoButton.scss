@@ -1,0 +1,83 @@
+// HkAuthSsoButton — the primary single-provider sign-in tile.
+//
+// The recipe is HkAuthMethodList's tile scaled up: a framed square on
+// token-based colors (dark mode rides the RGB triplets for free), the
+// provider's icon at its native brand colors, and the label outside the
+// click target. Sizes are fixed, not proportional: the tile must read as
+// ONE deliberate hero action, not as a scaled-up row widget, so it gets
+// its own explicit geometry (6rem square, 2rem icon) instead of reusing
+// the tile's 2.75rem/1rem pair.
+
+.hk-auth-sso-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+}
+
+.hk-auth-sso-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border-radius: var(--hi-radius-lg, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface)) 88%, transparent);
+  color: rgb(var(--color-text));
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, rgb(var(--color-primary)) 55%, transparent);
+    background: color-mix(in srgb, rgb(var(--color-surface)) 100%, transparent);
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary));
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &[data-loading] {
+    cursor: progress;
+  }
+}
+
+.hk-auth-sso-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+
+  // Brand SVGs and <img> icons arrive at their own intrinsic sizes;
+  // constrain them so every provider renders at the same visual weight.
+  svg,
+  img {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+  }
+}
+
+.hk-auth-sso-label {
+  font-size: 0.875rem;
+  color: color-mix(in srgb, rgb(var(--color-text)) 78%, transparent);
+  text-align: center;
+}

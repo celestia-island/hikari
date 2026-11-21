@@ -1,0 +1,65 @@
+// HkAuthScreen — the auth page shell.
+//
+// Geometry: three stacked flex rows; the stage is the only flexible
+// one, so BOTH-AXES centering of the auth card is structural — the
+// card sits in the middle of whatever space the header/footer leave,
+// and grows/shrinks with them without any dvh arithmetic. 100dvh (not
+// 100vh) keeps mobile browser chrome from clipping the footer.
+
+.hk-auth-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-height: 100dvh;
+}
+
+.hk-auth-screen-header {
+  flex: none;
+  width: 100%;
+}
+
+.hk-auth-screen-stage {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--space-24, 1.5rem);
+}
+
+.hk-auth-screen-footer {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-8, 0.5rem);
+  width: 100%;
+  padding: var(--space-16, 1rem) var(--space-16, 1rem) var(--space-24, 1.5rem);
+}
+
+// Compliance lines: the quietest row on the page — small, muted, on
+// their own line so filing numbers never wrap mid-sequence.
+.hk-auth-screen-beian {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4, 0.25rem);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, rgb(var(--color-text)) 55%, transparent);
+}
+
+.hk-auth-screen-beian-link {
+  color: inherit;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    color: color-mix(in srgb, rgb(var(--color-text)) 80%, transparent);
+    text-decoration: underline;
+  }
+}
+
+.hk-auth-screen-beian-item {
+  color: inherit;
+}

@@ -390,5 +390,9 @@
   "hikari::contextmenu.copy": "コピー",
   "hikari::contextmenu.cut": "切り取り",
   "hikari::contextmenu.paste": "貼り付け",
-  "hikari::contextmenu.selectAll": "すべて選択"
+  "hikari::contextmenu.selectAll": "すべて選択",
+  "hikari::loginFlow.channelCloud": "Celestia クラウド",
+  "hikari::loginFlow.channelOrg": "組織ログイン",
+  "hikari::loginFlow.signInTitle": "ログイン",
+  "hikari::loginFlow.signInSubtitle": "おかえりなさい"
 }

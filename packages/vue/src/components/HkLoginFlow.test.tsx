@@ -1,0 +1,280 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { createApp, h, nextTick } from "vue";
+
+import HkAuthSsoButton from "./HkAuthSsoButton";
+import HkAuthScreen from "./HkAuthScreen";
+import HkLoginFlow, { type HkLoginChannel } from "./HkLoginFlow";
+
+const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+
+function mount(node: ReturnType<typeof h>) {
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+  const app = createApp({ render: () => node });
+  app.mount(container);
+  mounts.push({ app, container });
+  return container;
+}
+
+afterEach(() => {
+  for (const { app, container } of mounts.splice(0)) {
+    app.unmount();
+    container.remove();
+  }
+});
+
+const cloudChannel: HkLoginChannel = {
+  key: "cloud",
+  mode: "credentials",
+};
+const orgChannel: HkLoginChannel = {
+  key: "org",
+  mode: "sso",
+  icon: h("svg"),
+};
+
+describe("HkAuthSsoButton", () => {
+  it("renders the provider label under a framed square tile and emits on click", async () => {
+    const onClick = vi.fn();
+    const c = mount(h(HkAuthSsoButton, { label: "Celestia 账号", icon: h("svg"), onClick }));
+    const tile = c.querySelector<HTMLButtonElement>(".hk-auth-sso-tile");
+    expect(tile).not.toBeNull();
+    expect(tile!.getAttribute("aria-label")).toBe("Celestia 账号");
+    expect(c.querySelector(".hk-auth-sso-label")?.textContent).toBe("Celestia 账号");
+    tile!.click();
+    await nextTick();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays inert while disabled or loading", async () => {
+    const onClick = vi.fn();
+    const c = mount(h(HkAuthSsoButton, { label: "Feishu", disabled: true, onClick }));
+    const tile = c.querySelector<HTMLButtonElement>(".hk-auth-sso-tile")!;
+    expect((tile as HTMLButtonElement).disabled).toBe(true);
+    tile.click();
+    await nextTick();
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the label's initial without an icon", () => {
+    const c = mount(h(HkAuthSsoButton, { label: "demo" }));
+    expect(c.querySelector(".hk-auth-sso-icon")?.textContent).toContain("D");
+  });
+});
+
+describe("HkLoginFlow — channel segment group", () => {
+  it("renders the pill segment group for two channels with the conventional locale labels", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel, orgChannel],
+        modelValue: "cloud",
+        "onUpdate:modelValue": () => {},
+      }),
+    );
+    // The segment labels are the PANEL's own locale keys — never a
+    // server-provided provider name (chest 2026-09-30 direction).
+    const tabs = c.querySelectorAll(".hk-tabs-trigger");
+    expect(tabs.length).toBe(2);
+    expect(tabs[0]!.textContent).toContain("Celestia Cloud");
+    expect(tabs[1]!.textContent).toContain("Organization login");
+  });
+
+  it("hides the segment group entirely for a single channel", () => {
+    const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
+    expect(c.querySelector(".hk-tabs")).toBeNull();
+  });
+
+  it("emits update:modelValue when a segment is picked", async () => {
+    const onUpdate = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel, orgChannel],
+        modelValue: "cloud",
+        "onUpdate:modelValue": onUpdate,
+      }),
+    );
+    const tabs = c.querySelectorAll<HTMLButtonElement>(".hk-tabs-trigger");
+    tabs[1]!.click();
+    await nextTick();
+    expect(onUpdate).toHaveBeenCalledWith("org");
+  });
+});
+
+describe("HkLoginFlow — credentials channel", () => {
+  it("is account-first by default: NO password field on the opening card", () => {
+    const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
+    const passwordInput = c.querySelector<HTMLInputElement>('input[name="signin-password"]');
+    // The family-wide posture since the MFA redesign: the password is
+    // proven on the verify step, so the opening card never asks for it.
+    expect(passwordInput).toBeNull();
+    expect(c.querySelector('input[name="signin-username"]')).not.toBeNull();
+  });
+
+  it("keeps the classic two-field card behind passwordField: true", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [{ key: "cloud", mode: "credentials", passwordField: true }],
+        modelValue: "cloud",
+      }),
+    );
+    expect(c.querySelector('input[name="signin-password"]')).not.toBeNull();
+  });
+
+  it("emits account-submit with the channel key and the typed username", async () => {
+    const onSubmit = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        onAccountSubmit: onSubmit,
+      }),
+    );
+    const input = c.querySelector<HTMLInputElement>('input[name="signin-username"]')!;
+    input.value = "demiurge";
+    input.dispatchEvent(new Event("input"));
+    await nextTick();
+    const form = c.querySelector("form")!;
+    form.dispatchEvent(new Event("submit"));
+    await nextTick();
+    expect(onSubmit).toHaveBeenCalledWith("cloud", "demiurge", "");
+  });
+
+  it("renders alternative method tiles and forwards their selection", async () => {
+    const onSelect = vi.fn();
+    const channel: HkLoginChannel = {
+      key: "cloud",
+      mode: "credentials",
+      methods: [{ key: "feishu", label: "Feishu" }],
+      methodsDivider: "或",
+    };
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [channel],
+        modelValue: "cloud",
+        onMethodSelect: onSelect,
+      }),
+    );
+    const tile = c.querySelector<HTMLButtonElement>('[data-key="feishu"]');
+    expect(tile).not.toBeNull();
+    expect(c.querySelector(".s-auth-methods-divider")?.textContent).toContain("或");
+    tile!.click();
+    await nextTick();
+    expect(onSelect).toHaveBeenCalledWith("cloud", "feishu");
+  });
+
+  it("omits the whole methods block when the list is empty", () => {
+    const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
+    // An empty methods list must not pad a dead strip under the form.
+    expect(c.querySelector(".s-auth-methods")).toBeNull();
+    expect(c.querySelector(".s-auth-methods-divider")).toBeNull();
+  });
+});
+
+describe("HkLoginFlow — sso channel", () => {
+  it("renders one centered primary tile and emits sso-click", async () => {
+    const onClick = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [orgChannel],
+        modelValue: "org",
+        onSsoClick: onClick,
+      }),
+    );
+    const tile = c.querySelector<HTMLButtonElement>(".hk-auth-sso-tile");
+    expect(tile).not.toBeNull();
+    tile!.click();
+    await nextTick();
+    expect(onClick).toHaveBeenCalledWith("org");
+  });
+
+  it("does not enter the verify step on an sso channel (fail-safe)", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [orgChannel],
+        modelValue: "org",
+        step: "verify",
+        verifyFactors: ["totp"],
+      }),
+    );
+    // A redirect flow has no second step by construction; the panel
+    // keeps showing the account card instead of a dead MFA card.
+    expect(c.querySelector(".hk-auth-sso-tile")).not.toBeNull();
+  });
+});
+
+describe("HkLoginFlow — verify step", () => {
+  it("slides to the MFA card and forwards its events", async () => {
+    const onVerify = vi.fn();
+    const onBack = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp", "password"],
+        verifyAccountName: "demiurge",
+        onVerify,
+        onVerifyBack: onBack,
+      }),
+    );
+    await nextTick();
+    // The MFA card is on stage: its factor picker (HkIconButtonGroup
+    // entries) and the verify title render; HkStepFlow keeps only the
+    // active body mounted after the swap settles.
+    const factorButtons = c.querySelectorAll("button.hk-icon-group-item");
+    expect(factorButtons.length).toBeGreaterThan(0);
+    expect(c.querySelector(".s-auth-title")?.textContent).toContain("Verify");
+  });
+
+  it("keeps the channel segment group off the verify step", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel, orgChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+      }),
+    );
+    // The verify step owns the whole card; a channel switch mid-verify
+    // would drop the ladder state, so the tabs never render here.
+    expect(c.querySelector(".hk-tabs")).toBeNull();
+  });
+});
+
+describe("HkAuthScreen", () => {
+  it("renders header, centered stage and footer slots", () => {
+    const c = mount(
+      h(HkAuthScreen, null, {
+        header: () => h("div", { class: "brand" }, "brand"),
+        default: () => h("div", { class: "card" }, "card"),
+        footer: () => h("div", { class: "legal" }, "legal"),
+      }),
+    );
+    expect(c.querySelector(".hk-auth-screen-header .brand")).not.toBeNull();
+    expect(c.querySelector(".hk-auth-screen-stage .card")).not.toBeNull();
+    expect(c.querySelector(".hk-auth-screen-footer .legal")).not.toBeNull();
+  });
+
+  it("renders beian entries as new-tab links", () => {
+    const c = mount(
+      h(HkAuthScreen, {
+        beian: [
+          { title: "京ICP备00000000号-1", url: "https://beian.miit.gov.cn/" },
+          { title: "plain line" },
+        ],
+      }),
+    );
+    const links = c.querySelectorAll<HTMLAnchorElement>(".hk-auth-screen-beian-link");
+    expect(links.length).toBe(1);
+    expect(links[0]!.getAttribute("href")).toBe("https://beian.miit.gov.cn/");
+    expect(links[0]!.getAttribute("target")).toBe("_blank");
+    expect(links[0]!.getAttribute("rel")).toContain("noopener");
+    expect(c.querySelector(".hk-auth-screen-beian-item")?.textContent).toBe("plain line");
+  });
+
+  it("renders no footer at all without footer content or beian entries", () => {
+    const c = mount(h(HkAuthScreen, null, { default: () => h("div", "x") }));
+    expect(c.querySelector(".hk-auth-screen-footer")).toBeNull();
+    expect(c.querySelector(".hk-auth-screen-beian")).toBeNull();
+  });
+});

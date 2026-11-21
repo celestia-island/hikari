@@ -179,7 +179,6 @@ describe("scene3d spec builder goes through the host client", () => {
         label: `M-${kind}-label-${i}`,
         status: `M-${kind}-status-${i}`,
         detail: `M-${kind}-detail-${i}`,
-        role: "star",
         online: !b.online,
         color: [0.111, 0.222, 0.333] as [number, number, number],
         radius: b.radius + 1000,
@@ -217,6 +216,8 @@ describe("scene3d spec builder goes through the host client", () => {
       expect(b.label).toBe(`M-star-label-${i}`);
       expect(b.status).toBe(`M-star-status-${i}`);
       expect(b.detail).toBe(`M-star-detail-${i}`);
+      // The adapter normalises role to "star"/"planet", so it is asserted by
+      // value rather than by a mark: a marked non-star would read as "planet".
       expect(b.role).toBe("star");
       expect(b.online).toBe(!plain.stars[i]!.online);
       expect(b.color).toEqual([0.111, 0.222, 0.333]);
@@ -231,17 +232,30 @@ describe("scene3d spec builder goes through the host client", () => {
       expect(b.satelliteTotal).toBe(plain.stars[i]!.satelliteTotal + 9);
     });
     expect(marked.planets).toHaveLength(plain.planets.length);
+    // The planet block must assert the SAME field set as the star block. An
+    // earlier revision checked only nine of the fifteen fields here, so four of
+    // them (colour, orbit centre, tilt, spin) leaked from a parallel raw read
+    // and the suite stayed green (measured: 75/75).
     marked.planets.forEach((b, i) => {
       expect(b).not.toEqual(plain.planets[i]);
       expect(b.id).toBe(`M-planet-id-${i}`);
       expect(b.label).toBe(`M-planet-label-${i}`);
       expect(b.status).toBe(`M-planet-status-${i}`);
       expect(b.detail).toBe(`M-planet-detail-${i}`);
+      // The adapter normalises a planet's role to "planet" whatever the
+      // component said, so assert the normalised value rather than a mark.
+      expect(b.role).toBe("planet");
       expect(b.online).toBe(!plain.planets[i]!.online);
+      expect(b.color).toEqual([0.111, 0.222, 0.333]);
       expect(b.radius).toBeCloseTo(plain.planets[i]!.radius + 1000, 5);
+      expect(b.orbitCenter).toEqual([1.5, 2.5, 3.5]);
       expect(b.orbitRadius).toBeCloseTo(plain.planets[i]!.orbitRadius + 2000, 5);
+      expect(b.orbitPeriodSec).toBeCloseTo(plain.planets[i]!.orbitPeriodSec + 3000, 5);
       expect(b.orbitPhase).toBeCloseTo(plain.planets[i]!.orbitPhase + 0.375, 5);
+      expect(b.orbitTilt).toBeCloseTo(plain.planets[i]!.orbitTilt + 0.5, 5);
+      expect(b.spinPeriodSec).toBeCloseTo(plain.planets[i]!.spinPeriodSec + 4000, 5);
       expect(b.satellites).toBe(plain.planets[i]!.satellites + 7);
+      expect(b.satelliteTotal).toBe(plain.planets[i]!.satelliteTotal + 9);
     });
     expect(marked.hasRegistryCore).toBe(!plain.hasRegistryCore);
     // Guard against a trivially empty comparison.
@@ -275,11 +289,17 @@ describe("scene3d spec builder goes through the host client", () => {
     // the next case documents).
     expect(seam.firstHandedCapabilities).toBe(SCENE3D_CAPABILITIES);
 
-    // The declaration must be *present*, not defaulted. `firstHandedCapabilities`
-    // records whatever `rest[0]` held, so a seam (or a builder) supplying an
-    // equal-shaped fallback would satisfy the identity assertion above while the
-    // production defect — the argument missing — is still present. Assert the
-    // arity instead: the first build must have been called with two arguments.
+    // The declaration must have been *passed* at the call site, not merely
+    // recorded. `firstHandedCapabilities` holds whatever `rest[0]` was, so a
+    // seam that fills in an equal-shaped default would satisfy the identity
+    // assertion above while the call site omits the argument. Assert the arity
+    // of the first build instead.
+    //
+    // Scope, precisely: this catches the *call site* omitting or explicitly
+    // passing `undefined` (both make `rest` shorter or non-identical). It does
+    // NOT catch a builder passing a different equal-shaped object — the door
+    // only reads `.interfaces`/`.wasiModules` off the value, so identity is
+    // deliberately stricter than the contract here (see the note above).
     expect(seam.surfaceBuilds[0]).toHaveLength(2);
     expect(seam.surfaceBuilds[0]![1]).toBe(SCENE3D_CAPABILITIES);
 

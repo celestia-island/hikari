@@ -178,6 +178,8 @@ export const HkLogWindow = defineComponent({
           <HScrollContainer
             class="s-log-viewer-scroll"
             autoFollow={autoscroll.value && !paused.value}
+            scrollRole="region"
+            scrollLabel={props.title ?? t("hikari::log.title", "Logs")}
             ref={scrollRef}
           >
             {currentLines.value.length === 0 ? (

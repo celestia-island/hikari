@@ -114,6 +114,11 @@
   // The generous top padding keeps the copy clear of the lane stroke —
   // a second device pass showed 8px reading as part of the graphic.
   display: block;
+  // One text line's box, kept across states: the confirmed spinner (12px)
+  // is shorter than the text line box it replaces, and without this floor
+  // the hint (and everything below it) jumps up ~6px at the moment of
+  // confirm.
+  min-height: calc(var(--text-xs, 0.75rem) * 1.5);
   padding: var(--space-8, 8px) var(--space-12, 12px) var(--space-4, 4px);
   text-align: center;
   font-size: var(--text-xs, 0.75rem);

@@ -187,6 +187,7 @@ impl StyledComponent for ExpansionPanelComponent {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
 
     #[test]
@@ -213,8 +214,15 @@ mod tests {
         // Wrappers always mount (Vue v-show); the sheet collapses the body
         // visually when [data-open] is absent.
         assert!(html.contains("hk-expansion-panel-body"), "{html}");
-        // The padding wrapper mounts too (the clip stays padding-free).
-        assert!(html.contains("hk-expansion-panel-content-inner"), "{html}");
+        // The padding wrapper mounts AND is a direct child of the clip (the
+        // clip stays padding-free; a wrapper hoisted elsewhere would defeat
+        // the collapse fix while this class string still matched).
+        assert!(
+            html.contains(
+                "class=\"hk-expansion-panel-content\"><div class=\"hk-expansion-panel-content-inner\""
+            ),
+            "{html}"
+        );
     }
 
     #[test]

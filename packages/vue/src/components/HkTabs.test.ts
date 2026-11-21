@@ -1450,12 +1450,32 @@ describe("HkTabs supplement trailing inset (2026-11-21)", () => {
   const scss = readFileSync(join(here, "HkTabs.scss"), "utf8");
 
   it("pads the supplement column's end inside the option cell", () => {
-    const block = scss.match(/\.hk-tabs-cell > \.hk-supplement-inset\s*{([^}]*)}/)?.[1] ?? "";
-    expect(block).toContain(".hk-supplement-inset-supplement-inner");
-    const inner = scss.match(
-      /\.hk-supplement-inset-supplement-inner\s*{([^}]*)}/,
-    )?.[1] ?? "";
-    expect(inner).toContain("padding-inline-end: var(--space-12)");
+    // Brace-walk the `.hk-tabs-cell > .hk-supplement-inset` block itself:
+    // a plain whole-file regex would also match a hoisted top-level rule,
+    // which would leak the inset to every HkSupplementInset consumer.
+    const cellStart = scss.indexOf(".hk-tabs-cell > .hk-supplement-inset");
+    expect(cellStart).toBeGreaterThan(-1);
+    const open = scss.indexOf("{", cellStart);
+    let depth = 0;
+    let end = -1;
+    for (let i = open; i < scss.length; i++) {
+      if (scss[i] === "{") depth++;
+      else if (scss[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    expect(end).toBeGreaterThan(open);
+    const cellBlock = scss.slice(open, end + 1);
+    expect(cellBlock).toContain(".hk-supplement-inset-supplement-inner");
+    expect(cellBlock).toContain("padding-inline-end: var(--space-12)");
+    // And the nested selector really is the inner (not some other child).
+    expect(cellBlock).toMatch(
+      /\.hk-supplement-inset-supplement-inner\s*{[^}]*padding-inline-end:\s*var\(--space-12\)/,
+    );
   });
 
   it("mounts the inset cell anatomy an action rides in (structure anchor)", () => {

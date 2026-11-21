@@ -1340,6 +1340,7 @@ snapshots:
     dependencies:
       '@bytecodealliance/jco-node-fs': 0.3.2
 
+  '@celestia-island/tairitsu-host-client@0.1.0': {}
   '@celestia-island/tairitsu-transport@0.2.0': {}
 
   '@dimforge/rapier3d-compat@0.12.0': {}

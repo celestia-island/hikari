@@ -289,19 +289,17 @@ describe("scene3d spec builder goes through the host client", () => {
     // the next case documents).
     expect(seam.firstHandedCapabilities).toBe(SCENE3D_CAPABILITIES);
 
-    // The declaration must have been *passed* at the call site. The identity
-    // assertion above is what catches the omission (verified: dropping the
-    // argument reds that line), and the line below pins the passed value on the
-    // recorded build.
+    // The identity assertion above is the guard for "the declaration was handed
+    // over": dropping the argument and passing `undefined` both red it and
+    // nothing else (verified by mutation). An arity assertion used to sit here;
+    // it was removed because no mutation reached it — every shape an argument
+    // can take was already caught by the identity check, so the extra line only
+    // invited a comment that overstated what it guarded.
     //
-    // Scope, precisely: `toHaveLength(2)` catches a call site that *explicitly*
-    // passes `undefined` or some other non-identical value. It does NOT catch an
-    // omission on its own — a seam that filled a default would still make `rest`
-    // length 2 — and neither line catches a builder passing a different
-    // equal-shaped object (the door only reads `.interfaces`/`.wasiModules`, so
-    // the identity check is deliberately stricter than the contract).
-    expect(seam.surfaceBuilds[0]).toHaveLength(2);
-    expect(seam.surfaceBuilds[0]![1]).toBe(SCENE3D_CAPABILITIES);
+    // Scope, precisely: neither the identity check nor an arity count catches a
+    // builder passing a *different* equal-shaped object — the door only reads
+    // `.interfaces`/`.wasiModules`, so identity here is deliberately stricter
+    // than the contract.
 
     // Exported and read by the builder — the read the package's `sideEffects`
     // whitelist entry keeps alive.

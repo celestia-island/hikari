@@ -84,13 +84,14 @@
 //   * the `trigger` slot is a `Option<Element>` prop — a host passes the same
 //     vnode it would have written into the slot.
 //   * `Intl.DateTimeFormat` does not exist on wasm32-wasip2: month / weekday
-//     NAMES come from chrono's locale data and the segment order from a
-//     per-language table — the full delta list lives on
+//     NAMES come from `hikari_i18n::dates` (CLDR) and the segment order from a
+//     per-language table — the context and accessor list lives on
 //     [`crate::basic::date_picker::DateLocale`]. One shape is specific to this
-//     component: the trigger label is the medium date PLUS a 24-hour clock
-//     ("Oct 6, 2024, 09:05"). Vue's Intl pattern for that label is
+//     component: the trigger label is the MONTH + DAY text (no year) PLUS a
+//     24-hour clock ("Oct 6, 09:05"), joined with a hard-coded ", ". Vue's Intl
+//     pattern for that label is
 //     `{month, day, hour, minute, hourCycle: "h23"}`, i.e. no year — the
-//     mirror keeps the year so the trigger cannot be ambiguous across years.
+//     mirror matches that (a year-less trigger is what Vue ships).
 //   * the trigger's `.hk-dtp-trigger-icon` / `.hk-dtp-trigger-chev` classes
 //     land on the crate's `div.hk-icon` glyph wrapper (Vue puts them on the
 //     lucide `<svg>` directly) — the same `hikari_icons::Icon` delta
@@ -103,8 +104,9 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 
 use crate::basic::date_picker::{
-    DateLocale, DatePickerNavGlyph, date_locale, date_picker_nav, is_disabled_day, month_grid,
-    parse_iso_date, to_iso_date, year_block_start,
+    DateLocale, DatePickerNavGlyph, date_locale, date_picker_nav, day_view_month_label,
+    is_disabled_day, locale_month_grid, month_pick_label, parse_iso_date, to_iso_date,
+    year_block_start,
 };
 use crate::basic::date_tag::{active_language, date_tag_parse_value};
 use crate::platform;
@@ -948,7 +950,7 @@ fn dtp_build_header(
             let year_wiring = wiring.clone();
             let prev_wiring = wiring.clone();
             let next_wiring = wiring.clone();
-            let month_name = locale.month_long(view_month);
+            let month_name = day_view_month_label(locale, view_month);
             rsx! {
                 div { class: "hk-dtp-header",
                     div { class: "hk-dtp-header-side",
@@ -1019,7 +1021,7 @@ fn dtp_build_content(
                 if is_now {
                     class.push_str(" is-today");
                 }
-                let label = locale.month_short(month);
+                let label = month_pick_label(locale, month);
                 let cell_wiring = wiring.clone();
                 cells.push(rsx! {
                     button {
@@ -1085,7 +1087,7 @@ fn dtp_build_content(
                 })
                 .collect();
 
-            let cells = month_grid(view_year, view_month, locale.first_weekday);
+            let cells = locale_month_grid(locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
                 let out_of_month = day.month() != view_month || day.year() != view_year;
@@ -1510,6 +1512,75 @@ mod tests {
         assert!(html.contains("hk-dtp-grid"), "{html}");
         // The trigger shows the locale date + 24-hour clock.
         assert!(html.contains("Oct 6, 09:05"), "{html}");
+    }
+
+    /// The render (not just the adapter) must ask for the standalone shapes:
+    /// the day-view title is a bare month ("октябрь"), a composed date would
+    /// read "октября"; the month picker's cells are bare months too ("Jan",
+    /// not the in-date "Jan."). Each test thread gets its own i18n context.
+    #[test]
+    fn date_time_picker_renders_bare_months_in_the_standalone_shape() {
+        hikari_i18n::provide_i18n(hikari_i18n::Language::Russian, hikari_i18n::I18nKeys::new());
+        let day_view = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            day_view.contains("октябрь"),
+            "the title is the standalone month"
+        );
+        assert!(
+            !day_view.contains("октября"),
+            "the in-date genitive must not reach the title"
+        );
+
+        hikari_i18n::provide_i18n(hikari_i18n::Language::German, hikari_i18n::I18nKeys::new());
+        let state = DateTimePickerViewState::anchored(moment(2024, 10, 6, 9, 5).date())
+            .drill(DateTimePickerView::Months);
+        let months = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            view_state: Some(state),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(months.contains(">Jan<"), "German month cell is standalone");
+        assert!(
+            !months.contains(">Jan.<"),
+            "the in-date shape must not reach the month picker"
+        );
+
+        // The day grid asks the locale for its first weekday (Russian is
+        // Monday-first: October 2024 opens on 2024-09-30, so a Sunday-first
+        // grid would additionally contain a 2024-09-29 cell).
+        hikari_i18n::provide_i18n(hikari_i18n::Language::Russian, hikari_i18n::I18nKeys::new());
+        let grid = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            ..Default::default()
+        })
+        .render_to_html();
+        // The dtp cell carries only its day number, so read the grid's first
+        // cell: Russian is Monday-first, which makes October 2024 open on the
+        // 30th (a Sunday-first grid would open on the 29th).
+        let first_cell = grid
+            .split("hk-dtp-grid")
+            .nth(1)
+            .and_then(|tail| tail.split("hk-dtp-cell-num").nth(1))
+            .and_then(|tail| tail.split('>').nth(1))
+            .map(|text| text.split('<').next().unwrap_or("").trim().to_string())
+            .unwrap_or_default();
+        assert_eq!(first_cell, "30", "ru dtp grid opens on Monday 2024-09-30");
+
+        // The weekday row asks for the SHORT shape (Vue's `{weekday:"short"}`);
+        // the date picker asks for the narrow one. Swapping them must be
+        // visible, so pin both.
+        assert!(
+            grid.contains("пн"),
+            "datetime picker row uses the short weekday names"
+        );
     }
 
     #[test]

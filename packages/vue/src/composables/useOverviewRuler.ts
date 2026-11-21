@@ -125,9 +125,12 @@ export function attachOverviewRuler(
     promotedParents.set(host, entry);
   }
   entry.count += 1;
-  promoted = true;
   const computedPosition = getComputedStyle(host).position;
-  if (entry.count === 1 && (computedPosition === "static" || computedPosition === "")) {
+  // Only the handle whose count triggered the promotion owns the restore:
+  // a host that arrived positioned (absolute/fixed/already relative) must
+  // keep its inline style when this handle detaches.
+  promoted = entry.count === 1 && (computedPosition === "static" || computedPosition === "");
+  if (promoted) {
     host.style.position = "relative";
   }
 
@@ -187,7 +190,10 @@ export function attachOverviewRuler(
   }
 
   /** Pointer fraction (0..1 down the strip) → the scroll position whose
-   *  visible WINDOW centers near that strip point, clamped. */
+   *  visible window START lands at that fraction of the travel, clamped.
+   *  Jump-mode scrubbing follows the pointer proportionally: re-targeting
+   *  the same fraction is idempotent (the same input yields the same
+   *  scroll), so no drag state double-applies. */
   function scrollToFraction(fraction: number) {
     const extent = contentExtent();
     const visible = visibleExtent();
@@ -240,7 +246,15 @@ export function attachOverviewRuler(
     for (const node of nodes) {
       const laid = laidOffsetWithin(node, viewport);
       if (!Number.isFinite(laid.x) || !Number.isFinite(laid.y)) continue;
-      const start = (horizontal ? laid.x : laid.y) / extent;
+      // Horizontal RTL mirrors band placement too (S2-R4-5): laid.x grows
+      // visually leftward under RTL, so the band's start anchors at the
+      // FAR edge minus its own extent.
+      const laidCoord = rtlHorizontal
+        ? extent - laid.x - node.offsetWidth
+        : horizontal
+          ? laid.x
+          : laid.y;
+      const start = laidCoord / extent;
       const length = (horizontal ? node.offsetWidth : node.offsetHeight) / extent;
       if (length <= 0) continue;
       bands.push({ start, length });
@@ -282,7 +296,7 @@ export function attachOverviewRuler(
    *  the pointer the full cursor travel scrolls the full document. */
   let cursorTravelPx = 1;
 
-  function beginDrag(event: PointerEvent, fraction: number) {
+  function beginDrag(event: PointerEvent) {
     dragging = true;
     dragMode = cursorDrag;
     dragStartClient = horizontal ? event.clientX : event.clientY;
@@ -290,27 +304,35 @@ export function attachOverviewRuler(
     const extent = contentExtent();
     const visible = visibleExtent();
     const length = Math.min(visible / extent, 1);
-    cursorTravelPx = Math.max((1 - length) * stripExtent(), 1);
+    const se = stripExtent();
+    console.log('DBG beginDrag geom:', JSON.stringify({ length, stripExtent: se, horizontal, axis, stripConnected: strip.isConnected }));
+    cursorTravelPx = Math.max((1 - length) * se, 1);
     strip.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
 
   function onPointerDown(event: PointerEvent) {
-    if (event.button !== 0) return;
+    console.log('DBG down: target===cursor:', event.target === cursor, '| button:', event.button);
+    if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey)
+      return;
     const fraction = pointerFraction(event);
     if (cursorDrag === "thumb") {
-      if (!event.composedPath().includes(cursor)) return;
+      if (event.target !== cursor) return;
     } else {
       scrollToFraction(fraction);
     }
-    beginDrag(event, fraction);
+    beginDrag(event);
+    // Move/up ride the WINDOW (not the strip): setPointerCapture keeps the
+    // events flowing through the strip when it works, and the window
+    // bindings are the fallback everywhere capture is unavailable.
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointercancel", onPointerUp);
   }
 
   function onPointerMove(event: PointerEvent) {
     if (!dragging) return;
     if (dragMode === "thumb") {
-      // 1:1 with the pointer: the pointer's px delta over the cursor's own
-      // travel scales to the full scroll range.
       const deltaPx = (horizontal ? event.clientX : event.clientY) - dragStartClient;
       const maxScroll = Math.max(contentExtent() - visibleExtent(), 0);
       writeScroll(dragStartScroll + (deltaPx / cursorTravelPx) * maxScroll);
@@ -330,9 +352,6 @@ export function attachOverviewRuler(
   }
 
   strip.addEventListener("pointerdown", onPointerDown);
-  strip.addEventListener("pointermove", onPointerMove);
-  strip.addEventListener("pointerup", onPointerUp);
-  strip.addEventListener("pointercancel", onPointerUp);
 
   // ── Live cursor: scroll + viewport resize ─────────────────────────────
   const onViewportScroll = () => renderCursor();
@@ -360,24 +379,35 @@ export function attachOverviewRuler(
   renderBands();
   renderCursor();
 
+  function endDrag(event: PointerEvent) {
+    if (!dragging) return;
+    dragging = false;
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    window.removeEventListener("pointercancel", onPointerUp);
+    try {
+      strip.releasePointerCapture(event.pointerId);
+    } catch {
+      // already released by the browser on pointer cancel
+    }
+  }
+
   function detach() {
     viewport.removeEventListener("scroll", onViewportScroll);
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    window.removeEventListener("pointercancel", onPointerUp);
     strip.removeEventListener("pointerdown", onPointerDown);
-    strip.removeEventListener("pointermove", onPointerMove);
-    strip.removeEventListener("pointerup", onPointerUp);
-    strip.removeEventListener("pointercancel", onPointerUp);
     sampler.disconnect();
     observer?.disconnect();
     observer = null;
     strip.remove();
-    if (promoted) {
-      const entry = promotedParents.get(host);
-      if (entry) {
-        entry.count -= 1;
-        if (entry.count <= 0) {
-          host.style.position = entry.saved;
-          promotedParents.delete(host);
-        }
+    const entry = promotedParents.get(host);
+    if (entry) {
+      entry.count -= 1;
+      if (entry.count <= 0) {
+        host.style.position = entry.saved;
+        promotedParents.delete(host);
       }
     }
   }

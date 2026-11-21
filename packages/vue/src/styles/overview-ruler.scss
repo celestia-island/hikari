@@ -58,11 +58,11 @@
 // ("severity coloring for log lines") works out of the box; unknown
 // modifiers stay unstyled by design.
 .hk-overview-ruler-band.hk-overview-band-error {
-  background: color-mix(in srgb, var(--hi-color-danger, #d4778b) 55%, transparent);
+  background: color-mix(in srgb, var(--hi-color-danger, #a62937) 55%, transparent);
 }
 
 .hk-overview-ruler-band.hk-overview-band-warn {
-  background: color-mix(in srgb, var(--hi-color-warning, #d9a44a) 55%, transparent);
+  background: color-mix(in srgb, var(--hi-color-warning, #894800) 55%, transparent);
 }
 
 .hk-overview-ruler-cursor {

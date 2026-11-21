@@ -145,7 +145,7 @@ describe("attachOverviewRuler (behaviour)", () => {
     const { host, sc } = makeScroller(30);
     stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
     seedScroll(sc, { extent: 3000, visible: 300 }); // length 0.1, maxScroll 2700
-    const handle = attachOverviewRuler(sc, { host });
+    const handle = attachOverviewRuler(sc, { host, cursorDrag: "thumb" });
     cleanup = () => handle.detach();
     const strip = host.querySelector<HTMLElement>(".hk-overview-ruler")!;
     stubRect(strip, STRIP);
@@ -153,8 +153,11 @@ describe("attachOverviewRuler (behaviour)", () => {
     stubRect(cursor, { left: 0, top: 0, width: 48, height: 40 }); // 10% of 400
     // cursor travel = 400 − 40 = 360px ↔ maxScroll 2700: a 180px drag is
     // HALF the document (1350) — exactly 1:1 with the cursor box.
+    // Pointerdown MUST hit the cursor: thumb mode ignores strip presses
+    // (dispatching on the strip would take the inert early return and the
+    // assertion would pass vacuously — the R4 finding).
     const startY = STRIP.top + 20; // inside the 40px cursor at top 0%
-    strip.dispatchEvent(
+    cursor.dispatchEvent(
       new PointerEvent("pointerdown", {
         bubbles: true,
         cancelable: true,
@@ -166,7 +169,7 @@ describe("attachOverviewRuler (behaviour)", () => {
         isPrimary: true,
       }),
     );
-    strip.dispatchEvent(
+    window.dispatchEvent(
       new PointerEvent("pointermove", {
         bubbles: true,
         cancelable: true,
@@ -176,7 +179,7 @@ describe("attachOverviewRuler (behaviour)", () => {
         pointerType: "mouse",
       }),
     );
-    strip.dispatchEvent(
+    window.dispatchEvent(
       new PointerEvent("pointerup", {
         bubbles: true,
         cancelable: true,

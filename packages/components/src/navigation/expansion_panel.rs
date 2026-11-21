@@ -16,7 +16,13 @@
 //       span.hk-expansion-panel-chevron        (aria-hidden, inner HTML chevron)
 //     div.hk-expansion-panel-body               (ALWAYS mounted; the sheet
 //       div.hk-expansion-panel-content            collapses it via 0fr when
-//         {children}                               closed, like Vue's v-show)
+//         div.hk-expansion-panel-content-inner     closed, like Vue's v-show;
+//           {children}                             carries the body PADDING —
+//                                                  the clip itself stays
+//                                                  padding-free or the
+//                                                  padding block survives
+//                                                  the 0fr track as a
+//                                                  residual band)
 //
 // Deltas vs Vue (documented, not accidental):
 //   * the panel is CONTROLLED-only (`open` + `on_open_change`): tairitsu has
@@ -156,7 +162,13 @@ pub fn ExpansionPanel(props: ExpansionPanelProps) -> Element {
     root = root.child(rsx! {
         div { class: "hk-expansion-panel-body",
             div { class: "hk-expansion-panel-content",
-                {props.children.clone()}
+                // The inner wrapper carries the sheet's body padding; the
+                // clipped grid item stays padding-free (a padded clip keeps
+                // its padding block under the 0fr track — the residual band
+                // below the closed header, upstream of the Vue mirror).
+                div { class: "hk-expansion-panel-content-inner",
+                    {props.children.clone()}
+                }
             }
         }
     });
@@ -201,6 +213,8 @@ mod tests {
         // Wrappers always mount (Vue v-show); the sheet collapses the body
         // visually when [data-open] is absent.
         assert!(html.contains("hk-expansion-panel-body"), "{html}");
+        // The padding wrapper mounts too (the clip stays padding-free).
+        assert!(html.contains("hk-expansion-panel-content-inner"), "{html}");
     }
 
     #[test]

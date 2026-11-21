@@ -135,17 +135,26 @@
 }
 
 .hk-expansion-panel-content {
+  /* The clipped grid item must stay PADDING-FREE: vertical padding on it
+     cannot collapse with the 0fr track — the track goes to zero but the
+     padding block survives as a residual band under the header of every
+     closed panel (the "weird padding below the collapsed DPI card"
+     report). The body inset therefore lives on the inner wrapper, which
+     the clip takes away wholesale when the track collapses. */
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  // Stays visible while the closing animation runs, then hides.
+  transition: visibility 0s linear var(--duration-normal);
+}
+
+.hk-expansion-panel-content-inner {
   /* The BODY padding belongs to the panel, not to each host: inline
      padding matches the header's own (var(--space-12)), so body content
      aligns with the title, and the bottom pad gives the content breathing
      room before the panel edge. Without this every consumer hand-pads
      (and forgets — the flush body was exactly that report). */
   padding: var(--space-8) var(--space-12) var(--space-12);
-  min-height: 0;
-  overflow: hidden;
-  visibility: hidden;
-  // Stays visible while the closing animation runs, then hides.
-  transition: visibility 0s linear var(--duration-normal);
 }
 
 .hk-expansion-panel[data-open] .hk-expansion-panel-content {

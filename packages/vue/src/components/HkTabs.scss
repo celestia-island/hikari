@@ -137,6 +137,17 @@
      takes no space, so the option's own content stays exactly centred (a
      reserved lane here was what pushed the auto option off-centre). */
   width: 100%;
+
+  .hk-supplement-inset-supplement-inner {
+    /* Trailing inset inside the collapsing column (so it, too, occupies
+       nothing at rest): the cell has no padding of its own and the
+       sliding indicator frames the CELL — without a trailing inset the
+       revealed action's 20px hit area lands flush on the segment edge
+       and the dots glyph hugs the boundary (user report). Matches the
+       trigger's own inline padding (var(--space-12)) so the revealed
+       action reads as sitting inside the option, same as the label. */
+    padding-inline-end: var(--space-12);
+  }
 }
 
 .hk-supplement-inset-main > .hk-tabs-trigger {

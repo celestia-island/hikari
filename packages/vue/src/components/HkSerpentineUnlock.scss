@@ -98,6 +98,16 @@
   box-shadow: 0 0 0 2px rgb(var(--color-success) / 60%);
 }
 
+.hk-serpentine--confirmed .hk-serpentine-hint {
+  // The retired ✓ glyph is a busy spinner now (2026-11-21 user ruling):
+  // a walk completion hands off to the parent, so the hint line shows the
+  // standard spinner, centred on the same line (the span is a block with
+  // text-align — a flex switch centres the inline spinner box).
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .hk-serpentine-hint {
   // In-flow under the lane: an absolutely-positioned hint hung below the
   // box got clipped by the confirmation window's padding (device feedback).

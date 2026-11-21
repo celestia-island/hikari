@@ -254,18 +254,15 @@ describe("attachOverviewRuler (behaviour)", () => {
       handle.detach();
       window.getComputedStyle = orig;
     };
-    // half-scroll: scrollLeft 1350 → progress 0.5 → cursor left = 45%
-    // (happy-dom's scrollLeft setter needs the stub, same as the dims)
+    // half-scroll under the LEGACY-negative convention (Firefox RTL:
+    // scrollLeft −1350) — the Math.abs read makes the cursor
+    // convention-proof: 45% under both the legacy and Chromium forms.
     Object.defineProperty(sc, "scrollLeft", {
       configurable: true,
-      value: 1350,
+      value: -1350,
       writable: true,
     });
     sc.dispatchEvent(new Event("scroll"));
-    console.log('DBG rtl:', JSON.stringify({
-      scrollLeft: sc.scrollLeft,
-      direction: window.getComputedStyle(sc as Element).direction,
-    }));
     const cursor = host.querySelector<HTMLElement>(".hk-overview-ruler-cursor")!;
     expect(cursor.style.left).toBe("45%");
     expect(cursor.style.width).toBe("10%");

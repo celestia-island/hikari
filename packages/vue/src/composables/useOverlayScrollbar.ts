@@ -24,6 +24,7 @@
 // `detach()` on close/unmount so no DOM or listener leaks.
 
 import { drawnScale } from "./layoutGeometry";
+import { promoteHost } from "./useHostPromotion";
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleFrame, type AnimationHandle } from "../runtime/animationBus";
 
@@ -240,7 +241,7 @@ const POSITION_GUARD_ATTR = "data-hk-overlay-scrollbar-positioned";
  *  (e.g. sibling code panes reconciled independently); the inline
  *  `position: relative` must survive until the LAST handle detaches, so
  *  promotion is reference-counted. */
-const promotedParents = new WeakMap<HTMLElement, { count: number; saved: string }>();
+
 
 /** Read the scroll geometry of `viewport` for one axis. */
 function axisMetrics(viewport: HTMLElement, horizontal: boolean) {
@@ -296,25 +297,21 @@ export function attachOverlayScrollbars(
   // viewport's parent. A static parent would anchor them to the
   // nearest positioned ancestor instead — promote it to `relative`
   // and remember the previous inline value for restore on detach —
-  // reference-counted per parent (see promotedParents) so a sibling
+  // reference-counted per parent (see useHostPromotion) so a sibling
   // handle's detach cannot strip the positioning out from under the
   // tracks that remain.
   // (Real browsers always report "static" for unpositioned elements;
   // happy-dom reports "" — both mean "no positioning context".)
-  const computedPosition = getComputedStyle(parent).position;
-  if (computedPosition === "static" || computedPosition === "") {
-    if (!promotedParents.has(parent)) {
-      promotedParents.set(parent, { count: 0, saved: parent.style.position });
-      parent.style.position = "relative";
-      parent.setAttribute(POSITION_GUARD_ATTR, "true");
-    }
+  // Positioning guard: the tracks are position:absolute inside the
+  // viewport's parent. A static parent would anchor them to the nearest
+  // positioned ancestor — promote it to `relative` through the shared
+  // reference-counted helper so a sibling composable's detach (the
+  // overview ruler attaches to the same hosts) cannot strip the
+  // positioning out from under the tracks that remain.
+  const releasePromotion = promoteHost(parent);
+  if (parent.style.position === "relative") {
+    parent.setAttribute(POSITION_GUARD_ATTR, "true");
   }
-  // Count EVERY handle on a promoted parent — including handles whose
-  // attach sees the parent already `relative` (computed styles reflect
-  // the first handle's inline promotion). Skipping those would let the
-  // first detach strip the positioning out from under surviving tracks.
-  const entry = promotedParents.get(parent);
-  if (entry) entry.count++;
 
   const states: AxisState[] = [];
   if (wantV) states.push(makeAxisState(false));
@@ -688,13 +685,9 @@ export function attachOverlayScrollbars(
         state.hideTimer?.disconnect();
         state.track.remove();
       }
-      const entry = promotedParents.get(parent);
-      if (entry && --entry.count <= 0) {
-        // Last handle on this parent is gone — restore its inline
-        // positioning exactly as the guard found it.
-        parent.style.position = entry.saved;
+      releasePromotion();
+      if (parent.style.position !== "relative") {
         parent.removeAttribute(POSITION_GUARD_ATTR);
-        promotedParents.delete(parent);
       }
     },
   };

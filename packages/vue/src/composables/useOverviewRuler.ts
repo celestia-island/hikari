@@ -1,5 +1,6 @@
 import { laidOffsetWithin } from "./layoutGeometry";
-import { scheduleEvery, type AnimationHandle } from "../runtime/animationBus";
+import { promoteHost } from "./useHostPromotion";
+import { scheduleEvery } from "../runtime/animationBus";
 
 /**
  * useOverviewRuler — a standalone minimap strip ("竖向瀑布流") that any
@@ -113,26 +114,8 @@ export function attachOverviewRuler(
   }
   const host: HTMLElement = parent;
 
-  // ── Promotion (reference-counted; see promotedParents above) ──────────
-  let promoted = false;
-  // Count EVERY handle on this host, even when the host is already
-  // positioned (an earlier ruler promoted it): otherwise ruler A's detach
-  // would strip the positioning out from under a still-live ruler B —
-  // exactly the accident the overlay scrollbar's comment exists to prevent.
-  let entry = promotedParents.get(host);
-  if (!entry) {
-    entry = { count: 0, saved: host.style.position };
-    promotedParents.set(host, entry);
-  }
-  entry.count += 1;
-  const computedPosition = getComputedStyle(host).position;
-  // Only the handle whose count triggered the promotion owns the restore:
-  // a host that arrived positioned (absolute/fixed/already relative) must
-  // keep its inline style when this handle detaches.
-  promoted = entry.count === 1 && (computedPosition === "static" || computedPosition === "");
-  if (promoted) {
-    host.style.position = "relative";
-  }
+  // ── Promotion (shared, reference-counted — see useHostPromotion) ──────
+  const releasePromotion = promoteHost(host);
 
   // ── Chrome ─────────────────────────────────────────────────────────────
   const strip = document.createElement("div");
@@ -399,6 +382,7 @@ export function attachOverviewRuler(
     window.removeEventListener("pointerup", onPointerUp);
     window.removeEventListener("pointercancel", onPointerUp);
     strip.removeEventListener("pointerdown", onPointerDown);
+    releasePromotion();
     sampler.disconnect();
     observer?.disconnect();
     observer = null;

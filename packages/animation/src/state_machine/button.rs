@@ -9,34 +9,44 @@
 //!
 //! # State Transition Diagram
 //!
-//! ```text
-//!       MouseEnter         MouseDown         MouseUp
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │ Idle │───────────>│ Hover │───────────>│ Active │───────┘
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!    ^                                    │
-//!    │         MouseLeave                 │ MouseLeave
-//!    │<──────────────────────────────────┘
-//!    │                                    ^
-//!    │         Blur                      │ Blur
-//!    └───────────────────────────────────┘
+//! Mouse machine (Idle / Hover / Active):
 //!
-//!    Focus                     MouseEnter      MouseDown
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │Focus │───────────>│ Hover │───────────>│ Active │
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!   ^                                              │
-//!   │              Blur                             │
-//!   └──────────────────────────────────────────────┘
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     Idle --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Hover: MouseUp
+//!     Hover --> Idle: MouseLeave
+//!     Active --> Idle: MouseLeave
+//!     Active --> Idle: Blur
+//! ```
 //!
-//!    Disable                    Enable
-//!   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │
-//!  Any State ─────────>│ Disabled │───────────> Idle
+//! Focus machine (Focus / Hover / Active):
+//!
+//! NOTE: this machine is drawn as the original sketch had it; the current code
+//! transition table differs (Idle →Focused on Focus, Focused →Idle on Blur,
+//! no Hover/Active →Focused edges). Reconcile before trusting it as a spec.
+//!
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     Focus --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Hover
+
+//!     Hover --> Focus
+//!     Active --> Focus: Blur
+//! ```
+//!
+//! Enable/disable machine (Any State / Disabled / Idle):
+//!
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     state "Any State" as AnyState
+//!     AnyState --> Disabled: Disable
+//!     Disabled --> Idle: Enable
 //! ```
 //!
 //! # Usage Example

@@ -391,6 +391,42 @@ describe("HkLoginFlow — host wiring details", () => {
     expect(active?.textContent).toContain("Celestia Cloud");
   });
 
+  it("keeps one channel's account name out of another channel's field", () => {
+    // The per-channel seed override: the org (email) channel pins "" so
+    // the cloud channel's typed account name — seeded flow-level for the
+    // verify round-trip — never pre-fills the org email field. Both
+    // postures mounted statically (the channel swap's crossfade settles
+    // on environment-dependent timing; the MOUNT-TIME seed is the
+    // contract under test).
+    const orgMount = mount(
+      h(HkLoginFlow, {
+        channels: [
+          { key: "cloud", mode: "credentials" },
+          { key: "org", mode: "credentials", usernameType: "email", usernameAutocomplete: "email", initialUsername: "" },
+        ],
+        modelValue: "org",
+        initialUsername: "cloud-user",
+      }),
+    );
+    expect(
+      orgMount.querySelector<HTMLInputElement>('input[name="signin-username"]')?.value,
+    ).toBe("");
+
+    const cloudMount = mount(
+      h(HkLoginFlow, {
+        channels: [
+          { key: "cloud", mode: "credentials" },
+          { key: "org", mode: "credentials", usernameType: "email", usernameAutocomplete: "email", initialUsername: "" },
+        ],
+        modelValue: "cloud",
+        initialUsername: "cloud-user",
+      }),
+    );
+    expect(
+      cloudMount.querySelector<HTMLInputElement>('input[name="signin-username"]')?.value,
+    ).toBe("cloud-user");
+  });
+
   it("forwards per-channel autocomplete tokens to the username field", () => {
     const c = mount(
       h(HkLoginFlow, {

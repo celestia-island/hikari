@@ -5,7 +5,7 @@ import { asPropType } from "../utils/typing";
 import { HkAuthCard } from "./HkAuthCard";
 import HkAuthMethodList, { type HkAuthMethodListEntry } from "./HkAuthMethodList";
 import { HkAuthSsoButton } from "./HkAuthSsoButton";
-import { HkMfaVerifyCard } from "./HkMfaVerifyCard";
+import { HkMfaVerifyCard, type HkMfaFactor } from "./HkMfaVerifyCard";
 import { HkSignInCard } from "./HkSignInCard";
 import HkStepFlow from "./HkStepFlow";
 import HkTabs from "./HkTabs";
@@ -158,7 +158,11 @@ export const HkLoginFlow = defineComponent({
     "account-submit": (_channel: string, _username: string, _password: string) => true,
     "method-select": (_channel: string, _key: string) => true,
     "sso-click": (_channel: string) => true,
-    verify: (_kind: string, _proof: string) => true,
+    // `verify` carries HkMfaFactor (not a bare string): consumers bind
+    // factor-typed handlers (`onVerify={(kind: MfaFactor, …)}`), and a
+    // wider `string` param fails TS2322 under strictFunctionTypes —
+    // the exact seam break R4 caught against chest's migration.
+    verify: (_kind: HkMfaFactor, _proof: string) => true,
     "verify-resend": () => true,
     "verify-back": () => true,
   },
@@ -334,7 +338,7 @@ export const HkLoginFlow = defineComponent({
                     resending={props.verifyResending}
                     passkeyRetryHint={props.passkeyRetryHint}
                     autofocus
-                    onVerify={(kind: string, proof: string) => emit("verify", kind, proof)}
+                    onVerify={(kind: HkMfaFactor, proof: string) => emit("verify", kind, proof)}
                     onResend={() => emit("verify-resend")}
                     onBack={() => emit("verify-back")}
                   />

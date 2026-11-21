@@ -3,9 +3,13 @@
 // evaluated: ES module imports are hoisted, so a statement in the consumer file
 // can never run earlier than the imports below it.
 //
-// The component is compute-only: no glue interface, no WASI module. The tairitsu
-// host client's synchronous door (`createSurface`) serves exactly this shape —
-// a statically imported wrapper cannot be handed capabilities it did not bind.
+// What this declaration is, precisely: the QR artifact has **no glue interface**
+// (its `interfaces/` are type declarations only) and gets WASI from its own direct
+// `@bytecodealliance/preview2-shim/*` imports — not from the host. So the
+// declaration is **inert for this component today**; it is here because the
+// tairitsu host client's synchronous door requires a declaration to exist, and so
+// that a future glue-bearing rewrite of this component inherits the right shape
+// instead of silently defaulting to "everything granted".
 import { publishCapabilities } from "@celestia-island/tairitsu-host-client";
 
 export const QR_CAPABILITIES = { interfaces: [] as string[], wasiModules: [] as string[] };

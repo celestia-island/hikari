@@ -9,34 +9,39 @@
 //!
 //! # State Transition Diagram
 //!
-//! ```text
-//!       MouseEnter         MouseDown         MouseUp
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │ Idle │───────────>│ Hover │───────────>│ Active │───────┘
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!    ^                                    │
-//!    │         MouseLeave                 │ MouseLeave
-//!    │<──────────────────────────────────┘
-//!    │                                    ^
-//!    │         Blur                      │ Blur
-//!    └───────────────────────────────────┘
+//! Mouse machine (Idle / Hover / Active):
 //!
-//!    Focus                     MouseEnter      MouseDown
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │Focus │───────────>│ Hover │───────────>│ Active │
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!   ^                                              │
-//!   │              Blur                             │
-//!   └──────────────────────────────────────────────┘
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     Idle --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Hover: MouseUp
+//!     Hover --> Idle: MouseLeave
+//!     Active --> Idle: MouseLeave
+//!     Active --> Idle: Blur
+//! ```
 //!
-//!    Disable                    Enable
-//!   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │
-//!  Any State ─────────>│ Disabled │───────────> Idle
+//! Focus machine (Focus / Hover / Active):
+//!
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     Focus --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Hover
+//!     Hover --> Focus
+//!     Active --> Focus: Blur
+//! ```
+//!
+//! Enable/disable machine (Any State / Disabled / Idle):
+//!
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     state "Any State" as AnyState
+//!     AnyState --> Disabled: Disable
+//!     Disabled --> Idle: Enable
 //! ```
 //!
 //! # Usage Example

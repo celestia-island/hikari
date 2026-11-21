@@ -25,12 +25,15 @@ interface Seam {
   handed: Record<string, unknown> | undefined;
   /** The declaration handed to `createSurface` (not just published). */
   handedCapabilities: unknown;
+  /** Every `createSurface` call's argument list, in order. */
+  surfaceBuilds: unknown[][];
 }
 
 const seam: Seam = {
   calls: [],
   handed: undefined,
   handedCapabilities: undefined,
+  surfaceBuilds: [],
 };
 
 vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
@@ -45,6 +48,11 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
     ): ReturnType<typeof actual.createSurface> => {
       seam.handed = module;
       seam.handedCapabilities = rest[0];
+      // Every build is recorded, not just the first: the factory is callable
+      // more than once, so an engine (or a copier's engine) could build a
+      // SECOND unwrapped surface and route calls through it while a
+      // first-call-only pin stayed green.
+      seam.surfaceBuilds.push([module, ...rest]);
       // `rest` is passed through untouched, so the door's real refusal logic
       // runs against whatever the engine declared.
       const live = (
@@ -86,6 +94,13 @@ describe("QR engine goes through the host client", () => {
     // A direct `qrWrapper.encode(...)` bypasses the surface entirely and leaves
     // this empty — that is the mutation this pin catches.
     expect(encodeCalls).toHaveLength(1);
+
+    // Exactly one surface was ever built, and it was built BEFORE the call
+    // (module load). The factory is callable repeatedly, so a lazy second
+    // surface inside `qrMatrix` would be a fresh, unseen door that every other
+    // pin here would still pass — this is what makes "the engine's calls go
+    // through the observed door" true rather than "the first door was fine".
+    expect(seam.surfaceBuilds).toHaveLength(1);
     expect(encodeCalls[0]!.args[0]).toBe(PAYLOAD);
   });
 
@@ -97,9 +112,13 @@ describe("QR engine goes through the host client", () => {
 
     // …and the engine must hand that declaration to the door, not merely
     // publish it. Omitting the argument lets `createSurface` default to `{}`,
-    // so its refusal never fires and a wrong declaration would pass silently —
-    // this pin is what makes a non-empty declaration fail loudly. Verified: it
-    // is the only case that fails when the argument is dropped again.
+    // so its refusal never fires and the declared value would never be
+    // consulted. Scope, precisely: this pin catches **the argument being
+    // dropped** (verified: it is the only case that fails then). It is not a
+    // general "no wrong declaration can ship" guard — it asserts identity with
+    // whatever `declare-caps.ts` exports, so changing that file to a non-empty
+    // declaration passes here and is refused by the door instead (which is what
+    // the next case documents).
     expect(seam.handedCapabilities).toBe(QR_CAPABILITIES);
 
     // Exported and read by the encoder — the read the package's `sideEffects`

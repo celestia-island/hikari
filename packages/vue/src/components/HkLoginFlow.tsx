@@ -29,6 +29,10 @@ export interface HkLoginCredentialsChannel {
   /** Username-field type; `email` renders the identifier login. */
   usernameType?: "text" | "email";
   usernamePlaceholder?: string;
+  /** Autocomplete token forwarded to the username field (e.g. "email"
+   *  on identifier logins); HkSignInCard's runtime credential policy
+   *  resolves the default. */
+  usernameAutocomplete?: string;
   /** Classic two-field card. Defaults to FALSE — account-first is the
    *  family-wide posture since the MFA redesign: the password is proven
    *  on the verify step as one factor among the announced ones, so the
@@ -160,10 +164,20 @@ export const HkLoginFlow = defineComponent({
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
-    /** HkMfaVerifyCard's exposed handle (`clearProof`). Vue types
-     *  expose() members off the instance type, so the ref carries the
-     *  narrow public handle and the template binding casts once. */
-    const mfaRef = ref<{ clearProof: () => void } | null>(null);
+    /** HkMfaVerifyCard's exposed handles, forwarded one level up so
+     *  hosts never hold a ref into the panel's internals: `clearProof`
+     *  empties the field after a rejected proof, `focusPassword`
+     *  re-arms the password entry, `selectedFactor` reports the factor
+     *  on stage (a two-proof host needs the kind it just proved when
+     *  the server does not echo it back). Vue's instance type does not
+     *  carry expose() members, so the binding carries the declared
+     *  handle type. */
+    type MfaCardHandle = {
+      clearProof: () => void;
+      focusPassword: () => void;
+      selectedFactor: () => unknown;
+    };
+    const mfaRef = ref<MfaCardHandle | null>(null);
 
     const currentChannel = computed(
       () =>
@@ -181,11 +195,13 @@ export const HkLoginFlow = defineComponent({
       return channel.key;
     }
 
-    /** Consumer handles a rejected proof: `clearProof` empties the MFA
-     *  card's active field. Re-exposed one level up so hosts never hold
-     *  a ref into the panel's internals. */
+    /** Consumer handles: forwarded from the inner MFA card. `clearProof`
+     *  empties the active field after a rejected proof; `selectedFactor`
+     *  reports the factor on stage; `focusPassword` re-arms focus. */
     expose({
       clearProof: () => mfaRef.value?.clearProof(),
+      focusPassword: () => mfaRef.value?.focusPassword(),
+      selectedFactor: () => mfaRef.value?.selectedFactor(),
     });
 
     const tabsEl = () =>
@@ -214,6 +230,7 @@ export const HkLoginFlow = defineComponent({
           passwordField={channel.passwordField ?? false}
           usernameType={channel.usernameType ?? "text"}
           usernamePlaceholder={channel.usernamePlaceholder}
+          usernameAutocomplete={channel.usernameAutocomplete}
           submitLabel={channel.submitLabel}
           initialUsername={props.initialUsername}
           onSubmit={(username: string, password: string) =>
@@ -308,7 +325,7 @@ export const HkLoginFlow = defineComponent({
                     : renderSsoCard(channel),
                 verify: () => (
                   <HkMfaVerifyCard
-                    ref={mfaRef as never}
+                    ref={mfaRef}
                     factors={props.verifyFactors}
                     proven={props.verifyProven}
                     accountName={props.verifyAccountName}

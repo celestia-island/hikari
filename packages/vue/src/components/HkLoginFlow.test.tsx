@@ -203,27 +203,87 @@ describe("HkLoginFlow — sso channel", () => {
 });
 
 describe("HkLoginFlow — verify step", () => {
-  it("slides to the MFA card and forwards its events", async () => {
+  it("slides to the MFA card and forwards the verify event with the composed proof", async () => {
     const onVerify = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+        verifyAccountName: "demiurge",
+        onVerify,
+      }),
+    );
+    await nextTick();
+    const cells = Array.from(c.querySelectorAll<HTMLInputElement>(".hk-otp-cell"));
+    expect(cells.length).toBe(6);
+    // Compose the 6-digit code cell by cell (the OTP input owns one
+    // character per cell), then submit through the primary button.
+    cells.forEach((cell, i) => {
+      cell.value = String(i);
+      cell.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await nextTick();
+    const submit = c.querySelector<HTMLButtonElement>(".hk-btn-primary")!;
+    submit.click();
+    await nextTick();
+    expect(onVerify).toHaveBeenCalledWith("totp", "012345");
+  });
+
+  it("forwards the resend and back events from the MFA card", async () => {
+    const onResend = vi.fn();
     const onBack = vi.fn();
     const c = mount(
       h(HkLoginFlow, {
         channels: [cloudChannel],
         modelValue: "cloud",
         step: "verify",
-        verifyFactors: ["totp", "password"],
-        verifyAccountName: "demiurge",
-        onVerify,
+        verifyFactors: ["sms"],
+        onVerifyResend: onResend,
         onVerifyBack: onBack,
       }),
     );
     await nextTick();
-    // The MFA card is on stage: its factor picker (HkIconButtonGroup
-    // entries) and the verify title render; HkStepFlow keeps only the
-    // active body mounted after the swap settles.
-    const factorButtons = c.querySelectorAll("button.hk-icon-group-item");
-    expect(factorButtons.length).toBeGreaterThan(0);
-    expect(c.querySelector(".s-auth-title")?.textContent).toContain("Verify");
+    const resend = Array.from(c.querySelectorAll("button")).find((b) =>
+      b.textContent?.toLowerCase().includes("resend"));
+    expect(resend).toBeTruthy();
+    resend!.click();
+    await nextTick();
+    expect(onResend).toHaveBeenCalledTimes(1);
+    const back = Array.from(c.querySelectorAll("button")).find((b) =>
+      b.textContent?.toLowerCase().includes("back"));
+    expect(back).toBeTruthy();
+    back!.click();
+    await nextTick();
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-exposes the MFA card's clearProof handle (the rejected-proof contract)", async () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+      }),
+    );
+    await nextTick();
+    const cells = Array.from(c.querySelectorAll<HTMLInputElement>(".hk-otp-cell"));
+    cells.forEach((cell, i) => {
+      cell.value = String(i);
+      cell.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await nextTick();
+    // The handle lives on the flow's root component instance.
+    const flowRoot = c.querySelector(".hk-login-flow") as HTMLElement & {
+      __vueParentComponent?: { exposed: { clearProof: () => void } | null };
+    };
+    const exposed = flowRoot.__vueParentComponent?.exposed;
+    expect(typeof exposed?.clearProof).toBe("function");
+    exposed!.clearProof();
+    await nextTick();
+    expect(cells.every((cell) => cell.value === "")).toBe(true);
   });
 
   it("keeps the channel segment group off the verify step", () => {
@@ -238,6 +298,37 @@ describe("HkLoginFlow — verify step", () => {
     // The verify step owns the whole card; a channel switch mid-verify
     // would drop the ladder state, so the tabs never render here.
     expect(c.querySelector(".hk-tabs")).toBeNull();
+  });
+});
+
+describe("HkLoginFlow — host wiring details", () => {
+  it("falls back to the first channel when modelValue matches nothing", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel, orgChannel],
+        modelValue: "ghost",
+        "onUpdate:modelValue": () => {},
+      }),
+    );
+    // No phantom selection: the first channel's card renders and the
+    // segment group stays coherent (first tab selected).
+    expect(c.querySelector('input[name="signin-username"]')).not.toBeNull();
+    const active = c.querySelector('.hk-tabs-trigger[aria-selected="true"]');
+    expect(active?.textContent).toContain("Celestia Cloud");
+  });
+
+  it("forwards per-channel autocomplete tokens to the username field", () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [
+          { key: "org", mode: "credentials", usernameType: "email", usernameAutocomplete: "email" },
+        ],
+        modelValue: "org",
+      }),
+    );
+    const input = c.querySelector<HTMLInputElement>('input[name="signin-username"]')!;
+    expect(input.getAttribute("autocomplete")).toBe("email");
+    expect(input.getAttribute("type")).toBe("email");
   });
 });
 

@@ -49,6 +49,11 @@ export const HkAuthScreen = defineComponent({
       type: Array as PropType<HkAuthScreenBeianEntry[]>,
       default: () => [],
     },
+    /** Accessible name for the compliance nav landmark. The landmark
+     *  stays unlabeled when unset (a nav of filing links is self-
+     *  describing enough for screen readers); hosts with a localized
+     *  name pass it explicitly. */
+    beianAriaLabel: { type: String, default: undefined },
   },
   setup(props, { slots }) {
     return () => (
@@ -59,11 +64,14 @@ export const HkAuthScreen = defineComponent({
           <footer class="hk-auth-screen-footer">
             {slots.footer?.()}
             {props.beian.length > 0 && (
-              <nav class="hk-auth-screen-beian" aria-label="beian">
-                {props.beian.map((entry) =>
+              <nav
+                class="hk-auth-screen-beian"
+                aria-label={props.beianAriaLabel || undefined}
+              >
+                {props.beian.map((entry, index) =>
                   entry.url ? (
                     <a
-                      key={entry.title}
+                      key={`${entry.title}-${index}`}
                       class="hk-auth-screen-beian-link"
                       href={entry.url}
                       target="_blank"
@@ -72,7 +80,7 @@ export const HkAuthScreen = defineComponent({
                       {entry.title}
                     </a>
                   ) : (
-                    <span key={entry.title} class="hk-auth-screen-beian-item">
+                    <span key={`${entry.title}-${index}`} class="hk-auth-screen-beian-item">
                       {entry.title}
                     </span>
                   ),

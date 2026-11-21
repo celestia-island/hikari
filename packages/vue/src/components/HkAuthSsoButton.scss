@@ -22,10 +22,10 @@
   width: 6rem;
   height: 6rem;
   padding: 0;
-  border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 14%, transparent);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 14%, transparent);
   border-radius: var(--hi-radius-lg, 12px);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 88%, transparent);
-  color: rgb(var(--color-text));
+  background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 88%, transparent);
+  color: rgb(var(--color-text, 25 30 40));
   cursor: pointer;
   transition:
     border-color 0.15s ease,
@@ -33,8 +33,8 @@
     transform 0.15s ease;
 
   &:hover:not(:disabled) {
-    border-color: color-mix(in srgb, rgb(var(--color-primary)) 55%, transparent);
-    background: color-mix(in srgb, rgb(var(--color-surface)) 100%, transparent);
+    border-color: color-mix(in srgb, rgb(var(--color-primary, 122 162 247)) 55%, transparent);
+    background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 100%, transparent);
     transform: translateY(-1px);
   }
 
@@ -43,7 +43,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
+    outline: 2px solid rgb(var(--color-primary, 122 162 247));
     outline-offset: 2px;
   }
 
@@ -78,6 +78,6 @@
 
 .hk-auth-sso-label {
   font-size: 0.875rem;
-  color: color-mix(in srgb, rgb(var(--color-text)) 78%, transparent);
+  color: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 78%, transparent);
   text-align: center;
 }

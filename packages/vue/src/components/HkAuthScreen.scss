@@ -46,7 +46,7 @@
   gap: var(--space-4, 0.25rem);
   font-size: 0.75rem;
   line-height: 1.5;
-  color: color-mix(in srgb, rgb(var(--color-text)) 55%, transparent);
+  color: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 55%, transparent);
 }
 
 .hk-auth-screen-beian-link {
@@ -55,7 +55,7 @@
 
   &:hover,
   &:focus-visible {
-    color: color-mix(in srgb, rgb(var(--color-text)) 80%, transparent);
+    color: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 80%, transparent);
     text-decoration: underline;
   }
 }

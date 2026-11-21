@@ -170,9 +170,10 @@ describe("HkSerpentineUnlock (mounted)", () => {
     expect((el.querySelector(".hk-serpentine-handle") as HTMLElement).style.left).toBe("24px");
   });
 
-  it("announces twenty-percent bands (40% renders as forty, not worse)", async () => {
-    // Walk to ~40%: the aria-live hint must read "(40%)" — the band
-    // formula is round(v*5)*20; a 2x-off formula renders hundreds.
+  it("keeps the visible hint static while tracking; aria carries progress", async () => {
+    // Walk to ~40%: the VISIBLE hint must stay the tracking copy (the user
+    // ruled the text must not mutate mid-drag), while the aria-live
+    // announcer steps through the twenty-percent bands.
     const el = mountGate();
     const path = generateSerpentinePath(600, 96, 42);
     const start = path.points[0]!;
@@ -181,7 +182,8 @@ describe("HkSerpentineUnlock (mounted)", () => {
     pointer(el, "pointermove", forty.x, forty.y);
     await nextTick();
     const hint = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
-    expect(hint).toContain("(40%)");
+    expect(hint).toBe("keep going"); // the trackingHint, unmutated
+    expect(hint).not.toContain("%");
   });
 
   it("zeroing paths reset the announcer (no stale percent)", async () => {
@@ -234,9 +236,10 @@ describe("HkSerpentineUnlock (mounted)", () => {
     const sixty = projectOntoPath(path.points, path.totalLength * 0.6);
     pointer(el, "pointermove", sixty.x, sixty.y);
     await nextTick();
-    // 60% tracks: announced band sits at 60.
+    // 60% tracks: the aria band sits at 60; the visible copy stays the
+    // tracking hint (unmutated, per the ruling).
     const tracked = (el.querySelector(".hk-serpentine-hint") as HTMLElement).textContent ?? "";
-    expect(tracked).toContain("60%");
+    expect(tracked).not.toContain("grab hint");
     // Bump resetKey: progress zeroes AND the announcer goes with it — the
     // next walk must announce from zero, not carry the 60% band.
     resetKey.value += 1;

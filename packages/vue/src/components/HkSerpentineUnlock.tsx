@@ -187,6 +187,7 @@ const TRACKING_TOLERANCE = 30;
     }
 
     function onPointerDown(event: PointerEvent) {
+      console.log("PROBE_DOWN: client", event.clientX, event.clientY, "disabled", props.disabled, "confirmed", confirmed.value);
       if (props.disabled || confirmed.value) return;
       const box = viewport.value?.getBoundingClientRect();
       if (!box) return;
@@ -309,9 +310,9 @@ const TRACKING_TOLERANCE = 30;
     );
 
     const announce = (value: number) => {
-      // Twenty-percent bands (0/20/40/60/80/100), recomputed in both
-      // directions. ROUNDED, not floored: the projection's float noise
-      // otherwise drops an exact 40% to the band below.
+      // Screen-reader channel only: twenty-percent bands (recomputed in
+      // both directions), never rendered in the visible hint — the user
+      // ruled the visible copy static while tracking.
       announced.value = Math.round(value * 5) * 20;
     };
 
@@ -375,7 +376,7 @@ const TRACKING_TOLERANCE = 30;
             {confirmed.value
               ? "✓"
               : tracking.value || keyboardGrabbed.value
-                ? `${props.trackingHint} (${announced.value}%)`
+                ? props.trackingHint
                 : props.grabHint}
           </span>
         </div>

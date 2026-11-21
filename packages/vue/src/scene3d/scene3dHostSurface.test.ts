@@ -289,17 +289,17 @@ describe("scene3d spec builder goes through the host client", () => {
     // the next case documents).
     expect(seam.firstHandedCapabilities).toBe(SCENE3D_CAPABILITIES);
 
-    // The declaration must have been *passed* at the call site, not merely
-    // recorded. `firstHandedCapabilities` holds whatever `rest[0]` was, so a
-    // seam that fills in an equal-shaped default would satisfy the identity
-    // assertion above while the call site omits the argument. Assert the arity
-    // of the first build instead.
+    // The declaration must have been *passed* at the call site. The identity
+    // assertion above is what catches the omission (verified: dropping the
+    // argument reds that line), and the line below pins the passed value on the
+    // recorded build.
     //
-    // Scope, precisely: this catches the *call site* omitting or explicitly
-    // passing `undefined` (both make `rest` shorter or non-identical). It does
-    // NOT catch a builder passing a different equal-shaped object — the door
-    // only reads `.interfaces`/`.wasiModules` off the value, so identity is
-    // deliberately stricter than the contract here (see the note above).
+    // Scope, precisely: `toHaveLength(2)` catches a call site that *explicitly*
+    // passes `undefined` or some other non-identical value. It does NOT catch an
+    // omission on its own — a seam that filled a default would still make `rest`
+    // length 2 — and neither line catches a builder passing a different
+    // equal-shaped object (the door only reads `.interfaces`/`.wasiModules`, so
+    // the identity check is deliberately stricter than the contract).
     expect(seam.surfaceBuilds[0]).toHaveLength(2);
     expect(seam.surfaceBuilds[0]![1]).toBe(SCENE3D_CAPABILITIES);
 

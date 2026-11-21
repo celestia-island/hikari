@@ -126,6 +126,33 @@ describe("HkSerpentineUnlock (mounted)", () => {
     expect(cancelSpy).not.toHaveBeenCalled();
   });
 
+  it("shows the busy spinner after a confirm — never a ✓ success stamp", async () => {
+    // 2026-11-21 user ruling: a walk completion hands off to the parent,
+    // so the hint line renders the standard spinner (the retired "✓"
+    // read as a success stamp on a deletion still in flight — and the
+    // #1468 revert had brought it back). DOM assertions ride nextTick:
+    // the confirm emit is synchronous, the render is not.
+    const el = mountGate();
+    expect(el.querySelector(".hk-serpentine-hint .hk-spinner")).toBeNull();
+    const path = generateSerpentinePath(600, 96, 42);
+    const start = path.points[0]!;
+    pointer(el, "pointerdown", start.x, start.y);
+    for (let d = 6; d <= path.totalLength + 4; d += 6) {
+      const at = projectOntoPath(path.points, d);
+      pointer(el, "pointermove", at.x, at.y);
+    }
+    pointer(el, "pointerup", 600, 48);
+    await nextTick();
+    // Mutation-ordering contract (R3 S1): the two semantic pins come FIRST,
+    // so each dies on its own line — a mutation back to the text "✓" trips
+    // the glyph-absence pin (and drops aria-busy), not just the spinner
+    // existence query.
+    const hint = el.querySelector(".hk-serpentine-hint")!;
+    expect(hint.textContent).not.toContain("✓");
+    expect(el.getAttribute("aria-busy")).toBe("true");
+    expect(hint.querySelector(".hk-spinner")).toBeTruthy();
+  });
+
   it("holds position when the pointer drifts off-lane (no reset)", () => {
     // Device feedback: an 18px corridor reset the walk on every wobble.
     // Now a drifting pointer HOLDS the knob (no fail, no spring); the walk
@@ -299,7 +326,26 @@ describe("HkSerpentineUnlock styles contract", () => {
   });
 
   it("keeps no displacement animation at all (the shake retired with the off-path fail)", () => {
-    expect(scss.split("@keyframes").length - 1).toBeLessThanOrEqual(1); // spinner keyframe only
+    // The busy spinner is the standard HkSpinner component — its rotation
+    // keyframe lives in HkSpinner.scss, not here (0 here is the healthy
+    // state; the ≤1 slack exists only so a future local keyframe does not
+    // read as a regression of the retired shake).
+    expect(scss.split("@keyframes").length - 1).toBeLessThanOrEqual(1);
+  });
+
+  it("authors the confirmed flex override AFTER the base hint rule (cascade pin)", () => {
+    // R5-caught S2: both selectors are (0,2,0), so source order decides.
+    // The confirmed rule (flex centring for the block-level spinner
+    // wrapper) sat ABOVE the base `display: block` and never applied —
+    // the spinner hugged the hint line's left edge. Pin the order.
+    const base = scss.indexOf(".hk-serpentine-hint {");
+    const confirmed = scss.indexOf(".hk-serpentine--confirmed .hk-serpentine-hint {");
+    expect(base).toBeGreaterThan(-1);
+    expect(confirmed).toBeGreaterThan(base);
+    // And the override really carries the centring declarations.
+    const confirmedBlock = scss.slice(confirmed);
+    expect(confirmedBlock).toContain("display: flex");
+    expect(confirmedBlock).toContain("justify-content: center");
   });
 
   it("puts the hint in flow (no absolute hang below the box)", () => {
@@ -315,7 +361,8 @@ describe("HkSerpentineUnlock styles contract", () => {
     // duration/ease tokens. The invented --hk-motion-ease must not return.
     expect(scss).toContain("--ease-standard");
     expect(scss).not.toContain("--hk-motion-ease");
-    // spinner keyframe is the only allowed animation
+    // The spinner rides the standard HkSpinner component; no local
+    // rotation keyframe belongs in this sheet.
     expect(scss.split("@keyframes").length - 1).toBeLessThanOrEqual(1);
   });
 });

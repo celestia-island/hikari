@@ -1439,3 +1439,78 @@ describe("HkTabs attached trigger actions (2026-11-19)", () => {
     expect(document.querySelector(".hk-select-popout")).toBeNull();
   });
 });
+
+describe("HkTabs supplement trailing inset (2026-11-21)", () => {
+  // User report: the hover/press-revealed ⋯ inside a segmented option sat
+  // flush on the segment's right edge — the cell has no padding of its own
+  // and the sliding indicator frames the CELL, so the action's hit area
+  // landed on the boundary. The fix gives the supplement column a trailing
+  // inset matching the trigger's own inline padding, INSIDE the collapsing
+  // column (at rest it still occupies nothing, so the label stays centred).
+  const scss = readFileSync(join(here, "HkTabs.scss"), "utf8");
+
+  it("pads the supplement column's end inside the option cell", () => {
+    // Brace-walk the `.hk-tabs-cell > .hk-supplement-inset` block itself:
+    // a plain whole-file regex would also match a hoisted top-level rule,
+    // which would leak the inset to every HkSupplementInset consumer.
+    const cellStart = scss.indexOf(".hk-tabs-cell > .hk-supplement-inset");
+    expect(cellStart).toBeGreaterThan(-1);
+    const open = scss.indexOf("{", cellStart);
+    let depth = 0;
+    let end = -1;
+    for (let i = open; i < scss.length; i++) {
+      if (scss[i] === "{") depth++;
+      else if (scss[i] === "}") {
+        depth--;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    expect(end).toBeGreaterThan(open);
+    const cellBlock = scss.slice(open, end + 1);
+    expect(cellBlock).toContain(".hk-supplement-inset-supplement-inner");
+    expect(cellBlock).toContain("padding-inline-end: var(--space-12)");
+    // And the nested selector really is the inner (not some other child).
+    expect(cellBlock).toMatch(
+      /\.hk-supplement-inset-supplement-inner\s*{[^}]*padding-inline-end:\s*var\(--space-12\)/,
+    );
+  });
+
+  it("mounts the inset cell anatomy an action rides in (structure anchor)", () => {
+    const onSelect = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const active = ref("a");
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkTabs, {
+            modelValue: active.value,
+            "onUpdate:modelValue": (v: string) => { active.value = v; },
+            renderPanels: false,
+            variant: "segmented",
+            tabs: [
+              { key: "a", label: "Auto", actions: [{ key: "dot", label: "Configure", onSelect }] },
+              { key: "b", label: "Dark" },
+            ] as TabItem[],
+          });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    // cell > inset > (main > trigger, supplement > inner > action): the
+    // stylesheet's descendant inset rule must reach the real supplement.
+    const inner = container.querySelector<HTMLElement>(
+      ".hk-tabs-cell > .hk-supplement-inset .hk-supplement-inset-supplement-inner",
+    );
+    expect(inner).toBeTruthy();
+    expect(
+      inner!.querySelector(".hk-tabs-trigger-action"),
+      "the action renders inside the padded inner",
+    ).toBeTruthy();
+  });
+});

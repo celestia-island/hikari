@@ -19,6 +19,7 @@ import {
 } from "./serpentineGeometry";
 import "./HkSerpentineUnlock.scss";
 import { onFrame, reportTransition, type AnimationHandle } from "../runtime/animationBus";
+import HkSpinner from "./HkSpinner";
 
 /**
  * Deliberate-action gate: drag the handle along a randomly generated
@@ -335,6 +336,7 @@ const TRACKING_TOLERANCE = 30;
           ref={viewport}
           role="group"
           aria-label={props.label}
+          aria-busy={confirmed.value || undefined}
           tabindex={props.disabled ? -1 : 0}
           onKeydown={onKeydown}
           onPointerdown={onPointerDown}
@@ -373,7 +375,13 @@ const TRACKING_TOLERANCE = 30;
           </div>
           <span class="hk-serpentine-hint" aria-live="polite">
             {confirmed.value
-              ? "✓"
+              // The walk is done and the parent is acting on it: a busy
+              // spinner (2026-11-21 user ruling — the retired "✓" claimed a
+              // completion the gate does not know about; it also came back
+              // from the #1461 revert looking like a *success* stamp on a
+              // deletion still in flight). The standard spinner renders in
+              // the hint line and the gate announces busy (aria-busy).
+              ? <HkSpinner size="xs" />
               : tracking.value || keyboardGrabbed.value
                 ? props.trackingHint
                 : props.grabHint}

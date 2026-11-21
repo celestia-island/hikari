@@ -111,15 +111,46 @@ describe("HkExpansionPanel", () => {
   });
 });
 
-describe("HkExpansionPanel body padding contract (2026-11-19)", () => {
+describe("HkExpansionPanel body padding contract (2026-11-19, relocated 2026-11-21)", () => {
   // The BODY padding belongs to the panel (user direction 2026-11-19: a
   // flush expanded body read as a host bug, and hosts that hand-padded
   // doubled once the panel grew its own). The stylesheet contract keeps
   // the inset from being dropped again.
-  it("owns the body inset in the stylesheet (header-aligned inline + bottom)", () => {
+  //
+  // 2026-11-21 (user report: a residual band below the collapsed DPI
+  // card): the padding MOVED from the clipped grid item to an inner
+  // wrapper. Vertical padding on the clipped item cannot collapse with
+  // the 0fr track — the track goes to zero but the padding block
+  // survives as a ~20px dead band under the header of every closed
+  // panel. Both halves are pinned: the inset still exists (inner), and
+  // the clip itself carries none.
+  it("owns the body inset on the inner wrapper (header-aligned inline + bottom)", () => {
     const scss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkExpansionPanel.scss"), "utf8");
     expect(scss).toMatch(
-      /\.hk-expansion-panel-content\s*{[^}]*padding:\s*var\(--space-8\)\s+var\(--space-12\)\s+var\(--space-12\)/,
+      /\.hk-expansion-panel-content-inner\s*{[^}]*padding:\s*var\(--space-8\)\s+var\(--space-12\)\s+var\(--space-12\)/,
     );
+  });
+
+  it("keeps the clipped grid item padding-free so a closed panel collapses to zero", () => {
+    const scss = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkExpansionPanel.scss"), "utf8");
+    const content = scss.match(/\.hk-expansion-panel-content\s*{([^}]*)}/)?.[1] ?? "";
+    // Strip comments first — the prose explains the rule and mentions the
+    // word; only the declarations count.
+    const declarations = content.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
+    expect(declarations).not.toMatch(/padding/);
+    // The collapse machinery stays on the clip: the 0fr track + the
+    // min-height/overflow pair are what make the closed body actually
+    // disappear rather than shrink to its padding.
+    expect(declarations).toContain("min-height: 0");
+    expect(declarations).toContain("overflow: hidden");
+  });
+
+  it("renders the inner wrapper between the clip and the slot content", () => {
+    const container = mountPanel({ title: "T" }, { default: () => h("p", "body") });
+    const content = panelOf(container).querySelector<HTMLElement>(".hk-expansion-panel-content")!;
+    expect(content).toBeTruthy();
+    const inner = content.querySelector<HTMLElement>(":scope > .hk-expansion-panel-content-inner");
+    expect(inner).toBeTruthy();
+    expect(inner!.textContent).toBe("body");
   });
 });

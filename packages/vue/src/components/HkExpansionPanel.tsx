@@ -93,7 +93,15 @@ export default defineComponent({
           </span>
         </button>
         <div class="hk-expansion-panel-body">
-          <div class="hk-expansion-panel-content">{slots.default?.()}</div>
+          <div class="hk-expansion-panel-content">
+            {/* The PADDING lives on this inner wrapper, not on the clipped
+                grid item: a padded grid item cannot collapse to zero (the
+                padding block survives the 0fr track as a residual band under
+                the header — the "weird padding below the collapsed DPI card"
+                report). The clip stays padding-free; the wrapper is what
+                gets clipped away. */}
+            <div class="hk-expansion-panel-content-inner">{slots.default?.()}</div>
+          </div>
         </div>
       </div>
     );

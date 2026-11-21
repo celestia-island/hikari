@@ -105,7 +105,8 @@
   },
   "sideEffects": [
     "**/*.scss",
-    "**/*.css"
+    "**/*.css",
+    "**/qr/declare-caps.ts"
   ],
   "peerDependenciesMeta": {
     "pinia": {

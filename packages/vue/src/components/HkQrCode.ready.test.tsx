@@ -13,14 +13,19 @@ vi.mock("../utils/qr/qrEncoder", async () => {
   const actual = await vi.importActual<typeof import("../utils/qr/qrEncoder")>(
     "../utils/qr/qrEncoder",
   );
+  // The real module throws `actual.QrNotReadyError` when the surface is not
+  // usable (its construction failed). Rebuild exactly that: a first call with
+  // the real error class, then the real matrix once "ready".
+  // Resolve on a macrotask so the first paint (mount) is definitely refused.
+  const ready = new Promise<void>((resolve) => setTimeout(resolve, 0));
   return {
     ...actual,
-    qrReady: Promise.resolve(),
+    qrReady: ready,
     qrMatrix: (text: string, opts?: Parameters<typeof actual.qrMatrix>[1]) => {
       state.calls += 1;
       if (state.calls === 1) {
         state.refused = true;
-        throw new actual.QrNotReadyError();
+        throw new actual.QrNotReadyError(new Error("surface unavailable"));
       }
       return actual.qrMatrix(text, opts);
     },

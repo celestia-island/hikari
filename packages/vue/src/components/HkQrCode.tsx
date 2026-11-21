@@ -71,8 +71,6 @@ export const HkQrCode = defineComponent({
         });
       } catch (error) {
         if (error instanceof QrNotReadyError) {
-          // The component is still loading: draw again once it is usable. This
-          // is the only case where the synchronous facade has no matrix yet.
           void qrReady.then(() => draw()).catch(() => {});
           return;
         }

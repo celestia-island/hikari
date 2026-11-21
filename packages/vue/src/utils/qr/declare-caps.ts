@@ -10,4 +10,9 @@ import { publishCapabilities } from "@celestia-island/tairitsu-host-client";
 
 export const QR_CAPABILITIES = { interfaces: [] as string[], wasiModules: [] as string[] };
 
-publishCapabilities(QR_CAPABILITIES);
+/**
+ * The value the publish returned (the previous declaration). Exported and read
+ * by the encoder so this module cannot be dropped as dead code by a bundler that
+ * honours `sideEffects`.
+ */
+export const QR_DECLARATION_PUBLISHED = publishCapabilities(QR_CAPABILITIES);

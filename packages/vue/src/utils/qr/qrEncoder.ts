@@ -9,7 +9,7 @@
 // client's synchronous door (`createSurface`) is what makes that possible: the
 // wrapper is in this module graph, so its exports are callable as soon as the
 // module is evaluated — no readiness dance in the common path.
-import "./declare-caps";
+import { QR_CAPABILITIES, QR_DECLARATION_PUBLISHED } from "./declare-caps";
 import * as qrWrapper from "../../wasm/qr/hikari_wasm_qr.js";
 import {
   createSurface,
@@ -38,18 +38,24 @@ export class QrNotReadyError extends Error {
 }
 
 let surface: HostComponent | undefined;
-let loadFailure: unknown;
+let loadFailure: QrNotReadyError | undefined;
 
 try {
   surface = createSurface(qrWrapper as unknown as Record<string, unknown>);
 } catch (error) {
-  loadFailure = error;
+  // Recognisable at the call site: `HkQrCode` re-draws on it, and callers that
+  // can wait use `qrReady`. The underlying cause is kept.
+  loadFailure = new QrNotReadyError(error);
 }
 
 /** Resolves once the component is usable; rejects if it could not be built. */
 export const qrReady: Promise<void> = surface
   ? Promise.resolve()
   : Promise.reject(loadFailure ?? new QrNotReadyError());
+
+/** Keeps the declaration module live for bundlers that honour `sideEffects`. */
+export const qrCapabilities = QR_CAPABILITIES;
+void QR_DECLARATION_PUBLISHED;
 
 qrReady.catch(() => {
   // Consumed by callers that care (`HkQrCode` re-renders on it); a rejected
@@ -65,10 +71,7 @@ qrReady.catch(() => {
  * generator it replaced), and `QrNotReadyError` if the component is unusable.
  */
 export function qrMatrix(text: string, opts: QrMatrixOptions = {}): boolean[][] {
-  if (!surface) {
-    if (loadFailure) throw loadFailure;
-    throw new QrNotReadyError();
-  }
+  if (!surface) throw loadFailure ?? new QrNotReadyError();
   const level = (opts.errorCorrectionLevel ?? "M").toLowerCase() as
     | "l"
     | "m"

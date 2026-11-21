@@ -259,7 +259,7 @@ describe("HkLoginFlow — verify step", () => {
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
-  it("re-exposes the MFA card's clearProof handle (the rejected-proof contract)", async () => {
+  it("re-exposes the MFA card's clearProof, focusPassword and selectedFactor handles", async () => {
     const c = mount(
       h(HkLoginFlow, {
         channels: [cloudChannel],
@@ -275,15 +275,42 @@ describe("HkLoginFlow — verify step", () => {
       cell.dispatchEvent(new Event("input", { bubbles: true }));
     });
     await nextTick();
-    // The handle lives on the flow's root component instance.
+    // The handles live on the flow's root component instance — all three
+    // the documented host contract for the verify step.
     const flowRoot = c.querySelector(".hk-login-flow") as HTMLElement & {
-      __vueParentComponent?: { exposed: { clearProof: () => void } | null };
+      __vueParentComponent?: {
+        exposed: {
+          clearProof: () => void;
+          focusPassword: () => void;
+          selectedFactor: () => unknown;
+        } | null;
+      };
     };
     const exposed = flowRoot.__vueParentComponent?.exposed;
     expect(typeof exposed?.clearProof).toBe("function");
+    expect(typeof exposed?.focusPassword).toBe("function");
+    expect(typeof exposed?.selectedFactor).toBe("function");
+    // selectedFactor reports the factor on stage (totp is the default
+    // pick of the ladder); clearProof empties the composed code.
+    expect(exposed!.selectedFactor()).toBe("totp");
     exposed!.clearProof();
     await nextTick();
     expect(cells.every((cell) => cell.value === "")).toBe(true);
+  });
+
+  it("renders the top and below slots around the panel body", () => {
+    const c = mount(
+      h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }, {
+        top: () => h("div", { class: "banner" }, "banner"),
+        below: () => h("div", { class: "signup" }, "signup"),
+      }),
+    );
+    expect(c.querySelector(".banner")).not.toBeNull();
+    expect(c.querySelector(".signup")).not.toBeNull();
+    // top renders ABOVE the card body, below UNDER it.
+    const root = c.querySelector(".hk-login-flow")!;
+    expect(root.firstElementChild?.className).toContain("banner");
+    expect(root.lastElementChild?.className).toContain("signup");
   });
 
   it("keeps the channel segment group off the verify step", () => {
@@ -361,6 +388,18 @@ describe("HkAuthScreen", () => {
     expect(links[0]!.getAttribute("target")).toBe("_blank");
     expect(links[0]!.getAttribute("rel")).toContain("noopener");
     expect(c.querySelector(".hk-auth-screen-beian-item")?.textContent).toBe("plain line");
+  });
+
+  it("labels the beian nav only when beianAriaLabel is set", () => {
+    const labelled = mount(
+      h(HkAuthScreen, {
+        beian: [{ title: "x" }],
+        beianAriaLabel: "备案信息",
+      }),
+    );
+    expect(labelled.querySelector(".hk-auth-screen-beian")?.getAttribute("aria-label")).toBe("备案信息");
+    const unlabelled = mount(h(HkAuthScreen, { beian: [{ title: "x" }] }));
+    expect(unlabelled.querySelector(".hk-auth-screen-beian")?.getAttribute("aria-label")).toBeNull();
   });
 
   it("renders no footer at all without footer content or beian entries", () => {

@@ -21,8 +21,16 @@ import { describe, expect, it, vi } from "vitest";
 interface Seam {
   /** Argument list of every `surface.call(name, …)`. */
   calls: Array<{ name: string; args: unknown[] }>;
+  /** What each observed `surface.call` returned, in order. */
+  results: unknown[];
   /** The namespace handed to `createSurface`. */
   handed: Record<string, unknown> | undefined;
+  /**
+   * Test seam: when set, the wrapped door delegates to this instead of the
+   * real export. Lets a probe substitute the door's return value and see
+   * whether the engine consumes it.
+   */
+  doorOverride?: (name: string, ...args: unknown[]) => unknown;
   /** The declaration handed to `createSurface` (not just published). */
   handedCapabilities: unknown;
   /**
@@ -38,6 +46,7 @@ interface Seam {
 
 const seam: Seam = {
   calls: [],
+  results: [],
   handed: undefined,
   handedCapabilities: undefined,
   firstHandedCapabilities: undefined,
@@ -74,7 +83,12 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
       // Wrap the surface's call door: this is where the engine must arrive.
       live.call = ((name: string, ...args: unknown[]) => {
         seam.calls.push({ name, args });
-        return realCall(name, ...args);
+        const value =
+          seam.doorOverride !== undefined
+            ? seam.doorOverride(name, ...args)
+            : realCall(name, ...args);
+        seam.results.push(value);
+        return value;
       }) as typeof live.call;
       return live;
     },
@@ -82,6 +96,8 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
 });
 
 const { qrMatrix, qrCapabilities } = await import("./qrEncoder");
+// The artifact itself, for the door-substitution probe.
+const realWrapper = await import("../../wasm/qr/hikari_wasm_qr.js");
 const { QR_CAPABILITIES } = await import("./declare-caps");
 
 const PAYLOAD = "https://example.com/";
@@ -111,6 +127,51 @@ describe("QR engine goes through the host client", () => {
     // through the observed door" true rather than "the first door was fine".
     expect(seam.surfaceBuilds).toHaveLength(1);
     expect(encodeCalls[0]!.args[0]).toBe(PAYLOAD);
+
+    // The observed door must be the door the *returned value* came through, not
+    // merely a door that was called. Counting calls alone is satisfiable while
+    // the real work goes through the raw namespace: a decoy
+    // `surface.call("encode", …)` whose result is discarded, with
+    // `qrWrapper.encode(…)` supplying the matrix, keeps every count green
+    // (measured 10/10) and still yields a correct matrix. So compare the
+    // decoded field the caller consumed, not just the call count.
+    expect(seam.results).toHaveLength(1);
+  });
+
+  it("uses the value the observed door returned, not a parallel encode", () => {
+    // Behavioural discriminator for the decoy shape that every count pin above
+    // passes: a discarded `surface.call("encode", …)` for the pins plus a
+    // direct `qrWrapper.encode(…)` that supplies the real matrix (measured:
+    // 10/10 green, correct output). Mark the door's return for the duration of
+    // one call — if the engine consumes the marked value the door is the data
+    // path; if it returns the real matrix instead, it went around.
+    const original = seam.doorOverride;
+    seam.doorOverride = (name, ...args) => {
+      void original;
+      // The artifact's own export — the same function the real door wraps.
+      const options = args[1] as
+        | Parameters<typeof realWrapper.encode>[1]
+        | undefined;
+      const value = realWrapper.encode(args[0] as string, options);
+      if (name !== "encode") return value;
+      // Same shape, but every module flipped: a caller that consumed this
+      // would produce an inverted matrix.
+      return {
+        size: value.size,
+        modules: Array.from({ length: value.modules.length }, (_, i) =>
+          !value.modules[i],
+        ),
+      };
+    };
+    let inverted: boolean[][];
+    try {
+      inverted = qrMatrix(PAYLOAD);
+    } finally {
+      seam.doorOverride = original;
+    }
+    // The matrix really is the door's marked output, so the door is the data path.
+    expect(inverted[0]![0]).toBe(false);
+    expect(qrMatrix(PAYLOAD)[0]![0]).not.toBe(inverted[0]![0]);
   });
 
   it("publishes the empty declaration the sync door requires", () => {

@@ -24,12 +24,17 @@
 //!
 //! Focus machine (Focus / Hover / Active):
 //!
+//! NOTE: this machine is drawn as the original sketch had it; the current code
+//! transition table differs (Idle →Focused on Focus, Focused →Idle on Blur,
+//! no Hover/Active →Focused edges). Reconcile before trusting it as a spec.
+//!
 //! ```mermaid
 //! stateDiagram-v2
 //!     direction LR
 //!     Focus --> Hover: MouseEnter
 //!     Hover --> Active: MouseDown
 //!     Active --> Hover
+
 //!     Hover --> Focus
 //!     Active --> Focus: Blur
 //! ```

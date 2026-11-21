@@ -166,9 +166,23 @@ describe("QR engine goes through the host client", () => {
     } finally {
       seam.doorOverride = original;
     }
-    // The matrix really is the door's marked output, so the door is the data path.
-    expect(inverted[0]![0]).toBe(false);
-    expect(qrMatrix(PAYLOAD)[0]![0]).not.toBe(inverted[0]![0]);
+    const plain = qrMatrix(PAYLOAD);
+
+    // EVERY module must be the door's marked value — not just a sentinel. A
+    // caller that takes the door's first module and the raw namespace's
+    // remainder satisfies a single-cell check (measured: 11/11 green), so the
+    // comparison has to cover the whole matrix.
+    expect(inverted).toHaveLength(plain.length);
+    let flipped = 0;
+    for (let row = 0; row < plain.length; row++) {
+      expect(inverted[row]).toHaveLength(plain[row]!.length);
+      for (let col = 0; col < plain[row]!.length; col++) {
+        expect(inverted[row]![col]).toBe(!plain[row]![col]);
+        flipped += 1;
+      }
+    }
+    // Guard against a trivially empty comparison.
+    expect(flipped).toBe(plain.length * plain.length);
   });
 
   it("publishes the empty declaration the sync door requires", () => {

@@ -9,34 +9,27 @@
 //!
 //! # State Transition Diagram
 //!
-//! ```text
-//!       MouseEnter         MouseDown         MouseUp
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │ Idle │───────────>│ Hover │───────────>│ Active │───────┘
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!    ^                                    │
-//!    │         MouseLeave                 │ MouseLeave
-//!    │<──────────────────────────────────┘
-//!    │                                    ^
-//!    │         Blur                      │ Blur
-//!    └───────────────────────────────────┘
-//!
-//!    Focus                     MouseEnter      MouseDown
-//!   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │   v              │
-//! ┌──────┐        │ ┌──────┐        │ ┌──────┐        │
-//! │Focus │───────────>│ Hover │───────────>│ Active │
-//! └──────┘   <──────── └──────┘   <──────── └──────┘
-//!   ^                                              │
-//!   │              Blur                             │
-//!   └──────────────────────────────────────────────┘
-//!
-//!    Disable                    Enable
-//!   ┌──────────────┐   ┌──────────────┐
-//!   v              │   v              │
-//!  Any State ─────────>│ Disabled │───────────> Idle
+//! ```mermaid
+//! stateDiagram-v2
+//!     direction LR
+//!     %% mouse transitions (Idle / Hover / Active)
+//!     Idle --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Active: MouseUp
+//!     Hover --> Idle
+//!     Active --> Hover
+//!     Active --> Idle: MouseLeave
+//!     Active --> Idle: Blur
+//!     %% focus transitions (Focus / Hover / Active)
+//!     Focus --> Hover: MouseEnter
+//!     Hover --> Active: MouseDown
+//!     Active --> Hover
+//!     Hover --> Focus
+//!     Active --> Focus: Blur
+//!     %% enable/disable transitions (Any State / Disabled / Idle)
+//!     state "Any State" as AnyState
+//!     AnyState --> Disabled: Disable
+//!     Disabled --> Idle: Enable
 //! ```
 //!
 //! # Usage Example

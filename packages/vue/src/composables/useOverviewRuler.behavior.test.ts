@@ -235,6 +235,59 @@ describe("attachOverviewRuler (behaviour)", () => {
     expect(host.querySelectorAll(".hk-overview-ruler-band").length).toBe(0);
   });
 
+  it("horizontal RTL: the cursor reads |scrollLeft| and jumps write positive (S2-1 guard)", () => {
+    const { host, sc } = makeScroller(30);
+    stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });
+    // HORIZONTAL axis: the extent reads scrollWidth/clientWidth, not the
+    // vertical pair the vertical tests seed.
+    seedScroll(sc, { extent: 3000, visible: 300 });
+    Object.defineProperty(sc, "scrollWidth", { configurable: true, value: 3000 });
+    Object.defineProperty(sc, "clientWidth", { configurable: true, value: 300 });
+    // Chromium RTL: direction rtl, scrollLeft positive (0 → +maxScroll).
+    const orig = window.getComputedStyle;
+    // @ts-expect-error test stub — a minimal plain object: the composable
+    // only reads `.direction` on this path.
+    window.getComputedStyle = (el: Element) =>
+      el === sc ? { direction: "rtl" } : orig(el);
+    const handle = attachOverviewRuler(sc, { host, axis: "horizontal" });
+    cleanup = () => {
+      handle.detach();
+      window.getComputedStyle = orig;
+    };
+    // half-scroll: scrollLeft 1350 → progress 0.5 → cursor left = 45%
+    // (happy-dom's scrollLeft setter needs the stub, same as the dims)
+    Object.defineProperty(sc, "scrollLeft", {
+      configurable: true,
+      value: 1350,
+      writable: true,
+    });
+    sc.dispatchEvent(new Event("scroll"));
+    console.log('DBG rtl:', JSON.stringify({
+      scrollLeft: sc.scrollLeft,
+      direction: window.getComputedStyle(sc as Element).direction,
+    }));
+    const cursor = host.querySelector<HTMLElement>(".hk-overview-ruler-cursor")!;
+    expect(cursor.style.left).toBe("45%");
+    expect(cursor.style.width).toBe("10%");
+    // jump at fraction 0.5 writes the POSITIVE value (Chromium semantics)
+    const strip = host.querySelector<HTMLElement>(".hk-overview-ruler")!;
+    stubRect(strip, { left: 0, top: 0, width: 400, height: 48 });
+    const y = 24;
+    strip.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        cancelable: true,
+        clientX: 200,
+        clientY: y,
+        pointerId: 1,
+        pointerType: "mouse",
+        button: 0,
+        isPrimary: true,
+      }),
+    );
+    expect(sc.scrollLeft).toBe(1350);
+  });
+
   it("host promotion is reference-counted and restores on the last detach (S2-1)", () => {
     const { host, sc } = makeScroller(5);
     stubRect(sc, { left: 0, top: 0, width: 300, height: 300 });

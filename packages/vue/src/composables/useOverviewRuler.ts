@@ -158,15 +158,19 @@ export function attachOverviewRuler(
     if (horizontal) viewport.scrollLeft = v;
     else viewport.scrollTop = v;
   };
-  /** Horizontal RTL: the engine reports scrollLeft descending 0 → −maxScroll
-   *  (useOverlayScrollbar's isRtlAxis exists for exactly this axis). The
-   *  vertical axis and every LTR horizontal engine are unaffected. */
+  /** Horizontal RTL: Chromium/WebKitGTK report scrollLeft rising 0 →
+   *  +maxScroll with 0 at the visual END; legacy Firefox descends 0 →
+   *  −maxScroll. |scrollLeft| is the position under BOTH conventions, so
+   *  the cursor reads correctly everywhere; the positive write targets
+   *  Chromium semantics (the dominant engine — the overlay scrollbar's
+   *  thumb uses |progress| for the same reason). Legacy-Firefox
+   *  horizontal-RTL WRITES degrade to a no-op: documented limitation. */
   const rtlHorizontal = horizontal
     && typeof getComputedStyle === "function"
     && getComputedStyle(viewport).direction === "rtl";
   /** The scroll position in the ruler's positive-fraction domain. */
-  const readScroll = (): number => (rtlHorizontal ? -scrollCoord() : scrollCoord());
-  const writeScroll = (v: number): void => setScrollCoord(rtlHorizontal ? -v : v);
+  const readScroll = (): number => (rtlHorizontal ? Math.abs(scrollCoord()) : scrollCoord());
+  const writeScroll = (v: number): void => setScrollCoord(rtlHorizontal ? Math.abs(v) : v);
   const contentExtent = (): number =>
     horizontal
       ? Math.max(viewport.scrollWidth, viewport.clientWidth)
@@ -403,7 +407,10 @@ export function attachOverviewRuler(
     if (entry) {
       entry.count -= 1;
       if (entry.count <= 0) {
-        host.style.position = entry.saved;
+        // Only undo OUR promotion: if a consumer re-positioned the host
+        // after attach, their inline style wins and the saved value stays
+        // dead (presence-gated, per R4b).
+        if (host.style.position === "relative") host.style.position = entry.saved;
         promotedParents.delete(host);
       }
     }

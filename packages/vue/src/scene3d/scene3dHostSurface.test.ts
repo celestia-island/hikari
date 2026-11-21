@@ -166,14 +166,35 @@ describe("scene3d spec builder goes through the host client", () => {
     // builder consumes the marked value the door is the data path; if it
     // returns the real spec instead, it went around.
     const original = seam.doorOverride;
+    // Mark EVERY carried field, not just `label`. `FleetBodySpec` has ~15
+    // renderer-driving fields; marking one lets a builder source the rest from
+    // a parallel raw read and still pass (measured: 75/75 with all of
+    // orbitPhase/status/color/… taken from the raw namespace).
     seam.doorOverride = (name, ...args) => {
       if (name !== EXPORT) return rawBuild(...(args as [never]));
       const value = rawBuild(...(args as [never]));
-      // Same shape, every observable field marked: a consumer that used the
-      // door's value must see these.
+      const mark = (b: (typeof value.stars)[number], kind: string, i: number) => ({
+        ...b,
+        id: `M-${kind}-id-${i}`,
+        label: `M-${kind}-label-${i}`,
+        status: `M-${kind}-status-${i}`,
+        detail: `M-${kind}-detail-${i}`,
+        role: "star",
+        online: !b.online,
+        color: [0.111, 0.222, 0.333] as [number, number, number],
+        radius: b.radius + 1000,
+        orbitCenter: [1.5, 2.5, 3.5] as [number, number, number],
+        orbitRadius: b.orbitRadius + 2000,
+        orbitPeriodSec: b.orbitPeriodSec + 3000,
+        orbitPhase: b.orbitPhase + 0.375,
+        orbitTilt: b.orbitTilt + 0.5,
+        spinPeriodSec: b.spinPeriodSec + 4000,
+        satellites: b.satellites + 7,
+        satelliteTotal: b.satelliteTotal + 9,
+      });
       return {
-        stars: value.stars.map((b, i) => ({ ...b, label: `MARKED-star-${i}` })),
-        planets: value.planets.map((b, i) => ({ ...b, label: `MARKED-planet-${i}` })),
+        stars: value.stars.map((b, i) => mark(b, "star", i)),
+        planets: value.planets.map((b, i) => mark(b, "planet", i)),
         hasRegistryCore: !value.hasRegistryCore,
       };
     };
@@ -185,17 +206,42 @@ describe("scene3d spec builder goes through the host client", () => {
     }
     const plain = buildFleetSceneSpecWasm(ROWS);
 
-    // EVERY body must carry the door's marked label — not just the first one. A
-    // builder that takes the door's first body and the raw namespace's
-    // remainder satisfies a single-item check, so the comparison has to cover
-    // the whole result. (Both lists are checked; the flag too.)
+    // EVERY field of EVERY body must be the door's value. Comparing whole
+    // objects (rather than one marked key per body) is what closes the
+    // field-level partial door: a builder that takes the door's labels and the
+    // raw namespace's numbers passes a label-only check.
     expect(marked.stars).toHaveLength(plain.stars.length);
     marked.stars.forEach((b, i) => {
-      expect(b.label).toBe(`MARKED-star-${i}`);
+      expect(b).not.toEqual(plain.stars[i]);
+      expect(b.id).toBe(`M-star-id-${i}`);
+      expect(b.label).toBe(`M-star-label-${i}`);
+      expect(b.status).toBe(`M-star-status-${i}`);
+      expect(b.detail).toBe(`M-star-detail-${i}`);
+      expect(b.role).toBe("star");
+      expect(b.online).toBe(!plain.stars[i]!.online);
+      expect(b.color).toEqual([0.111, 0.222, 0.333]);
+      expect(b.radius).toBeCloseTo(plain.stars[i]!.radius + 1000, 5);
+      expect(b.orbitCenter).toEqual([1.5, 2.5, 3.5]);
+      expect(b.orbitRadius).toBeCloseTo(plain.stars[i]!.orbitRadius + 2000, 5);
+      expect(b.orbitPeriodSec).toBeCloseTo(plain.stars[i]!.orbitPeriodSec + 3000, 5);
+      expect(b.orbitPhase).toBeCloseTo(plain.stars[i]!.orbitPhase + 0.375, 5);
+      expect(b.orbitTilt).toBeCloseTo(plain.stars[i]!.orbitTilt + 0.5, 5);
+      expect(b.spinPeriodSec).toBeCloseTo(plain.stars[i]!.spinPeriodSec + 4000, 5);
+      expect(b.satellites).toBe(plain.stars[i]!.satellites + 7);
+      expect(b.satelliteTotal).toBe(plain.stars[i]!.satelliteTotal + 9);
     });
     expect(marked.planets).toHaveLength(plain.planets.length);
     marked.planets.forEach((b, i) => {
-      expect(b.label).toBe(`MARKED-planet-${i}`);
+      expect(b).not.toEqual(plain.planets[i]);
+      expect(b.id).toBe(`M-planet-id-${i}`);
+      expect(b.label).toBe(`M-planet-label-${i}`);
+      expect(b.status).toBe(`M-planet-status-${i}`);
+      expect(b.detail).toBe(`M-planet-detail-${i}`);
+      expect(b.online).toBe(!plain.planets[i]!.online);
+      expect(b.radius).toBeCloseTo(plain.planets[i]!.radius + 1000, 5);
+      expect(b.orbitRadius).toBeCloseTo(plain.planets[i]!.orbitRadius + 2000, 5);
+      expect(b.orbitPhase).toBeCloseTo(plain.planets[i]!.orbitPhase + 0.375, 5);
+      expect(b.satellites).toBe(plain.planets[i]!.satellites + 7);
     });
     expect(marked.hasRegistryCore).toBe(!plain.hasRegistryCore);
     // Guard against a trivially empty comparison.
@@ -228,6 +274,14 @@ describe("scene3d spec builder goes through the host client", () => {
     // declaration passes here and is refused by the door instead (which is what
     // the next case documents).
     expect(seam.firstHandedCapabilities).toBe(SCENE3D_CAPABILITIES);
+
+    // The declaration must be *present*, not defaulted. `firstHandedCapabilities`
+    // records whatever `rest[0]` held, so a seam (or a builder) supplying an
+    // equal-shaped fallback would satisfy the identity assertion above while the
+    // production defect — the argument missing — is still present. Assert the
+    // arity instead: the first build must have been called with two arguments.
+    expect(seam.surfaceBuilds[0]).toHaveLength(2);
+    expect(seam.surfaceBuilds[0]![1]).toBe(SCENE3D_CAPABILITIES);
 
     // Exported and read by the builder — the read the package's `sideEffects`
     // whitelist entry keeps alive.

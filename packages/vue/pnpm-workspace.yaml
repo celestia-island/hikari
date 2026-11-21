@@ -8,6 +8,8 @@ allowBuilds:
 # matching the built-in default's intent — the shittim-chest convention).
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
+  # stage 3: the library-facing host client (hikari QR consumes it)
+  - '@celestia-island/tairitsu-host-client@0.1.0'
   - '@vue/language-core@3.3.9'
   - vue-tsc@3.3.9
   - '@celestia-island/tairitsu-transport@0.1.0'

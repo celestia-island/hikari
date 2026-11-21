@@ -71,7 +71,13 @@ export const HkQrCode = defineComponent({
         });
       } catch (error) {
         if (error instanceof QrNotReadyError) {
-          void qrReady.then(() => draw()).catch(() => {});
+          // Surfaced, not swallowed: a component that fails to load must not
+          // leave a silently blank canvas.
+          void qrReady
+            .then(() => draw())
+            .catch((readyError) => {
+              console.error("[hikari] QR component failed to load", readyError);
+            });
           return;
         }
         throw error;

@@ -128,4 +128,47 @@ describe("HkPopupSelect", () => {
     expect(value.textContent).toBe("Agent One");
     expect(value.textContent).not.toContain("secret-meta");
   });
+
+  it("scroll-to-highlight resolves inside this popup's viewport, never the document", async () => {
+    // The issue #907 collision: a foreign surface's row carries the SAME
+    // data-select-index and sits EARLIER in document order than the
+    // teleported panel (the overlay root is appended after this test's
+    // mount containers), so a document-scoped query resolved to it first
+    // and scrolled the wrong row. The prototype spy records every
+    // scrollIntoView target, pinning where the query actually resolved.
+    const decoy = document.createElement("div");
+    decoy.setAttribute("data-select-index", "1");
+    document.body.appendChild(decoy);
+    const scrolled: Element[] = [];
+    const spy = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(function (this: Element) {
+        scrolled.push(this);
+      });
+    try {
+      // modelValue "a2" → the popup opens with index 1 highlighted.
+      const c = mount(h(HkPopupSelect, { modelValue: "a2", options: OPTIONS }));
+      c.querySelector<HTMLButtonElement>(".hk-popup-select-trigger")!
+        .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await Promise.resolve();
+      await Promise.resolve();
+      const ownRow = document.querySelector<HTMLElement>(
+        '.hk-popup-select-item[data-select-index="1"]',
+      );
+      expect(ownRow).toBeTruthy();
+      // Sanity: the row really lives inside the popup's own viewport.
+      expect(ownRow!.closest(".hk-popup-select-viewport")).not.toBeNull();
+      // The highlighted row got scrolled…
+      expect(scrolled).toContain(ownRow);
+      // …and nothing outside this popup's viewport ever did — the decoy
+      // must not even be reached by the query.
+      expect(scrolled).not.toContain(decoy);
+      for (const el of scrolled) {
+        expect(el.closest(".hk-popup-select-viewport")).not.toBeNull();
+      }
+    } finally {
+      spy.mockRestore();
+      decoy.remove();
+    }
+  });
 });

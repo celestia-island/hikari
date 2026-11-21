@@ -21,9 +21,15 @@ interface Seam {
   calls: Array<{ name: string; args: unknown[] }>;
   /** The namespace handed to `createSurface`. */
   handed: Record<string, unknown> | undefined;
+  /** The declaration handed to `createSurface` (not just published). */
+  handedCapabilities: unknown;
 }
 
-const seam: Seam = { calls: [], handed: undefined };
+const seam: Seam = {
+  calls: [],
+  handed: undefined,
+  handedCapabilities: undefined,
+};
 
 vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
   const actual = await importOriginal<
@@ -36,8 +42,9 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
       ...rest: unknown[]
     ): ReturnType<typeof actual.createSurface> => {
       seam.handed = module;
-      // `rest` is passed through untouched; the engine calls the one-argument
-      // form, so the remaining parameters are never supplied here.
+      seam.handedCapabilities = rest[0];
+      // `rest` is passed through untouched, so the door's real refusal logic
+      // runs against whatever the engine declared.
       const live = (
         actual.createSurface as (
           m: Record<string, unknown>,
@@ -102,8 +109,37 @@ describe("Mermaid engine goes through the host client", () => {
     // (it cannot provide capabilities for an already-evaluated wrapper), so a
     // glue-bearing declaration here would make the engine unusable.
     expect(MERMAID_CAPABILITIES).toEqual({ interfaces: [], wasiModules: [] });
+
+    // …and the engine must hand that declaration to the door, not merely
+    // publish it. Omitting the argument lets `createSurface` default to `{}`,
+    // so its refusal never fires and a wrong declaration would pass silently —
+    // the pin below is what makes a non-empty declaration fail loudly.
+    expect(seam.handedCapabilities).toBe(MERMAID_CAPABILITIES);
     // Exported and read by the engine — the read the package's `sideEffects`
     // whitelist entry keeps alive.
     expect(mermaidCapabilities).toBe(MERMAID_CAPABILITIES);
+  });
+
+  it("refuses a non-empty declaration instead of silently granting it", async () => {
+    // Documents the door's contract with the REAL client: a glue- or
+    // WASI-bearing declaration is refused. DISCLOSURE: this calls
+    // `createSurface` directly, so it passes even if the engine stops handing
+    // the declaration over — it is NOT the regression guard for that. The guard
+    // is `expect(seam.handedCapabilities).toBe(MERMAID_CAPABILITIES)` above
+    // (verified: dropping the argument leaves this case green and only that one
+    // red). Both are kept: one states the contract, the other pins the wiring.
+    const { createSurface, HostClientError } = await vi.importActual<
+      typeof import("@celestia-island/tairitsu-host-client")
+    >("@celestia-island/tairitsu-host-client");
+    const namespace = seam.handed!;
+    expect(() =>
+      createSurface(namespace, { interfaces: ["document"], wasiModules: [] }),
+    ).toThrow(HostClientError);
+    // Same for a WASI declaration.
+    expect(() =>
+      createSurface(namespace, { interfaces: [], wasiModules: ["random"] }),
+    ).toThrow(HostClientError);
+    // The empty declaration is the one the door accepts.
+    expect(() => createSurface(namespace, { interfaces: [], wasiModules: [] })).not.toThrow();
   });
 });

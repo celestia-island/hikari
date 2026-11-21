@@ -46,7 +46,14 @@ let surface: HostComponent | undefined;
 let loadFailure: MermaidNotReadyError | undefined;
 
 try {
-  surface = createSurface(mermaidWrapper as unknown as Record<string, unknown>);
+  surface = createSurface(
+    mermaidWrapper as unknown as Record<string, unknown>,
+    // Hand the declaration to the door, don't just publish it: with the
+    // parameter omitted it defaults to `{}`, so the door's own refusal
+    // (`sync-door-cannot-provide`) can never fire and a wrong declaration would
+    // pass unnoticed. Passing it makes the declaration checkable here.
+    MERMAID_CAPABILITIES,
+  );
 } catch (error) {
   // Recognisable at the call site: callers that can wait use `mermaidReady`.
   // The underlying cause is kept.

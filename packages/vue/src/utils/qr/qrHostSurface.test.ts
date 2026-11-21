@@ -3,12 +3,12 @@
 // declaration to the door** rather than only publishing it.
 //
 // Why a separate file: the frozen golden (`qrEncoder.test.ts`) pins the output
-// of `qrMatrix`. A direct call to the generated wrapper produces identical
-// output, so bypassing the host leaves the golden green (verified on the sibling
-// Mermaid migration: a compilable `wrapper.parse(…)` bypass kept all 16 frozen
-// cases green). It also asserted only `expect(QR_CAPABILITIES).toEqual(…)`, which
-// cannot see whether that constant is ever passed to `createSurface`. These pins
-// observe the seam itself.
+// of `qrMatrix`, and nothing more. A direct call to the generated wrapper
+// produces identical output, so bypassing the host leaves the golden green —
+// verified here by mutation, and independently on the sibling Mermaid migration.
+// The golden also says nothing about the declaration: whether that constant is
+// ever *passed* to `createSurface` is invisible to an output-only test. These
+// pins observe the seam itself.
 //
 // The declaration half is the defect #1475 recorded: `createSurface(module,
 // capabilities = {})` defaults to `{}`, so with the second argument omitted both

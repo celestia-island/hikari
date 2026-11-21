@@ -1243,3 +1243,12 @@ export type {
 export { useRemoteTouchGestures } from "./composables/useRemoteTouchGestures";
 export type { TouchGestureHandlers } from "./composables/useRemoteTouchGestures";
 export { useOrientationLock } from "./composables/useOrientationLock";
+
+export {
+  attachOverviewRuler,
+  type OverviewRulerAxis,
+  type OverviewRulerBand,
+  type OverviewRulerCursorMode,
+  type OverviewRulerHandle,
+  type OverviewRulerOptions,
+} from "./composables/useOverviewRuler";

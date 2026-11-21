@@ -1,0 +1,87 @@
+// The standalone minimap strip ("竖向瀑布流"): one band per content block,
+// sized by its share of the content extent, plus the draggable cursor that
+// marks the visible window. Attached by composables/useOverviewRuler.ts —
+// nothing renders without it, so consumers that never attach keep exactly
+// the chrome they had.
+
+.hk-overview-ruler {
+  position: absolute;
+  z-index: 9;
+  background: color-mix(in srgb, var(--hi-color-surface, rgba(255, 255, 255, 0.95)) 60%, transparent);
+  border-radius: var(--radius-sm, 4px);
+  overflow: hidden;
+  touch-action: none;
+
+  &[data-axis="vertical"][data-side="end"] {
+    top: 4px;
+    bottom: 4px;
+    right: 4px;
+    width: var(--hk-overview-ruler-thickness, 48px);
+  }
+
+  &[data-axis="vertical"][data-side="start"] {
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: var(--hk-overview-ruler-thickness, 48px);
+  }
+
+  &[data-axis="horizontal"][data-side="end"] {
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    height: var(--hk-overview-ruler-thickness, 36px);
+  }
+
+  &[data-axis="horizontal"][data-side="start"] {
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    height: var(--hk-overview-ruler-thickness, 36px);
+  }
+}
+
+.hk-overview-ruler-bands {
+  position: absolute;
+  inset: 0;
+}
+
+.hk-overview-ruler-band {
+  position: absolute;
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 28%, transparent);
+  border-radius: 1px;
+
+}
+
+// Severity modifiers for log-style waterfalls. The `modifier` option is a
+// caller-owned styling hook — these defaults exist so the documented use
+// ("severity coloring for log lines") works out of the box; unknown
+// modifiers stay unstyled by design.
+.hk-overview-ruler-band.hk-overview-band-error {
+  background: color-mix(in srgb, var(--hi-color-danger, #a62937) 55%, transparent);
+}
+
+.hk-overview-ruler-band.hk-overview-band-warn {
+  background: color-mix(in srgb, var(--hi-color-warning, #894800) 55%, transparent);
+}
+
+.hk-overview-ruler-cursor {
+  position: absolute;
+  background: color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 24%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 55%, transparent);
+  border-radius: 2px;
+  transition: none;
+  cursor: var(--hk-overview-ruler-cursor-cursor, grab);
+}
+
+// The cursor's inline styles place it on the drag axis; the cross axis
+// stretches to the strip so the box reads as one rail-wide window.
+.hk-overview-ruler[data-axis="vertical"] .hk-overview-ruler-cursor {
+  left: 0;
+  right: 0;
+}
+
+.hk-overview-ruler[data-axis="horizontal"] .hk-overview-ruler-cursor {
+  top: 0;
+  bottom: 0;
+}

@@ -144,6 +144,10 @@
   translate: calc(-50% + var(--hk-modal-shift-x, 0px))
     calc(-50% + var(--hk-modal-shift-y, 0px));
   width: 100%;
+  // Reasonable upper bound: a 2734px-wide viewport with width:100% gives
+  // a modal frame wider than the content can usefully fill — the body
+  // area sits off-center and the border-radius corners become invisible.
+  max-width: min(680px, 90vw);
   // Size changes animate instead of snapping: `height: auto` growth
   // cannot fire a CSS transition (verified in Chromium — neither auto
   // nor calc-size(auto, size) changes its computed value on content

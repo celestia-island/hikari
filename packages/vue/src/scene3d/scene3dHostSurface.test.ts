@@ -292,14 +292,18 @@ describe("scene3d spec builder goes through the host client", () => {
     // The identity assertion above is the guard for "the declaration was handed
     // over": dropping the argument and passing `undefined` both red it and
     // nothing else (verified by mutation). An arity assertion used to sit here;
-    // it was removed because no mutation reached it — every shape an argument
-    // can take was already caught by the identity check, so the extra line only
-    // invited a comment that overstated what it guarded.
+    // it was removed as redundant — every shape it could fail on (an omitted
+    // argument, `undefined`, a foreign object) already reds the identity check
+    // above, and `rest` is length 2 for the latter two, so it added nothing
+    // except a sentence about itself that three revisions could not state
+    // truthfully.
     //
-    // Scope, precisely: neither the identity check nor an arity count catches a
-    // builder passing a *different* equal-shaped object — the door only reads
-    // `.interfaces`/`.wasiModules`, so identity here is deliberately stricter
-    // than the contract.
+    // Scope, precisely: this pin is *stricter* than the door's contract. The
+    // door only reads `.interfaces`/`.wasiModules`, so a builder passing a
+    // different object with the same contents would be functionally correct —
+    // and still red here (verified by mutation). That is deliberate: the
+    // declaration is a single exported singleton, and handing over anything
+    // else means the builder has stopped using what `declare-caps.ts` publishes.
 
     // Exported and read by the builder — the read the package's `sideEffects`
     // whitelist entry keeps alive.

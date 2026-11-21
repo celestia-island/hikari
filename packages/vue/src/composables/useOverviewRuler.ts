@@ -304,15 +304,12 @@ export function attachOverviewRuler(
     const extent = contentExtent();
     const visible = visibleExtent();
     const length = Math.min(visible / extent, 1);
-    const se = stripExtent();
-    console.log('DBG beginDrag geom:', JSON.stringify({ length, stripExtent: se, horizontal, axis, stripConnected: strip.isConnected }));
-    cursorTravelPx = Math.max((1 - length) * se, 1);
+    cursorTravelPx = Math.max((1 - length) * stripExtent(), 1);
     strip.setPointerCapture(event.pointerId);
     event.preventDefault();
   }
 
   function onPointerDown(event: PointerEvent) {
-    console.log('DBG down: target===cursor:', event.target === cursor, '| button:', event.button);
     if (event.button !== 0 || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey)
       return;
     const fraction = pointerFraction(event);

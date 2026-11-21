@@ -39,9 +39,9 @@ describe("useOverviewRuler contract", () => {
   it("cursor modes: jump is the default; thumb restricts dragging to the cursor", () => {
     expect(composable).toMatch(/cursorDrag \?\? "jump"/);
     expect(composable).toMatch(/OverviewRulerCursorMode = "jump" \| "thumb"/);
-    expect(composable).toContain(
-      "if (!event.composedPath().includes(cursor)) return;",
-    );
+    // Target identity, not composedPath — happy-dom's composedPath is empty
+    // for manually dispatched events, and the cursor box has no children.
+    expect(composable).toContain("if (event.target !== cursor) return;");
   });
 
   it("direction is a first-class option with per-side placement", () => {

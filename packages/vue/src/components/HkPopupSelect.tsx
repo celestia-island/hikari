@@ -31,11 +31,6 @@ export function closeAllPopups(): void {
   activePopupId.value = null;
 }
 
-function scrollToElement(selector: string): void {
-  const el = document.querySelector(selector) as HTMLElement | null;
-  el?.scrollIntoView({ block: "nearest" });
-}
-
 export default defineComponent({
   name: "HkPopupSelect",
   props: {
@@ -68,6 +63,9 @@ export default defineComponent({
     const instanceId = `hk-popup-select-${++popupCounter}`;
     const isOpen = ref(false);
     const triggerRef = ref<HTMLElement>();
+    /** The popup's own scroll viewport (HkScrollContainer expose) — row
+     *  queries stay scoped to it. */
+    const viewportExpose = ref<{ getScrollElement: () => HTMLElement | undefined }>();
     const highlightedIndex = ref(-1);
 
     // Registered with the overlay registry so closeAll()/isOverlayOpen()
@@ -180,7 +178,16 @@ export default defineComponent({
     });
 
     function scrollToHighlighted() {
-      scrollToElement(`[data-select-index="${highlightedIndex.value}"]`);
+      // Scoped to OUR viewport — a document-scoped query could hit another
+      // concurrently open surface's rows (HkSelect/HkCurrencySelect/
+      // HkHeaderPicker panels carry the same data attribute), and the
+      // teleported panel is not even inside this component's own subtree
+      // (HkSelect's rule). Null viewport (panel not mounted yet) → no-op.
+      const root = viewportExpose.value?.getScrollElement() ?? null;
+      const el = root?.querySelector(
+        `[data-select-index="${highlightedIndex.value}"]`,
+      );
+      el?.scrollIntoView({ block: "nearest" });
     }
 
     watch(highlightedIndex, () => {
@@ -228,7 +235,10 @@ export default defineComponent({
           title={props.label || props.placeholder || undefined}
           class="hk-popup-select-content"
         >
-          <HkScrollContainer class="hk-popup-select-viewport">
+          <HkScrollContainer
+            ref={viewportExpose}
+            class="hk-popup-select-viewport"
+          >
             {slots.default
               ? slots.default()
               : normalizedOptions.value.map((opt, i) => (

@@ -33,6 +33,12 @@ export interface HkLoginCredentialsChannel {
    *  on identifier logins); HkSignInCard's runtime credential policy
    *  resolves the default. */
   usernameAutocomplete?: string;
+  /** Per-channel seed override for the username field. The flow-level
+   *  `initialUsername` exists for the account→verify→back round-trip of
+   *  ONE channel; a channel that never collects that value (the org
+   *  email funnel) overrides with "" so the OTHER channel's account
+   *  name never leaks into its field (chest R4 seam finding). */
+  initialUsername?: string;
   /** Classic two-field card. Defaults to FALSE — account-first is the
    *  family-wide posture since the MFA redesign: the password is proven
    *  on the verify step as one factor among the announced ones, so the
@@ -237,7 +243,7 @@ export const HkLoginFlow = defineComponent({
           usernamePlaceholder={channel.usernamePlaceholder}
           usernameAutocomplete={channel.usernameAutocomplete}
           submitLabel={channel.submitLabel}
-          initialUsername={props.initialUsername}
+          initialUsername={channel.initialUsername ?? props.initialUsername}
           onSubmit={(username: string, password: string) =>
             emit("account-submit", channel.key, username, password)
           }

@@ -390,5 +390,9 @@
   "hikari::contextmenu.copy": "نسخ",
   "hikari::contextmenu.cut": "قص",
   "hikari::contextmenu.paste": "لصق",
-  "hikari::contextmenu.selectAll": "تحديد الكل"
+  "hikari::contextmenu.selectAll": "تحديد الكل",
+  "hikari::loginFlow.channelCloud": "Celestia Cloud",
+  "hikari::loginFlow.channelOrg": "تسجيل الدخول بالمؤسسة",
+  "hikari::loginFlow.signInTitle": "تسجيل الدخول",
+  "hikari::loginFlow.signInSubtitle": "مرحبًا بعودتك"
 }

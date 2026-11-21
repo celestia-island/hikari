@@ -1,0 +1,23 @@
+// HkLoginFlow — the shared sign-in panel.
+//
+// The root caps itself to the family-wide auth-card width contract
+// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (cards, the
+// transition container's measuring wrappers) lay out as width:100%, so
+// the HOST's centering slot must cap here rather than justify-items the
+// crossfade items — the chest blueprint's hard-won rule. Hosts that
+// embed the panel in a wider stage can override the CSS var locally.
+
+.hk-login-flow {
+  width: 100%;
+  max-width: var(--hk-auth-card-max-width, 28rem);
+  margin-inline: auto;
+}
+
+// The sso card's hero tile block: the HkAuthCard form column centers
+// its children, so this wrapper just adds breathing room under the
+// channel tabs.
+.hk-login-flow-sso {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-24, 1.5rem) var(--space-8, 0.5rem);
+}

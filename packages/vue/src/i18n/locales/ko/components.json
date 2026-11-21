@@ -390,5 +390,9 @@
   "hikari::contextmenu.copy": "복사",
   "hikari::contextmenu.cut": "잘라내기",
   "hikari::contextmenu.paste": "붙여넣기",
-  "hikari::contextmenu.selectAll": "모두 선택"
+  "hikari::contextmenu.selectAll": "모두 선택",
+  "hikari::loginFlow.channelCloud": "Celestia 클라우드",
+  "hikari::loginFlow.channelOrg": "조직 로그인",
+  "hikari::loginFlow.signInTitle": "로그인",
+  "hikari::loginFlow.signInSubtitle": "다시 오신 것을 환영합니다"
 }

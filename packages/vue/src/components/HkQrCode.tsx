@@ -8,7 +8,12 @@ import {
 } from "vue";
 
 import { useI18n } from "../i18n/context";
-import { qrMatrix, type QrErrorCorrectionLevel } from "../utils/qr/qrEncoder";
+import {
+  qrMatrix,
+  qrReady,
+  QrNotReadyError,
+  type QrErrorCorrectionLevel,
+} from "../utils/qr/qrEncoder";
 import "./HkQrCode.scss";
 
 /**
@@ -59,9 +64,24 @@ export const HkQrCode = defineComponent({
       if (!canvasRef.value || !hasValue.value) return;
       if (typeof document === "undefined") return; // SSR guard
       const canvas = canvasRef.value;
-      const matrix = qrMatrix(props.value, {
-        errorCorrectionLevel: props.level,
-      });
+      let matrix: boolean[][];
+      try {
+        matrix = qrMatrix(props.value, {
+          errorCorrectionLevel: props.level,
+        });
+      } catch (error) {
+        if (error instanceof QrNotReadyError) {
+          // Surfaced, not swallowed: a component that fails to load must not
+          // leave a silently blank canvas.
+          void qrReady
+            .then(() => draw())
+            .catch((readyError) => {
+              console.error("[hikari] QR component failed to load", readyError);
+            });
+          return;
+        }
+        throw error;
+      }
       const count = matrix.length;
       const totalModules = count + props.margin * 2;
       const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;

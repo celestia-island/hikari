@@ -110,3 +110,24 @@
   color: rgb(var(--color-muted));
 }
 
+
+
+.hk-serpentine-hint--confirmed-spinner {
+  &::after {
+    content: "";
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: hk-serpentine-spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+}
+
+@keyframes hk-serpentine-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

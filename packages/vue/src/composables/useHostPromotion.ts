@@ -17,7 +17,15 @@
 
 const promotedParents = new WeakMap<HTMLElement, { count: number; saved: string }>();
 
-export function promoteHost(host: HTMLElement): () => void {
+export interface PromoteHostHandle {
+  release(): void;
+  /** Whether THIS call applied the promotion (count reached 1 on a
+   *  static/empty host). Consumers use it to gate companion markers that
+   *  only make sense when the promotion actually happened. */
+  promoted: boolean;
+}
+
+export function promoteHost(host: HTMLElement): PromoteHostHandle {
   let entry = promotedParents.get(host);
   if (!entry) {
     entry = { count: 0, saved: host.style.position };
@@ -25,22 +33,26 @@ export function promoteHost(host: HTMLElement): () => void {
   }
   entry.count += 1;
   const computedPosition = getComputedStyle(host).position;
-  if (entry.count === 1 && (computedPosition === "static" || computedPosition === "")) {
+  const promoted = entry.count === 1 && (computedPosition === "static" || computedPosition === "");
+  if (promoted) {
     host.style.position = "relative";
   }
   let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    const current = promotedParents.get(host);
-    if (!current || current !== entry) return;
-    entry.count -= 1;
-    if (entry.count <= 0) {
-      // Only undo OUR promotion: if a consumer re-positioned the host
-      // after attach, their inline style wins and the saved value stays
-      // dead (presence-gated, per R4b).
-      if (host.style.position === "relative") host.style.position = entry.saved;
-      promotedParents.delete(host);
-    }
+  return {
+    promoted,
+    release(): void {
+      if (released) return;
+      released = true;
+      const current = promotedParents.get(host);
+      if (!current || current !== entry) return;
+      entry.count -= 1;
+      if (entry.count <= 0) {
+        // Only undo OUR promotion: if a consumer re-positioned the host
+        // after attach, their inline style wins and the saved value stays
+        // dead (presence-gated, per R4b).
+        if (host.style.position === "relative") host.style.position = entry.saved;
+        promotedParents.delete(host);
+      }
+    },
   };
 }

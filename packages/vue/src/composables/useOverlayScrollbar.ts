@@ -308,8 +308,8 @@ export function attachOverlayScrollbars(
   // reference-counted helper so a sibling composable's detach (the
   // overview ruler attaches to the same hosts) cannot strip the
   // positioning out from under the tracks that remain.
-  const releasePromotion = promoteHost(parent);
-  if (parent.style.position === "relative") {
+  const promotion = promoteHost(parent);
+  if (promotion.promoted) {
     parent.setAttribute(POSITION_GUARD_ATTR, "true");
   }
 
@@ -685,7 +685,7 @@ export function attachOverlayScrollbars(
         state.hideTimer?.disconnect();
         state.track.remove();
       }
-      releasePromotion();
+      promotion.release();
       if (parent.style.position !== "relative") {
         parent.removeAttribute(POSITION_GUARD_ATTR);
       }

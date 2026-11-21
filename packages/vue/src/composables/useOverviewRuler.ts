@@ -90,12 +90,6 @@ function clamp01(n: number): number {
   return n < 0 ? 0 : n > 1 ? 1 : n;
 }
 
-/** Reference-counted host-position promotion, shared with the overlay
- *  scrollbar's contract: N handles on one host keep the promotion until
- *  the LAST one detaches (a bare boolean would let ruler A strip ruler
- *  B's positioning context). */
-const promotedParents = new WeakMap<HTMLElement, { count: number; saved: string }>();
-
 export function attachOverviewRuler(
   viewport: HTMLElement,
   opts: OverviewRulerOptions = {},
@@ -115,7 +109,7 @@ export function attachOverviewRuler(
   const host: HTMLElement = parent;
 
   // ── Promotion (shared, reference-counted — see useHostPromotion) ──────
-  const releasePromotion = promoteHost(host);
+  const promotion = promoteHost(host);
 
   // ── Chrome ─────────────────────────────────────────────────────────────
   const strip = document.createElement("div");
@@ -382,22 +376,11 @@ export function attachOverviewRuler(
     window.removeEventListener("pointerup", onPointerUp);
     window.removeEventListener("pointercancel", onPointerUp);
     strip.removeEventListener("pointerdown", onPointerDown);
-    releasePromotion();
+    promotion.release();
     sampler.disconnect();
     observer?.disconnect();
     observer = null;
     strip.remove();
-    const entry = promotedParents.get(host);
-    if (entry) {
-      entry.count -= 1;
-      if (entry.count <= 0) {
-        // Only undo OUR promotion: if a consumer re-positioned the host
-        // after attach, their inline style wins and the saved value stays
-        // dead (presence-gated, per R4b).
-        if (host.style.position === "relative") host.style.position = entry.saved;
-        promotedParents.delete(host);
-      }
-    }
   }
 
   return {

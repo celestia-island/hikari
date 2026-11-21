@@ -25,6 +25,13 @@ interface Seam {
   handed: Record<string, unknown> | undefined;
   /** The declaration handed to `createSurface` (not just published). */
   handedCapabilities: unknown;
+  /**
+   * The declaration handed on the FIRST build — the one that guarded module
+   * load. Pinned separately because a later build would otherwise overwrite
+   * `handedCapabilities` and make the declaration pin fail with `undefined`,
+   * i.e. for the wrong reason.
+   */
+  firstHandedCapabilities: unknown;
   /** Every `createSurface` call's argument list, in order. */
   surfaceBuilds: unknown[][];
 }
@@ -33,6 +40,7 @@ const seam: Seam = {
   calls: [],
   handed: undefined,
   handedCapabilities: undefined,
+  firstHandedCapabilities: undefined,
   surfaceBuilds: [],
 };
 
@@ -48,6 +56,7 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
     ): ReturnType<typeof actual.createSurface> => {
       seam.handed = module;
       seam.handedCapabilities = rest[0];
+      if (seam.surfaceBuilds.length === 0) seam.firstHandedCapabilities = rest[0];
       // Every build is recorded, not just the first: the factory is callable
       // more than once, so an engine (or a copier's engine) could build a
       // SECOND unwrapped surface and route calls through it while a
@@ -113,13 +122,17 @@ describe("QR engine goes through the host client", () => {
     // …and the engine must hand that declaration to the door, not merely
     // publish it. Omitting the argument lets `createSurface` default to `{}`,
     // so its refusal never fires and the declared value would never be
-    // consulted. Scope, precisely: this pin catches **the argument being
+    // consulted. Asserted against the FIRST build so a later surface cannot
+    // turn this into an `undefined` failure for the wrong reason — the
+    // build-count pin is what reports a second door, this one reports the
+    // declaration that actually guarded module load.
+    // Scope, precisely: this pin catches **the argument being
     // dropped** (verified: it is the only case that fails then). It is not a
     // general "no wrong declaration can ship" guard — it asserts identity with
     // whatever `declare-caps.ts` exports, so changing that file to a non-empty
     // declaration passes here and is refused by the door instead (which is what
     // the next case documents).
-    expect(seam.handedCapabilities).toBe(QR_CAPABILITIES);
+    expect(seam.firstHandedCapabilities).toBe(QR_CAPABILITIES);
 
     // Exported and read by the encoder — the read the package's `sideEffects`
     // whitelist entry keeps alive.

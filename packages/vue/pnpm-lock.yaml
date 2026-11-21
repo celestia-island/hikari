@@ -15,6 +15,9 @@ importers:
       '@bytecodealliance/preview2-shim':
         specifier: ^0.31
         version: 0.31.1
+      '@celestia-island/tairitsu-host-client':
+        specifier: ^0.1
+        version: 0.1.0
       '@celestia-island/tairitsu-transport':
         specifier: ^0.2
         version: 0.2.0
@@ -257,6 +260,9 @@ packages:
 
   '@bytecodealliance/preview2-shim@0.31.1':
     resolution: {integrity: sha512-uDVB/IhExDW70TquqVx2l2Q5uwwpH7r5M2ltYccux+0YxXBm4TvqyNHTyYxcoLBsoAar28o7uZSj7GOKVx9uvA==}
+
+  '@celestia-island/tairitsu-host-client@0.1.0':
+    resolution: {integrity: sha512-Ge8jNk5B8n1vfHyJBrhrAUKgaFIhWDvh40JrN/awgvJ0iXPO1BABCnj02bsjT+FYLg8QRCBt6jeTJXrI51OOtw==}
 
   '@celestia-island/tairitsu-transport@0.2.0':
     resolution: {integrity: sha512-4pdlaTuVN4J7RnZHQ7LsXFQb9ZXcY5yCPQ2u24TCq2ax1PNB3fX/a4lZycKBb4fPYjX4qWuzvFSkmWyn72tIFA==}

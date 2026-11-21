@@ -98,16 +98,6 @@
   box-shadow: 0 0 0 2px rgb(var(--color-success) / 60%);
 }
 
-.hk-serpentine--confirmed .hk-serpentine-hint {
-  // The retired ✓ glyph is a busy spinner now (2026-11-21 user ruling):
-  // a walk completion hands off to the parent, so the hint line shows the
-  // standard spinner, centred on the same line (the span is a block with
-  // text-align — a flex switch centres the inline spinner box).
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .hk-serpentine-hint {
   // In-flow under the lane: an absolutely-positioned hint hung below the
   // box got clipped by the confirmation window's padding (device feedback).
@@ -123,6 +113,18 @@
   text-align: center;
   font-size: var(--text-xs, 0.75rem);
   color: rgb(var(--color-muted));
+}
+
+// The retired ✓ glyph is a busy spinner now (2026-11-21 user ruling):
+// a walk completion hands off to the parent, so the hint line shows the
+// standard spinner. The wrapper is a BLOCK-level flex box, so
+// text-align cannot centre it — this confirmed override must stay AFTER
+// the base rule above (same specificity (0,2,0); source order decides)
+// or the centring silently dies (R5-caught S2).
+.hk-serpentine--confirmed .hk-serpentine-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 

@@ -333,6 +333,21 @@ describe("HkSerpentineUnlock styles contract", () => {
     expect(scss.split("@keyframes").length - 1).toBeLessThanOrEqual(1);
   });
 
+  it("authors the confirmed flex override AFTER the base hint rule (cascade pin)", () => {
+    // R5-caught S2: both selectors are (0,2,0), so source order decides.
+    // The confirmed rule (flex centring for the block-level spinner
+    // wrapper) sat ABOVE the base `display: block` and never applied —
+    // the spinner hugged the hint line's left edge. Pin the order.
+    const base = scss.indexOf(".hk-serpentine-hint {");
+    const confirmed = scss.indexOf(".hk-serpentine--confirmed .hk-serpentine-hint {");
+    expect(base).toBeGreaterThan(-1);
+    expect(confirmed).toBeGreaterThan(base);
+    // And the override really carries the centring declarations.
+    const confirmedBlock = scss.slice(confirmed);
+    expect(confirmedBlock).toContain("display: flex");
+    expect(confirmedBlock).toContain("justify-content: center");
+  });
+
   it("puts the hint in flow (no absolute hang below the box)", () => {
     // Device feedback: the absolutely-positioned hint got clipped by the
     // confirmation window. The hint is a block in flow now.

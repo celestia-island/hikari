@@ -107,7 +107,8 @@
     "**/*.scss",
     "**/*.css",
     "**/qr/declare-caps.ts",
-    "**/mermaid/declare-caps.ts"
+    "**/mermaid/declare-caps.ts",
+    "**/scene3d/declare-caps.ts"
   ],
   "peerDependenciesMeta": {
     "pinia": {

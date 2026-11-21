@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
 import HkAuthSsoButton from "./HkAuthSsoButton";
 import HkAuthScreen from "./HkAuthScreen";
@@ -325,6 +325,41 @@ describe("HkLoginFlow — verify step", () => {
     // The verify step owns the whole card; a channel switch mid-verify
     // would drop the ladder state, so the tabs never render here.
     expect(c.querySelector(".hk-tabs")).toBeNull();
+  });
+
+  it("slides account → verify → back when the host flips the step prop reactively", async () => {
+    // The host mirrors every real consumer: reactive state read INSIDE
+    // the render function, so each change re-evaluates the props. (A
+    // one-shot `h()` snapshot VNode never updates — re-mounting such a
+    // probe "shows" a dead verify step that no real host exhibits; this
+    // regression test pins the actual contract after that false alarm.)
+    const step = ref<"account" | "verify">("account");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [cloudChannel],
+          modelValue: "cloud",
+          step: step.value,
+          verifyFactors: ["totp"],
+        }),
+    });
+    const c = mount(h(Host));
+    await nextTick();
+    expect(c.querySelectorAll('input[name="signin-username"]').length).toBe(1);
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBe(0);
+
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // The verify body is on stage (the leaving account body may linger
+    // in the DOM until the swap settles — jsdom fires no transitionend —
+    // so assert on PRESENCE of the OTP cells, not absence of the card).
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBeGreaterThan(0);
+
+    step.value = "account";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // The account card comes back: a FRESH username input is mounted
+    // (remount-by-key), seeded by initialUsername.
+    expect(c.querySelectorAll('input[name="signin-username"]').length).toBeGreaterThan(0);
   });
 });
 

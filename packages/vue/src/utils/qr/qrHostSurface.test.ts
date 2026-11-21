@@ -31,13 +31,12 @@ interface Seam {
    * whether the engine consumes it.
    */
   doorOverride?: (name: string, ...args: unknown[]) => unknown;
-  /** The declaration handed to `createSurface` (not just published). */
-  handedCapabilities: unknown;
   /**
    * The declaration handed on the FIRST build — the one that guarded module
-   * load. Pinned separately because a later build would otherwise overwrite
-   * `handedCapabilities` and make the declaration pin fail with `undefined`,
-   * i.e. for the wrong reason.
+   * load, and the one the declaration pin asserts. Captured separately (not
+   * "latest build wins") because a later build would otherwise overwrite it
+   * and make that pin fail with `undefined`, i.e. for the wrong reason while
+   * the build-count pin names the actual fault.
    */
   firstHandedCapabilities: unknown;
   /** Every `createSurface` call's argument list, in order. */
@@ -48,7 +47,6 @@ const seam: Seam = {
   calls: [],
   results: [],
   handed: undefined,
-  handedCapabilities: undefined,
   firstHandedCapabilities: undefined,
   surfaceBuilds: [],
 };
@@ -64,7 +62,6 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
       ...rest: unknown[]
     ): ReturnType<typeof actual.createSurface> => {
       seam.handed = module;
-      seam.handedCapabilities = rest[0];
       if (seam.surfaceBuilds.length === 0) seam.firstHandedCapabilities = rest[0];
       // Every build is recorded, not just the first: the factory is callable
       // more than once, so an engine (or a copier's engine) could build a
@@ -205,7 +202,7 @@ describe("QR engine goes through the host client", () => {
     // WASI-bearing declaration is refused. DISCLOSURE: this calls
     // `createSurface` directly, so it passes even if the engine stops handing
     // the declaration over — it is NOT the regression guard for that. The guard
-    // is `expect(seam.handedCapabilities).toBe(QR_CAPABILITIES)` above.
+    // is `expect(seam.firstHandedCapabilities).toBe(QR_CAPABILITIES)` above.
     const { createSurface, HostClientError } = await vi.importActual<
       typeof import("@celestia-island/tairitsu-host-client")
     >("@celestia-island/tairitsu-host-client");

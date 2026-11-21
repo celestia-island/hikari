@@ -357,9 +357,21 @@ describe("HkLoginFlow — verify step", () => {
 
     step.value = "account";
     for (let i = 0; i < 12; i++) await nextTick();
-    // The account card comes back: a FRESH username input is mounted
-    // (remount-by-key), seeded by initialUsername.
-    expect(c.querySelectorAll('input[name="signin-username"]').length).toBeGreaterThan(0);
+    // The account card comes back as a FRESH body: jsdom fires no
+    // transitionend, so the leaving verify body lingers with its OTP
+    // cells — asserting a bare username-input count would pass even if
+    // the flip-back never happened (the leaving account input from the
+    // entry leg also lingers). Pin the body that is NOT on its way
+    // out: the username input inside a body without the leave class.
+    const settledInput = c.querySelector(
+      '.hk-stepflow-body:not(.hk-stepflow-leave-to) input[name="signin-username"]',
+    );
+    expect(settledInput).not.toBeNull();
+    // And the OTP cells of the returning stage live only in a leaving
+    // body — the settled stage carries none.
+    expect(
+      c.querySelectorAll('.hk-stepflow-body:not(.hk-stepflow-leave-to) .hk-otp-cell').length,
+    ).toBe(0);
   });
 });
 

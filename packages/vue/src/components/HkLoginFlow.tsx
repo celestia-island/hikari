@@ -81,8 +81,9 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * height-morphing channel swap, the direction-aware account→verify
  * slide, the methods tiles, the MFA card — while staying a CONTROLLED
  * component: no endpoint, no URL building, no factor ladder policy.
- * The host (chest, erp, arona, …) keeps its own auth client and drives
- * the panel through props/events:
+ * Each host (the chest migration plus the erp and arona login surfaces,
+ * landing as their own PRs) keeps its own auth client and drives the
+ * panel through props/events:
  *
  * - `v-model` (channel key) + `channels` — the segment group.
  * - `step` — `'account' | 'verify'`; the host flips it when its ladder
@@ -305,10 +306,15 @@ export const HkLoginFlow = defineComponent({
       return (
         <div class="hk-login-flow">
           {slots.top?.()}
-          <HkTransitionContainer
-            swapKey={props.step === "verify" ? "verify" : channel.key}
-            axis="height"
-          >
+          {/* The generation key is the CHANNEL only (the chest
+           *  blueprint's shape): a channel switch morphs the whole card
+           *  (cloud form ↔ org form differ in height), while the
+           *  account→verify move rides HkStepFlow's OWN direction-aware
+           *  slide INSIDE one generation. Keying the container on the
+           *  step too would replace the step machine itself on every
+           *  flip — a crossfade remount that loses the directional
+           *  slide and double-mounts the flow. */}
+          <HkTransitionContainer swapKey={channel.key} axis="height">
             <HkStepFlow
               steps={[
                 { key: "account", label: "account" },

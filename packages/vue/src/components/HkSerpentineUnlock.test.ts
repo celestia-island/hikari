@@ -143,11 +143,14 @@ describe("HkSerpentineUnlock (mounted)", () => {
     }
     pointer(el, "pointerup", 600, 48);
     await nextTick();
-    expect(el.querySelector(".hk-serpentine-hint .hk-spinner")).toBeTruthy();
-    // No stray check glyph anywhere in the confirmed hint line.
-    expect(el.querySelector(".hk-serpentine-hint")!.textContent).not.toContain("✓");
-    // The gate announces busy for the in-flight parent action.
+    // Mutation-ordering contract (R3 S1): the two semantic pins come FIRST,
+    // so each dies on its own line — a mutation back to the text "✓" trips
+    // the glyph-absence pin (and drops aria-busy), not just the spinner
+    // existence query.
+    const hint = el.querySelector(".hk-serpentine-hint")!;
+    expect(hint.textContent).not.toContain("✓");
     expect(el.getAttribute("aria-busy")).toBe("true");
+    expect(hint.querySelector(".hk-spinner")).toBeTruthy();
   });
 
   it("holds position when the pointer drifts off-lane (no reset)", () => {

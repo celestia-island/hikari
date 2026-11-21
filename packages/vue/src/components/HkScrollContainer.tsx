@@ -114,6 +114,19 @@ export default defineComponent({
      */
     mapSegments: { type: Array as PropType<OverlayScrollMapSegment[]>, default: undefined },
     autoFollow: { type: Boolean, default: false },
+    /** Keyboard access for the scrollable region (WCAG 2.1.1): the viewport
+     *  takes `tabindex=0` and arrows / PageUp / PageDown / Home / End scroll
+     *  it. Default ON — a scrollable region a keyboard user cannot reach is
+     *  a compliance defect, and an extra tab stop is the standard cost
+     *  (the viewport only scrolls while IT holds focus, so inner inputs,
+     *  buttons and links keep their own key handling). */
+    keyboardScroll: { type: Boolean, default: true },
+    /** ARIA role for the viewport (`region` needs a label to be announced;
+     *  a log viewer passes "log", a feed passes "feed"). Omitted = no role
+     *  attribute — plain tabbable scrolling, announcement unchanged. */
+    scrollRole: { type: String, default: undefined },
+    /** Accessible name for the viewport (announced with the role). */
+    scrollLabel: { type: String, default: undefined },
     overscanScreens: { type: Number, default: 1 },
     /** Inline-axis alignment of the content when it fits the viewport.
      *  "center" wraps the slot in an auto-margin aligner: content that
@@ -1108,6 +1121,37 @@ export default defineComponent({
       scheduleUpdate();
     });
 
+    /** Keyboard scrolling for the focused viewport (WCAG 2.1.1). Handled
+     *  only when the viewport ITSELF is the event target — an inner input
+     *  or button keeps its native keys. Arrows step a line, PgUp/PgDn a
+     *  page, Home/End jump; a held modifier (IME, browser zoom) bails. */
+    function onViewportKeydown(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target !== viewportRef.value) return;
+      const el = viewportRef.value;
+      if (!el) return;
+      const page = Math.max(el.clientHeight * 0.9, 0);
+      const line = 40;
+      let delta: number | null = null;
+      switch (event.key) {
+        case "ArrowDown": delta = line; break;
+        case "ArrowUp": delta = -line; break;
+        case "PageDown": delta = page; break;
+        case "PageUp": delta = -page; break;
+        case "Home": el.scrollTo({ top: 0, behavior: "auto" }); event.preventDefault(); return;
+        case "End":
+          el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+          event.preventDefault();
+          return;
+        default:
+          return;
+      }
+      if (delta === null || page === 0) return;
+      el.scrollBy({ top: delta, behavior: "auto" });
+      event.preventDefault();
+    }
+
     function onScroll() {
       if (!viewportRef.value) return;
       scheduleUpdate();
@@ -1497,6 +1541,10 @@ export default defineComponent({
             ref={viewportRef}
             class={["hk-scroll-container-viewport", SCROLL_HOST_CLASS]}
             data-scroll-axis={props.axis}
+            tabindex={props.keyboardScroll ? 0 : undefined}
+            role={props.scrollRole || undefined}
+            aria-label={props.scrollLabel || undefined}
+            onKeydown={props.keyboardScroll ? onViewportKeydown : undefined}
           >
             {content}
             {rideDockMounted && (

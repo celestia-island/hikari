@@ -568,3 +568,13 @@
 // The overlay track/thumb chrome (.hk-scrollbar-track / .hk-scrollbar-thumb)
 // moved to packages/theme/styles/_scrollbar.scss — the single shared set used
 // by every scroll region (see composables/useOverlayScrollbar.ts).
+
+// Keyboard-scrollable viewport (WCAG 2.1.1): the region is tabbable and
+// scrolls on arrows / PgUp / PgDn / Home / End while focused. The indicator
+// rides hikari's focus token so it reads as the library's focus, not a UA
+// default — and `focus-visible` keeps pointer users undisturbed.
+.hk-scroll-container-viewport:focus-visible {
+  outline: var(--hk-focus-width, 2px) solid
+    var(--hk-focus-color, color-mix(in srgb, var(--hi-color-primary, #7aa2f7) 70%, transparent));
+  outline-offset: -2px;
+}

@@ -77,12 +77,16 @@ function ensureLoaded(): Promise<HostComponent | null> {
       // `import()` used, keeps the artifact in its own chunk, and is resolved
       // by whichever loader is running.
       loaders: {
-        // A STATIC-ANALYSABLE import: the specifier is a literal, so Vite still
-        // emits the artifact as its own chunk, and the module graph stays
-        // replaceable (a `vi.mock` of it still takes effect — without that,
-        // `HkDiffViewer.epoch.test.tsx` silently loaded the real component and
-        // failed; measured). A `/* @vite-ignore */` on this call broke the
-        // second property while fixing nothing.
+        // A STATIC-ANALYSABLE import: the specifier is a literal, so Vite emits
+        // the artifact as its own chunk and the module stays
+        // `vi.mock`-replaceable. (The exact chunk sizes depend on the build
+        // config — two reviewers and I measured three different entry sizes —
+        // so what is reproducible is the *split*: the artifact is its own file
+        // and the entry does not reference it statically; measured.) A
+        // `/* @vite-ignore */` here would silence the bundler's static analysis
+        // for no benefit — measured, it did NOT actually break `vi.mock` under
+        // this Vite/vitest, so the reason to omit it is generality, not a bug
+        // it caused.
         importModule: () =>
           import(
             "../wasm/highlight/hikari_wasm_highlight.js"

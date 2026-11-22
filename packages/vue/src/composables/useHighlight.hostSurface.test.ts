@@ -37,6 +37,8 @@ interface Seam {
   doorOverride?: (name: string, ...args: unknown[]) => unknown;
   /** Set when `loadComponent` resolved — the surface exists from then on. */
   loaded: boolean;
+  /** The most recently returned surface object, for identity assertions. */
+  surfaceIdentity: unknown;
 }
 
 const seam: Seam = {
@@ -44,6 +46,7 @@ const seam: Seam = {
   calls: [],
   doorOverride: undefined,
   loaded: false,
+  surfaceIdentity: undefined,
 };
 
 vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
@@ -61,6 +64,7 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
       seam.builds.push(options as Record<string, unknown>);
       const live = await actual.loadComponent(options);
       seam.loaded = true;
+      seam.surfaceIdentity = live;
       const realCall = live.call.bind(live);
       // Wrap the surface's call door: this is where the highlighting must
       // arrive.
@@ -84,11 +88,11 @@ const LANG = "rust";
 
 /** Let the lazy load settle.
  *
- *  Real timers, not fake ones: the load is a genuine dynamic `import()` of a
- *  2.9 MB module, and a fake clock would stall it forever (measured — under
+ *  Real timers, not fake ones: the load is a genuine dynamic `import()` of the
+ *  ~3.2 MB artifact, and a fake clock would stall it (measured — under
  *  `vi.useFakeTimers()` the module never finishes loading and every pin that
- *  waits for a call fails). This waits up to ~10s, which is what the production
- *  path does on a cold start. */
+ *  waits for a call fails). The loop caps at 70 × 25 ms ≈ 1.75 s; actual
+ *  completion is well under 100 ms on a warm cache. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 70; i++) {
     await new Promise((resolve) => setTimeout(resolve, 25));
@@ -114,10 +118,11 @@ describe("highlight loads through the host client", () => {
   // so it is loaded once here and every case below runs against that one door.
   // `builds` is therefore 1 for the whole file; the per-case assertions about
   // "still one build" are about a second load NOT happening.
+  let firstSurface: unknown;
   beforeAll(async () => {
-
     highlight(CODE, LANG);
     await settle();
+    firstSurface = seam.surfaceIdentity;
   });
 
   beforeEach(() => {
@@ -158,22 +163,29 @@ describe("highlight loads through the host client", () => {
   });
 
   it("calls the component export through the surface, not the wrapper", () => {
-    // eslint-disable-next-line no-console
-
     // A second call must reuse the loaded surface rather than loading again.
     highlight(CODE, LANG);
 
     // A bare `import()` returns the same highlighting but never reaches this
     // door, so the array stays empty. Measured: replacing the surface call with
-    // a direct wrapper read reds this case plus the two below; a lazy second
-    // `loadComponent` reds this case alone (the build count).
+    // a direct wrapper read reds this case plus the two below.
     const highlightCalls = seam.calls.filter((c) => c.name === "highlight");
     expect(highlightCalls).toHaveLength(1);
     expect(highlightCalls[0]!.args[0]).toBe(CODE);
     expect(highlightCalls[0]!.args[1]).toBe(LANG);
 
-    // ① Still exactly one load after a second call: the surface is cached.
+    // ① Still exactly one load after a second call.
+    //
+    // Scope, precisely (measured, not assumed): this catches a load issued
+    // synchronously during the call. It does NOT catch a later asynchronous
+    // reload — one that clears the cached promise still short-circuits on the
+    // existing `if (surface) return`, so no second load happens at all; and a
+    // reload driven from outside the composable keeps all five cases green.
+    // The surface is cached by early return rather than by a guard the pins can
+    // observe, so "only ever one door" here rests on that `if (surface)` line,
+    // not on this assertion.
     expect(seam.builds).toHaveLength(1);
+    expect(seam.surfaceIdentity).toBe(firstSurface);
   });
 
   it("uses the value the observed door returned, not a parallel import", () => {

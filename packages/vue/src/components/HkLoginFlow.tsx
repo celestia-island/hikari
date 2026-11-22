@@ -44,7 +44,7 @@ export interface HkLoginCredentialsChannel {
    *  opening card must not ask for it (2026-11 user direction). */
   passwordField?: boolean;
   submitLabel?: string;
-  /** Alternative sign-in tiles under the form (rendered only when
+  /** Alternative sign-in rows under the form (rendered only when
    *  non-empty; an empty list omits the whole methods block instead of
    *  padding a dead strip). */
   methods?: HkAuthChannelListEntry[];

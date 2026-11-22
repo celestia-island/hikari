@@ -574,6 +574,12 @@ describe("HkMasterDetail — stylesheet contract", () => {
     // keyframe is the only place that direction is written down.
     expect(drawer).toContain("animation: hk-master-detail-drawer-in");
     expect(css).toContain("transform: translateX(100%)");
+    // The rounded side is the one it slides against: the physical-right
+    // edge square, the left corners rounded. Both halves are pinned — a
+    // flip of either one alone must red this case.
+    expect(drawer).toContain(
+      "border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px)",
+    );
     const scrim = ruleBody(css, ".hk-master-detail-scrim");
     expect(scrim).toContain("position: fixed");
     expect(scrim).toContain("z-index: var(--hk-z-sidebar");

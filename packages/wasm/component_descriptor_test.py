@@ -16,9 +16,8 @@ each, exactly as phase 4's G4 names them:
 4. **a capability the WIT world never imports** is refused, naming the import
    surface (MUT:no-capability-check).
 
-Plus the two structural controls the artifact-drift gate also carries: the real
-four-component corpus must MATCH, and a scan that matches **no** component must
-refuse rather than report green.
+Plus two structural controls: the real four-component corpus must MATCH, and a
+scan that matches **no** component must refuse rather than report green.
 
 Fixtures are a miniature ``packages/wasm/<c>/wit/<c>.wit`` + ``component.toml``
 layout mirroring hikari's real one, so every case is recomputable without the
@@ -367,6 +366,17 @@ def test_a_non_table_resource_entry_is_a_finding_not_a_crash(tmp_path: Path) -> 
     result = _run_cli(repo, "--artifacts", str(tmp_path / "a"))
     assert result.returncode == gate.EXIT_FINDINGS, result.stdout + result.stderr
     assert "Traceback" not in result.stderr
+
+
+def test_a_resource_kind_that_disagrees_with_the_form_is_refused(tmp_path: Path) -> None:
+    # `kind` is what akivili files the payload under. A descriptor whose form
+    # says wasm.component while the resource says anything else is internally
+    # inconsistent (MUT:no-kind-check).
+    manifest = descriptor("qr").replace('kind = "wasm.component"', 'kind = "action"')
+    repo = make_repo(tmp_path / "repo", "qr", manifest=manifest, artifacts=tmp_path / "a")
+    verdicts = [gate.check_component(repo, w, tmp_path / "a") for w in gate.discover(repo)]
+    assert not verdicts[0].ok, "a kind/form disagreement must be refused"
+    assert "kind is 'action'" in " ".join(verdicts[0].findings)
 
 
 # ── both directions of the capability surface (MUT:no-ungranted-import-check) ──

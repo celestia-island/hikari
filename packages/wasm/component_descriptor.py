@@ -47,8 +47,12 @@ in its message so the fix is mechanical.
   with ``--artifacts <dir>``. ``--allow-unverified`` is the explicit opt-in for
   a checkout that genuinely has no artifacts.
 
-*Scope:* components are discovered from ``packages/wasm/*/wit/*.wit``, the same
-way the artifact-drift gate does it -- a new component joins by existing.
+*Scope:* components are discovered from ``packages/wasm/*/wit/*.wit`` -- a new
+component joins by existing. That glob is deliberately WIT-shaped and not
+``*/Cargo.toml`` (how ``build.py`` finds crates to compile): a crate with no
+``wit/`` directory has no contract, so no descriptor can pin it and the gate
+has nothing to check. A ``Cargo.toml``-shaped scan would report a buildable
+component whose contract does not exist.
 """
 
 from __future__ import annotations
@@ -70,6 +74,9 @@ EXIT_UNVERIFIED = 3
 
 WIT_GLOB = "packages/wasm/*/wit/*.wit"
 DESCRIPTOR_NAME = "component.toml"
+#: The plugin form every hikari descriptor declares, and the resource kind its
+#: payload must carry (akivili filters hosts on this tag).
+FORM = "wasm.component"
 HERE = Path(__file__).resolve().parent
 
 #: Where ``cargo build --target wasm32-wasip2 --release`` puts a component by
@@ -361,6 +368,19 @@ def check_component(
                 f"{world.component}: resources[{index}] is a "
                 f"{type(entry).__name__}, not a table -- each resource must be "
                 f"a `[[resources]]` table with a kind and a payload"
+            )
+            continue
+        # `kind` is a seam field akivili consumes (its store walks resources by
+        # payload, and hosts filter on the kind tag): a descriptor whose form
+        # says wasm.component while its resource says something else is
+        # internally inconsistent, and the registry would file the payload
+        # under the wrong tag without noticing.
+        kind = entry.get("kind")
+        if kind != FORM:
+            verdict.findings.append(
+                f"{world.component}: resources[{index}].kind is {kind!r} but the "
+                f"descriptor's form is {FORM!r} -- the payload would be filed under "
+                f"the wrong tag"
             )
             continue
         payload = entry.get("payload") or {}

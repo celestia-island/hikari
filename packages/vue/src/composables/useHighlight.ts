@@ -155,10 +155,19 @@ export function highlight(code: string, lang?: string): string {
 
   const name = lang ? normalize(lang) : "";
   if (name && surface) {
-    const html = adaptHighlightResult(
-      surface.call<HighlightResult>(HIGHLIGHT_EXPORT, code, name),
-    );
-    if (html !== null) return html;
+    // A surface that resolves but cannot serve the export (or whose guest traps)
+    // must degrade to plaintext, not throw into a render: this composable's
+    // documented contract is "plain text until the module loads", and callers
+    // (`HkDiffViewer`) call it directly inside a render. Measured before the
+    // guard: a surface missing the export threw `no-export` straight through.
+    try {
+      const html = adaptHighlightResult(
+        surface.call<HighlightResult>(HIGHLIGHT_EXPORT, code, name),
+      );
+      if (html !== null) return html;
+    } catch {
+      // Fall through to escaped plaintext.
+    }
   }
   // Trigger the lazy load (first call only); render plain text for now.
   if (!surface && !loadPromise) {

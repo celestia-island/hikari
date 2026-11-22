@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createApp, defineComponent, h, inject } from "vue";
+import { createApp, defineComponent, h, inject, nextTick, type VNode } from "vue";
 
 // HDrawer teleports and animates; replace it with an inline passthrough
 // (same stub shape as HkAdminShell.test.tsx) so the shell contract is
@@ -37,6 +37,7 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
 import { HkFaceShell } from "./HkFaceShell";
 import { HkAdminShell } from "./HkAdminShell";
 import { HK_SCROLL_PROGRESS_ALLOWED } from "./HkScrollProgressDock";
+import { provideActionBar } from "../composables/useActionBar";
 
 /**
  * HkFaceShell — the generalized face shell extracted from HkAdminShell
@@ -252,6 +253,52 @@ describe("the extraction boundary: the action-bar channel", () => {
       expect("actions" in params).toBe(true);
       expect(Array.isArray(params.actions)).toBe(true);
     }
+  });
+});
+
+/**
+ * The header CENTRE channel (2026-11-23) — the other half of the bar
+ * contract. `actions` belongs to the shell that PROVIDES the bar; `center`
+ * belongs to whichever shell sits UNDER one (HkFaceShell provides none, so
+ * it injects the nearest). The delivery is the field's ABSENCE, not an
+ * empty renderer: a face whose host owns its chrome must not be handed a
+ * centre group no page registered.
+ */
+describe("the header centre channel", () => {
+  it("HkFaceShell carries NO center param when no bar is provided above", () => {
+    const seen: Array<Record<string, unknown>> = [];
+    mount(h(HkFaceShell, { navTitle: "Navigation" }, {
+      header: (params: Record<string, unknown>) => {
+        seen.push(params);
+        return null;
+      },
+      content: CONTENT,
+    }));
+    expect(seen.length).toBeGreaterThan(0);
+    for (const params of seen) {
+      expect("center" in params).toBe(false);
+    }
+  });
+
+  it("HkFaceShell relays the centre group of a bar provided ABOVE it", async () => {
+    // A bespoke face that owns its bar provides it over the shell — the
+    // same shape HkAdminShell has, without its `actions` injection.
+    const Host = defineComponent({
+      name: "CentreHost",
+      setup() {
+        const bar = provideActionBar();
+        bar.center.value = () => [h("span", { class: "host-centre" }, "host-mid")];
+        return () =>
+          h(HkFaceShell, { navTitle: "Navigation" }, {
+            header: (params: { center?: () => VNode[] }) =>
+              h("div", { class: "header-centre" }, params.center?.() ?? []),
+            content: CONTENT,
+          });
+      },
+    });
+    const c = mount(h(Host));
+    await nextTick();
+    expect(c.querySelector(".header-centre .host-centre")?.textContent).toBe("host-mid");
   });
 });
 

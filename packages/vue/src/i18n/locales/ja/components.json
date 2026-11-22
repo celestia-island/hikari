@@ -407,5 +407,7 @@
   "hikari::mdEditor.editorAriaLabel": "本文",
   "hikari::mdEditor.previewLabel": "プレビュー",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "プレーンテキスト"
+  "hikari::mdEditor.plain": "プレーンテキスト",
+  "hikari::masterDetail.close": "閉じる",
+  "hikari::masterDetail.emptyTitle": "何も選択されていません"
 }

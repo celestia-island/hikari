@@ -407,5 +407,7 @@
   "hikari::mdEditor.editorAriaLabel": "Nachrichtentext",
   "hikari::mdEditor.previewLabel": "Vorschau",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "Klartext"
+  "hikari::mdEditor.plain": "Klartext",
+  "hikari::masterDetail.close": "Schließen",
+  "hikari::masterDetail.emptyTitle": "Nichts ausgewählt"
 }

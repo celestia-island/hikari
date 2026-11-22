@@ -411,5 +411,7 @@
   "hikari::mdEditor.editorAriaLabel": "內文",
   "hikari::mdEditor.previewLabel": "預覽",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "純文字"
+  "hikari::mdEditor.plain": "純文字",
+  "hikari::masterDetail.close": "關閉",
+  "hikari::masterDetail.emptyTitle": "尚未選取任何內容"
 }

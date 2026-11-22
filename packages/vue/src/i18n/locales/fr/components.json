@@ -407,5 +407,7 @@
   "hikari::mdEditor.editorAriaLabel": "Corps du message",
   "hikari::mdEditor.previewLabel": "Aperçu",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "Texte brut"
+  "hikari::mdEditor.plain": "Texte brut",
+  "hikari::masterDetail.close": "Fermer",
+  "hikari::masterDetail.emptyTitle": "Aucune sélection"
 }

@@ -35,6 +35,14 @@ export type { PaddingSidesScan } from "./HkFaceShell";
  * output. Faces that own their action bar — or their whole content
  * lifecycle, like a canvas stage — consume HkFaceShell directly and
  * provide whatever they want, closest to their pages.
+ *
+ * BOTH header zones ride that one provide: `actions` is added here (the
+ * inner shell knows nothing about the bar the admin face owns), and the
+ * centre renderer arrives on the inner shell's own payload — HkFaceShell
+ * reads the bar provided ABOVE it, which for every HkAdminShell host is
+ * exactly this one — and is relayed verbatim by the spread below. So a
+ * host's `slots.header({ actions, center })` receives the two channels
+ * from one registration surface, and neither is a second source.
  */
 export const HkAdminShell = defineComponent({
   name: "HkAdminShell",
@@ -163,6 +171,12 @@ export const HkAdminShell = defineComponent({
                 // VNode[] (now one entry per registered affordance, in
                 // slot order).
                 actions: actionBar.actions.value.flatMap((render) => render()),
+                // The centre zone rides the spread: the inner shell
+                // resolved it from the bar provided above it (this
+                // wrapper's own), so re-forwarding `shellParams.center`
+                // would only re-read the same ref through a second path.
+                // Pinned end to end by HkAdminShell.centre.test.tsx — a
+                // shell that stops relaying the field goes red there.
               })
           : undefined,
         sidebar: slots.sidebar,

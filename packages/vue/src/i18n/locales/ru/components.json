@@ -407,5 +407,7 @@
   "hikari::mdEditor.editorAriaLabel": "Текст сообщения",
   "hikari::mdEditor.previewLabel": "Предпросмотр",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "Обычный текст"
+  "hikari::mdEditor.plain": "Обычный текст",
+  "hikari::masterDetail.close": "Закрыть",
+  "hikari::masterDetail.emptyTitle": "Ничего не выбрано"
 }

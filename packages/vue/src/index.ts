@@ -680,6 +680,11 @@ export {
 } from "./components/HkMfaVerifyCard";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
 export { provideActionBar, useActionBar, PageActionSlot, orderActionRegistrations } from "./composables/useActionBar";
+// The centre channel's LAYOUT-side read (a shell that relays the bar it
+// sits under, without owning one): exported so a bespoke layout hands its
+// header slot the same `center` payload HkFaceShell does instead of
+// re-deriving a second source for the zone.
+export { useActionBarCenter } from "./composables/useActionBar";
 export type { ActionBarRenderer, PageActionSlotValue, ActionBarRegistration } from "./composables/useActionBar";
 export { useChromeActionSize } from "./composables/useChromeActionSize";
 export { leadingZeroBits, sha256, solvePow, solvePowSync, verifyPow } from "./utils/pow";
@@ -1098,6 +1103,11 @@ export { HkAuthChannelList as HkAuthChannelList } from "./components/HkAuthChann
 export { type HkAuthChannelListEntry as HkAuthChannelListEntry } from "./components/HkAuthChannelList";
 export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";
 export { HkAdminTablePage as HkAdminTablePage } from "./components/HkAdminTablePage";
+// The roster+detail twin of the table page (2026-11-23): one standard
+// two-pane surface for every host list that picks a row and shows it
+// beside the list, instead of each host hand-rolling its own CSS grid.
+export { HkMasterDetail as HkMasterDetail } from "./components/HkMasterDetail";
+export type { HkMasterDetailSlots } from "./components/HkMasterDetail";
 export { HkPageHeader as HkPageHeader } from "./components/HkPageHeader";
 export { HkStatCard as HkStatCard } from "./components/HkStatCard";
 export { statToneColor, type StatTone as StatTone, type StatVariant as StatVariant } from "./components/HkStatCard";

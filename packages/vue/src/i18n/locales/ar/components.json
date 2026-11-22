@@ -394,5 +394,18 @@
   "hikari::loginFlow.channelCloud": "Celestia Cloud",
   "hikari::loginFlow.channelOrg": "تسجيل الدخول بالمؤسسة",
   "hikari::loginFlow.signInTitle": "تسجيل الدخول",
-  "hikari::loginFlow.signInSubtitle": "مرحبًا بعودتك"
+  "hikari::loginFlow.signInSubtitle": "مرحبًا بعودتك",
+  "hikari::mdEditor.bold": "عريض",
+  "hikari::mdEditor.italic": "مائل",
+  "hikari::mdEditor.strikethrough": "مشطوب",
+  "hikari::mdEditor.code": "تعليمة برمجية سطرية",
+  "hikari::mdEditor.link": "رابط",
+  "hikari::mdEditor.heading": "عنوان",
+  "hikari::mdEditor.bulletList": "قائمة نقطية",
+  "hikari::mdEditor.orderedList": "قائمة مرقمة",
+  "hikari::mdEditor.quote": "اقتباس",
+  "hikari::mdEditor.editorAriaLabel": "نص الرسالة",
+  "hikari::mdEditor.previewLabel": "معاينة",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "نص عادي"
 }

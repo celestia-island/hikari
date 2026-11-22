@@ -909,6 +909,8 @@ export { default as HkLabel } from "./components/HkLabel";
 export { default as HkListTransition } from "./components/HkListTransition";
 export { default as HkLoadMore } from "./components/HkLoadMore";
 export { default as HkMarkdownRenderer } from "./components/HkMarkdownRenderer";
+export { default as HkMarkdownEditor, applyLinePrefix, applyWrap } from "./components/HkMarkdownEditor";
+export type { HkMarkdownEditorMode, MarkdownTextEdit } from "./components/HkMarkdownEditor";
 export { default as HkMermaidDiagram } from "./components/HkMermaidDiagram";
 export { default as HkTerminal } from "./components/HkTerminal";
 export { default as HkModal } from "./components/HkModal";

@@ -394,5 +394,18 @@
   "hikari::loginFlow.channelCloud": "Celestia Cloud",
   "hikari::loginFlow.channelOrg": "Вход через организацию",
   "hikari::loginFlow.signInTitle": "Войти",
-  "hikari::loginFlow.signInSubtitle": "С возвращением"
+  "hikari::loginFlow.signInSubtitle": "С возвращением",
+  "hikari::mdEditor.bold": "Полужирный",
+  "hikari::mdEditor.italic": "Курсив",
+  "hikari::mdEditor.strikethrough": "Зачёркнутый",
+  "hikari::mdEditor.code": "Встроенный код",
+  "hikari::mdEditor.link": "Ссылка",
+  "hikari::mdEditor.heading": "Заголовок",
+  "hikari::mdEditor.bulletList": "Маркированный список",
+  "hikari::mdEditor.orderedList": "Нумерованный список",
+  "hikari::mdEditor.quote": "Цитата",
+  "hikari::mdEditor.editorAriaLabel": "Текст сообщения",
+  "hikari::mdEditor.previewLabel": "Предпросмотр",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "Обычный текст"
 }

@@ -394,5 +394,18 @@
   "hikari::loginFlow.channelCloud": "Celestia クラウド",
   "hikari::loginFlow.channelOrg": "組織ログイン",
   "hikari::loginFlow.signInTitle": "ログイン",
-  "hikari::loginFlow.signInSubtitle": "おかえりなさい"
+  "hikari::loginFlow.signInSubtitle": "おかえりなさい",
+  "hikari::mdEditor.bold": "太字",
+  "hikari::mdEditor.italic": "斜体",
+  "hikari::mdEditor.strikethrough": "取り消し線",
+  "hikari::mdEditor.code": "インラインコード",
+  "hikari::mdEditor.link": "リンク",
+  "hikari::mdEditor.heading": "見出し",
+  "hikari::mdEditor.bulletList": "箇条書きリスト",
+  "hikari::mdEditor.orderedList": "番号付きリスト",
+  "hikari::mdEditor.quote": "引用",
+  "hikari::mdEditor.editorAriaLabel": "本文",
+  "hikari::mdEditor.previewLabel": "プレビュー",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "プレーンテキスト"
 }

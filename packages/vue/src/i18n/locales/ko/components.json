@@ -394,5 +394,18 @@
   "hikari::loginFlow.channelCloud": "Celestia 클라우드",
   "hikari::loginFlow.channelOrg": "조직 로그인",
   "hikari::loginFlow.signInTitle": "로그인",
-  "hikari::loginFlow.signInSubtitle": "다시 오신 것을 환영합니다"
+  "hikari::loginFlow.signInSubtitle": "다시 오신 것을 환영합니다",
+  "hikari::mdEditor.bold": "굵게",
+  "hikari::mdEditor.italic": "기울임꼴",
+  "hikari::mdEditor.strikethrough": "취소선",
+  "hikari::mdEditor.code": "인라인 코드",
+  "hikari::mdEditor.link": "링크",
+  "hikari::mdEditor.heading": "제목",
+  "hikari::mdEditor.bulletList": "글머리 기호 목록",
+  "hikari::mdEditor.orderedList": "번호 매기기 목록",
+  "hikari::mdEditor.quote": "인용",
+  "hikari::mdEditor.editorAriaLabel": "본문",
+  "hikari::mdEditor.previewLabel": "미리보기",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "일반 텍스트"
 }

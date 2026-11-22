@@ -394,5 +394,18 @@
   "hikari::loginFlow.channelCloud": "Celestia Cloud",
   "hikari::loginFlow.channelOrg": "Connexion organisation",
   "hikari::loginFlow.signInTitle": "Se connecter",
-  "hikari::loginFlow.signInSubtitle": "Bon retour"
+  "hikari::loginFlow.signInSubtitle": "Bon retour",
+  "hikari::mdEditor.bold": "Gras",
+  "hikari::mdEditor.italic": "Italique",
+  "hikari::mdEditor.strikethrough": "Barré",
+  "hikari::mdEditor.code": "Code en ligne",
+  "hikari::mdEditor.link": "Lien",
+  "hikari::mdEditor.heading": "Titre",
+  "hikari::mdEditor.bulletList": "Liste à puces",
+  "hikari::mdEditor.orderedList": "Liste numérotée",
+  "hikari::mdEditor.quote": "Citation",
+  "hikari::mdEditor.editorAriaLabel": "Corps du message",
+  "hikari::mdEditor.previewLabel": "Aperçu",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "Texte brut"
 }

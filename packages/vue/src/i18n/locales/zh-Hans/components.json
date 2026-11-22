@@ -398,5 +398,18 @@
   "hikari::loginFlow.channelCloud": "Celestia 云",
   "hikari::loginFlow.channelOrg": "组织登录",
   "hikari::loginFlow.signInTitle": "登录",
-  "hikari::loginFlow.signInSubtitle": "欢迎回来"
+  "hikari::loginFlow.signInSubtitle": "欢迎回来",
+  "hikari::mdEditor.bold": "粗体",
+  "hikari::mdEditor.italic": "斜体",
+  "hikari::mdEditor.strikethrough": "删除线",
+  "hikari::mdEditor.code": "行内代码",
+  "hikari::mdEditor.link": "链接",
+  "hikari::mdEditor.heading": "标题",
+  "hikari::mdEditor.bulletList": "无序列表",
+  "hikari::mdEditor.orderedList": "有序列表",
+  "hikari::mdEditor.quote": "引用",
+  "hikari::mdEditor.editorAriaLabel": "正文",
+  "hikari::mdEditor.previewLabel": "预览",
+  "hikari::mdEditor.markdown": "Markdown",
+  "hikari::mdEditor.plain": "纯文本"
 }

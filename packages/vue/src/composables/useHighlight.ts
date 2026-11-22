@@ -6,37 +6,96 @@
 // at bundle initialization. Until loaded, code renders as plain text
 // (same UX as the old hljs lazy loading, but with a single Rust wasm
 // module instead of 85 JS grammar chunks).
+//
+// Loading goes through the tairitsu host client's ASYNC door
+// (`loadComponent`), not a bare `import()`: the client publishes the
+// capability declaration before it evaluates the wrapper, which is an
+// ordering a bare import cannot give you (ES imports hoist, so a statement
+// in this file can never run earlier than the import it is meant to guard).
+// `highlight()` stays synchronous — the load resolves in the background and
+// `version` re-runs the render effects, so the visible contract is unchanged.
+//
+// Measured behaviour this file's comments rely on (each verified by probe, not
+// assumed): the first call renders escaped plaintext and starts the load; the
+// next call reaches the surface; a failed load leaves plaintext and the
+// following call retries; and `version` goes 0 → 1 when the load resolves.
 
 import { ref } from "vue";
+import {
+  HostClientError,
+  loadComponent,
+  type HostComponent,
+} from "@celestia-island/tairitsu-host-client";
 import type { HighlightResult } from "../wasm/highlight/hikari_wasm_highlight.js";
 
-// The binding trades in a record, not a string: `HighlightResult` is
-// `{ html?: string }` (generated, see hikari_wasm_highlight.d.ts and
-// interfaces/hikari-highlight-types.d.ts). Keeping the generated type
-// here is deliberate — a `(code, lang) => string | null` alias let the
-// record reach `v-html` and every diff row rendered "[object Object]".
-type WasmHighlightFn = (code: string, language: string) => HighlightResult;
+/**
+ * The capability declaration this component runs under.
+ *
+ * Empty is not cosmetic: the highlight artifact has no glue interface (its
+ * `interfaces/` are type declarations only) and gets WASI from its own direct
+ * `@bytecodealliance/preview2-shim/*` imports. Declaring anything here makes
+ * `buildImports` refuse the load before the wrapper is evaluated.
+ */
+const HIGHLIGHT_CAPABILITIES = { interfaces: [] as string[], wasiModules: [] as string[] } as const;
 
-// Module-level state: the loaded wasm function (null until loaded).
-let wasmFn: WasmHighlightFn | null = null;
-let loadPromise: Promise<WasmHighlightFn | null> | null = null;
+/** The wrapper's export name. jco names JS exports in the component's own
+ *  identifier style; this one is a bare `highlight`, which is also the WIT func
+ *  name — unlike scene3d, whose WIT `build-fleet-scene` becomes `buildFleetScene`.
+ *  The host client's `pickExport` looks up an exact own property, so this must
+ *  match the export exactly. */
+const HIGHLIGHT_EXPORT = "highlight";
 
-// Reactive version — bumped when the module finishes loading so
+// Module-level state: the call surface (null until loaded). The surface is the
+// host client's synchronous door onto the component — `surface.call("highlight",
+// code, lang)` — so the hot path never touches the promise again.
+let surface: HostComponent | null = null;
+let loadPromise: Promise<HostComponent | null> | null = null;
+
+// Reactive version — bumped when the component finishes loading so
 // computed/render effects re-run and replace plain text with color.
 const version = ref(0);
 
-/** Load the wasm module on first use; cached thereafter. */
-function ensureLoaded(): Promise<WasmHighlightFn | null> {
-  if (wasmFn) return Promise.resolve(wasmFn);
+/**
+ * Load the component on first use through the host client; cached thereafter.
+ *
+ * A failed load resolves `null` and clears `loadPromise`, which is the existing
+ * behaviour: the next `highlight()` call retries, and until one succeeds every
+ * call renders plaintext.
+ */
+function ensureLoaded(): Promise<HostComponent | null> {
+  if (surface) return Promise.resolve(surface);
   if (!loadPromise) {
-    loadPromise = import("../wasm/highlight/hikari_wasm_highlight.js")
-      .then((mod) => {
-        wasmFn = mod.highlight;
+    loadPromise = loadComponent({
+      wrapper: "hikari_wasm_highlight.js",
+      capabilities: HIGHLIGHT_CAPABILITIES,
+      // A RELATIVE SPECIFIER, not a URL built from `import.meta.url`.
+      // The client's own fallback is `import(target)`, and a URL derived from
+      // `import.meta.url` resolves to the bundler's origin (an `http://` dev
+      // server) or to the wrong directory under Node — both of which the ESM
+      // loader rejects ("Only URLs with a scheme in: file and data are
+      // supported"; measured). A relative specifier is what the previous
+      // `import()` used, keeps the artifact in its own chunk, and is resolved
+      // by whichever loader is running.
+      loaders: {
+        // A STATIC-ANALYSABLE import: the specifier is a literal, so Vite still
+        // emits the artifact as its own chunk, and the module graph stays
+        // replaceable (a `vi.mock` of it still takes effect — without that,
+        // `HkDiffViewer.epoch.test.tsx` silently loaded the real component and
+        // failed; measured). A `/* @vite-ignore */` on this call broke the
+        // second property while fixing nothing.
+        importModule: () =>
+          import(
+            "../wasm/highlight/hikari_wasm_highlight.js"
+          ) as Promise<Record<string, unknown>>,
+      },
+    })
+      .then((loaded) => {
+        surface = loaded;
         version.value += 1;
-        return wasmFn;
+        return loaded;
       })
       .catch(() => {
-        // Module failed to load — stay plaintext forever.
+        // Load failed — stay plaintext and let the next call retry.
         loadPromise = null;
         return null;
       });
@@ -91,12 +150,14 @@ export function highlight(code: string, lang?: string): string {
   void version.value;
 
   const name = lang ? normalize(lang) : "";
-  if (name && wasmFn) {
-    const html = adaptHighlightResult(wasmFn(code, name));
+  if (name && surface) {
+    const html = adaptHighlightResult(
+      surface.call<HighlightResult>(HIGHLIGHT_EXPORT, code, name),
+    );
     if (html !== null) return html;
   }
   // Trigger the lazy load (first call only); render plain text for now.
-  if (!wasmFn && !loadPromise) {
+  if (!surface && !loadPromise) {
     void ensureLoaded();
   }
   return escapeHtml(code);

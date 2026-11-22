@@ -1,16 +1,34 @@
 import { describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h } from "vue";
 
-// Mock the wasm module at the top level: the composable's lazy import()
-// resolves to this factory, exactly like the real module landing after
-// the first plaintext render. The shape is the real ABI — the binding
-// returns `HighlightResult = { html?: string }`, NOT a bare string
-// (packages/vue/src/wasm/highlight/hikari_wasm_highlight.d.ts). A string
-// mock here hid the seam that fed the record to `v-html`, so every row
-// rendered "[object Object]"; the adapter test pins that separately.
-vi.mock("../wasm/highlight/hikari_wasm_highlight.js", () => ({
-  highlight: (text: string, lang: string) => ({ html: `<wasm>${lang}:${text}</wasm>` }),
-}));
+// Mock the host client's async door at the top level: the composable now loads
+// the component through `loadComponent`, so that is where "the wasm module
+// lands" happens. The returned surface mimics the real call shape, and its
+// `html` is the real ABI record — `HighlightResult = { html?: string }`, NOT a
+// bare string (packages/vue/src/wasm/highlight/hikari_wasm_highlight.d.ts). A
+// string-returning mock hid the seam that fed the record to `v-html`; the
+// adapter test pins that separately.
+//
+// Mocking the module this test used to mock (`../wasm/highlight/...`) no longer
+// works: the composable imports it from `src/composables/`, which resolves to a
+// different module id, so the real component loaded and the assertion never
+// saw `<wasm>` (measured).
+vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@celestia-island/tairitsu-host-client")>();
+  return {
+    ...actual,
+    loadComponent: async () =>
+      ({
+        exports: {},
+        call: (_name: string, text: string, lang: string) => ({
+          html: `<wasm>${lang}:${text}</wasm>`,
+        }),
+        stop: async () => {},
+        whenIdle: async () => {},
+        stopped: false,
+      }) as unknown as Awaited<ReturnType<typeof actual.loadComponent>>,
+  };
+});
 
 import HkDiffViewer from "./HkDiffViewer";
 import { useHighlight } from "../composables/useHighlight";

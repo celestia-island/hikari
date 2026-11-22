@@ -35,6 +35,9 @@ describe("HkAuthChannelList", () => {
     expect(rows.length).toBe(2);
     expect(rows[0]!.textContent).toContain("飞书登录");
     expect(rows[1]!.textContent).toContain("Celestia 账号");
+    // The accessible name rides the row itself (no role override).
+    expect(rows[0]!.getAttribute("aria-label")).toBe("飞书登录");
+    expect(rows[0]!.getAttribute("role")).toBeNull();
     // The icon renders BEFORE the name (left-mark, right-name).
     const icon = rows[0]!.querySelector(".hk-auth-channel-icon");
     const name = rows[0]!.querySelector(".hk-auth-channel-name");

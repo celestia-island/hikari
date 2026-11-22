@@ -100,7 +100,7 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * - `account-submit(channel, username, password)` — credentials
  *   channel submitted (password is empty while `passwordField` is off).
  * - `method-select(channel, key)` — an alternative method row was picked.
- * - `sso-click(channel)` — the primary sso tile was picked.
+ * - `sso-click(channel)` — the primary sso row was picked.
  * - `verify(kind, proof)` / `verify-resend` / `verify-back` — the MFA
  *   card's events, re-emitted one level up.
  *

@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h } from "vue";
 
@@ -237,6 +241,33 @@ describe("HkSignInCard", () => {
     expect(c.querySelectorAll(".s-auth-footer")).toHaveLength(1);
     expect(c.querySelectorAll(".m-row")).toHaveLength(1);
     expect(c.querySelectorAll(".f-row")).toHaveLength(1);
+  });
+
+  it("carries its own column rhythm at any nesting depth (spacing regression pin)", () => {
+    // 2026-11-24 user report: the username field and the submit button
+    // sat GLUED together on every HkLoginFlow surface — the stable-shell
+    // refactor moved the form inside the inner transition container, so
+    // the `.s-auth-form > form` sibling gap no longer reached it. The
+    // class travels with the form; the stylesheet pin below keeps the
+    // rule that grants it.
+    // MUT:r-spacing-class-drop (removing the class from credentialBody's
+    // form, or the `.s-auth-credentials` arm from the rule, leaves the
+    // bare-fragment form gap-less — both halves redden).
+    const bare = mount(
+      h(HkSignInCard, { bare: true }, { footer: () => h("div", "f") }),
+    );
+    const bareForm = bare.querySelector("form")!;
+    expect(bareForm.classList.contains("s-auth-credentials")).toBe(true);
+    const shell = mount(h(HkSignInCard, { title: "T" }));
+    expect(
+      shell.querySelector("form")!.classList.contains("s-auth-credentials"),
+    ).toBe(true);
+
+    const here = dirname(fileURLToPath(import.meta.url));
+    const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
+    const rule = scss.match(/\.s-auth-form > form,\s*\.s-auth-form > \*,\s*\.s-auth-credentials\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, "the credentials rhythm rule must keep its class arm").toBeTruthy();
+    expect(rule).toContain("gap: var(--space-16, 1rem)");
   });
 
   it("renders no footer wrapper at all when no footer slot was passed (dead-space guard)", () => {

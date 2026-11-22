@@ -127,7 +127,10 @@ export const HkSignInCard = defineComponent({
      *  host-owned shell. */
     const credentialBody = (withBlocks: boolean) => (
       <>
-        <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
+        <form
+          class="s-auth-credentials"
+          onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}
+        >
           <HkInput
             modelValue={username.value}
             onUpdate:modelValue={(v: string) => (username.value = v)}

@@ -1253,8 +1253,17 @@
   gap: var(--space-16, 1rem);
 }
 
+/* The form column rhythm (2026-11-24 user report: the username field
+   and the submit button sat GLUED together on every HkLoginFlow
+   surface). The `.s-auth-credentials` arm is the load-bearing one:
+   since the stable-shell refactor the form renders inside the inner
+   transition container (`.hk-login-flow-body > … > .hk-crossfade-item
+   > form`), so the sibling arms no longer reach it — the class
+   travels with the form at ANY nesting depth, standalone card and
+   bare fragment alike. */
 .s-auth-form > form,
-.s-auth-form > * {
+.s-auth-form > *,
+.s-auth-credentials {
   display: flex;
   flex-direction: column;
   gap: var(--space-16, 1rem);

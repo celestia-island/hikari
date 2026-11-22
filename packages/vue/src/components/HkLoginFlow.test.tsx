@@ -364,16 +364,22 @@ describe("HkLoginFlow — verify step", () => {
 
     step.value = "account";
     for (let i = 0; i < 12; i++) await nextTick();
-    // The account shell comes back: jsdom fires no transitionend, so
-    // the leaving verify body lingers with its OTP cells — pin the
-    // body that is NOT on its way out (the crossfade item without
-    // leave classes carries the settled stage).
-    const settled = c.querySelectorAll(
-      ".hk-crossfade-item:not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+    // The account shell comes back. Scope the assertion to the OUTER
+    // tier's DIRECT stage items (`.hk-login-flow > .hk-tc > …`) — the
+    // union of every crossfade item in the subtree is unfalsifiable
+    // (the inner items ride inside the settled account item, so a
+    // stuck-outer mutation can never turn this red; the forward leg's
+    // OTP-presence check carries the teeth for that mutation).
+    const outerSettled = Array.from(
+      c.querySelectorAll(
+        ".hk-login-flow > .hk-tc > .hk-tc-stage > .hk-crossfade > .hk-crossfade-item"
+          + ":not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+      ),
     );
-    const settledHtml = Array.from(settled).map((el) => el.outerHTML).join("");
-    expect(settledHtml).toContain('name="signin-username"');
-    expect(settledHtml).not.toContain("hk-otp-cell");
+    expect(outerSettled.length).toBe(1);
+    expect((outerSettled[0] as HTMLElement).dataset.crossfadeKey).toBe("account");
+    expect(outerSettled[0]!.querySelector('input[name="signin-username"]')).not.toBeNull();
+    expect(outerSettled[0]!.querySelector(".hk-otp-cell")).toBeNull();
   });
 });
 
@@ -409,6 +415,14 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     const logoSlotBefore = container.querySelector(".s-auth-header");
     expect(tabsBefore).not.toBeNull();
     expect(titleBefore?.textContent).toBe("Sign in");
+    // Exactly ONE card — the shell. A silently-ignored `bare` mode
+    // (HkSignInCard wrapping its own card inside the shell) shows up
+    // as a second .s-auth-card / .s-auth-form here.
+    // MUT:r1487-bare-ignored (deleting HkSignInCard's bare return
+    // makes this count 2 and the nested selector non-null).
+    expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
+    expect(container.querySelector(".s-auth-card .s-auth-card")).toBeNull();
+    expect(container.querySelectorAll(".s-auth-form")).toHaveLength(1);
 
     active.value = "org";
     for (let i = 0; i < 12; i++) await nextTick();
@@ -452,6 +466,24 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect((innerSettled[0] as HTMLElement).dataset.crossfadeKey).toBe("cloud");
     expect(innerSettled[0]!.querySelector('input[name="signin-username"]')).not.toBeNull();
     expect(innerSettled[0]!.querySelector(".hk-login-flow-sso")).toBeNull();
+  });
+
+  it("blurs a field focused inside the leaving body on a channel switch", async () => {
+    // The anti-strobe cover HkStepFlow's dropFlowFocus used to provide
+    // (chest round-22 field report: a focused field re-anchors the
+    // Android autofill panel on every layout beat). The TAB button
+    // keeps its focus — the blur scope is the swapped body only.
+    const { container, active } = mountTwoChannel("cloud");
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="signin-username"]',
+    )!;
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    active.value = "org";
+    await nextTick();
+    // MUT:r1487-focus-strobe (dropping the blur watch leaves the
+    // dissolved field focused — the autofill strobe regression).
+    expect(document.activeElement).not.toBe(input);
   });
 
   it("flows the per-channel fallback title through the stable shell header", async () => {

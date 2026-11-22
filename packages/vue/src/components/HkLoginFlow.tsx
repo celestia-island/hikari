@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType } from "vue";
+import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import { asPropType } from "../utils/typing";
@@ -207,6 +207,22 @@ export const HkLoginFlow = defineComponent({
         props.channels[0],
     );
 
+    // Anti-strobe on the channel swap (the chest round-22 field report
+    // HkStepFlow's dropFlowFocus used to cover): a field still focused
+    // INSIDE the leaving body re-anchors the Android autofill panel on
+    // every layout beat of the morph. The tab buttons are deliberately
+    // OUTSIDE the blur scope — the activated tab must keep focus
+    // (keyboard a11y).
+    watch(() => currentChannel.value?.key, () => {
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        active.closest(".hk-login-flow-body")
+      ) {
+        active.blur();
+      }
+    });
+
     /** Segment label precedence: explicit label > the conventional-key
      *  locale > the raw key. The conventional keys cover every Celestia
      *  deployment today, so most hosts pass no labels at all. */
@@ -373,7 +389,11 @@ export const HkLoginFlow = defineComponent({
                       {/* The segment group rides ABOVE the swapped body —
                         * stable across channel switches. */}
                       {tabsEl()}
-                      <HkTransitionContainer swapKey={channel.key} axis="height">
+                      <HkTransitionContainer
+                        class="hk-login-flow-body"
+                        swapKey={channel.key}
+                        axis="height"
+                      >
                         {channel.mode === "credentials"
                           ? renderCredentialsBody(channel)
                           : renderSsoBody(channel)}

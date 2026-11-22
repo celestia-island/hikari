@@ -353,6 +353,22 @@ def test_a_verified_artifact_exits_zero(tmp_path: Path) -> None:
     assert result.returncode == gate.EXIT_OK, result.stdout + result.stderr
 
 
+def test_a_non_table_resource_entry_is_a_finding_not_a_crash(tmp_path: Path) -> None:
+    # TOML accepts `resources = ["x.wasm"]`; an unguarded `.get` on that raised
+    # AttributeError and the process died with a traceback instead of naming
+    # the field (MUT:no-resource-table-guard).
+    manifest = descriptor("qr").split("[[resources]]")[0] + (
+        'resources = ["target/wasm32-wasip2/release/hikari_wasm_qr.wasm"]\n'
+    )
+    repo = make_repo(tmp_path / "repo", "qr", manifest=manifest, artifacts=tmp_path / "a")
+    verdicts = [gate.check_component(repo, w, tmp_path / "a") for w in gate.discover(repo)]
+    assert not verdicts[0].ok
+    assert "not a table" in " ".join(verdicts[0].findings)
+    result = _run_cli(repo, "--artifacts", str(tmp_path / "a"))
+    assert result.returncode == gate.EXIT_FINDINGS, result.stdout + result.stderr
+    assert "Traceback" not in result.stderr
+
+
 # ── both directions of the capability surface (MUT:no-ungranted-import-check) ──
 
 

@@ -350,7 +350,20 @@ def check_component(
             f"must ship its payload"
         )
     for index, entry in enumerate(resources):
-        payload = (entry or {}).get("payload") or {}
+        # The entry itself must be a table. TOML accepts `resources = ["x.wasm"]`
+        # (a string), and an unguarded `.get` on it raised AttributeError --
+        # a traceback instead of the "name the offending field" contract this
+        # gate promises. `exactly-one` also refuses duplicates, which no
+        # consumer could resolve (the shape akivili already rejects for
+        # webui.page-type).
+        if not isinstance(entry, dict):
+            verdict.findings.append(
+                f"{world.component}: resources[{index}] is a "
+                f"{type(entry).__name__}, not a table -- each resource must be "
+                f"a `[[resources]]` table with a kind and a payload"
+            )
+            continue
+        payload = entry.get("payload") or {}
         file_entry = payload.get("File") if isinstance(payload, dict) else None
         if not isinstance(file_entry, dict):
             verdict.findings.append(

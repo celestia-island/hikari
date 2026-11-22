@@ -42,6 +42,13 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
  *   between the form and the footer (typically `HkAuthMethodList`), so
  *   alternative sign-in buttons line up with the inputs while the footer
  *   rows keep their centered-group layout.
+ * - `bare: true` — render ONLY the credential fragment (the `<form>` plus
+ *   the methods/footer blocks, same wrapper classes) with NO HkAuthCard
+ *   shell: for hosts that own a stable card shell and swap this body
+ *   inside it (HkLoginFlow's channel switch — 2026-11-24 user direction:
+ *   the shell, its header and the channel tabs must NOT dissolve when
+ *   only the content below the tabs changes). The `top` slot is a shell
+ *   concern and deliberately does not exist in bare mode.
  *
  * ```tsx
  * <HSignInCard
@@ -56,7 +63,9 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
 export const HkSignInCard = defineComponent({
   name: "HkSignInCard",
   props: {
-    title: { type: String, required: true },
+    /** Card title (shell mode). Unused in `bare` mode — the host owns
+     *  the shell — but kept in the prop shape for the standalone card. */
+    title: { type: String, default: "" },
     subtitle: { type: String, default: "" },
     /** Optional logo image URL for the card header. */
     logoSrc: { type: String, default: undefined },
@@ -84,6 +93,11 @@ export const HkSignInCard = defineComponent({
      *  user navigates back from a later step, so the typed account name
      *  must travel through a prop rather than module state. */
     initialUsername: { type: String, default: "" },
+    /** Render ONLY the credential fragment — no HkAuthCard shell, no
+     *  `top` slot. For hosts that own a stable shell and transition this
+     *  body inside it (HkLoginFlow's channel swap). Default keeps the
+     *  full standalone card. */
+    bare: { type: Boolean, default: false },
   },
   emits: {
     /** Fired on explicit click or Enter; never with an empty username (or
@@ -102,6 +116,71 @@ export const HkSignInCard = defineComponent({
       emit("submit", u, props.passwordField ? password.value : "");
     }
 
+    /** The credential fragment every mode shares: the `<form>` (username,
+     *  optional password, block submit) plus the methods/footer blocks.
+     *  The wrapper classes match HkAuthCard's layout blocks so the bare
+     *  fragment occupies the same visual lanes inside a host-owned shell
+     *  as it would inside its own card. */
+    const credentialBody = () => (
+      <>
+        <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
+          <HkInput
+            modelValue={username.value}
+            onUpdate:modelValue={(v: string) => (username.value = v)}
+            type={props.usernameType}
+            name="signin-username"
+            autocomplete={props.usernameAutocomplete ?? credentialAutocomplete("username", "username")}
+            placeholder={
+              props.usernamePlaceholder ??
+              t("hikari::signIn.usernamePlaceholder", "Username")
+            }
+            disabled={props.loading || props.disabled}
+            submitOnEnter={attemptSubmit}
+          >
+          {{
+            prefixIcon: () =>
+              slots.usernameIcon ? (
+                slots.usernameIcon()
+              ) : (
+                <User class="s-auth-card-field-icon" aria-hidden="true" />
+              ),
+          }}
+        </HkInput>
+        {/* Account-first mode omits the field entirely — not hides
+            it with CSS: a hidden password input would still plant a
+            credential-manager save prompt and an autocomplete target
+            on a form that never carries a password. */}
+        {props.passwordField && (
+          <HkInput
+            variant="password"
+            modelValue={password.value}
+            onUpdate:modelValue={(v: string) => (password.value = v)}
+            name="signin-password"
+            autocomplete={props.passwordAutocomplete ?? credentialAutocomplete("password", "current-password")}
+            placeholder={t("hikari::signIn.passwordPlaceholder", "Password")}
+            disabled={props.loading || props.disabled}
+            submitOnEnter={attemptSubmit}
+          />
+        )}
+        <HkAuthSubmitButton
+          label={props.submitLabel ?? t("hikari::signIn.submit", "Sign in")}
+          block
+          loading={props.loading}
+          disabled={props.disabled || !username.value.trim() || (props.passwordField && !password.value)}
+          doSubmit={() => Promise.resolve(attemptSubmit())}
+        />
+        </form>
+        {slots.methods && <div class="s-auth-methods">{slots.methods()}</div>}
+        {slots.footer && <div class="s-auth-footer">{slots.footer()}</div>}
+      </>
+    );
+
+    // Bare mode: the fragment alone — the host owns the shell (and any
+    // transition choreography around this body).
+    if (props.bare) {
+      return () => credentialBody();
+    }
+
     return () => (
       <HkAuthCard title={props.title} subtitle={props.subtitle}>
         {{
@@ -114,53 +193,7 @@ export const HkSignInCard = defineComponent({
           default: () => (
             <>
               {slots.top?.()}
-              <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
-                <HkInput
-                  modelValue={username.value}
-                  onUpdate:modelValue={(v: string) => (username.value = v)}
-                  type={props.usernameType}
-                  name="signin-username"
-                  autocomplete={props.usernameAutocomplete ?? credentialAutocomplete("username", "username")}
-                  placeholder={
-                    props.usernamePlaceholder ??
-                    t("hikari::signIn.usernamePlaceholder", "Username")
-                  }
-                  disabled={props.loading || props.disabled}
-                  submitOnEnter={attemptSubmit}
-                >
-                {{
-                  prefixIcon: () =>
-                    slots.usernameIcon ? (
-                      slots.usernameIcon()
-                    ) : (
-                      <User class="s-auth-card-field-icon" aria-hidden="true" />
-                    ),
-                }}
-              </HkInput>
-              {/* Account-first mode omits the field entirely — not hides
-                  it with CSS: a hidden password input would still plant a
-                  credential-manager save prompt and an autocomplete target
-                  on a form that never carries a password. */}
-              {props.passwordField && (
-                <HkInput
-                  variant="password"
-                  modelValue={password.value}
-                  onUpdate:modelValue={(v: string) => (password.value = v)}
-                  name="signin-password"
-                  autocomplete={props.passwordAutocomplete ?? credentialAutocomplete("password", "current-password")}
-                  placeholder={t("hikari::signIn.passwordPlaceholder", "Password")}
-                  disabled={props.loading || props.disabled}
-                  submitOnEnter={attemptSubmit}
-                />
-              )}
-              <HkAuthSubmitButton
-                label={props.submitLabel ?? t("hikari::signIn.submit", "Sign in")}
-                block
-                loading={props.loading}
-                disabled={props.disabled || !username.value.trim() || (props.passwordField && !password.value)}
-                doSubmit={() => Promise.resolve(attemptSubmit())}
-              />
-              </form>
+              {credentialBody()}
             </>
           ),
           footer: () => slots.footer?.(),

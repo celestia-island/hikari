@@ -6,7 +6,6 @@ import { HkAuthCard } from "./HkAuthCard";
 import { HkAuthChannelList, type HkAuthChannelListEntry } from "./HkAuthChannelList";
 import { HkMfaVerifyCard, type HkMfaFactor } from "./HkMfaVerifyCard";
 import { HkSignInCard } from "./HkSignInCard";
-import HkStepFlow from "./HkStepFlow";
 import HkTabs from "./HkTabs";
 import HkTransitionContainer from "./HkTransitionContainer";
 
@@ -82,10 +81,12 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * This is the business-level composition above the auth kit (extracted
  * from shittim-chest's LoginView, 2026-11 user direction: the login
  * screen had drifted into per-app reimplementations). It owns EVERYTHING
- * visual — the pill segment group (hidden when a deployment offers a
- * single channel; a lone dead segment reads as a broken switch), the
- * height-morphing channel swap, the direction-aware account→verify
- * slide, the methods rows, the MFA card — while staying a CONTROLLED
+ * visual — ONE stable shell card (logo, header, the pill segment group
+ * hidden when a deployment offers a single channel; a lone dead segment
+ * reads as a broken switch) whose body below the tabs crossfades and
+ * height-morphs per channel through `HkTransitionContainer`, with the
+ * account→verify step as the same fade+height morph between the shell
+ * and the MFA card — while staying a CONTROLLED
  * component: no endpoint, no URL building, no factor ladder policy.
  * Each host (the chest migration plus the erp and arona login surfaces,
  * landing as their own PRs) keeps its own auth client and drives the
@@ -144,8 +145,18 @@ export const HkLoginFlow = defineComponent({
     step: { type: String as PropType<"account" | "verify">, default: "account" },
     /** In-flight state of the credentials submit. */
     loading: { type: Boolean, default: false },
-    /** Logo image URL forwarded to the active card's header. */
+    /** Logo image URL forwarded to the shell card's header. */
     logoSrc: { type: String, default: undefined },
+    /** The SHELL card's header title — one stable header across every
+     *  channel (2026-11-24 user direction: a channel switch must morph
+     *  only the content below the tabs, never dissolve the card). Falls
+     *  back to the ACTIVE channel's `title` (then the conventional
+     *  sign-in copy) for hosts that still brand per channel; distinct
+     *  per-channel fallbacks then swap as instant text, so multi-channel
+     *  hosts should pass this once. */
+    title: { type: String, default: undefined },
+    /** The SHELL card's subtitle — same stability contract as `title`. */
+    subtitle: { type: String, default: undefined },
     /** Seed for the credentials card's username field — survives the
      *  verify round-trip (see HkSignInCard.initialUsername). */
     initialUsername: { type: String, default: "" },
@@ -229,14 +240,12 @@ export const HkLoginFlow = defineComponent({
         />
       ) : null;
 
-    function renderCredentialsCard(channel: HkLoginCredentialsChannel) {
+    function renderCredentialsBody(channel: HkLoginCredentialsChannel) {
       const methods = channel.methods ?? [];
       return (
         <HkSignInCard
           key={channel.key}
-          title={channel.title ?? t("hikari::loginFlow.signInTitle", "Sign in")}
-          subtitle={channel.subtitle ?? t("hikari::loginFlow.signInSubtitle", "Welcome back")}
-          logoSrc={props.logoSrc}
+          bare
           loading={props.loading}
           passwordField={channel.passwordField ?? false}
           usernameType={channel.usernameType ?? "text"}
@@ -249,9 +258,6 @@ export const HkLoginFlow = defineComponent({
           }
         >
           {{
-            // top is the channel-tabs slot: rendered OUTSIDE the card's
-            // <form> so segment clicks never trigger a submit.
-            top: () => tabsEl(),
             usernameIcon: () => slots.usernameIcon?.({ channel: channel.key }),
             ...(methods.length > 0
               ? {
@@ -264,49 +270,32 @@ export const HkLoginFlow = defineComponent({
                   ),
                 }
               : {}),
-            footer: () => slots.footer?.({ channel: channel.key }),
+            // The footer wrapper must not exist when no footer was
+            // passed (HkAuthCard's dead-space rule; the bare fragment
+            // renders the wrapper itself whenever the slot is present).
+            ...(slots.footer
+              ? { footer: () => slots.footer?.({ channel: channel.key }) }
+              : {}),
           }}
         </HkSignInCard>
       );
     }
 
-    function renderSsoCard(channel: HkLoginSsoChannel) {
+    function renderSsoBody(channel: HkLoginSsoChannel) {
       return (
-        <HkAuthCard
-          key={channel.key}
-          title={channel.title ?? channelLabel(channel)}
-          subtitle={channel.subtitle}
-        >
-          {{
-            logo: () =>
-              props.logoSrc ? (
-                <img
-                  class="hk-logo-img"
-                  src={props.logoSrc}
-                  alt=""
-                  style={{ width: "3.5rem", height: "3.5rem" }}
-                />
-              ) : null,
-            default: () => (
-              <>
-                {tabsEl()}
-                <div class="hk-login-flow-sso">
-                  <HkAuthChannelList
-                    methods={[
-                      {
-                        key: channel.key,
-                        label: channel.buttonLabel ?? channelLabel(channel),
-                        icon: channel.icon,
-                        disabled: channel.disabled,
-                      },
-                    ]}
-                    onSelect={() => emit("sso-click", channel.key)}
-                  />
-                </div>
-              </>
-            ),
-          }}
-        </HkAuthCard>
+        <div key={channel.key} class="hk-login-flow-sso">
+          <HkAuthChannelList
+            methods={[
+              {
+                key: channel.key,
+                label: channel.buttonLabel ?? channelLabel(channel),
+                icon: channel.icon,
+                disabled: channel.disabled,
+              },
+            ]}
+            onSelect={() => emit("sso-click", channel.key)}
+          />
+        </div>
       );
     }
 
@@ -314,54 +303,86 @@ export const HkLoginFlow = defineComponent({
       const channel = currentChannel.value;
       if (!channel) return null;
 
+      // The stable shell header: flow-level copy wins; per-channel
+      // fallbacks keep single-channel hosts working unchanged.
+      const shellTitle = props.title ?? channel.title ?? (channel.mode === "credentials"
+        ? t("hikari::loginFlow.signInTitle", "Sign in")
+        : channelLabel(channel));
+      const shellSubtitle = props.subtitle ?? channel.subtitle ?? (channel.mode === "credentials"
+        ? t("hikari::loginFlow.signInSubtitle", "Welcome back")
+        : "");
+
+      // The fail-safe of the old design, kept: verify only ever renders
+      // for a credentials channel (a redirect flow has no second step).
+      const verifying = props.step === "verify" && channel.mode === "credentials";
+
       return (
         <div class="hk-login-flow">
           {slots.top?.()}
-          {/* The generation key is the CHANNEL only (the chest
-           *  blueprint's shape): a channel switch morphs the whole card
-           *  (cloud form ↔ org form differ in height), while the
-           *  account→verify move rides HkStepFlow's OWN direction-aware
-           *  slide INSIDE one generation. Keying the container on the
-           *  step too would replace the step machine itself on every
-           *  flip — a crossfade remount that loses the directional
-           *  slide and double-mounts the flow. */}
-          <HkTransitionContainer swapKey={channel.key} axis="height">
-            <HkStepFlow
-              steps={[
-                { key: "account", label: "account" },
-                { key: "verify", label: "verify" },
-              ]}
-              modelValue={
-                props.step === "verify" &&
-                channel.mode === "credentials"
-                  ? "verify"
-                  : "account"
-              }
-              hideTimeline
-            >
-              {{
-                account: () =>
-                  channel.mode === "credentials"
-                    ? renderCredentialsCard(channel)
-                    : renderSsoCard(channel),
-                verify: () => (
-                  <HkMfaVerifyCard
-                    ref={mfaRef}
-                    factors={props.verifyFactors}
-                    proven={props.verifyProven}
-                    accountName={props.verifyAccountName}
-                    logoSrc={props.logoSrc}
-                    loading={props.verifyLoading}
-                    resending={props.verifyResending}
-                    passkeyRetryHint={props.passkeyRetryHint}
-                    autofocus
-                    onVerify={(kind: HkMfaFactor, proof: string) => emit("verify", kind, proof)}
-                    onResend={() => emit("verify-resend")}
-                    onBack={() => emit("verify-back")}
-                  />
-                ),
-              }}
-            </HkStepFlow>
+          {/* Two transition tiers (2026-11-24 user direction — "switching
+           * the top segment group only crossfades the content below it
+           * and morphs the height; use the library's existing component,
+           * do not destroy the whole card"):
+           *
+           * - the OUTER container is keyed on the STEP ("account" vs
+           *   "verify"): the account generation is ONE stable shell card
+           *   (logo + header + segment group), the verify generation is
+           *   the MFA card — a step move morphs between the two cards.
+           * - the INNER container is keyed on the CHANNEL and lives in
+           *   the shell's body BELOW the segment group: a channel switch
+           *   crossfades only the credentials form / the sso row list
+           *   and morphs the height — the shell, its header and the tabs
+           *   are NOT inside the swapped region and never dissolve.
+           *
+           * The shell card opts out of its own smooth-height wrapper:
+           * inside this flow the inner container owns the height
+           * choreography, and a second measuring wrapper would chain its
+           * 300ms transition after the container's (a telescoping
+           * double-morph). */}
+          <HkTransitionContainer swapKey={verifying ? "verify" : "account"} axis="height">
+            {verifying ? (
+              <HkMfaVerifyCard
+                key="verify"
+                ref={mfaRef}
+                factors={props.verifyFactors}
+                proven={props.verifyProven}
+                accountName={props.verifyAccountName}
+                logoSrc={props.logoSrc}
+                loading={props.verifyLoading}
+                resending={props.verifyResending}
+                passkeyRetryHint={props.passkeyRetryHint}
+                autofocus
+                onVerify={(kind: HkMfaFactor, proof: string) => emit("verify", kind, proof)}
+                onResend={() => emit("verify-resend")}
+                onBack={() => emit("verify-back")}
+              />
+            ) : (
+              <HkAuthCard key="account" title={shellTitle} subtitle={shellSubtitle} smoothHeight={false}>
+                {{
+                  logo: () =>
+                    props.logoSrc ? (
+                      <img
+                        class="hk-logo-img"
+                        src={props.logoSrc}
+                        alt=""
+                        style={{ width: "3.5rem", height: "3.5rem" }}
+                      />
+                    ) : null,
+                  default: () => (
+                    <>
+                      {/* The segment group rides ABOVE the swapped body —
+                        * stable across channel switches. */}
+                      {tabsEl()}
+                      <HkTransitionContainer swapKey={channel.key} axis="height">
+                        {channel.mode === "credentials"
+                          ? renderCredentialsBody(channel)
+                          : renderSsoBody(channel)}
+                      </HkTransitionContainer>
+                    </>
+                  ),
+                }}
+              </HkAuthCard>
+            )}
           </HkTransitionContainer>
           {slots.below?.()}
         </div>

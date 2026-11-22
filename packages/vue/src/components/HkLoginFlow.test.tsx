@@ -334,7 +334,7 @@ describe("HkLoginFlow — verify step", () => {
     expect(c.querySelector(".hk-tabs")).toBeNull();
   });
 
-  it("slides account → verify → back when the host flips the step prop reactively", async () => {
+  it("morphs account → verify → back when the host flips the step prop reactively", async () => {
     // The host mirrors every real consumer: reactive state read INSIDE
     // the render function, so each change re-evaluates the props. (A
     // one-shot `h()` snapshot VNode never updates — re-mounting such a
@@ -364,21 +364,119 @@ describe("HkLoginFlow — verify step", () => {
 
     step.value = "account";
     for (let i = 0; i < 12; i++) await nextTick();
-    // The account card comes back as a FRESH body: jsdom fires no
-    // transitionend, so the leaving verify body lingers with its OTP
-    // cells — asserting a bare username-input count would pass even if
-    // the flip-back never happened (the leaving account input from the
-    // entry leg also lingers). Pin the body that is NOT on its way
-    // out: the username input inside a body without the leave class.
-    const settledInput = c.querySelector(
-      '.hk-stepflow-body:not(.hk-stepflow-leave-to) input[name="signin-username"]',
+    // The account shell comes back: jsdom fires no transitionend, so
+    // the leaving verify body lingers with its OTP cells — pin the
+    // body that is NOT on its way out (the crossfade item without
+    // leave classes carries the settled stage).
+    const settled = c.querySelectorAll(
+      ".hk-crossfade-item:not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
     );
-    expect(settledInput).not.toBeNull();
-    // And the OTP cells of the returning stage live only in a leaving
-    // body — the settled stage carries none.
+    const settledHtml = Array.from(settled).map((el) => el.outerHTML).join("");
+    expect(settledHtml).toContain('name="signin-username"');
+    expect(settledHtml).not.toContain("hk-otp-cell");
+  });
+});
+
+describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)", () => {
+  // "Switching the top segment group only crossfades the content below
+  // it and morphs the height — use the library's existing component, do
+  // not destroy the whole card." The pins below are ELEMENT-IDENTITY
+  // assertions: if the shell (or the tabs, or the header) remounts on a
+  // channel switch, the captured element nodes go stale and the test
+  // fails — the exact regression the direction forbids.
+
+  function mountTwoChannel(channel: "cloud" | "org") {
+    const active = ref<"cloud" | "org">(channel);
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [cloudChannel, orgChannel],
+          modelValue: active.value,
+          title: "Sign in",
+          subtitle: "Console",
+          "onUpdate:modelValue": (key: string) => {
+            active.value = key as "cloud" | "org";
+          },
+        }),
+    });
+    return { container: mount(h(Host)), active };
+  }
+
+  it("keeps the shell, header and tabs mounted while only the body swaps", async () => {
+    const { container, active } = mountTwoChannel("cloud");
+    const tabsBefore = container.querySelector(".hk-tabs");
+    const titleBefore = container.querySelector(".s-auth-title");
+    const logoSlotBefore = container.querySelector(".s-auth-header");
+    expect(tabsBefore).not.toBeNull();
+    expect(titleBefore?.textContent).toBe("Sign in");
+
+    active.value = "org";
+    for (let i = 0; i < 12; i++) await nextTick();
+
+    // SAME DOM NODES — the shell never dissolved.
+    expect(container.querySelector(".hk-tabs")).toBe(tabsBefore);
+    expect(container.querySelector(".s-auth-title")).toBe(titleBefore);
+    expect(container.querySelector(".s-auth-header")).toBe(logoSlotBefore);
+    // The swapped region carries the org body (the sso row list), and
+    // it lives BELOW the tabs inside the shell card.
+    const shellCard = container.querySelector(".s-auth-card")!;
+    const ssoBlock = container.querySelector(".hk-login-flow-sso");
+    expect(ssoBlock).not.toBeNull();
+    expect(shellCard.contains(ssoBlock!)).toBe(true);
+    // The inner crossfade is keyed on the CHANNEL; the outer tier stayed
+    // on the account generation (the shell item's key never changed).
+    const innerItems = container.querySelectorAll(
+      ".hk-tc .hk-tc .hk-crossfade-item",
+    );
+    expect(innerItems.length).toBeGreaterThan(0);
     expect(
-      c.querySelectorAll('.hk-stepflow-body:not(.hk-stepflow-leave-to) .hk-otp-cell').length,
-    ).toBe(0);
+      Array.from(innerItems).some(
+        (el) => (el as HTMLElement).dataset.crossfadeKey === "org",
+      ),
+    ).toBe(true);
+  });
+
+  it("swaps the credentials body back without losing the typed tab state", async () => {
+    const { container, active } = mountTwoChannel("org");
+    active.value = "cloud";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // The INNER container's settled item is the cloud body (the outer
+    // account item contains the leaving inner org item too — scope the
+    // assertion to the inner tier, the only thing that swapped).
+    const innerSettled = Array.from(
+      container.querySelectorAll(
+        ".hk-tc .hk-tc .hk-crossfade-item:not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+      ),
+    );
+    expect(innerSettled.length).toBe(1);
+    expect((innerSettled[0] as HTMLElement).dataset.crossfadeKey).toBe("cloud");
+    expect(innerSettled[0]!.querySelector('input[name="signin-username"]')).not.toBeNull();
+    expect(innerSettled[0]!.querySelector(".hk-login-flow-sso")).toBeNull();
+  });
+
+  it("flows the per-channel fallback title through the stable shell header", async () => {
+    // Without a flow-level title the ACTIVE channel's title supplies
+    // the header copy (single-channel hosts unchanged); switching then
+    // updates the text in place — the header node itself stays mounted.
+    const active = ref<"cloud" | "org">("cloud");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [
+            cloudChannel,
+            { key: "org", mode: "sso", icon: h("svg"), title: "Organization access" },
+          ],
+          modelValue: active.value,
+          "onUpdate:modelValue": () => {},
+        }),
+    });
+    const container = mount(h(Host));
+    const titleEl = container.querySelector(".s-auth-title")!;
+    expect(titleEl.textContent).toContain("Sign in");
+    active.value = "org";
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(container.querySelector(".s-auth-title")).toBe(titleEl);
+    expect(titleEl.textContent).toContain("Organization access");
   });
 });
 

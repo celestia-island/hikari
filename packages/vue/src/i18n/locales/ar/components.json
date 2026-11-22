@@ -407,5 +407,7 @@
   "hikari::mdEditor.editorAriaLabel": "نص الرسالة",
   "hikari::mdEditor.previewLabel": "معاينة",
   "hikari::mdEditor.markdown": "Markdown",
-  "hikari::mdEditor.plain": "نص عادي"
+  "hikari::mdEditor.plain": "نص عادي",
+  "hikari::masterDetail.close": "إغلاق",
+  "hikari::masterDetail.emptyTitle": "لم يتم تحديد أي شيء"
 }

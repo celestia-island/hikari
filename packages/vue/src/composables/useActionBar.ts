@@ -35,6 +35,11 @@ import { computed, inject, onScopeDispose, provide, ref, type Ref, type VNode } 
  * 节点概览 / 历史记录). Same registration contract, same per-scope
  * lifetime: a view whose filter is a small closed enum renders it there
  * (HkTabs segmented) instead of a filter card inside the page body.
+ * DELIVERY (2026-11-23): the layout's header slot receives the renderer as
+ * its `center` payload field — HkFaceShell reads the bar it sits under
+ * through `useActionBarCenter()` and HkAdminShell relays the same field
+ * beside `actions`, so a page registers once and the host never touches
+ * the composable to render it.
  *
  * Readout-style header zones (a left-wing HUD cluster) are host-side
  * extensions, not part of this contract: this module exposes only the
@@ -149,6 +154,27 @@ export function provideActionBar() {
   };
   provide(KEY, ctx);
   return ctx;
+}
+
+/**
+ * The enclosing bar's CENTRE renderer, for LAYOUTS that hand their header
+ * slot a payload but do not own the bar themselves (HkFaceShell): whoever
+ * provides the bar above the layout — HkAdminShell in the admin face, a
+ * host's own `provideActionBar()` in a bespoke one — is the single source,
+ * and the renderer handed out stays a FUNCTION so the read of
+ * `center.value` happens inside the consumer's own render effect (the
+ * registration therefore repaints the header that renders it).
+ *
+ * `undefined` when nothing provides a bar above: layouts keep the payload
+ * field ABSENT then, instead of handing every face an always-empty
+ * renderer that would make a header mount a centre wrapper for nothing.
+ *
+ * Call in setup — it injects.
+ */
+export function useActionBarCenter(): ActionBarRenderer | undefined {
+  const ctx = inject<ActionBarContext | null>(KEY, null);
+  if (!ctx) return undefined;
+  return () => ctx.center.value?.() ?? [];
 }
 
 export function useActionBar() {

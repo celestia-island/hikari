@@ -1,6 +1,7 @@
 import { computed, defineComponent, provide, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
+import { useActionBarCenter } from "../composables/useActionBar";
 import { useSidebarRail } from "../composables/useSidebarRail";
 import { provideMenuGroupState } from "../composables/useMenuGroupState";
 import HkSidebarRailSwap from "./HkSidebarRailSwap";
@@ -184,6 +185,19 @@ export interface HkFaceShellHeaderSlot {
   onHamburger: () => void;
   /** Opens the mobile nav drawer directly (e.g. the avatar's drawer mode). */
   onOpenDrawer: () => void;
+  /**
+   * The CENTRE header zone (2026-11-23): the enclosing action bar's centre
+   * renderer, so a host renders `HkAdminHeader`'s `center` slot without
+   * reaching for `useActionBar()` itself — the page registered it, the
+   * layout delivers it. `undefined` when nothing provides a bar above this
+   * shell (a face that owns its own chrome keeps the field absent rather
+   * than mounting an always-empty centre wrapper).
+   *
+   * Kept a renderer, never VNodes: the read of the bar's `center.value`
+   * then happens in the CONSUMER's render effect, so a page that registers
+   * (or drops) its centre group repaints the header that renders it.
+   */
+  center?: () => VNode[];
 }
 
 /**
@@ -351,6 +365,15 @@ export const HkFaceShell = defineComponent({
     const { width: viewportWidth } = useBreakpoint();
     const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
     const sidebarOpen = ref(false);
+    // ── the header's CENTRE channel, read from the bar above ─────────
+    // This shell provides NO bar of its own (whoever provides, provides
+    // closest to the pages — see the component doc), so the read is an
+    // inject of the nearest one: HkAdminShell's in the admin face, a
+    // host's own in a bespoke one. `undefined` when there is none, which
+    // keeps the slot field absent instead of always-empty. Resolved once,
+    // at setup: the renderer it returns closes over the bar's ref, so the
+    // registration stays live without re-injecting on every render.
+    const actionBarCenter = useActionBarCenter();
 
     // ── sidebar menu GROUP fold, stable across the rail crossfade ─────
     // The rail swap mounts each density as a FRESH generation, so an
@@ -517,6 +540,11 @@ export const HkFaceShell = defineComponent({
               // Lets a header trigger (e.g. the avatar in "drawer" action
               // mode) open the mobile nav drawer directly.
               onOpenDrawer: openSidebar,
+              // The centre zone's data: the bar provided ABOVE this shell
+              // (HkAdminShell provides one; a bespoke face provides its
+              // own). Absent — not empty — when no bar is above, so the
+              // field never claims a centre group that does not exist.
+              ...(actionBarCenter ? { center: actionBarCenter } : {}),
             })}
           </div>
         )}

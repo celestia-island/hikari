@@ -321,6 +321,82 @@ def test_an_unreached_artifact_is_reported_not_silently_passed(tmp_path: Path) -
     assert verdicts[0].unreached, "an absent artifact must be REPORTED"
 
 
+def _run_cli(repo: Path, *extra: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, str(REPO / "packages" / "wasm" / "component_descriptor.py"),
+         "--repo", str(repo), *extra],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_an_absent_artifact_exits_non_zero(tmp_path: Path) -> None:
+    # The whole point of the digest: "no artifact" must not be indistinguishable
+    # from "artifact matches". Printing UNREACHED to stderr while exiting 0 was
+    # exactly that confusion (MUT:unverified-exit-zero).
+    repo = make_repo(tmp_path / "repo", "qr")
+    result = _run_cli(repo)
+    assert result.returncode == gate.EXIT_UNVERIFIED, result.stdout + result.stderr
+    assert "could not be verified" in result.stderr
+
+
+def test_allow_unverified_opts_out_explicitly(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path / "repo", "qr")
+    result = _run_cli(repo, "--allow-unverified")
+    assert result.returncode == gate.EXIT_OK, result.stdout + result.stderr
+    assert "could not be verified" in result.stderr, "the opt-out must still announce"
+
+
+def test_a_verified_artifact_exits_zero(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path / "repo", "qr", artifacts=tmp_path / "a")
+    result = _run_cli(repo, "--artifacts", str(tmp_path / "a"))
+    assert result.returncode == gate.EXIT_OK, result.stdout + result.stderr
+
+
+# ── both directions of the capability surface (MUT:no-ungranted-import-check) ──
+
+
+def test_an_import_the_descriptor_does_not_grant_is_refused(tmp_path: Path) -> None:
+    # A world that gains an import while the descriptor keeps capabilities = []
+    # used to pass: the subset check only asked "is every declared capability
+    # imported", never "is every import granted".
+    repo = make_repo(
+        tmp_path / "repo",
+        "qr",
+        wit=IMPORTING_WIT.format(c="qr"),
+        manifest=descriptor("qr", capabilities=()),
+        artifacts=tmp_path / "a",
+    )
+    verdicts = [gate.check_component(repo, w, tmp_path / "a") for w in gate.discover(repo)]
+    assert not verdicts[0].ok, "an ungranted import must be refused"
+    joined = " ".join(verdicts[0].findings)
+    assert "imports 'log' but the descriptor grants no matching capability" in joined, joined
+
+
+def test_a_second_world_with_imports_is_reported(tmp_path: Path) -> None:
+    # A `.wit` may declare several worlds; examining only the first left the
+    # rest unexamined (MUT:first-world-only).
+    wit = PURE_WIT.format(c="qr") + """
+world encode {
+    import wasi:cli/environment@0.2.12;
+    export run: func() -> u32;
+}
+"""
+    repo = make_repo(tmp_path / "repo", "qr", wit=wit, artifacts=tmp_path / "a")
+    worlds = gate.discover(repo)
+    assert [name for name, _ in worlds[0].extra_worlds] == ["encode"]
+    verdicts = [gate.check_component(repo, w, tmp_path / "a") for w in worlds]
+    assert not verdicts[0].ok, "a second world's import surface must be reported"
+    assert "world 'encode'" in " ".join(verdicts[0].findings)
+
+
+def test_a_second_world_without_imports_is_harmless(tmp_path: Path) -> None:
+    wit = PURE_WIT.format(c="qr") + "\nworld encode {\n    export run: func() -> u32;\n}\n"
+    repo = make_repo(tmp_path / "repo", "qr", wit=wit, artifacts=tmp_path / "a")
+    verdicts = [gate.check_component(repo, w, tmp_path / "a") for w in gate.discover(repo)]
+    assert verdicts[0].ok, verdicts[0].findings
+
+
 # ── the real corpus ──────────────────────────────────────────────────────
 
 

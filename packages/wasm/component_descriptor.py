@@ -26,20 +26,26 @@ in its message so the fix is mechanical.
 * ``requires-contract`` is derived: WIT ``package celestia:hikari-<c>@X.Y.Z``
   plus the world declared in the same file gives ``celestia:hikari-<c>/<world>@X.Y``
   -- the two-part version is akivili's ``ContractRef`` form, the same
-  ``major.minor`` projection ``addressing`` documents.
-* ``capabilities`` is checked against the WIT world's **import** surface. All
-  four components are pure computation: their worlds have no ``import`` at all,
-  so the expected set is empty and any declared capability is a widening. The
-  parser behaves the other way round on purpose -- it *records* imports, so the
-  day a world gains one the gate keeps working instead of silently demanding
-  "empty forever".
-* The digest is checked against a real artifact when one is reachable, and
-  reported as *unreached* when it is not. An unreached artifact is not a pass:
-  the gate prints it loudly. The repository does not carry the ``.wasm`` bytes
-  (``target/`` is ignored; the Vue package ships jco-transpiled JS), so the
-  digest is verified in the lane that built the artifact:
-  ``cargo build --target wasm32-wasip2`` then this script with
-  ``--artifacts <dir>``.
+  ``major.minor`` projection ``addressing`` documents. **This gate compares
+  strings; it does not claim the registry acts on them.** akivili validates a
+  ``ContractRef``'s shape and stores it, but currently reads
+  ``requires_contract`` nowhere outside its own tests -- so a wrong value is a
+  contract defect a consumer would hit, not something the registry rejects.
+* ``capabilities`` is checked in **both** directions against the WIT world's
+  **import** surface: declaring more than the WIT imports is a widened grant,
+  and leaving a WIT import ungranted is the same defect from the other side.
+  All four components are pure computation today (their worlds have no
+  ``import`` at all), and the two-way check is what keeps that true the day a
+  world gains one -- a one-way subset check would pass an ungranted import
+  silently. A file declaring a second world is reported rather than ignored.
+* The digest is checked against a real artifact when one is reachable. When it
+  is not, the gate **exits non-zero** (``EXIT_UNVERIFIED``) instead of reporting
+  success: an absent artifact must never look like a matching one. The
+  repository does not carry the ``.wasm`` bytes (``target/`` is ignored; the Vue
+  package ships jco-transpiled JS), so the digest is verified in the lane that
+  built the artifact: ``cargo build --target wasm32-wasip2`` then this script
+  with ``--artifacts <dir>``. ``--allow-unverified`` is the explicit opt-in for
+  a checkout that genuinely has no artifacts.
 
 *Scope:* components are discovered from ``packages/wasm/*/wit/*.wit``, the same
 way the artifact-drift gate does it -- a new component joins by existing.
@@ -58,6 +64,9 @@ from pathlib import Path
 EXIT_OK = 0
 EXIT_FINDINGS = 1
 EXIT_USAGE = 2
+#: A descriptor matched its WIT but its digest could not be proven: distinct
+#: from both "clean" and "wrong", so a caller cannot mistake absence for a pass.
+EXIT_UNVERIFIED = 3
 
 WIT_GLOB = "packages/wasm/*/wit/*.wit"
 DESCRIPTOR_NAME = "component.toml"
@@ -78,9 +87,27 @@ _PACKAGE = re.compile(
 #: second segment names. WIT allows a world to be declared with the same
 #: braces-on-file-end shape as an interface, so the body is scanned to its match.
 _WORLD = re.compile(r"^world\s+(?P<name>[a-z][a-z0-9-]*)\s*\{", re.MULTILINE)
-#: ``import log: func(...)`` / ``import wasi:cli/exit@0.2.12;`` -- both the
-#: inline-function form and the named-interface form count as an import surface.
-_IMPORT = re.compile(r"^\s*import\s+(?P<what>[A-Za-z0-9][A-Za-z0-9._:\-/@]*)\s*[:;]", re.MULTILINE)
+#: The WIT forms an import can take inside a world body:
+#:
+#: * ``import log: func(level: string);`` -- an inline function.
+#: * ``import wasi:cli/environment@0.2.12;`` -- a named interface.
+#: * ``import foo: interface { … }`` -- an inline interface, whose body ends in
+#:   a brace rather than `:` or `;`.
+#: * ``import wasi:cli/environment@0.2.12 with { … }`` -- a named interface
+#:   with an `include`-style record merge.
+#:
+#: The first two are what this corpus uses today; all four are matched so the
+#: "records imports" claim stays true when a world starts using the others.
+_IMPORT = re.compile(
+    r"^\s*import\s+(?P<what>[A-Za-z0-9][A-Za-z0-9._:\-/@]*)"
+    r"(?:\s*:\s*(?:func|interface|static|resource)\b|\s*;|\s+with\s*\{)",
+    re.MULTILINE,
+)
+
+
+def _imports_in(body: str) -> list[str]:
+    """The import surface of one world body, in declaration order."""
+    return [m.group("what") for m in _IMPORT.finditer(body)]
 
 _BLOCK_COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
 _LINE_COMMENT = re.compile(r"//[^\n]*")
@@ -97,6 +124,11 @@ class World:
     version: str
     world: str | None = None
     imports: list[str] = field(default_factory=list)
+    #: Every world the file declares, `(name, imports)`. The first one is also
+    #: `world`/`imports` above; the rest exist so a SECOND world cannot hide.
+    #: A `.wit` may declare several, and only one of them is the world a
+    #: descriptor pins -- scanning just the first left the others unexamined.
+    extra_worlds: list[tuple[str, list[str]]] = field(default_factory=list)
 
     @property
     def expected_contract(self) -> str | None:
@@ -153,19 +185,23 @@ def parse_wit(path: Path, component: str) -> World:
             "ContractRef needs `@<major>.<minor>` and an unversioned WIT has none"
         )
 
-    imports: list[str] = []
-    world_name: str | None = None
-    world_match = _WORLD.search(text)
-    if world_match is not None:
-        world_name = world_match.group("name")
+    # EVERY world in the file, in declaration order. Pinning only the first
+    # would leave a second world -- which may be the one actually built, and
+    # which may import host surface -- permanently unexamined.
+    worlds: list[tuple[str, list[str]]] = []
+    for world_match in _WORLD.finditer(text):
         body = _world_body(text, world_match.end() - 1)
-        imports = [m.group("what") for m in _IMPORT.finditer(body)]
+        worlds.append((world_match.group("name"), _imports_in(body)))
+
+    world_name = worlds[0][0] if worlds else None
+    imports = worlds[0][1] if worlds else []
     return World(
         component=component,
         package_id=package_id,
         version=version,
         world=world_name,
         imports=imports,
+        extra_worlds=worlds[1:],
     )
 
 
@@ -255,10 +291,19 @@ def check_component(
             if expected not in contracts:
                 verdict.findings.append(
                     f"{world.component}: requires-contract does not include {expected!r} "
-                    f"-> the registry would not link this descriptor to its world"
+                    f"-> a consumer pinning that world would match nothing this "
+                    f"descriptor declares"
                 )
 
-    # ── capabilities must not exceed the WIT import surface ──────────────
+    # ── capabilities must EXACTLY cover the WIT import surface ───────────
+    # Two directions, and the second is the one that matters as the contract
+    # evolves. Declaring more than the WIT imports is a widened grant; leaving
+    # a WIT import UNGRANTED is the same defect seen from the other side --
+    # the component reaches host surface no declared capability authorises.
+    # A subset check alone (`declared <= imports`) passes a world that gains an
+    # import while the descriptor still grants nothing, which is precisely the
+    # "pure computation today, not necessarily tomorrow" shape this gate exists
+    # to survive.
     declared_caps = descriptor.get("capabilities") or []
     if not isinstance(declared_caps, list):
         verdict.findings.append(
@@ -266,18 +311,36 @@ def check_component(
             f"{type(declared_caps).__name__}"
         )
     else:
-        # Pure-computation components import nothing; the expected grant is the
-        # empty set. A world that gains an import keeps this gate honest: the
-        # descriptor may then declare it, and anything else is still a widening.
-        allowed = set(world.imports)
+        imported = sorted(set(world.imports))
+        declared_set = set(declared_caps)
         for capability in declared_caps:
-            if capability not in allowed:
+            if capability not in set(imported):
                 verdict.findings.append(
                     f"{world.component}: capability {capability!r} is not in the WIT "
                     f"world '{world.world}' import surface "
-                    f"({sorted(allowed) if allowed else 'no imports'}) -- declared "
+                    f"({imported if imported else 'no imports'}) -- declared "
                     f"wider than the contract grants"
                 )
+        for missing in imported:
+            if missing not in declared_set:
+                verdict.findings.append(
+                    f"{world.component}: the WIT world '{world.world}' imports "
+                    f"{missing!r} but the descriptor grants no matching capability "
+                    f"-- ungranted host surface (declared {sorted(declared_set) or 'none'})"
+                )
+
+    # ── a second world must not hide an import surface ───────────────────
+    # Only the first world is the one a descriptor pins, but a `.wit` may hold
+    # several and any of them can carry imports. Report them so a world that
+    # is not the pinned one cannot quietly widen the component's host surface.
+    for other_name, other_imports in world.extra_worlds:
+        if other_imports:
+            verdict.findings.append(
+                f"{world.component}: world '{other_name}' (declared after the pinned "
+                f"'{world.world}') imports {sorted(set(other_imports))} -- this file "
+                f"declares more than one world, so the descriptor's pinned world is "
+                f"ambiguous and the extra import surface is unaccounted for"
+            )
 
     # ── the payload digest must be the artifact's real digest ────────────
     resources = descriptor.get("resources") or []
@@ -343,6 +406,12 @@ def main(argv: list[str] | None = None) -> int:
         f"own path, i.e. {DEFAULT_ARTIFACT_DIR}/)",
     )
     parser.add_argument("--quiet", action="store_true", help="only print failures")
+    parser.add_argument(
+        "--allow-unverified",
+        action="store_true",
+        help=f"exit {EXIT_OK} (instead of {EXIT_UNVERIFIED}) when artifacts are absent "
+        f"and a digest cannot be proven -- announce, never assume",
+    )
     args = parser.parse_args(argv)
 
     repo = Path(args.repo).resolve()
@@ -383,14 +452,23 @@ def main(argv: list[str] | None = None) -> int:
             file=sys.stderr,
         )
         return EXIT_FINDINGS
+    # An unverified digest is NOT a pass. Exiting 0 here made "the artifact is
+    # absent" indistinguishable from "the artifact matches", which is the exact
+    # silent-green shape the gate exists to prevent: the only caller that can
+    # see the difference is a human reading stderr. `--allow-unverified` is the
+    # explicit opt-in for a lane that genuinely has no artifacts (a docs-only
+    # checkout), and it announces itself.
     unreached_count = sum(len(v.unreached) for v in verdicts)
     if unreached_count:
         print(
-            f"component-descriptor: OK {len(verdicts)} descriptor(s); "
-            f"{unreached_count} digest(s) unverified (artifacts not present)",
+            f"component-descriptor: {len(verdicts)} descriptor(s) matched their WIT, "
+            f"but {unreached_count} digest(s) could not be verified (artifacts absent). "
+            f"Build them and pass --artifacts <dir>; use --allow-unverified to accept "
+            f"this explicitly",
             file=sys.stderr,
         )
-    elif not args.quiet:
+        return EXIT_OK if args.allow_unverified else EXIT_UNVERIFIED
+    if not args.quiet:
         print(f"component-descriptor: OK {len(verdicts)} descriptor(s), digests verified")
     return EXIT_OK
 

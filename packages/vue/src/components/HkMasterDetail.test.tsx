@@ -575,8 +575,11 @@ describe("HkMasterDetail — stylesheet contract", () => {
     expect(drawer).toContain("animation: hk-master-detail-drawer-in");
     expect(css).toContain("transform: translateX(100%)");
     // The rounded side is the one it slides against: the physical-right
-    // edge square, the left corners rounded. Both halves are pinned — a
-    // flip of either one alone must red this case.
+    // edge square, the two left corners rounded, in that 4-value order.
+    // Pinned as the whole shorthand: a swapped corner pairing, a dropped
+    // declaration or a changed order reds it [MUT:drawer-radius-flipped];
+    // a partial edit of one corner through another property is outside
+    // this pin's reach.
     expect(drawer).toContain(
       "border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px)",
     );

@@ -41,6 +41,9 @@ describe("HkMasterDetail on a server", () => {
 
     expect(html).toContain('class="hk-master-detail"');
     // No viewport to measure ⇒ the wide layout, never the drawer form.
+    // Dropping the `hasViewport` guard turns this assertion red — the
+    // server fallback (1024) sits below the default `splitAt` (1100)
+    // [MUT:hasviewport-guard-dropped].
     expect(html).toContain('data-split="two"');
     expect(html).not.toContain("hk-master-detail-drawer");
     expect(html).not.toContain("hk-master-detail-scrim");

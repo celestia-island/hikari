@@ -529,6 +529,25 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(methods).toContain("padding-bottom: var(--space-8, 0.5rem)");
   });
 
+  it("renders no footer band when the host passed no footer slot (flow-level dead-space guard)", () => {
+    // The flow's own footer-slot existence guard (mirroring the card's
+    // methods/footer rules): an unconditional lambda would make the
+    // bare fragment render an empty padded .s-auth-footer band under
+    // every channel body.
+    // MUT:r1487-flow-footer-dead-space (forwarding the footer lambda
+    // unconditionally renders the empty band here).
+    const c = mount(h(HkLoginFlow, {
+      channels: [cloudChannel],
+      modelValue: "cloud",
+    }));
+    expect(c.querySelector(".s-auth-footer")).toBeNull();
+    // The default username icon lane survives the bare fragment (the
+    // fallback <User> mark rides the field unless a channel overrides).
+    // MUT:r1487-icon-fallback-drop (dropping the else branch leaves
+    // the field icon-less).
+    expect(c.querySelector(".s-auth-card-field-icon")).not.toBeNull();
+  });
+
   it("flows the per-channel fallback title through the stable shell header", async () => {
     // Without a flow-level title the ACTIVE channel's title supplies
     // the header copy (single-channel hosts unchanged); switching then

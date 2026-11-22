@@ -1,6 +1,7 @@
-import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { compile } from "sass";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick } from "vue";
@@ -30,6 +31,22 @@ import { asIndexable } from "../utils/typing";
  * - the scss contract (sticky gated on the two-pane mode, the head band,
  *   the fixed drawer + veil) — a class-name-only test cannot see the layout
  *   rules that make the pane usable.
+ *
+ * Each behaviour claim above is anchored to the mutation that proved it (the
+ * PR body carries the full table with the red counts):
+ * - the split is width-driven — forcing `narrow` false reds the whole
+ *   single-column / drawer / resize group [MUT:split-always-wide];
+ * - Escape answers the drawer face only — ungating that watcher reds
+ *   "keeps Escape away from the two-pane layout" [MUT:escape-ungated];
+ * - the close affordance keys off the BOUND listener — rendering it
+ *   unconditionally reds the "only when a close listener is bound" case
+ *   [MUT:close-always];
+ * - a closed pane shows the empty state — dropping that branch reds both
+ *   boxed-empty-state tests [MUT:empty-state-dropped];
+ * - the barrel re-export is load-bearing — deleting the line reds the
+ *   barrel pin [MUT:barrel-line-deleted];
+ * - the compiled sheet carries the drawer edge — flipping `right: 0` to
+ *   `left: 0` reds the stylesheet contract [MUT:drawer-edge-flipped].
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -57,6 +74,8 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  // Every test also states its own width at the top; this reset keeps the
+  // value from leaking into the next FILE.
   setWidth(1280);
 });
 
@@ -468,11 +487,19 @@ describe("HkMasterDetail — dismissal", () => {
 
 describe("HkMasterDetail — stylesheet contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
-  const css = readFileSync(join(here, "HkMasterDetail.scss"), "utf-8").replace(/\r\n/g, "\n");
+  // COMPILED, not authored: the pins below must see what the consumer's
+  // bundler gets — through `@use "polyfill"`, the nesting, the `@supports`
+  // wrap and sass's own selector normalisation (HkPaneHolder.test.tsx's
+  // sass-compile precedent).
+  const css = compile(join(here, "HkMasterDetail.scss")).css.replace(/\r\n/g, "\n");
 
-  /** One rule body by selector prefix, ignoring nested blocks. */
+  /** One flat rule body by selector — the compiler flattens nesting, so a
+   *  `&::-webkit-scrollbar` child arrives as its own rule. */
   function ruleBody(source: string, selector: string): string {
-    const start = source.indexOf(`${selector} {`);
+    // Anchored to a line start, which keeps the root selector distinct from
+    // the `-detail` family while the file's FIRST rule still resolves.
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const start = source.search(new RegExp(`(?:^|\\n)${escaped} \\{`));
     expect(start, `${selector} present`).toBeGreaterThanOrEqual(0);
     const open = source.indexOf("{", start);
     let depth = 0;
@@ -492,7 +519,7 @@ describe("HkMasterDetail — stylesheet contract", () => {
     expect(root).toContain("gap: var(--space-12");
     expect(root).toContain("grid-template-columns:");
     // The single-column mode overrides the tracks.
-    expect(ruleBody(css, '.hk-master-detail[data-split="single"]')).toContain(
+    expect(ruleBody(css, ".hk-master-detail[data-split=single]")).toContain(
       "grid-template-columns: minmax(0, 1fr)",
     );
   });
@@ -504,28 +531,30 @@ describe("HkMasterDetail — stylesheet contract", () => {
       "border-radius: var(--radius-lg",
       "box-shadow: var(--shadow-elevated)",
       // The rail host: the overlay tracks are absolute children of the
-      // pane, so the pane itself must never scroll.
+      // pane, so the pane itself has to stay a non-scroller.
       "position: relative",
     ]) {
       expect(detail).toContain(declaration);
     }
     // No hardcoded colour: every surface layer reads a channel triplet.
     expect(detail).toContain("rgb(var(--color-surface)");
-    expect(detail).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
 
     // The scroll REGION keeps native mechanics and hides the native bar
-    // (the shared overlay rail is the only chrome that may paint).
+    // (the shared overlay rail is the only chrome that may paint). The
+    // suppression pair is asserted FLAT — that is how it ships.
     const scroll = ruleBody(css, ".hk-master-detail-detail-scroll");
     expect(scroll).toContain("overflow: auto");
     expect(scroll).toContain("scrollbar-width: none");
-    expect(scroll).toContain("&::-webkit-scrollbar");
-    expect(scroll).toContain("display: none");
+    expect(ruleBody(css, ".hk-master-detail-detail-scroll::-webkit-scrollbar")).toContain(
+      "display: none",
+    );
   });
 
   it("applies sticky ONLY in the two-pane mode, and keeps the head band pinned", () => {
     const sticky = ruleBody(
       css,
-      '.hk-master-detail[data-split="two"] .hk-master-detail-detail[data-sticky]',
+      ".hk-master-detail[data-split=two] .hk-master-detail-detail[data-sticky]",
     );
     expect(sticky).toContain("position: sticky");
     expect(sticky).toContain("top: var(--hk-master-detail-sticky-top, 0px)");

@@ -61,11 +61,19 @@ export type HkMasterDetailSlots = SlotsType<{
  * or the labelled close button. Escape's precedence follows HkDrawer /
  * HkModal — a nested control that already consumed the key owns it.
  *
+ * The head band (`.hk-master-detail-detail-head`) carries the drawer-form
+ * title, the `actions` slot and the close affordance; it renders only when
+ * it has at least one of those. A wide, closed, action-less pane therefore
+ * shows just the empty state — a band holding nothing would be blank
+ * chrome above a placeholder.
+ *
  * NOT a focus-trapping window: the drawer is a page region laid OVER the
- * roster (fixed position, dialog-sized), not a teleported overlay. Hosts
- * that need capture semantics (focus trap, body scroll lock, back-gesture
- * handling) mount HkDrawer themselves; this component deliberately does
- * not re-implement that surface family.
+ * roster (fixed position, dialog-sized), not a teleported overlay. It
+ * paints in the page-chrome band (`--hk-z-sidebar`), so a host popup or
+ * window teleported to `#hk-overlay-root` (--hk-z-float and up) covers it
+ * by design. Hosts that need capture semantics (focus trap, body scroll
+ * lock, back-gesture handling) mount HkDrawer themselves; this component
+ * deliberately does not re-implement that surface family.
  *
  * Emits `close` when the user dismisses the selection. The close
  * affordance renders only when a listener is bound (`@close` /

@@ -26,6 +26,10 @@ import type { HkFaceShellHeaderSlot } from "../index";
  * spread here hands HkAdminHeader an incomplete namespace while the barrel
  * is still initializing — the header then renders nothing and this file
  * would be testing the mock instead of the wiring.
+ *
+ * The payload is load-bearing: dropping the `center` field from
+ * HkFaceShell's header payload reds all three tests in this file
+ * (the PR body's mutation table records the count) [MUT:centre-spread-dropped].
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -99,7 +103,7 @@ describe("HkAdminShell — the header centre channel", () => {
     expect(c.querySelector(".s-admin-header-actions .page-action")).toBeTruthy();
 
     // The page goes away (a route / view swap): BOTH registrations leave
-    // with it — the per-scope disposal contract setActions always had.
+    // with it — the per-scope disposal contract the composable documents.
     showPage.value = false;
     await nextTick();
     await nextTick();
@@ -108,7 +112,7 @@ describe("HkAdminShell — the header centre channel", () => {
   });
 
   it("hands a renderer that produces nothing while no page registered a group", async () => {
-    // The admin face ALWAYS provides a bar, so the field is always a
+    // The admin face provides a bar of its own, so the field arrives as a
     // renderer here — an empty VNode list until a page registers one.
     // (The ABSENT case belongs to HkFaceShell with no bar above it:
     // pinned in HkFaceShell.test.tsx.)
@@ -131,9 +135,10 @@ describe("HkAdminShell — the header centre channel", () => {
   });
 
   it("keeps a page's centre registration alive across a header repaint", async () => {
-    // The renderer is a FUNCTION, not VNodes (the action-bar contract):
-    // the header may re-render any number of times and must still get a
-    // fresh, live group each time.
+    // The host repaints its header (the title is a live ref read inside the
+    // header slot): the centre group must survive the repaint, because the
+    // payload carries a RENDERER the consumer re-invokes, not VNodes it
+    // would have to reuse.
     setWidth(1024);
     const Page = defineComponent({
       name: "LiveCentrePage",
@@ -155,13 +160,16 @@ describe("HkAdminShell — the header centre channel", () => {
       }),
     );
     await nextTick();
-    const first = c.querySelector(".s-admin-header-center .page-centre");
-    expect(first?.textContent).toBe("mid");
+    expect(c.querySelector(".s-admin-header-center .page-centre")?.textContent).toBe("mid");
+    expect(c.querySelector(".s-admin-header-title")?.textContent).toBe("Page");
 
-    // A host-side header repaint (title change) replaces the vnode tree
-    // without touching the registration.
+    // A host-side header repaint replaces the vnode tree without touching
+    // the registration. The title assertion is what proves the repaint
+    // really happened — without it this test would pass on a tree that
+    // did not re-render at all.
     title.value = "Renamed";
     await nextTick();
+    expect(c.querySelector(".s-admin-header-title")?.textContent).toBe("Renamed");
     expect(c.querySelector(".s-admin-header-center .page-centre")?.textContent).toBe("mid");
   });
 });

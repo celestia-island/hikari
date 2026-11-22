@@ -56,7 +56,7 @@
   // parse time but resolves to unset (IACVT) on engines without it, so
   // the tint must sit behind a feature query (the HkScrollPin lesson)
   // rather than in a cascade that would keep a transparent background.
-  background: rgb(var(--color-surface) / 70%);
+  background: var(--hk-master-detail-bg, rgb(var(--color-surface) / 70%));
   @include backdrop-filter(var(--hk-card-blur, blur(var(--blur-md))));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg, 12px);
@@ -65,7 +65,12 @@
 
 @supports (background: color-mix(in srgb, white 70%, transparent)) {
   .hk-master-detail-detail {
-    background: color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent);
+    // The SAME hook as the base rule: a host that retunes the tint keeps
+    // it on both sides of the feature query instead of silently reverting.
+    background: var(
+      --hk-master-detail-bg,
+      color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent)
+    );
   }
 }
 

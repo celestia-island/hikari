@@ -1,0 +1,16 @@
+schema = 1
+id = "hikari-scene3d"
+version = "0.1.0"
+provider = "celestia-island"
+description = "Fleet scene layout wasm component (celestia:hikari-scene3d world `scene3d`)"
+form = "wasm.component"
+platforms = ["web"]
+capabilities = []
+requires-contract = ["celestia:hikari-scene3d/scene3d@0.1"]
+
+[[resources]]
+kind = "wasm.component"
+
+[resources.payload.File]
+path = "target/wasm32-wasip2/release/hikari_wasm_scene3d.wasm"
+sha256 = "8cd711adebfe969314ab323c99c7fd79ec0a5eb48bc3284193fa8fbbf4749984"

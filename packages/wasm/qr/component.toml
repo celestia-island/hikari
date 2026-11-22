@@ -1,0 +1,16 @@
+schema = 1
+id = "hikari-qr"
+version = "0.1.0"
+provider = "celestia-island"
+description = "QR code encoder wasm component (celestia:hikari-qr world `qr`)"
+form = "wasm.component"
+platforms = ["web"]
+capabilities = []
+requires-contract = ["celestia:hikari-qr/qr@0.1"]
+
+[[resources]]
+kind = "wasm.component"
+
+[resources.payload.File]
+path = "target/wasm32-wasip2/release/hikari_wasm_qr.wasm"
+sha256 = "9c09b816fc372b51674706802ef812340ba094684a823b07f1d5c6e4f4a9b277"

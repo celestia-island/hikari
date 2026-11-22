@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
@@ -334,7 +338,7 @@ describe("HkLoginFlow — verify step", () => {
     expect(c.querySelector(".hk-tabs")).toBeNull();
   });
 
-  it("slides account → verify → back when the host flips the step prop reactively", async () => {
+  it("morphs account → verify → back when the host flips the step prop reactively", async () => {
     // The host mirrors every real consumer: reactive state read INSIDE
     // the render function, so each change re-evaluates the props. (A
     // one-shot `h()` snapshot VNode never updates — re-mounting such a
@@ -364,21 +368,228 @@ describe("HkLoginFlow — verify step", () => {
 
     step.value = "account";
     for (let i = 0; i < 12; i++) await nextTick();
-    // The account card comes back as a FRESH body: jsdom fires no
-    // transitionend, so the leaving verify body lingers with its OTP
-    // cells — asserting a bare username-input count would pass even if
-    // the flip-back never happened (the leaving account input from the
-    // entry leg also lingers). Pin the body that is NOT on its way
-    // out: the username input inside a body without the leave class.
-    const settledInput = c.querySelector(
-      '.hk-stepflow-body:not(.hk-stepflow-leave-to) input[name="signin-username"]',
+    // The account shell comes back. Scope the assertion to the OUTER
+    // tier's DIRECT stage items (`.hk-login-flow > .hk-tc > …`) — the
+    // union of every crossfade item in the subtree is unfalsifiable
+    // (the inner items ride inside the settled account item, so a
+    // stuck-outer mutation can never turn this red; the forward leg's
+    // OTP-presence check carries the teeth for that mutation).
+    // MUT:r1487-outer-key-channel (R7 M1: keying the outer container on
+    // the channel makes `dataset.crossfadeKey` read "account:cloud" here
+    // and this assertion goes red).
+    const outerSettled = Array.from(
+      c.querySelectorAll(
+        ".hk-login-flow > .hk-tc > .hk-tc-stage > .hk-crossfade > .hk-crossfade-item"
+          + ":not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+      ),
     );
-    expect(settledInput).not.toBeNull();
-    // And the OTP cells of the returning stage live only in a leaving
-    // body — the settled stage carries none.
+    expect(outerSettled.length).toBe(1);
+    expect((outerSettled[0] as HTMLElement).dataset.crossfadeKey).toBe("account");
+    expect(outerSettled[0]!.querySelector('input[name="signin-username"]')).not.toBeNull();
+    expect(outerSettled[0]!.querySelector(".hk-otp-cell")).toBeNull();
+  });
+});
+
+describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)", () => {  // "Switching the top segment group only crossfades the content below
+  // it and morphs the height — use the library's existing component, do
+  // not destroy the whole card." The pins below are ELEMENT-IDENTITY
+  // assertions: if the shell (or the tabs, or the header) remounts on a
+  // channel switch, the captured element nodes go stale and the test
+  // fails — the exact regression the direction forbids.
+
+  function mountTwoChannel(channel: "cloud" | "org") {
+    const active = ref<"cloud" | "org">(channel);
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [cloudChannel, orgChannel],
+          modelValue: active.value,
+          title: "Sign in",
+          subtitle: "Console",
+          "onUpdate:modelValue": (key: string) => {
+            active.value = key as "cloud" | "org";
+          },
+        }),
+    });
+    return { container: mount(h(Host)), active };
+  }
+
+  it("keeps the shell, header and tabs mounted while only the body swaps", async () => {
+    const { container, active } = mountTwoChannel("cloud");
+    const tabsBefore = container.querySelector(".hk-tabs");
+    const titleBefore = container.querySelector(".s-auth-title");
+    const logoSlotBefore = container.querySelector(".s-auth-header");
+    expect(tabsBefore).not.toBeNull();
+    expect(titleBefore?.textContent).toBe("Sign in");
+    // Exactly ONE card — the shell. A silently-ignored `bare` mode
+    // (HkSignInCard wrapping its own card inside the shell) shows up
+    // as a second .s-auth-card / .s-auth-form here.
+    // MUT:r1487-bare-ignored (deleting HkSignInCard's bare return
+    // makes this count 2 and the nested selector non-null).
+    expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
+    expect(container.querySelector(".s-auth-card .s-auth-card")).toBeNull();
+    expect(container.querySelectorAll(".s-auth-form")).toHaveLength(1);
+    // The shell opts OUT of HkAuthCard's own smooth-height wrapper: the
+    // inner container owns the height choreography, and a second
+    // measuring wrapper would chain its 300ms transition after the
+    // container's (a telescoping double-morph). smoothHeight={false}
+    // leaves the wrapper unmeasured — no inline height, no observer
+    // (a measured wrapper pins an inline height and tracks the card).
+    // MUT:r1487-shell-double-morph (dropping the prop installs the
+    // observer and writes an inline height — this goes red).
+    const heightWrapper = container.querySelector(
+      ".s-auth-card-height",
+    ) as HTMLElement;
+    expect(heightWrapper).not.toBeNull();
+    expect(heightWrapper.style.height).toBe("");
+
+    active.value = "org";
+    for (let i = 0; i < 12; i++) await nextTick();
+
+    // SAME DOM NODES — the shell never dissolved.
+    expect(container.querySelector(".hk-tabs")).toBe(tabsBefore);
+    expect(container.querySelector(".s-auth-title")).toBe(titleBefore);
+    expect(container.querySelector(".s-auth-header")).toBe(logoSlotBefore);
+    // The tabs sit ABOVE the swapped region — outside the inner
+    // container's own class (a tabs-inside-the-body shape would
+    // dissolve the switch itself; the tabs are necessarily inside the
+    // OUTER tier, so the inner tier's class is the discriminator).
+    // MUT:r1487-tabs-inside-body (moving tabsEl() into the inner
+    // container gives the tabs a .hk-login-flow-body ancestor — this
+    // fails).
+    expect(tabsBefore!.closest(".hk-login-flow-body")).toBeNull();
+    // The swapped region carries the org body (the sso row list), and
+    // it lives BELOW the tabs inside the shell card.
+    const shellCard = container.querySelector(".s-auth-card")!;
+    const ssoBlock = container.querySelector(".hk-login-flow-sso");
+    expect(ssoBlock).not.toBeNull();
+    expect(shellCard.contains(ssoBlock!)).toBe(true);
+    // The inner crossfade is keyed on the CHANNEL; the outer tier stayed
+    // on the account generation (the shell item's key never changed).
+    // MUT:r1487-inner-key-fixed (R7 M6: pinning the inner swapKey to a
+    // constant leaves no item carrying data-crossfade-key="org" and
+    // this assertion goes red).
+    const innerItems = container.querySelectorAll(
+      ".hk-tc .hk-tc .hk-crossfade-item",
+    );
+    expect(innerItems.length).toBeGreaterThan(0);
     expect(
-      c.querySelectorAll('.hk-stepflow-body:not(.hk-stepflow-leave-to) .hk-otp-cell').length,
-    ).toBe(0);
+      Array.from(innerItems).some(
+        (el) => (el as HTMLElement).dataset.crossfadeKey === "org",
+      ),
+    ).toBe(true);
+  });
+
+  it("swaps the credentials body back without losing the typed tab state", async () => {
+    const { container, active } = mountTwoChannel("org");
+    active.value = "cloud";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // The INNER container's settled item is the cloud body (the outer
+    // account item contains the leaving inner org item too — scope the
+    // assertion to the inner tier, the only thing that swapped).
+    const innerSettled = Array.from(
+      container.querySelectorAll(
+        ".hk-tc .hk-tc .hk-crossfade-item:not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+      ),
+    );
+    expect(innerSettled.length).toBe(1);
+    expect((innerSettled[0] as HTMLElement).dataset.crossfadeKey).toBe("cloud");
+    expect(innerSettled[0]!.querySelector('input[name="signin-username"]')).not.toBeNull();
+    expect(innerSettled[0]!.querySelector(".hk-login-flow-sso")).toBeNull();
+  });
+
+  it("blurs a field focused inside the leaving body on a channel switch", async () => {
+    // The anti-strobe cover HkStepFlow's dropFlowFocus used to provide
+    // (chest round-22 field report: a focused field re-anchors the
+    // Android autofill panel on every layout beat). The TAB button
+    // keeps its focus — the blur scope is the swapped body only.
+    const { container, active } = mountTwoChannel("cloud");
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="signin-username"]',
+    )!;
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    active.value = "org";
+    await nextTick();
+    // MUT:r1487-focus-strobe (dropping the blur watch leaves the
+    // dissolved field focused — the autofill strobe regression).
+    expect(document.activeElement).not.toBe(input);
+
+    // The exempt half: an activated TAB TRIGGER keeps focus across the
+    // switch (keyboard a11y — the blur scope must not fold to the whole
+    // flow).
+    // MUT:r1487-blur-scope-fold (widening the scope to .hk-login-flow
+    // blurs the trigger here and this goes red).
+    active.value = "cloud";
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 30));
+    const trigger = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-tabs-trigger",
+    )[0]!;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    active.value = "org";
+    await nextTick();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("extends the :has rhythm collapse to the bare fragment's descendant blocks (styles pin)", () => {
+    // The stable shell's bare fragment renders the methods/footer
+    // blocks as DESCENDANTS of the shell's .s-auth-form — the sibling
+    // `:has(+ …)` rules cannot see them, so the descendant variants
+    // carry the same collapsed bottom padding (without them the form's
+    // full 24px bottom padding stacks onto the footer's top margin).
+    // MUT:r1487-rhythm-descendant (reverting to sibling-only rules
+    // makes this match empty).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
+    const methods = scss.match(/\.s-auth-form:has\(\.s-auth-methods\)\s*,\s*\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
+    expect(methods, "descendant :has collapse rule must exist").toBeTruthy();
+    expect(methods).toContain("padding-bottom: var(--space-8, 0.5rem)");
+  });
+
+  it("renders no footer band when the host passed no footer slot (flow-level dead-space guard)", () => {
+    // The flow's own footer-slot existence guard (mirroring the card's
+    // methods/footer rules): an unconditional lambda would make the
+    // bare fragment render an empty padded .s-auth-footer band under
+    // every channel body.
+    // MUT:r1487-flow-footer-dead-space (forwarding the footer lambda
+    // unconditionally renders the empty band here).
+    const c = mount(h(HkLoginFlow, {
+      channels: [cloudChannel],
+      modelValue: "cloud",
+    }));
+    expect(c.querySelector(".s-auth-footer")).toBeNull();
+    // The default username icon lane survives the bare fragment (the
+    // fallback <User> mark rides the field unless a channel overrides).
+    // MUT:r1487-icon-fallback-drop (dropping the else branch leaves
+    // the field icon-less).
+    expect(c.querySelector(".s-auth-card-field-icon")).not.toBeNull();
+  });
+
+  it("flows the per-channel fallback title through the stable shell header", async () => {
+    // Without a flow-level title the ACTIVE channel's title supplies
+    // the header copy (single-channel hosts unchanged); switching then
+    // updates the text in place — the header node itself stays mounted.
+    const active = ref<"cloud" | "org">("cloud");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [
+            cloudChannel,
+            { key: "org", mode: "sso", icon: h("svg"), title: "Organization access" },
+          ],
+          modelValue: active.value,
+          "onUpdate:modelValue": () => {},
+        }),
+    });
+    const container = mount(h(Host));
+    const titleEl = container.querySelector(".s-auth-title")!;
+    expect(titleEl.textContent).toContain("Sign in");
+    active.value = "org";
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(container.querySelector(".s-auth-title")).toBe(titleEl);
+    expect(titleEl.textContent).toContain("Organization access");
   });
 });
 

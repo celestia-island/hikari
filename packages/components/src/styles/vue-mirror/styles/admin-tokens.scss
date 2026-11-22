@@ -1338,6 +1338,21 @@
   padding-bottom: var(--space-8, 0.5rem);
 }
 
+/* The stable-shell shape (HkLoginFlow's bare sign-in fragment, 2026-11):
+   the methods and footer blocks ride INSIDE the swapped channel body as
+   DESCENDANTS of the shell's form block, so the sibling rules above
+   cannot see that shape — collapse it with the same padding here (a
+   bare-fragment footer otherwise stacks the form's full bottom padding
+   onto the footer's top margin). A card whose blocks ARE direct children
+   already fires the sibling rules above with the same value, so this arm
+   changes nothing for it (HkLoginFlow is the only descendant-shaped
+   consumer today). Non-:has engines keep the full bottom padding in BOTH
+   shapes — the sibling rules degrade the same way (spacing-only). */
+.s-auth-form:has(.s-auth-methods),
+.s-auth-form:has(.s-auth-footer) {
+  padding-bottom: var(--space-8, 0.5rem);
+}
+
 .s-auth-link {
   font-size: var(--text-xs, 0.75rem);
   color: var(--hi-color-text-secondary, #999);

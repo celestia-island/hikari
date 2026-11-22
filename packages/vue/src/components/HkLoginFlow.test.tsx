@@ -154,10 +154,11 @@ describe("HkLoginFlow — credentials channel", () => {
         onMethodSelect: onSelect,
       }),
     );
-    const tile = c.querySelector<HTMLButtonElement>('[data-key="feishu"]');
-    expect(tile).not.toBeNull();
-    expect(c.querySelector(".s-auth-methods-divider")?.textContent).toContain("或");
-    tile!.click();
+    const row = c.querySelector<HTMLButtonElement>('[data-key="feishu"]');
+    expect(row).not.toBeNull();
+    expect(row!.getAttribute("aria-label")).toBe("Feishu");
+    expect(c.querySelector(".hk-auth-channel-divider")?.textContent).toContain("或");
+    row!.click();
     await nextTick();
     expect(onSelect).toHaveBeenCalledWith("cloud", "feishu");
   });
@@ -166,12 +167,12 @@ describe("HkLoginFlow — credentials channel", () => {
     const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
     // An empty methods list must not pad a dead strip under the form.
     expect(c.querySelector(".s-auth-methods")).toBeNull();
-    expect(c.querySelector(".s-auth-methods-divider")).toBeNull();
+    expect(c.querySelector(".hk-auth-channel-list")).toBeNull();
   });
 });
 
 describe("HkLoginFlow — sso channel", () => {
-  it("renders one centered primary tile and emits sso-click", async () => {
+  it("renders the channel's destination row and emits sso-click", async () => {
     const onClick = vi.fn();
     const c = mount(
       h(HkLoginFlow, {
@@ -180,9 +181,13 @@ describe("HkLoginFlow — sso channel", () => {
         onSsoClick: onClick,
       }),
     );
-    const tile = c.querySelector<HTMLButtonElement>(".hk-auth-sso-tile");
-    expect(tile).not.toBeNull();
-    tile!.click();
+    // The 2026-11 list form: the destination renders as a standard
+    // channel row (icon left, name right) — not a square tile.
+    const row = c.querySelector<HTMLButtonElement>(".hk-auth-channel-row");
+    expect(row).not.toBeNull();
+    // No buttonLabel on the fixture → the conventional channel label.
+    expect(row!.getAttribute("aria-label")).toBe("Organization login");
+    row!.click();
     await nextTick();
     expect(onClick).toHaveBeenCalledWith("org");
   });
@@ -198,7 +203,7 @@ describe("HkLoginFlow — sso channel", () => {
     );
     // A redirect flow has no second step by construction; the panel
     // keeps showing the account card instead of a dead MFA card.
-    expect(c.querySelector(".hk-auth-sso-tile")).not.toBeNull();
+    expect(c.querySelector(".hk-auth-channel-row")).not.toBeNull();
   });
 });
 

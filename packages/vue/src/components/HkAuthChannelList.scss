@@ -1,0 +1,83 @@
+// HkAuthChannelList — the standard sign-in destination list (rows, not
+// tiles). One full-width bordered row per channel: mark left, name
+// right; token-driven so dark mode rides the triplets.
+
+.hk-auth-channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-auth-channel-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+  color: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 55%, transparent);
+  font-size: 0.75rem;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 12%, transparent);
+  }
+}
+
+.hk-auth-channel-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8, 0.5rem);
+}
+
+.hk-auth-channel-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12, 0.75rem);
+  width: 100%;
+  padding: 0.625rem var(--space-16, 1rem);
+  border: 1px solid color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 14%, transparent);
+  border-radius: var(--hi-radius-lg, 12px);
+  background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 88%, transparent);
+  color: rgb(var(--color-text, 25 30 40));
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, rgb(var(--color-primary, 122 162 247)) 55%, transparent);
+    background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 100%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgb(var(--color-primary, 122 162 247));
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.hk-auth-channel-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+
+  svg,
+  img {
+    width: 1.25rem;
+    height: 1.25rem;
+    object-fit: contain;
+  }
+}
+
+.hk-auth-channel-name {
+  text-align: left;
+}

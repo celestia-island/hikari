@@ -3,8 +3,7 @@ import { computed, defineComponent, ref, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
 import { asPropType } from "../utils/typing";
 import { HkAuthCard } from "./HkAuthCard";
-import HkAuthMethodList, { type HkAuthMethodListEntry } from "./HkAuthMethodList";
-import { HkAuthSsoButton } from "./HkAuthSsoButton";
+import { HkAuthChannelList, type HkAuthChannelListEntry } from "./HkAuthChannelList";
 import { HkMfaVerifyCard, type HkMfaFactor } from "./HkMfaVerifyCard";
 import { HkSignInCard } from "./HkSignInCard";
 import HkStepFlow from "./HkStepFlow";
@@ -48,7 +47,7 @@ export interface HkLoginCredentialsChannel {
   /** Alternative sign-in tiles under the form (rendered only when
    *  non-empty; an empty list omits the whole methods block instead of
    *  padding a dead strip). */
-  methods?: HkAuthMethodListEntry[];
+  methods?: HkAuthChannelListEntry[];
   /** Divider text above the tiles; consumer-localized on purpose. */
   methodsDivider?: string;
 }
@@ -256,7 +255,7 @@ export const HkLoginFlow = defineComponent({
             ...(methods.length > 0
               ? {
                   methods: () => (
-                    <HkAuthMethodList
+                    <HkAuthChannelList
                       divider={channel.methodsDivider}
                       methods={methods}
                       onSelect={(key: string) => emit("method-select", channel.key, key)}
@@ -291,11 +290,16 @@ export const HkLoginFlow = defineComponent({
               <>
                 {tabsEl()}
                 <div class="hk-login-flow-sso">
-                  <HkAuthSsoButton
-                    label={channel.buttonLabel ?? channelLabel(channel)}
-                    icon={channel.icon}
-                    disabled={channel.disabled}
-                    onClick={() => emit("sso-click", channel.key)}
+                  <HkAuthChannelList
+                    methods={[
+                      {
+                        key: channel.key,
+                        label: channel.buttonLabel ?? channelLabel(channel),
+                        icon: channel.icon,
+                        disabled: channel.disabled,
+                      },
+                    ]}
+                    onSelect={() => emit("sso-click", channel.key)}
                   />
                 </div>
               </>

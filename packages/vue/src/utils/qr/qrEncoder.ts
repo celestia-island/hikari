@@ -10,6 +10,11 @@
 // wrapper is in this module graph, so its exports are callable as soon as the
 // module is evaluated — no readiness dance in the common path.
 import { QR_CAPABILITIES, QR_DECLARATION_PUBLISHED } from "./declare-caps";
+// The GENERATED result type, not a hand-written copy of it: this file is the
+// one path that consumes the component's contract, and re-typing the shape here
+// made the generated type inert — the whole `interfaces/` tree could drift or
+// be deleted with `vue-tsc` and the suite both green (measured).
+import type { QrCode } from "../../wasm/qr/hikari_wasm_qr.js";
 import * as qrWrapper from "../../wasm/qr/hikari_wasm_qr.js";
 import {
   createSurface,
@@ -84,7 +89,7 @@ export function qrMatrix(text: string, opts: QrMatrixOptions = {}): boolean[][] 
     | "m"
     | "q"
     | "h";
-  const result = surface.call<{ size: number; modules: Uint8Array | number[] }>(
+  const result = surface.call<QrCode>(
     "encode",
     text,
     { ecc: level, version: opts.typeNumber ?? 0 },

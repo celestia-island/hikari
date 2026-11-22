@@ -60,12 +60,11 @@ export const HkAuthChannelList = defineComponent({
             <span>{props.divider}</span>
           </div>
         )}
-        <div class="hk-auth-channel-rows" role="list">
+        <div class="hk-auth-channel-rows">
           {props.methods.map((method) => (
             <button
               key={method.key}
               type="button"
-              role="listitem"
               class="hk-auth-channel-row"
               data-key={method.key}
               disabled={method.disabled}

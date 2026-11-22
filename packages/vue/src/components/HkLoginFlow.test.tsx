@@ -139,7 +139,7 @@ describe("HkLoginFlow — credentials channel", () => {
     expect(onSubmit).toHaveBeenCalledWith("cloud", "demiurge", "");
   });
 
-  it("renders alternative method tiles and forwards their selection", async () => {
+  it("renders alternative method rows and forwards their selection", async () => {
     const onSelect = vi.fn();
     const channel: HkLoginChannel = {
       key: "cloud",
@@ -165,9 +165,11 @@ describe("HkLoginFlow — credentials channel", () => {
 
   it("omits the whole methods block when the list is empty", () => {
     const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
-    // An empty methods list must not pad a dead strip under the form.
-    expect(c.querySelector(".s-auth-methods")).toBeNull();
+    // An empty methods list must not pad a dead strip under the form
+    // (the operative pin is the channel list's absence — the retired
+    // tile wrapper's absence is not observable here, R2).
     expect(c.querySelector(".hk-auth-channel-list")).toBeNull();
+    expect(c.querySelector(".hk-auth-channel-divider")).toBeNull();
   });
 });
 

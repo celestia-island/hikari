@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
@@ -383,8 +387,7 @@ describe("HkLoginFlow — verify step", () => {
   });
 });
 
-describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)", () => {
-  // "Switching the top segment group only crossfades the content below
+describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)", () => {  // "Switching the top segment group only crossfades the content below
   // it and morphs the height — use the library's existing component, do
   // not destroy the whole card." The pins below are ELEMENT-IDENTITY
   // assertions: if the shell (or the tabs, or the header) remounts on a
@@ -431,6 +434,14 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(container.querySelector(".hk-tabs")).toBe(tabsBefore);
     expect(container.querySelector(".s-auth-title")).toBe(titleBefore);
     expect(container.querySelector(".s-auth-header")).toBe(logoSlotBefore);
+    // The tabs sit ABOVE the swapped region — outside the inner
+    // container's own class (a tabs-inside-the-body shape would
+    // dissolve the switch itself; the tabs are necessarily inside the
+    // OUTER tier, so the inner tier's class is the discriminator).
+    // MUT:r1487-tabs-inside-body (moving tabsEl() into the inner
+    // container gives the tabs a .hk-login-flow-body ancestor — this
+    // fails).
+    expect(tabsBefore!.closest(".hk-login-flow-body")).toBeNull();
     // The swapped region carries the org body (the sso row list), and
     // it lives BELOW the tabs inside the shell card.
     const shellCard = container.querySelector(".s-auth-card")!;
@@ -484,6 +495,38 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     // MUT:r1487-focus-strobe (dropping the blur watch leaves the
     // dissolved field focused — the autofill strobe regression).
     expect(document.activeElement).not.toBe(input);
+
+    // The exempt half: an activated TAB TRIGGER keeps focus across the
+    // switch (keyboard a11y — the blur scope must not fold to the whole
+    // flow).
+    // MUT:r1487-blur-scope-fold (widening the scope to .hk-login-flow
+    // blurs the trigger here and this goes red).
+    active.value = "cloud";
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 30));
+    const trigger = container.querySelectorAll<HTMLButtonElement>(
+      ".hk-tabs-trigger",
+    )[0]!;
+    trigger.focus();
+    expect(document.activeElement).toBe(trigger);
+    active.value = "org";
+    await nextTick();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("extends the :has rhythm collapse to the bare fragment's descendant blocks (styles pin)", () => {
+    // The stable shell's bare fragment renders the methods/footer
+    // blocks as DESCENDANTS of the shell's .s-auth-form — the sibling
+    // `:has(+ …)` rules cannot see them, so the descendant variants
+    // carry the same collapsed bottom padding (without them the form's
+    // full 24px bottom padding stacks onto the footer's top margin).
+    // MUT:r1487-rhythm-descendant (reverting to sibling-only rules
+    // makes this match empty).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
+    const methods = scss.match(/\.s-auth-form:has\(\.s-auth-methods\)\s*,\s*\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
+    expect(methods, "descendant :has collapse rule must exist").toBeTruthy();
+    expect(methods).toContain("padding-bottom: var(--space-8, 0.5rem)");
   });
 
   it("flows the per-channel fallback title through the stable shell header", async () => {

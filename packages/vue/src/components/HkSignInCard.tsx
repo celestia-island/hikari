@@ -117,11 +117,15 @@ export const HkSignInCard = defineComponent({
     }
 
     /** The credential fragment every mode shares: the `<form>` (username,
-     *  optional password, block submit) plus the methods/footer blocks.
-     *  The wrapper classes match HkAuthCard's layout blocks so the bare
-     *  fragment occupies the same visual lanes inside a host-owned shell
-     *  as it would inside its own card. */
-    const credentialBody = () => (
+     *  optional password, block submit). `withBlocks` additionally
+     *  renders the methods/footer wrapper divs — BARE mode only: there
+     *  no HkAuthCard exists to own those layout blocks, while in shell
+     *  mode HkAuthCard's own slots render them (rendering both would
+     *  duplicate the blocks — R3 caught exactly that in the standalone
+     *  card). The wrapper classes match HkAuthCard's blocks so the bare
+     *  fragment occupies the same visual lanes inside a host-owned
+     *  shell. */
+    const credentialBody = (withBlocks: boolean) => (
       <>
         <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>
           <HkInput
@@ -170,15 +174,19 @@ export const HkSignInCard = defineComponent({
           doSubmit={() => Promise.resolve(attemptSubmit())}
         />
         </form>
-        {slots.methods && <div class="s-auth-methods">{slots.methods()}</div>}
-        {slots.footer && <div class="s-auth-footer">{slots.footer()}</div>}
+        {withBlocks && slots.methods && (
+          <div class="s-auth-methods">{slots.methods()}</div>
+        )}
+        {withBlocks && slots.footer && (
+          <div class="s-auth-footer">{slots.footer()}</div>
+        )}
       </>
     );
 
     // Bare mode: the fragment alone — the host owns the shell (and any
     // transition choreography around this body).
     if (props.bare) {
-      return () => credentialBody();
+      return () => credentialBody(true);
     }
 
     return () => (
@@ -193,7 +201,7 @@ export const HkSignInCard = defineComponent({
           default: () => (
             <>
               {slots.top?.()}
-              {credentialBody()}
+              {credentialBody(false)}
             </>
           ),
           footer: () => slots.footer?.(),

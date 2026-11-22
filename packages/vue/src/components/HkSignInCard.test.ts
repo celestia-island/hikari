@@ -219,4 +219,36 @@ describe("HkSignInCard", () => {
     const btn = c.querySelector(".hk-btn-primary") as HTMLElement;
     expect(btn.getAttribute("disabled")).not.toBeNull(); // password still empty
   });
+
+  it("renders the methods and footer blocks EXACTLY ONCE per card in shell mode", () => {
+    // The bare-mode extraction (2026-11) once rendered the wrapper divs
+    // in BOTH the credential fragment and HkAuthCard's own slots — a
+    // standalone card with slots showed two .s-auth-methods and two
+    // .s-auth-footer blocks (R3 of the extraction PR caught it live).
+    // MUT:r1487-double-blocks (rendering the blocks in shell mode too
+    // makes both counts 2).
+    const c = mount(
+      h(HkSignInCard, { title: "T" }, {
+        methods: () => h("div", { class: "m-row" }, "m"),
+        footer: () => h("div", { class: "f-row" }, "f"),
+      }),
+    );
+    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(1);
+    expect(c.querySelectorAll(".s-auth-footer")).toHaveLength(1);
+    expect(c.querySelectorAll(".m-row")).toHaveLength(1);
+    expect(c.querySelectorAll(".f-row")).toHaveLength(1);
+  });
+
+  it("renders the blocks exactly once in BARE mode too", () => {
+    const c = mount(
+      h(HkSignInCard, { bare: true }, {
+        methods: () => h("div", { class: "m-row" }, "m"),
+        footer: () => h("div", { class: "f-row" }, "f"),
+      }),
+    );
+    // No HkAuthCard exists in bare mode — the fragment owns the blocks.
+    expect(c.querySelectorAll(".s-auth-card")).toHaveLength(0);
+    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(1);
+    expect(c.querySelectorAll(".s-auth-footer")).toHaveLength(1);
+  });
 });

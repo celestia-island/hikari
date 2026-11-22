@@ -1,0 +1,16 @@
+schema = 1
+id = "hikari-highlight"
+version = "0.1.0"
+provider = "celestia-island"
+description = "Syntax highlighter wasm component (celestia:hikari-highlight world `highlight`)"
+form = "wasm.component"
+platforms = ["web"]
+capabilities = []
+requires-contract = ["celestia:hikari-highlight/highlight@0.1"]
+
+[[resources]]
+kind = "wasm.component"
+
+[resources.payload.File]
+path = "target/wasm32-wasip2/release/hikari_wasm_highlight.wasm"
+sha256 = "d04058f242b3126fc46a8357d0d99ccafa494a63e8776087b63c617cf404aadc"

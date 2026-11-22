@@ -1,0 +1,16 @@
+schema = 1
+id = "hikari-mermaid"
+version = "0.1.0"
+provider = "celestia-island"
+description = "Mermaid parser wasm component (celestia:hikari-mermaid world `mermaid`)"
+form = "wasm.component"
+platforms = ["web"]
+capabilities = []
+requires-contract = ["celestia:hikari-mermaid/mermaid@0.1"]
+
+[[resources]]
+kind = "wasm.component"
+
+[resources.payload.File]
+path = "target/wasm32-wasip2/release/hikari_wasm_mermaid.wasm"
+sha256 = "4641dc6d7bc070a46eb16eda51579d17ef8dd54d9e7a8cabbcd9207b2d420729"

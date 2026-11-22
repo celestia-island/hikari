@@ -3,8 +3,7 @@ import { computed, defineComponent, ref, type PropType } from "vue";
 import { useI18n } from "../i18n/context";
 import { asPropType } from "../utils/typing";
 import { HkAuthCard } from "./HkAuthCard";
-import HkAuthMethodList, { type HkAuthMethodListEntry } from "./HkAuthMethodList";
-import { HkAuthSsoButton } from "./HkAuthSsoButton";
+import { HkAuthChannelList, type HkAuthChannelListEntry } from "./HkAuthChannelList";
 import { HkMfaVerifyCard, type HkMfaFactor } from "./HkMfaVerifyCard";
 import { HkSignInCard } from "./HkSignInCard";
 import HkStepFlow from "./HkStepFlow";
@@ -45,28 +44,29 @@ export interface HkLoginCredentialsChannel {
    *  opening card must not ask for it (2026-11 user direction). */
   passwordField?: boolean;
   submitLabel?: string;
-  /** Alternative sign-in tiles under the form (rendered only when
+  /** Alternative sign-in rows under the form (rendered only when
    *  non-empty; an empty list omits the whole methods block instead of
    *  padding a dead strip). */
-  methods?: HkAuthMethodListEntry[];
-  /** Divider text above the tiles; consumer-localized on purpose. */
+  methods?: HkAuthChannelListEntry[];
+  /** Divider text above the rows; consumer-localized on purpose. */
   methodsDivider?: string;
 }
 
 /** A channel whose whole sign-in is one redirect (a.celestia.world's
- * "Celestia" tile jumping to the central login, an org channel that
- * only offers Feishu): the card renders one centered primary tile and
- * `sso-click` sends the host off to build its OAuth URL. */
+ * "Celestia" row jumping to the central login, an org channel that
+ * only offers Feishu): the card renders the standard channel list —
+ * one full-width row naming the destination — and `sso-click` sends
+ * the host off to build its OAuth URL. */
 export interface HkLoginSsoChannel {
   key: string;
   mode: "sso";
   label?: string;
   title?: string;
   subtitle?: string;
-  /** Provider mark for the tile (brand SVG, <img>, …). Loose-typed like
+  /** Provider mark for the row (brand SVG, <img>, …). Loose-typed like
    *  every auth icon: hosts materialize hikari against their own vue. */
   icon: unknown;
-  /** Accessible name + the line under the tile; defaults to the channel
+  /** The row's label (accessible name + visible text); defaults to the
    *  label. */
   buttonLabel?: string;
   disabled?: boolean;
@@ -85,7 +85,7 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * visual — the pill segment group (hidden when a deployment offers a
  * single channel; a lone dead segment reads as a broken switch), the
  * height-morphing channel swap, the direction-aware account→verify
- * slide, the methods tiles, the MFA card — while staying a CONTROLLED
+ * slide, the methods rows, the MFA card — while staying a CONTROLLED
  * component: no endpoint, no URL building, no factor ladder policy.
  * Each host (the chest migration plus the erp and arona login surfaces,
  * landing as their own PRs) keeps its own auth client and drives the
@@ -99,8 +99,8 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  *   channel renders the account card as a fail-safe).
  * - `account-submit(channel, username, password)` — credentials
  *   channel submitted (password is empty while `passwordField` is off).
- * - `method-select(channel, key)` — an alternative tile was picked.
- * - `sso-click(channel)` — the primary sso tile was picked.
+ * - `method-select(channel, key)` — an alternative method row was picked.
+ * - `sso-click(channel)` — the primary sso row was picked.
  * - `verify(kind, proof)` / `verify-resend` / `verify-back` — the MFA
  *   card's events, re-emitted one level up.
  *
@@ -256,7 +256,7 @@ export const HkLoginFlow = defineComponent({
             ...(methods.length > 0
               ? {
                   methods: () => (
-                    <HkAuthMethodList
+                    <HkAuthChannelList
                       divider={channel.methodsDivider}
                       methods={methods}
                       onSelect={(key: string) => emit("method-select", channel.key, key)}
@@ -291,11 +291,16 @@ export const HkLoginFlow = defineComponent({
               <>
                 {tabsEl()}
                 <div class="hk-login-flow-sso">
-                  <HkAuthSsoButton
-                    label={channel.buttonLabel ?? channelLabel(channel)}
-                    icon={channel.icon}
-                    disabled={channel.disabled}
-                    onClick={() => emit("sso-click", channel.key)}
+                  <HkAuthChannelList
+                    methods={[
+                      {
+                        key: channel.key,
+                        label: channel.buttonLabel ?? channelLabel(channel),
+                        icon: channel.icon,
+                        disabled: channel.disabled,
+                      },
+                    ]}
+                    onSelect={() => emit("sso-click", channel.key)}
                   />
                 </div>
               </>

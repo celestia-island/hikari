@@ -13,11 +13,9 @@
   margin-inline: auto;
 }
 
-// The sso card's hero tile block: the HkAuthCard form column centers
-// its children, so this wrapper just adds breathing room under the
-// channel tabs.
+// The sso card's destination list block: full-width rows (the 2026-11
+// standard-list direction), so this wrapper just adds breathing room
+// under the channel tabs.
 .hk-login-flow-sso {
-  display: flex;
-  justify-content: center;
   padding-block: var(--space-24, 1.5rem) var(--space-8, 0.5rem);
 }

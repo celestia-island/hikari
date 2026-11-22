@@ -1092,6 +1092,8 @@ export { type HkLoginChannel as HkLoginChannel } from "./components/HkLoginFlow"
 export { type HkLoginCredentialsChannel as HkLoginCredentialsChannel } from "./components/HkLoginFlow";
 export { type HkLoginSsoChannel as HkLoginSsoChannel } from "./components/HkLoginFlow";
 export { HkAuthSsoButton as HkAuthSsoButton } from "./components/HkAuthSsoButton";
+export { HkAuthChannelList as HkAuthChannelList } from "./components/HkAuthChannelList";
+export { type HkAuthChannelListEntry as HkAuthChannelListEntry } from "./components/HkAuthChannelList";
 export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";
 export { HkAdminTablePage as HkAdminTablePage } from "./components/HkAdminTablePage";
 export { HkPageHeader as HkPageHeader } from "./components/HkPageHeader";

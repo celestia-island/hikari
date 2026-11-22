@@ -204,12 +204,13 @@ export const HkSignInCard = defineComponent({
               {credentialBody(false)}
             </>
           ),
-          footer: () => slots.footer?.(),
-          /* Forward the methods slot ONLY when the consumer passed one: an
-             unconditional lambda would make HkAuthCard see a slot that
-             always exists and render its (padded, top-margined)
-             `.s-auth-methods` wrapper as empty dead space under the form
-             on every methods-less sign-in card. */
+          /* Both block slots forward ONLY when the consumer passed one —
+             an unconditional lambda makes HkAuthCard see an always-present
+             slot and render its (padded, top-margined) wrapper as empty
+             dead space (the methods half pinned 2026-09; the footer half
+             made symmetric 2026-11 after R4 of the extraction PR caught
+             the asymmetry). */
+          ...(slots.footer ? { footer: () => slots.footer?.() } : {}),
           ...(slots.methods ? { methods: () => slots.methods?.() } : {}),
         }}
       </HkAuthCard>

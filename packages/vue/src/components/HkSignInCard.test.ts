@@ -239,6 +239,17 @@ describe("HkSignInCard", () => {
     expect(c.querySelectorAll(".f-row")).toHaveLength(1);
   });
 
+  it("renders no footer wrapper at all when no footer slot was passed (dead-space guard)", () => {
+    // The footer half of the methods dead-space rule, made symmetric
+    // after R4 caught the unconditional forwarding: a methods-less,
+    // footer-less card must leave BOTH wrapper bands absent.
+    // MUT:r1487-footer-dead-space (unconditional footer forwarding
+    // renders an empty .s-auth-footer band here).
+    const c = mount(h(HkSignInCard, { title: "T" }));
+    expect(c.querySelector(".s-auth-footer")).toBeNull();
+    expect(c.querySelector(".s-auth-methods")).toBeNull();
+  });
+
   it("renders the blocks exactly once in BARE mode too", () => {
     const c = mount(
       h(HkSignInCard, { bare: true }, {

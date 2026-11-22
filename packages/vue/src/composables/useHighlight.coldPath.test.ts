@@ -111,12 +111,16 @@ describe("highlight cold path", () => {
 
   it("makes a single build for two concurrent first calls", async () => {
     const { highlight } = await freshComposable();
-    // Two cold calls before the first load resolves must collapse into one
-    // door build. Scope, precisely: the collapse comes from `loadPromise` being
-    // cached inside `ensureLoaded`, so removing `highlight()`'s own
+    // Two cold calls before the first load resolves must collapse into one door
+    // build.
+    //
+    // Scope, precisely (both clauses measured): removing `highlight()`'s own
     // `if (!surface && !loadPromise)` guard does NOT produce a second build
-    // (measured: still 1). Deleting that cached promise is what breaks it, and
-    // that is what this case would catch.
+    // (still 1), and neither does deleting the `loadPromise` cache inside
+    // `ensureLoaded` — the two calls both reach the guard before the first
+    // `await`, so the collapse holds without either. This case therefore pins
+    // the observable property (one build for two concurrent cold calls), not a
+    // particular guard: both guard removals stay green here.
     highlight("fn a() {}", "rust");
     highlight("fn b() {}", "rust");
     await tick(() => highlight("fn a() {}", "rust").includes("hljs"));

@@ -1,11 +1,12 @@
 // wasm syntax highlighting — single source of truth, lazily loaded.
 //
 // The pest-driven Rust wasm component (hikari-wasm-highlight) handles
-// all supported languages. The 2.9MB component is code-split by Vite
-// via dynamic import() — it loads on the first highlight() call, not
-// at bundle initialization. Until loaded, code renders as plain text
-// (same UX as the old hljs lazy loading, but with a single Rust wasm
-// module instead of 85 JS grammar chunks).
+// all supported languages. The artifact is ~3.2 MB (3,306,474 bytes; an
+// earlier "2.9MB" here was stale) and is code-split by Vite via dynamic
+// import() — it loads on the first highlight() call, not at bundle
+// initialization. Until loaded, code renders as plain text (same UX as the old
+// hljs lazy loading, but with a single Rust wasm module instead of 85 JS
+// grammar chunks).
 //
 // Loading goes through the tairitsu host client's ASYNC door
 // (`loadComponent`), not a bare `import()`: the client publishes the

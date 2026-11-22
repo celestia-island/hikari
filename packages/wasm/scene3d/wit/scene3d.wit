@@ -1,4 +1,11 @@
-package hikari:scene3d;
+package celestia:hikari-scene3d@0.1.0;
+
+// Contract version 0.1.0. Compatibility policy: additive changes bump the
+// MINOR component (a new field, a new interface member, a new export); anything
+// that removes or changes the meaning of an existing item bumps MAJOR. The
+// version is part of the package id, so a consumer pins
+// `celestia:hikari-scene3d/<world>@<major>.<minor>` and a major bump is a new
+// package rather than a silent break.
 
 interface types {
     /// Input row for the fleet scene layout.

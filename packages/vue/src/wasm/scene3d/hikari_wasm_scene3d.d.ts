@@ -1,7 +1,7 @@
 // world root:component/root
-export type FleetRow = import('./interfaces/hikari-scene3d-types.js').FleetRow;
-export type FleetSceneSpec = import('./interfaces/hikari-scene3d-types.js').FleetSceneSpec;
-export type * as HikariScene3dTypes from './interfaces/hikari-scene3d-types.js'; // import hikari:scene3d/types
+export type FleetRow = import('./interfaces/celestia-hikari-scene3d-types.js').FleetRow;
+export type FleetSceneSpec = import('./interfaces/celestia-hikari-scene3d-types.js').FleetSceneSpec;
+export type * as CelestiaHikariScene3dTypes010 from './interfaces/celestia-hikari-scene3d-types.js'; // import celestia:hikari-scene3d/types@0.1.0
 export type * as WasiCliEnvironment0212 from './interfaces/wasi-cli-environment.js'; // import wasi:cli/environment@0.2.12
 export type * as WasiCliExit0212 from './interfaces/wasi-cli-exit.js'; // import wasi:cli/exit@0.2.12
 export type * as WasiCliStderr0212 from './interfaces/wasi-cli-stderr.js'; // import wasi:cli/stderr@0.2.12
@@ -13,6 +13,7 @@ export type * as WasiCliTerminalStderr0212 from './interfaces/wasi-cli-terminal-
 export type * as WasiCliTerminalStdin0212 from './interfaces/wasi-cli-terminal-stdin.js'; // import wasi:cli/terminal-stdin@0.2.12
 export type * as WasiCliTerminalStdout0212 from './interfaces/wasi-cli-terminal-stdout.js'; // import wasi:cli/terminal-stdout@0.2.12
 export type * as WasiClocksMonotonicClock0212 from './interfaces/wasi-clocks-monotonic-clock.js'; // import wasi:clocks/monotonic-clock@0.2.12
+export type * as WasiClocksWallClock0212 from './interfaces/wasi-clocks-wall-clock.js'; // import wasi:clocks/wall-clock@0.2.12
 export type * as WasiIoError0212 from './interfaces/wasi-io-error.js'; // import wasi:io/error@0.2.12
 export type * as WasiIoPoll0212 from './interfaces/wasi-io-poll.js'; // import wasi:io/poll@0.2.12
 export type * as WasiIoStreams0212 from './interfaces/wasi-io-streams.js'; // import wasi:io/streams@0.2.12

@@ -1,4 +1,11 @@
-package hikari:highlight;
+package celestia:hikari-highlight@0.1.0;
+
+// Contract version 0.1.0. Compatibility policy: additive changes bump the
+// MINOR component (a new field, a new interface member, a new export); anything
+// that removes or changes the meaning of an existing item bumps MAJOR. The
+// version is part of the package id, so a consumer pins
+// `celestia:hikari-highlight/<world>@<major>.<minor>` and a major bump is a new
+// package rather than a silent break.
 
 interface types {
     /// Highlight result: the HTML string (same format as

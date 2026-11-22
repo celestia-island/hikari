@@ -1333,12 +1333,11 @@
    DESCENDANTS of the shell's form block, so the sibling rules above
    cannot see that shape — collapse it with the same padding here (a
    bare-fragment footer otherwise stacks the form's full bottom padding
-   onto the footer's top margin). The match is shape-tolerant: cards
-   whose blocks are DIRECT children (every HkAuthCard consumer, e.g.
-   HkMfaVerifyCard) already fire the sibling rules above with the same
-   value — this arm is a no-op for them. Non-:has engines keep the full
-   bottom padding in BOTH shapes (the sibling rules degrade the same
-   way — spacing-only, never layout-breaking). */
+   onto the footer's top margin). A card whose blocks ARE direct children
+   already fires the sibling rules above with the same value, so this arm
+   changes nothing for it (HkLoginFlow is the only descendant-shaped
+   consumer today). Non-:has engines keep the full bottom padding in BOTH
+   shapes — the sibling rules degrade the same way (spacing-only). */
 .s-auth-form:has(.s-auth-methods),
 .s-auth-form:has(.s-auth-footer) {
   padding-bottom: var(--space-8, 0.5rem);

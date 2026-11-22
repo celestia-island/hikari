@@ -118,13 +118,13 @@ export const HkSignInCard = defineComponent({
 
     /** The credential fragment every mode shares: the `<form>` (username,
      *  optional password, block submit). `withBlocks` additionally
-     *  renders the methods/footer wrapper divs — BARE mode only: there
-     *  no HkAuthCard exists to own those layout blocks, while in shell
-     *  mode HkAuthCard's own slots render them (rendering both would
-     *  duplicate the blocks — R3 caught exactly that in the standalone
-     *  card). The wrapper classes match HkAuthCard's blocks so the bare
-     *  fragment occupies the same visual lanes inside a host-owned
-     *  shell. */
+     *  renders the methods/footer wrapper divs — BARE mode only: no
+     *  HkAuthCard exists there to own those layout blocks, while in
+     *  shell mode HkAuthCard's own slots render them (rendering both
+     *  would duplicate the blocks — R3 caught exactly that in the
+     *  standalone card). The wrapper classes match HkAuthCard's blocks
+     *  so the bare fragment occupies the same visual lanes inside a
+     *  host-owned shell. */
     const credentialBody = (withBlocks: boolean) => (
       <>
         <form onSubmit={(e: Event) => { e.preventDefault(); attemptSubmit(); }}>

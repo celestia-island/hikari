@@ -426,6 +426,19 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
     expect(container.querySelector(".s-auth-card .s-auth-card")).toBeNull();
     expect(container.querySelectorAll(".s-auth-form")).toHaveLength(1);
+    // The shell opts OUT of HkAuthCard's own smooth-height wrapper: the
+    // inner container owns the height choreography, and a second
+    // measuring wrapper would chain its 300ms transition after the
+    // container's (a telescoping double-morph). smoothHeight={false}
+    // leaves the wrapper unmeasured — no inline height, no observer
+    // (a measured wrapper pins an inline height and tracks the card).
+    // MUT:r1487-shell-double-morph (dropping the prop installs the
+    // observer and writes an inline height — this goes red).
+    const heightWrapper = container.querySelector(
+      ".s-auth-card-height",
+    ) as HTMLElement;
+    expect(heightWrapper).not.toBeNull();
+    expect(heightWrapper.style.height).toBe("");
 
     active.value = "org";
     for (let i = 0; i < 12; i++) await nextTick();

@@ -374,6 +374,9 @@ describe("HkLoginFlow — verify step", () => {
     // (the inner items ride inside the settled account item, so a
     // stuck-outer mutation can never turn this red; the forward leg's
     // OTP-presence check carries the teeth for that mutation).
+    // MUT:r1487-outer-key-channel (R7 M1: keying the outer container on
+    // the channel makes `dataset.crossfadeKey` read "account:cloud" here
+    // and this assertion goes red).
     const outerSettled = Array.from(
       c.querySelectorAll(
         ".hk-login-flow > .hk-tc > .hk-tc-stage > .hk-crossfade > .hk-crossfade-item"
@@ -463,6 +466,9 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(shellCard.contains(ssoBlock!)).toBe(true);
     // The inner crossfade is keyed on the CHANNEL; the outer tier stayed
     // on the account generation (the shell item's key never changed).
+    // MUT:r1487-inner-key-fixed (R7 M6: pinning the inner swapKey to a
+    // constant leaves no item carrying data-crossfade-key="org" and
+    // this assertion goes red).
     const innerItems = container.querySelectorAll(
       ".hk-tc .hk-tc .hk-crossfade-item",
     );

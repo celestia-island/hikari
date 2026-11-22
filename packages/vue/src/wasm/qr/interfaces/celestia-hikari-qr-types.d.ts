@@ -1,4 +1,4 @@
-/** @module Interface hikari:qr/types **/
+/** @module Interface celestia:hikari-qr/types@0.1.0 **/
 /**
  * # Variants
  * 
@@ -20,5 +20,4 @@ export interface QrCode {
   modules: Array<boolean>,
   version: number,
   ecc: EccLevel,
-  mask: number,
 }

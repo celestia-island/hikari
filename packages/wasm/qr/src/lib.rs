@@ -25,8 +25,8 @@ pub struct Qr;
 impl bindings::Guest for Qr {
     fn encode(
         text: String,
-        options: Option<bindings::hikari::qr::types::EncodeOptions>,
-    ) -> Result<bindings::hikari::qr::types::QrCode, String> {
+        options: Option<bindings::celestia::hikari_qr::types::EncodeOptions>,
+    ) -> Result<bindings::celestia::hikari_qr::types::QrCode, String> {
         let (ecc, version) = match &options {
             Some(opts) => (
                 opts.ecc.map(to_qrcode_ecc).unwrap_or(qrcode::EcLevel::M),
@@ -62,33 +62,37 @@ impl bindings::Guest for Qr {
             }
         }
 
-        Ok(bindings::hikari::qr::types::QrCode {
+        Ok(bindings::celestia::hikari_qr::types::QrCode {
             size,
             modules,
             version: version_num,
             ecc: from_qrcode_ecc(ecc),
-            mask: 0, // The crate picks internally; not exposed. Consumed via modules.
+            // No `mask` field: the `qrcode` crate picks the mask internally and
+            // never exposes it, so the contract used to carry a constant 0. It
+            // was removed from `qr-code` at contract 0.1.0 rather than frozen
+            // into the public surface — the modules themselves are the answer
+            // to "what got applied".
         })
     }
 }
 
 #[cfg(target_family = "wasm")]
-fn to_qrcode_ecc(level: bindings::hikari::qr::types::EccLevel) -> qrcode::EcLevel {
+fn to_qrcode_ecc(level: bindings::celestia::hikari_qr::types::EccLevel) -> qrcode::EcLevel {
     match level {
-        bindings::hikari::qr::types::EccLevel::L => qrcode::EcLevel::L,
-        bindings::hikari::qr::types::EccLevel::M => qrcode::EcLevel::M,
-        bindings::hikari::qr::types::EccLevel::Q => qrcode::EcLevel::Q,
-        bindings::hikari::qr::types::EccLevel::H => qrcode::EcLevel::H,
+        bindings::celestia::hikari_qr::types::EccLevel::L => qrcode::EcLevel::L,
+        bindings::celestia::hikari_qr::types::EccLevel::M => qrcode::EcLevel::M,
+        bindings::celestia::hikari_qr::types::EccLevel::Q => qrcode::EcLevel::Q,
+        bindings::celestia::hikari_qr::types::EccLevel::H => qrcode::EcLevel::H,
     }
 }
 
 #[cfg(target_family = "wasm")]
-fn from_qrcode_ecc(level: qrcode::EcLevel) -> bindings::hikari::qr::types::EccLevel {
+fn from_qrcode_ecc(level: qrcode::EcLevel) -> bindings::celestia::hikari_qr::types::EccLevel {
     match level {
-        qrcode::EcLevel::L => bindings::hikari::qr::types::EccLevel::L,
-        qrcode::EcLevel::M => bindings::hikari::qr::types::EccLevel::M,
-        qrcode::EcLevel::Q => bindings::hikari::qr::types::EccLevel::Q,
-        qrcode::EcLevel::H => bindings::hikari::qr::types::EccLevel::H,
+        qrcode::EcLevel::L => bindings::celestia::hikari_qr::types::EccLevel::L,
+        qrcode::EcLevel::M => bindings::celestia::hikari_qr::types::EccLevel::M,
+        qrcode::EcLevel::Q => bindings::celestia::hikari_qr::types::EccLevel::Q,
+        qrcode::EcLevel::H => bindings::celestia::hikari_qr::types::EccLevel::H,
     }
 }
 

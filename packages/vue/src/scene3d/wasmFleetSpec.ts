@@ -22,7 +22,7 @@ import {
 import type { FleetBodySpec, FleetRowLike, FleetSceneSpec } from "./holographicFleetSpec";
 import type { Vec3 } from "../utils/scene3d";
 
-/** The component's `hikari:scene3d/types` shape, as the wrapper returns it. */
+/** The component's `celestia:hikari-scene3d/types` shape, as the wrapper returns it. */
 interface WasmFleetBodySpec {
   id: string;
   label: string;

@@ -1,4 +1,11 @@
-package hikari:qr;
+package celestia:hikari-qr@0.1.0;
+
+// Contract version 0.1.0. Compatibility policy: additive changes bump the
+// MINOR component (a new field, a new interface member, a new export); anything
+// that removes or changes the meaning of an existing item bumps MAJOR. The
+// version is part of the package id, so a consumer pins
+// `celestia:hikari-qr/<world>@<major>.<minor>` and a major bump is a new
+// package rather than a silent break.
 
 interface types {
     /// Error correction level, matching the QR spec.
@@ -27,8 +34,6 @@ interface types {
         version: u8,
         /// The ECC level actually used.
         ecc: ecc-level,
-        /// The mask pattern applied (0..7).
-        mask: u8,
     }
 }
 

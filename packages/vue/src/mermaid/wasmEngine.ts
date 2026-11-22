@@ -25,7 +25,7 @@ import {
 import type { MermaidDoc } from "./types";
 import type { MermaidParserEngine } from "./engine";
 
-/** The component's `hikari:mermaid/types` `parse-result` record. */
+/** The component's `celestia:hikari-mermaid/types` `parse-result` record. */
 export interface MermaidParseResult {
   /** JSON-serialized MermaidDiagram; absent when unrecognized. */
   json?: string;

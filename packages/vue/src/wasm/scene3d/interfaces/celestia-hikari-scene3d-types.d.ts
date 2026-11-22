@@ -1,4 +1,4 @@
-/** @module Interface hikari:scene3d/types **/
+/** @module Interface celestia:hikari-scene3d/types@0.1.0 **/
 export interface FleetRow {
   nodeId: string,
   tier: number,

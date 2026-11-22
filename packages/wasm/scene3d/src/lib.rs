@@ -270,8 +270,8 @@ pub struct Scene3d;
 #[cfg(target_family = "wasm")]
 impl bindings::Guest for Scene3d {
     fn build_fleet_scene(
-        rows: Vec<bindings::hikari::scene3d::types::FleetRow>,
-    ) -> bindings::hikari::scene3d::types::FleetSceneSpec {
+        rows: Vec<bindings::celestia::hikari_scene3d::types::FleetRow>,
+    ) -> bindings::celestia::hikari_scene3d::types::FleetSceneSpec {
         let native_rows: Vec<FleetRow> = rows
             .iter()
             .map(|r| FleetRow {
@@ -285,7 +285,7 @@ impl bindings::Guest for Scene3d {
             })
             .collect();
         let spec = build_fleet_scene_spec(&native_rows);
-        let to_body = |b: &FleetBodySpec| bindings::hikari::scene3d::types::FleetBodySpec {
+        let to_body = |b: &FleetBodySpec| bindings::celestia::hikari_scene3d::types::FleetBodySpec {
             id: b.id.clone(),
             label: b.label.clone(),
             status: b.status.clone(),
@@ -307,7 +307,7 @@ impl bindings::Guest for Scene3d {
             satellites: b.satellites,
             satellite_total: b.satellite_total,
         };
-        bindings::hikari::scene3d::types::FleetSceneSpec {
+        bindings::celestia::hikari_scene3d::types::FleetSceneSpec {
             stars: spec.stars.iter().map(&to_body).collect(),
             planets: spec.planets.iter().map(&to_body).collect(),
             has_registry_core: spec.has_registry_core,

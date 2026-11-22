@@ -40,7 +40,24 @@ def main() -> int:
         if out.exists():
             shutil.rmtree(out)
         out.mkdir(parents=True)
-        subprocess.run(["jco", "transpile", str(wasm), "-o", str(out)], check=True)
+        # `--base64-cutoff`: inline the core wasm into the JS instead of
+        # emitting a sibling `.core.wasm`. The Vue package ships these files
+        # verbatim and its test environments resolve them as modules, not as
+        # fetchable assets — without inlining, every consumer would need a
+        # `.core.wasm` fetch that vitest/jsdom cannot satisfy (measured: the
+        # whole component suite failed with `The URL must be of scheme file`).
+        # 1 GiB inlines every core module this suite emits (the largest is well
+        # under 10 MB). Do NOT "simplify" this to `1 << 40`: jco accepts the
+        # value and silently falls back to external `.core.wasm` fetches for it.
+        # The boundary is unsigned 2^32 — measured: 4294967295 inlines,
+        # 4294967296 emits three core files, both with rc=0 and no warning.
+        # That silent fallback is exactly how the first regeneration broke
+        # every component test.
+        subprocess.run(
+            ["jco", "transpile", str(wasm), "-o", str(out),
+             "--base64-cutoff", "1073741824"],
+            check=True,
+        )
         size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
         print(f"── {comp} → {out} ({size // 1024}KB)")
     print("done")

@@ -274,7 +274,13 @@ export const HkLoginFlow = defineComponent({
           }
         >
           {{
-            usernameIcon: () => slots.usernameIcon?.({ channel: channel.key }),
+            // Forward the icon slot ONLY when the host passed one — an
+            // unconditional lambda would shadow HkSignInCard's own
+            // <User> fallback and leave the field icon-less (the same
+            // dead-slot rule as methods/footer).
+            ...(slots.usernameIcon
+              ? { usernameIcon: () => slots.usernameIcon?.({ channel: channel.key }) }
+              : {}),
             ...(methods.length > 0
               ? {
                   methods: () => (

@@ -396,6 +396,11 @@ export const HkLoginFlow = defineComponent({
                         * stable across channel switches. */}
                       {tabsEl()}
                       <HkTransitionContainer
+                        // The class lands on the container's root Tag
+                        // because HkTransitionContainer does not set
+                        // inheritAttrs:false — an implicit contract the
+                        // blur scope above and its pin depend on: adding
+                        // that flag there silently breaks both.
                         class="hk-login-flow-body"
                         swapKey={channel.key}
                         axis="height"

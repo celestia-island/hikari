@@ -1331,10 +1331,14 @@
 /* The stable-shell shape (HkLoginFlow's bare sign-in fragment, 2026-11):
    the methods and footer blocks ride INSIDE the swapped channel body as
    DESCENDANTS of the shell's form block, so the sibling rules above
-   cannot see them — match the descendant shape with the same collapse
-   so the vertical rhythm holds in both layouts (a bare-fragment footer
-   otherwise stacks the form's full bottom padding onto the footer's top
-   margin and the rows sit visibly closer to the card's bottom edge). */
+   cannot see that shape — collapse it with the same padding here (a
+   bare-fragment footer otherwise stacks the form's full bottom padding
+   onto the footer's top margin). The match is shape-tolerant: cards
+   whose blocks are DIRECT children (every HkAuthCard consumer, e.g.
+   HkMfaVerifyCard) already fire the sibling rules above with the same
+   value — this arm is a no-op for them. Non-:has engines keep the full
+   bottom padding in BOTH shapes (the sibling rules degrade the same
+   way — spacing-only, never layout-breaking). */
 .s-auth-form:has(.s-auth-methods),
 .s-auth-form:has(.s-auth-footer) {
   padding-bottom: var(--space-8, 0.5rem);

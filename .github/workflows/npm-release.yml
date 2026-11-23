@@ -60,6 +60,12 @@ jobs:
       # only automated behavioral gate for it, so a release must never go out
       # with a red suite. Type check runs via prepublishOnly on `npm publish`.
       - name: Run Vitest suite
+        env:
+          # The suite outgrew the runner's default Node heap (~4 GB): two
+          # consecutive release runs died in `Ineffective mark-compacts`
+          # at 6894/6895 green (2026-11-23, v0.55.468). The same suite is
+          # green on the farm, so this is heap, not behaviour.
+          NODE_OPTIONS: --max-old-space-size=6144
         run: |
           cd packages/vue
           pnpm test

@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`；relay 模式下 `channels` 為 `[]`、`defaultChannel` 為 `null` |
 | `hkRelayEntryHref(doc, returnTo?)` | 非 relay 模式回傳 `null`；否則回傳入口 URL，僅在返回位址為同源路徑時才附加 |
-| `hkIsSameOriginPath(raw)` | `/x` 為 `true`；`//host`、`/`、相對或絕對 URL 為 `false` |
+| `hkIsSameOriginPath(raw)` | `/x` 為 `true`；`//host`、`/`、相對或絕對 URL，以及含反斜線、控制字元或改變顯示的格式字元的路徑為 `false`（與 kirino 對導覽目標的規則相同） |
 
 未知方法類型與 `id` 為空的方法會被忽略——介面卡絕不會因為看不懂文件而擲出錯誤。
 

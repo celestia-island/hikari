@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`; в режиме relay `channels` — это `[]`, а `defaultChannel` — `null` |
 | `hkRelayEntryHref(doc, returnTo?)` | `null` вне режима relay; иначе URL точки входа, адрес возврата добавляется только если это путь того же источника |
-| `hkIsSameOriginPath(raw)` | `true` для `/x`; `false` для `//host`, `/`, относительных и абсолютных URL |
+| `hkIsSameOriginPath(raw)` | `true` для `/x`; `false` для `//host`, `/`, относительных и абсолютных URL, а также для любого пути с обратной косой чертой, управляющим символом или форматирующим символом, меняющим отображение (то же правило, что kirino применяет к целям навигации) |
 
 Неизвестные типы методов и методы с пустым `id` игнорируются — адаптер никогда не выбрасывает исключение на документе, который не понимает.
 

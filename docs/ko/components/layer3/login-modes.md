@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`. relay 모드에서는 `channels`가 `[]`, `defaultChannel`이 `null` |
 | `hkRelayEntryHref(doc, returnTo?)` | relay 모드가 아니면 `null`. 그 외에는 진입 URL을 반환하며, 돌아갈 주소가 같은 출처 경로일 때만 덧붙임 |
-| `hkIsSameOriginPath(raw)` | `/x`는 `true`. `//host`, `/`, 상대·절대 URL은 `false` |
+| `hkIsSameOriginPath(raw)` | `/x`는 `true`. `//host`, `/`, 상대·절대 URL, 그리고 백슬래시·제어 문자·표시를 바꾸는 서식 문자가 들어 있는 경로는 `false` (kirino가 탐색 대상에 적용하는 것과 같은 규칙) |
 
 알 수 없는 방법 종류와 `id`가 비어 있는 방법은 무시됩니다. 어댑터는 이해하지 못하는 문서 때문에 예외를 던지지 않습니다.
 

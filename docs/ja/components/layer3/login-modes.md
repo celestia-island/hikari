@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`。relay モードでは `channels` は `[]`、`defaultChannel` は `null` |
 | `hkRelayEntryHref(doc, returnTo?)` | relay モード以外では `null`。それ以外はエントリ URL を返し、戻り先が同一オリジンのパスのときだけ追加する |
-| `hkIsSameOriginPath(raw)` | `/x` は `true`。`//host`、`/`、相対・絶対 URL は `false` |
+| `hkIsSameOriginPath(raw)` | `/x` は `true`。`//host`、`/`、相対・絶対 URL、およびバックスラッシュ・制御文字・表示を組み替える書式文字を含むパスは `false`（kirino がナビゲーション先に適用するのと同じ規則） |
 
 不明なメソッド種別や `id` が空のメソッドは無視されます。アダプターは理解できないドキュメントに対して決して例外を投げません。
 

@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`; `channels` es `[]` y `defaultChannel` es `null` en modo relay |
 | `hkRelayEntryHref(doc, returnTo?)` | `null` fuera del modo relay; en caso contrario, la URL de entrada, añadiendo la dirección de retorno solo si es una ruta del mismo origen |
-| `hkIsSameOriginPath(raw)` | `true` para `/x`; `false` para `//host`, `/`, URL relativas o absolutas |
+| `hkIsSameOriginPath(raw)` | `true` para `/x`; `false` para `//host`, `/`, URL relativas o absolutas, y para toda ruta con barra invertida, carácter de control o carácter de formato que altera la visualización (la misma regla que kirino aplica a los destinos de navegación) |
 
 Los tipos de método desconocidos y los métodos con un `id` vacío se ignoran — el adaptador nunca lanza una excepción ante un documento que no entiende.
 

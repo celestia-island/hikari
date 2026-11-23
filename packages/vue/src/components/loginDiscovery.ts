@@ -134,11 +134,26 @@ export function hkLoginPlanFromDiscovery(
   return { mode: d.mode, channels: [channel], defaultChannel: key };
 }
 
+/** Characters a navigation target must never contain. A backslash is read
+ *  as a slash by browsers, so `/` + backslash + host leaves the origin;
+ *  control characters, the line/paragraph separators and the format
+ *  characters that reshape how a path is displayed or ordered (soft hyphen,
+ *  zero-width marks, bidi controls, BOM) are refused because the value ends
+ *  up in a `Location` header and may be shown to a user. The same rule as
+ *  kirino's `relay::is_unsafe_in_a_location`; keep the two in step. */
+const UNSAFE_IN_A_LOCATION = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\u00ad\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff\\]/;
+
 /** True for a path hikari may forward as a return address: absolute,
- *  same-origin by construction (`/x`), and not a protocol-relative URL
- *  (`//evil.example`) or the bare root. */
+ *  same-origin by construction (`/x`), not a protocol-relative URL
+ *  (`//evil.example`), not the bare root, and free of backslashes, control
+ *  and format characters (see `UNSAFE_IN_A_LOCATION`). */
 export function hkIsSameOriginPath(raw: string): boolean {
-  return raw.startsWith("/") && !raw.startsWith("//") && raw !== "/";
+  return (
+    raw.startsWith("/") &&
+    !raw.startsWith("//") &&
+    raw !== "/" &&
+    !UNSAFE_IN_A_LOCATION.test(raw)
+  );
 }
 
 /**

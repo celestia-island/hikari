@@ -142,6 +142,23 @@ describe("hkIsSameOriginPath", () => {
     expect(hkIsSameOriginPath("https://evil.example")).toBe(false);
     expect(hkIsSameOriginPath("console")).toBe(false);
     expect(hkIsSameOriginPath("")).toBe(false);
+    // MUT:no-backslash (browsers turn `/\host` into `//host`), and no
+    // control or display-reshaping format characters: the value ends up in
+    // a `Location` header. The same rule as kirino's navigation-target check.
+    for (const bad of [
+      "/\\evil.example/x",
+      "/\nevil",
+      "/in\u{007f}box",
+      "/\u{2028}x",
+      "/in\u{200b}box",
+      "/\u{202e}xp",
+      "/in\u{feff}box",
+    ]) {
+      expect(hkIsSameOriginPath(bad)).toBe(false);
+    }
+    // Internationalised paths are untouched by the rule.
+    expect(hkIsSameOriginPath("/收件箱")).toBe(true);
+    expect(hkIsSameOriginPath("/café/x?y=日本語")).toBe(true);
   });
 });
 

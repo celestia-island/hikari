@@ -99,14 +99,15 @@
 //   * the day-cell `aria-label` is not emitted: Vue's date-time picker never
 //     sets one (the DATE picker does, and that mirror keeps it).
 
-use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike};
 use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
+use jiff::civil::Date;
+use jiff::civil::DateTime as CivilDateTime;
 
 use crate::basic::date_picker::{
-    DateLocale, DatePickerNavGlyph, date_locale, date_picker_nav, day_view_month_label,
-    is_disabled_day, locale_month_grid, month_pick_label, parse_iso_date, to_iso_date,
-    year_block_start,
+    DateLocale, DatePickerNavGlyph, date_locale, date_picker_month, date_picker_nav,
+    date_picker_year, day_view_month_label, is_disabled_day, locale_month_grid, month_pick_label,
+    parse_iso_date, to_iso_date, year_block_start,
 };
 use crate::basic::date_tag::{active_language, date_tag_parse_value};
 use crate::platform;
@@ -214,7 +215,7 @@ pub fn dtp_pad2(value: u32) -> String {
 
 /// The model's wire format: `YYYY-MM-DDTHH:mm` (the value a host stores and
 /// passes back through [`DateTimePickerProps::model_value`]).
-pub fn dtp_to_value(value: NaiveDateTime) -> String {
+pub fn dtp_to_value(value: CivilDateTime) -> String {
     format!(
         "{}T{:02}:{:02}",
         to_iso_date(value.date()),
@@ -227,13 +228,13 @@ pub fn dtp_to_value(value: NaiveDateTime) -> String {
 /// [`crate::basic::date_tag::date_tag_parse_value`] accepts (a bare date is
 /// midnight, an epoch-MILLISECONDS string is UTC), so the two date-family
 /// components read the same string shapes.
-pub fn dtp_parse_value(raw: &str) -> Option<NaiveDateTime> {
+pub fn dtp_parse_value(raw: &str) -> Option<CivilDateTime> {
     date_tag_parse_value(raw)
 }
 
 /// The native input's wire format (Vue: `toNativeInputValue`) —
 /// `YYYY-MM-DD`, or `YYYY-MM-DDTHH:mm` when the clock is shown.
-pub fn to_native_input_value(value: NaiveDateTime, with_time: bool) -> String {
+pub fn to_native_input_value(value: CivilDateTime, with_time: bool) -> String {
     let date = to_iso_date(value.date());
     if with_time {
         format!("{date}T{:02}:{:02}", value.hour(), value.minute())
@@ -292,9 +293,9 @@ pub fn parse_native_input_value(value: &str) -> Option<NativeInputParts> {
         }
     };
     Some(NativeInputParts {
-        year: date.year(),
-        month: date.month(),
-        day: date.day(),
+        year: date_picker_year(date),
+        month: date_picker_month(date),
+        day: dtp_field(date.day()),
         hour,
         minute,
     })
@@ -302,18 +303,51 @@ pub fn parse_native_input_value(value: &str) -> Option<NativeInputParts> {
 
 /// The `YYYY-MM-DD` day key Vue's model watcher compares
 /// (`lastDayKey`), and the key `marked_days` holds.
-pub fn day_key(date: NaiveDate) -> String {
+pub fn day_key(date: Date) -> String {
     to_iso_date(date)
 }
 
 /// Vue's `startOfDay` — the calendar date of a date-time.
-pub fn start_of_day(value: NaiveDateTime) -> NaiveDate {
+pub fn start_of_day(value: CivilDateTime) -> Date {
     value.date()
 }
 
+/// Today's wall clock in the SYSTEM time zone — the `today` prop's fallback.
+///
+/// `ZonedDateTime::now()` reads the host's zone explicitly and degrades to UTC
+/// only when the zone cannot be resolved; the old `Local::now()` had
+/// the same native behaviour but reached UTC silently on a target without TZ
+/// data. An unknown zone is not an error here: a picker still needs a today.
+pub fn today_wall_clock() -> CivilDateTime {
+    jiff::ZonedDateTime::now().datetime()
+}
+
+/// `civil` time fields are `i8` (always non-negative in range); the picker's
+/// view state and the native-input reader carry `u32`.
+fn dtp_field(value: i8) -> u32 {
+    u32::from(value.unsigned_abs())
+}
+
+/// `(year, month, day)` from a native `<input>` reading, in the
+/// OUT-OF-RANGE form chrono rejected, so the accepted set is unchanged
+/// (chrono took `1..=9999`, `civil::Date` spans `-9999..=9999`).
+fn native_input_day(year: i32, month: u32, day: u32) -> Option<Date> {
+    if !(1..=9999).contains(&year) {
+        return None;
+    }
+    let year = i16::try_from(year).ok()?;
+    let month = i8::try_from(month).ok()?;
+    let day = i8::try_from(day).ok()?;
+    Date::new(year, month, day).ok()
+}
+
 /// Keep the clock of one value on another day (Vue's `selectDay`).
-pub fn combine_day_time(day: NaiveDate, hour: u32, minute: u32) -> Option<NaiveDateTime> {
-    day.and_hms_opt(hour.min(23), minute.min(59), 0)
+pub fn combine_day_time(day: Date, hour: u32, minute: u32) -> Option<CivilDateTime> {
+    let hour = i8::try_from(hour.min(23)).ok()?;
+    let minute = i8::try_from(minute.min(59)).ok()?;
+    jiff::civil::Time::new(hour, minute, 0, 0)
+        .ok()
+        .map(|clock| day.to_datetime(clock))
 }
 
 /// Vue's `bump("h", delta)`: the hour wraps inside one day.
@@ -420,7 +454,7 @@ pub fn dtp_popout_style(
 
 /// The trigger's display text (Vue's `triggerLabel`): the medium date with
 /// the 24-hour clock, or the plain medium date when the clock is hidden.
-pub fn dtp_trigger_label(value: NaiveDateTime, with_time: bool, locale: &DateLocale) -> String {
+pub fn dtp_trigger_label(value: CivilDateTime, with_time: bool, locale: &DateLocale) -> String {
     if with_time {
         // Vue's `triggerDateTime`: `{month: "short", day: "numeric", hour,
         // minute, hourCycle: "h23"}` — NO year in this form.
@@ -530,8 +564,8 @@ struct DateTimePickerWiring {
     open: bool,
     state: DateTimePickerViewState,
     /// The effective model (the prop, or the `today` fallback).
-    value: NaiveDateTime,
-    today: NaiveDateTime,
+    value: CivilDateTime,
+    today: CivilDateTime,
     min_key: Option<String>,
     max_key: Option<String>,
     marked_days: Vec<String>,
@@ -556,7 +590,7 @@ impl DateTimePickerWiring {
         }
     }
 
-    fn request_value(&self, value: NaiveDateTime) {
+    fn request_value(&self, value: CivilDateTime) {
         if let Some(handler) = self.on_value_change.as_ref() {
             handler.call(Some(dtp_to_value(value)));
         }
@@ -584,11 +618,15 @@ impl DateTimePickerWiring {
 
     /// Vue's `selectDay(d)`: keep the clock, swap the day, never leave popup
     /// mode on a calendar click (Vue keeps the popup open until Confirm).
-    fn select_day(&self, day: NaiveDate) {
+    fn select_day(&self, day: Date) {
         if is_disabled_day(day, self.min_key.as_deref(), self.max_key.as_deref()) {
             return;
         }
-        if let Some(next) = combine_day_time(day, self.value.hour(), self.value.minute()) {
+        if let Some(next) = combine_day_time(
+            day,
+            dtp_field(self.value.hour()),
+            dtp_field(self.value.minute()),
+        ) {
             self.request_value(next);
         }
     }
@@ -623,7 +661,7 @@ pub fn DateTimePicker(props: DateTimePickerProps) -> Element {
         .today
         .as_deref()
         .and_then(dtp_parse_value)
-        .unwrap_or_else(|| chrono::Local::now().naive_local());
+        .unwrap_or_else(today_wall_clock);
     let value = props
         .model_value
         .as_deref()
@@ -678,7 +716,7 @@ pub fn DateTimePicker(props: DateTimePickerProps) -> Element {
                 // nothing).
                 return;
             };
-            let Some(day) = NaiveDate::from_ymd_opt(parts.year, parts.month, parts.day) else {
+            let Some(day) = native_input_day(parts.year, parts.month, parts.day) else {
                 return;
             };
             if is_disabled_day(day, min_bound.as_deref(), max_bound.as_deref()) {
@@ -686,8 +724,8 @@ pub fn DateTimePicker(props: DateTimePickerProps) -> Element {
             }
             // Without a clock part the field keeps the model's time (Vue's
             // `parsed.hh ?? cur.getHours()`).
-            let hour = parts.hour.unwrap_or_else(|| fallback.hour());
-            let minute = parts.minute.unwrap_or_else(|| fallback.minute());
+            let hour = parts.hour.unwrap_or_else(|| dtp_field(fallback.hour()));
+            let minute = parts.minute.unwrap_or_else(|| dtp_field(fallback.minute()));
             if let Some(next) = combine_day_time(day, hour, minute)
                 && let Some(handler) = on_value_change.as_ref()
             {
@@ -1000,8 +1038,8 @@ fn dtp_build_content(
     locale: &DateLocale,
     view_year: i32,
     view_month: u32,
-    value: NaiveDateTime,
-    today: NaiveDateTime,
+    value: CivilDateTime,
+    today: CivilDateTime,
 ) -> VNode {
     use crate::basic::date_picker::DatePickerView;
 
@@ -1012,8 +1050,9 @@ fn dtp_build_content(
         DatePickerView::Months => {
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for month in 1..=12u32 {
-                let is_selected = view_year == selected.year() && month == selected.month();
-                let is_now = view_year == now.year() && month == now.month();
+                let is_selected =
+                    view_year == date_picker_year(selected) && month == date_picker_month(selected);
+                let is_now = view_year == date_picker_year(now) && month == date_picker_month(now);
                 let mut class = String::from("hk-dtp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1046,8 +1085,8 @@ fn dtp_build_content(
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for offset in 0..12 {
                 let year = start + offset;
-                let is_selected = year == selected.year();
-                let is_now = year == now.year();
+                let is_selected = year == date_picker_year(selected);
+                let is_now = year == date_picker_year(now);
                 let mut class = String::from("hk-dtp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1090,7 +1129,8 @@ fn dtp_build_content(
             let cells = locale_month_grid(locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
-                let out_of_month = day.month() != view_month || day.year() != view_year;
+                let out_of_month =
+                    date_picker_month(day) != view_month || date_picker_year(day) != view_year;
                 let day_disabled =
                     is_disabled_day(day, wiring.min_key.as_deref(), wiring.max_key.as_deref());
                 let is_selected = day == selected;
@@ -1117,7 +1157,7 @@ fn dtp_build_content(
                         "type": "button",
                         disabled: day_disabled,
                         onclick: move |_event: MouseEvent| cell_wiring.select_day(day),
-                        span { class: "hk-dtp-cell-num", {day.day()} }
+                        span { class: "hk-dtp-cell-num", {dtp_field(day.day())} }
                         if show_dot {
                             span { class: "hk-dtp-cell-dot" }
                         }
@@ -1145,8 +1185,8 @@ fn dtp_build_time_row(wiring: &DateTimePickerWiring, _locale: &DateLocale) -> VN
     let minute_label = t("hikari::dateTimePicker.minute", "Minute");
     let today_label = t("hikari::dateTimePicker.today", "Today");
     let show_time = wiring.show_time;
-    let hour_value = wiring.value.hour();
-    let minute_value = wiring.value.minute();
+    let hour_value = dtp_field(wiring.value.hour());
+    let minute_value = dtp_field(wiring.value.minute());
 
     let hour_up = wiring.clone();
     let hour_down = wiring.clone();
@@ -1248,10 +1288,9 @@ mod tests {
 
     use super::*;
 
-    fn moment(year: i32, month: u32, day: u32, hour: u32, minute: u32) -> NaiveDateTime {
-        NaiveDate::from_ymd_opt(year, month, day)
-            .and_then(|date| date.and_hms_opt(hour, minute, 0))
-            .expect("valid test date-time")
+    fn moment(year: i32, month: u32, day: u32, hour: u32, minute: u32) -> CivilDateTime {
+        let date = Date::new(year as i16, month as i8, day as i8).expect("valid test date");
+        combine_day_time(date, hour, minute).expect("valid test date-time")
     }
 
     fn anchor() -> DateTimePickerAnchorRect {
@@ -1373,7 +1412,7 @@ mod tests {
         assert_eq!(dtp_pad2(9), "09");
         assert_eq!(dtp_pad2(23), "23");
         // Day + clock composition, with the clock clamped into range.
-        let day = NaiveDate::from_ymd_opt(2024, 10, 6).expect("day");
+        let day = Date::new(2024, 10, 6).expect("day");
         assert_eq!(combine_day_time(day, 9, 5), Some(moment(2024, 10, 6, 9, 5)));
         assert_eq!(
             combine_day_time(day, 99, 99),
@@ -1434,7 +1473,7 @@ mod tests {
         // Jumping home resets the drill but keeps the drift.
         let reset = DateTimePickerViewState::anchored(moment(2024, 10, 6, 9, 5).date())
             .drill(DateTimePickerView::Months)
-            .reset(NaiveDate::from_ymd_opt(2024, 12, 31).expect("day"));
+            .reset(Date::new(2024, 12, 31).expect("day"));
         assert_eq!((reset.year, reset.month), (2024, 12));
         assert_eq!(reset.view, DateTimePickerView::Days);
     }

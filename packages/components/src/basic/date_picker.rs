@@ -55,7 +55,7 @@
 // / `shift_year` / `pick_month` / `pick_year` / `reset` / `reanchored`), so
 // the host stays a one-line reducer and the state machine is unit-testable.
 // `open` is controlled too ([`DatePickerProps::on_open_change`]); `today` is
-// an optional prop that falls back to `Local::now()`.
+// an optional prop that falls back to the system time zone's today.
 //
 // Behaviour deltas vs Vue (documented):
 //   * no `<Teleport>` and no popup-manager: the calendar renders in place
@@ -106,10 +106,10 @@
 // API exposed that Vue does not have is gone; hosts that need a formatter keep
 // it on their side.
 
-use chrono::{Datelike, NaiveDate};
 use hikari_i18n::dates::{DateVocabulary, date_vocabulary};
 use hikari_i18n::{Language, t};
 use hikari_icons::{Icon, MdiIcon};
+use jiff::civil::Date;
 
 use crate::basic::button::{Button, ButtonSize};
 use crate::basic::date_tag::active_language;
@@ -190,7 +190,7 @@ pub struct DatePickerViewState {
     /// Vue: `viewYear`.
     pub year: i32,
     /// Vue: `viewMonth` (0-based inside Vue, 1-based here — the month number
-    /// `chrono` and the ISO wire format both use).
+    /// the ISO wire format uses).
     pub month: u32,
     /// Vue: `view`.
     pub view: DatePickerView,
@@ -203,10 +203,10 @@ pub struct DatePickerViewState {
 impl DatePickerViewState {
     /// Vue's initial state: the anchor date's month, the day view, an empty
     /// drill stack, forward drift.
-    pub fn anchored(anchor: NaiveDate) -> Self {
+    pub fn anchored(anchor: Date) -> Self {
         DatePickerViewState {
-            year: anchor.year(),
-            month: anchor.month(),
+            year: date_picker_year(anchor),
+            month: date_picker_month(anchor),
             view: DatePickerView::Days,
             stack: Vec::new(),
             drift: DatePickerDrift::Fwd,
@@ -215,10 +215,10 @@ impl DatePickerViewState {
 
     /// `resetView()` on a new anchor, KEEPING the drift direction — Vue's
     /// `toggle()` re-anchor (it only resets the drill, not `drift`).
-    pub fn reset(self, anchor: NaiveDate) -> Self {
+    pub fn reset(self, anchor: Date) -> Self {
         DatePickerViewState {
-            year: anchor.year(),
-            month: anchor.month(),
+            year: date_picker_year(anchor),
+            month: date_picker_month(anchor),
             view: DatePickerView::Days,
             stack: Vec::new(),
             drift: self.drift,
@@ -228,7 +228,7 @@ impl DatePickerViewState {
     /// Vue's `watch(() => props.modelValue)`: re-anchor, drift BACK, and
     /// reset the drill-down (an external model change is a reset, not a
     /// drill).
-    pub fn reanchored(self, anchor: NaiveDate) -> Self {
+    pub fn reanchored(self, anchor: Date) -> Self {
         DatePickerViewState {
             drift: DatePickerDrift::Back,
             ..self.reset(anchor)
@@ -311,7 +311,7 @@ impl DatePickerViewState {
 /// `^\d{4}-\d{2}-\d{2}$` (unpadded input is rejected, like the regex) and a
 /// rollover such as `2026-02-31` is rejected too (Vue's parser validates the
 /// normalized date instead of letting `new Date` roll it into March).
-pub fn parse_iso_date(value: &str) -> Option<NaiveDate> {
+pub fn parse_iso_date(value: &str) -> Option<Date> {
     let bytes = value.as_bytes();
     if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-' {
         return None;
@@ -326,11 +326,43 @@ pub fn parse_iso_date(value: &str) -> Option<NaiveDate> {
     let year = digits(0..4)? as i32;
     let month = digits(5..7)?;
     let day = digits(8..10)?;
-    NaiveDate::from_ymd_opt(year, month, day)
+    date_picker_date(year, month, day)
 }
 
-/// `NaiveDate` → the `YYYY-MM-DD` wire format (Vue: `toISODate`).
-pub fn to_iso_date(date: NaiveDate) -> String {
+/// `(year, month, day)` in the OUT-OF-RANGE form chrono rejected, so the
+/// accepted set is unchanged: chrono took `1..=9999` while `civil::Date`
+/// spans `-9999..=9999`, and the wire format here is a 4-digit `YYYY`.
+fn date_picker_date(year: i32, month: u32, day: u32) -> Option<Date> {
+    if !(1..=9999).contains(&year) {
+        return None;
+    }
+    let year = i16::try_from(year).ok()?;
+    let month = i8::try_from(month).ok()?;
+    let day = i8::try_from(day).ok()?;
+    Date::new(year, month, day).ok()
+}
+
+/// `civil::Date::year()` is `i16`; the picker's view state and props carry
+/// `i32`. One widening point, so the two never drift into an `as` at a call
+/// site.
+pub(crate) fn date_picker_year(date: Date) -> i32 {
+    i32::from(date.year())
+}
+
+/// `civil::Weekday`'s Sunday-zero offset is `i8`; the CLDR vocabulary indexes
+/// with `u32` (`Sun = 0`).
+fn date_picker_sunday_offset(date: Date) -> u32 {
+    u32::from(date.weekday().to_sunday_zero_offset().unsigned_abs())
+}
+
+/// `civil::Date::month()` is `i8` (always `1..=12`); the view state and the
+/// CLDR vocabulary carry `u32`.
+pub(crate) fn date_picker_month(date: Date) -> u32 {
+    u32::from(date.month().unsigned_abs())
+}
+
+/// `Date` → the `YYYY-MM-DD` wire format (Vue: `toISODate`).
+pub fn to_iso_date(date: Date) -> String {
     format!("{}-{:02}-{:02}", date.year(), date.month(), date.day())
 }
 
@@ -382,23 +414,24 @@ pub fn shift_month(year: i32, month: u32, delta: i32) -> (i32, u32) {
 
 /// The 42 day cells of a month grid (6 rows × 7 columns), starting on the
 /// locale's first weekday — Vue's `cells` computed, one to one.
-pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
-    let Some(first) = NaiveDate::from_ymd_opt(year, clamp_month(month), 1) else {
+pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
+    let Some(first) = date_picker_date(year, clamp_month(month), 1) else {
         return Vec::new();
     };
     // Vue: `(first.getDay() - firstDay + 7) % 7` days of leading slack.
-    let lead = (first.weekday().num_days_from_sunday() + 7 - first_weekday % 7) % 7;
+    let lead =
+        (i32::from(first.weekday().to_sunday_zero_offset()) + 7 - (first_weekday % 7) as i32) % 7;
     let mut cursor = first;
     for _ in 0..lead {
-        cursor = match cursor.pred_opt() {
+        cursor = match cursor.yesterday().ok() {
             Some(previous) => previous,
             None => return Vec::new(),
         };
     }
     let mut cells = Vec::with_capacity(42);
-    for _ in 0..42 {
+    for _ in 0..42usize {
         cells.push(cursor);
-        cursor = match cursor.succ_opt() {
+        cursor = match cursor.tomorrow().ok() {
             Some(next) => next,
             None => break,
         };
@@ -410,7 +443,7 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
 /// to one). A thin adapter on purpose: the render asks the LOCALE for its
 /// first weekday instead of passing a constant, and a test can pin that
 /// choice without mounting the component.
-pub fn locale_month_grid(locale: &DateLocale, year: i32, month: u32) -> Vec<NaiveDate> {
+pub fn locale_month_grid(locale: &DateLocale, year: i32, month: u32) -> Vec<Date> {
     month_grid(year, month, locale.first_weekday())
 }
 
@@ -461,7 +494,7 @@ pub fn native_change_emission(
 /// day keys (already normalized by the parser), and — exactly like Vue — the
 /// comparison is a lexicographic string comparison, which is chronological
 /// for zero-padded ISO dates.
-pub fn is_disabled_day(day: NaiveDate, min_key: Option<&str>, max_key: Option<&str>) -> bool {
+pub fn is_disabled_day(day: Date, min_key: Option<&str>, max_key: Option<&str>) -> bool {
     let key = to_iso_date(day);
     if let Some(min_key) = min_key
         && key.as_str() < min_key
@@ -590,9 +623,9 @@ impl DateLocale {
     }
 
     /// The full weekday name of one date (Vue: `dateStyle: "full"`).
-    pub fn weekday_long(&self, date: NaiveDate) -> String {
+    pub fn weekday_long(&self, date: Date) -> String {
         self.vocabulary
-            .weekday_long(date.weekday().num_days_from_sunday())
+            .weekday_long(date_picker_sunday_offset(date))
             .to_string()
     }
 
@@ -609,8 +642,8 @@ impl DateLocale {
     }
 
     /// The trigger's display text (Vue: `dateStyle: "medium"`).
-    pub fn display_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short_format(date.month());
+    pub fn display_text(&self, date: Date) -> String {
+        let month = self.month_short_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}年{}月{}日", date.year(), date.month(), date.day())
@@ -632,8 +665,8 @@ impl DateLocale {
 
     /// The MONTH + DAY medium text WITHOUT a year (Vue's `triggerDateTime`
     /// formatter: `{month: "short", day: "numeric"}`).
-    pub fn short_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short_format(date.month());
+    pub fn short_text(&self, date: Date) -> String {
+        let month = self.month_short_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}月{}日", date.month(), date.day())
@@ -649,23 +682,23 @@ impl DateLocale {
     }
 
     /// The day cell's `aria-label` (Vue: `dateStyle: "full"`).
-    pub fn full_text(&self, date: NaiveDate) -> String {
+    pub fn full_text(&self, date: Date) -> String {
         let weekday = self.weekday_long(date);
-        let month = self.month_long_format(date.month());
+        let month = self.month_long_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!(
                     "{}年{}月{}日{}",
-                    date.year(),
-                    date.month(),
+                    date_picker_year(date),
+                    date_picker_month(date),
                     date.day(),
                     weekday
                 )
             }
             Language::Korean => format!(
                 "{}년 {}월 {}일 {}",
-                date.year(),
-                date.month(),
+                date_picker_year(date),
+                date_picker_month(date),
                 date.day(),
                 weekday
             ),
@@ -716,9 +749,16 @@ pub fn date_locale(language: Language) -> DateLocale {
     }
 }
 
-/// Today's local calendar date (Vue: `new Date()`, refreshed on every open).
-pub fn today_date() -> NaiveDate {
-    chrono::Local::now().date_naive()
+/// Today's calendar date in the SYSTEM time zone (Vue: `new Date()`,
+/// refreshed on every open).
+///
+/// `ZonedDateTime::now()` reads the host's zone explicitly and falls back to
+/// UTC only when the zone cannot be resolved. The old `Local::now()`
+/// had the same native behaviour but degraded to UTC silently on a target
+/// without TZ data, which is the failure mode this shape names instead of
+/// inheriting.
+pub fn today_date() -> Date {
+    jiff::ZonedDateTime::now().date()
 }
 
 // ── inline SVG (the two glyphs the Rust icon set does not carry) ─────────
@@ -865,8 +905,8 @@ struct DatePickerWiring {
     disabled: bool,
     open: bool,
     state: DatePickerViewState,
-    anchor_date: NaiveDate,
-    today: NaiveDate,
+    anchor_date: Date,
+    today: Date,
     min_key: Option<String>,
     max_key: Option<String>,
     clearable: bool,
@@ -911,7 +951,7 @@ impl DatePickerWiring {
     }
 
     /// Vue's `selectDay(d)`: reject a bounded day, emit the ISO key, close.
-    fn commit_day(&self, day: NaiveDate) {
+    fn commit_day(&self, day: Date) {
         if is_disabled_day(day, self.min_key.as_deref(), self.max_key.as_deref()) {
             return;
         }
@@ -1314,17 +1354,19 @@ fn build_content(
     locale: &DateLocale,
     view_year: i32,
     view_month: u32,
-    selected: Option<NaiveDate>,
-    today: NaiveDate,
+    selected: Option<Date>,
+    today: Date,
     _is_touch: bool,
 ) -> VNode {
     match wiring.state.view {
         DatePickerView::Months => {
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for month in 1..=12u32 {
-                let is_selected =
-                    selected.is_some_and(|day| day.year() == view_year && day.month() == month);
-                let is_today = today.year() == view_year && today.month() == month;
+                let is_selected = selected.is_some_and(|day| {
+                    date_picker_year(day) == view_year && date_picker_month(day) == month
+                });
+                let is_today =
+                    date_picker_year(today) == view_year && date_picker_month(today) == month;
                 let mut class = String::from("hk-dp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1357,8 +1399,8 @@ fn build_content(
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for offset in 0..12 {
                 let year = start + offset;
-                let is_selected = selected.is_some_and(|day| day.year() == year);
-                let is_today = today.year() == year;
+                let is_selected = selected.is_some_and(|day| date_picker_year(day) == year);
+                let is_today = date_picker_year(today) == year;
                 let mut class = String::from("hk-dp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1399,7 +1441,8 @@ fn build_content(
             let cells = locale_month_grid(locale, view_year, view_month);
             let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
             for day in cells {
-                let out_of_month = day.month() != view_month || day.year() != view_year;
+                let out_of_month =
+                    date_picker_month(day) != view_month || date_picker_year(day) != view_year;
                 let day_disabled =
                     is_disabled_day(day, wiring.min_key.as_deref(), wiring.max_key.as_deref());
                 let is_selected = selected == Some(day);
@@ -1426,7 +1469,7 @@ fn build_content(
                         disabled: day_disabled,
                         "aria-label": aria_label,
                         onclick: move |_event: MouseEvent| cell_wiring.commit_day(day),
-                        {day.day()}
+                        {u32::from(day.day().unsigned_abs())}
                     }
                 });
             }
@@ -1460,8 +1503,8 @@ impl StyledComponent for DatePickerComponent {
 mod tests {
     use super::*;
 
-    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(year, month, day).expect("valid test date")
+    fn date(year: i32, month: u32, day: u32) -> Date {
+        Date::new(year as i16, month as i8, day as i8).expect("valid test date")
     }
 
     // LEDGER L127 RESOLVED: an empty committed value is a REAL clear —

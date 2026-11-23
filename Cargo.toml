@@ -61,7 +61,14 @@ include_dir = "^0.7"
 # ------
 # Data and serialization
 # ------
-chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+# Date/time. Replaces `chrono` (RUSTSEC-2026-0543, unmaintained). The `serde`
+# feature is kept even though no hikari type serializes a date today: the
+# components are published, so a consumer that puts a `Timestamp` on its own
+# wire keeps the standard RFC 3339 shape without asking us for a feature.
+# There is no `unstable-locales` counterpart on purpose — jiff ships no locale
+# catalogue, and the calendar vocabulary has come from `hikari_i18n::dates`
+# (CLDR) since #1454, so chrono's `LC_TIME` mirror was already dead.
+jiff = { version = "^1", features = ["serde"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1" }
 ron = "^0.8"

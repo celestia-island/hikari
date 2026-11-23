@@ -64,7 +64,7 @@
 //
 // Replaces nothing: the family had no calendar heatmap before this mirror.
 
-use chrono::{Datelike, NaiveDate};
+use jiff::civil::Date;
 
 use crate::basic::{DateLocale, active_language, date_locale};
 use crate::prelude::*;
@@ -220,30 +220,36 @@ pub fn heatmap_gap_style() -> String {
 
 // ── dates (pure; UTC day boundaries only) ───────────────────────────────
 
-fn heatmap_parse_iso(iso: &str) -> Option<NaiveDate> {
-    NaiveDate::parse_from_str(iso, "%Y-%m-%d").ok()
+fn heatmap_parse_iso(iso: &str) -> Option<Date> {
+    // `civil::Date`'s `FromStr` accepts exactly the `YYYY-MM-DD` shape
+    // this series ships (jiff rejects the unpadded and offset-bearing
+    // forms a bare date parser would wave through).
+    iso.parse::<Date>().ok()
 }
 
 /// ISO date ± n days (UTC arithmetic only — no local timezone leaks).
 pub fn heatmap_shift_iso(iso: &str, days: i64) -> Option<String> {
     let date = heatmap_parse_iso(iso)?;
     let shifted = if days >= 0 {
-        date.checked_add_days(chrono::Days::new(days as u64))
+        date.checked_add(jiff::Span::new().days(days)).ok()?
     } else {
-        date.checked_sub_days(chrono::Days::new(days.unsigned_abs()))
-    }?;
-    Some(shifted.format("%Y-%m-%d").to_string())
+        date.checked_sub(jiff::Span::new().days(-days)).ok()?
+    };
+    Some(shifted.strftime("%Y-%m-%d").to_string())
 }
 
 /// Monday-first weekday index of an ISO date (Mon = 0 … Sun = 6).
 pub fn heatmap_weekday_index(iso: &str) -> Option<usize> {
     let date = heatmap_parse_iso(iso)?;
-    Some(date.weekday().num_days_from_monday() as usize)
+    Some(date.weekday().to_monday_zero_offset() as usize)
 }
 
 /// Today as an ISO date (UTC — the series' day boundary).
 pub fn heatmap_today_iso() -> String {
-    chrono::Utc::now().format("%Y-%m-%d").to_string()
+    jiff::Timestamp::now()
+        .to_zoned_datetime(jiff::tz::TimeZone::UTC)
+        .strftime("%Y-%m-%d")
+        .to_string()
 }
 
 // ── the grid (pure) ────────────────────────────────────────────────────
@@ -279,8 +285,8 @@ pub fn heatmap_calendar_grid(
         Some(date) => date,
         None => return Vec::new(),
     };
-    let lead = start.weekday().num_days_from_monday() as usize;
-    let grid_start = match start.checked_sub_days(chrono::Days::new(lead as u64)) {
+    let lead = start.weekday().to_monday_zero_offset() as usize;
+    let grid_start = match start.checked_sub(jiff::Span::new().days(lead as i64)).ok() {
         Some(date) => date,
         None => return Vec::new(),
     };
@@ -299,11 +305,14 @@ pub fn heatmap_calendar_grid(
 
     let mut cells: Vec<HeatmapCell> = Vec::with_capacity(span);
     for index in 0..span {
-        let date = match grid_start.checked_add_days(chrono::Days::new(index as u64)) {
+        let date = match grid_start
+            .checked_add(jiff::Span::new().days(index as i64))
+            .ok()
+        {
             Some(date) => date,
             None => break,
         };
-        let iso = date.format("%Y-%m-%d").to_string();
+        let iso = date.strftime("%Y-%m-%d").to_string();
         let shipped = value_by_date.get(iso.as_str()).copied();
         if date > today_date && shipped.is_none() {
             cells.push(HeatmapCell::Gap {
@@ -800,6 +809,46 @@ mod tests {
     }
 
     // ── date math ──────────────────────────────────────────────────────
+
+    /// The ISO rendering must be STRICTLY zero-padded, byte for byte.
+    ///
+    /// Negative control, measured: swapping these two `strftime("%Y-%m-%d")`
+    /// calls for chrono's `format("%Y-%m-%d")` — which space-pads a 4-digit
+    /// year to `"  24"` — left all fourteen pre-existing heatmap tests green,
+    /// because every grid fixture is a 3-digit-free 4-digit year and the
+    /// padding only shows up at the day-boundary cells' ISO keys. Without this
+    /// test the `chrono` -> `jiff` swap could have changed the series' wire
+    /// shape (and the `value_by_date` lookups that key on it) unnoticed.
+    #[test]
+    fn heatmap_iso_rendering_is_zero_padded_not_space_padded() {
+        // Four-digit years: both renderers agree, so pin it anyway.
+        assert_eq!(
+            heatmap_shift_iso("2025-12-01", 0).as_deref(),
+            Some("2025-12-01")
+        );
+        // Below 1000 chrono emitted `" 987-01-06"`; nothing may carry the
+        // space, and the grid key must stay the ISO shape.
+        assert_eq!(
+            heatmap_shift_iso("0987-01-06", 1).as_deref(),
+            Some("0987-01-07")
+        );
+        // A leading space in an input is a different (unparseable) string, so
+        // the padded form can never leak back in as valid input.
+        assert_eq!(heatmap_shift_iso(" 987-01-06", 0), None);
+        // Today's ISO key has the same shape contract.
+        let today = heatmap_today_iso();
+        assert_eq!(
+            today.len(),
+            10,
+            "today_iso must be YYYY-MM-DD, got {today:?}"
+        );
+        assert!(
+            today.bytes().all(|b| b.is_ascii_digit() || b == b'-'),
+            "today_iso must be digits and dashes only, got {today:?}"
+        );
+        assert_eq!(&today[4..5], "-");
+        assert_eq!(&today[7..8], "-");
+    }
 
     #[test]
     fn heatmap_weekday_and_shift_math_is_monday_first_utc() {

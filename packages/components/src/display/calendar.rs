@@ -1,15 +1,20 @@
 // packages/components/src/display/calendar.rs
 // Calendar component
 
-use chrono::{Datelike, Local};
 use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
+/// Today's year and month in the SYSTEM time zone.
+///
+/// `ZonedDateTime::now()` names the zone explicitly and degrades to UTC only
+/// when it cannot be resolved; the old `Local::now()` reached UTC silently on
+/// a target without TZ data. `Date::year()` is `i16` and the props are `i32`,
+/// so the widening is explicit here rather than a silent `as`.
 fn get_current_date() -> (i32, u32) {
-    let now = Local::now();
-    (now.year(), now.month())
+    let now = jiff::ZonedDateTime::now().date();
+    (i32::from(now.year()), u32::from(now.month().unsigned_abs()))
 }
 
 pub struct CalendarComponent;

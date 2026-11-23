@@ -9,6 +9,9 @@ the first version of this script treated it as proof. Measured in review round
 transpiled verbatim into ``packages/vue/src/wasm/qr/`` while the build reported
 success, cargo having recompiled nothing.
 
+Mutation anchors for the claims above (each id names the behaviour whose removal
+the listed test covers): MUT:defence-follows-cargo MUT:artifact-present
+
 Two independent defences are pinned here:
 
 * ``artifact_path`` — the name the crate's artifact takes. A rename here would
@@ -107,7 +110,7 @@ def test_a_rebuilt_artifact_is_accepted(lane: Path, monkeypatch: pytest.MonkeyPa
 
 def test_the_artifact_must_be_present_after_the_build(lane: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # A build that claims success and leaves nothing behind is an error, not an
-    # empty output directory for jco to fail on later (#MUT:artifact-present).
+    # empty output directory for jco to fail on later (# MUT:artifact-present).
     path = artifact(lane)
     path.write_bytes(b"previous build")
 

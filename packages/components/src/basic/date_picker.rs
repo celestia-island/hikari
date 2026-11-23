@@ -1703,10 +1703,11 @@ mod tests {
     /// with inert cells. Second, and the reason this test checks uniqueness:
     /// a padding scheme that substitutes the anchor date for unrepresentable
     /// cells still returns 42 cells but repeats a real one — measured 42 cells
-    /// with **34 unique** days on Sunday-first (8 duplicates) and **33 unique**
+    /// with **34 unique** cells on Sunday-first (8 duplicates) and **33 unique**
     /// on Monday-first (9 duplicates), because the two locales leave a
-    /// different number of real days inside the grid. The grid must never
-    /// duplicate, whatever the count.
+    /// different number of REAL cells inside the grid. ("34 cells" is the
+    /// whole row: 3 of them are the previous month's tail, 31 are December's.)
+    /// The grid must never duplicate, whatever the count.
     #[test]
     fn date_picker_grid_pads_at_the_range_edges_without_repeating_days() {
         for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {
@@ -2114,9 +2115,9 @@ mod tests {
             ..Default::default()
         })
         .render_to_html();
-        // 42 cells wide. Of those, 34 are REAL days (the 3 previous-month
-        // cells for a Sunday-first start plus December's 31), 3 of which are
-        // out-of-month, and the 8-cell shortfall is padded inert.
+        // 42 cells wide. Of those, 34 are REAL cells: the 3 previous-month
+        // cells a Sunday-first start needs, plus December's 31 days. The
+        // 8-cell shortfall is padded inert.
         assert_eq!(
             edge.matches("hk-dp-cell").count(),
             42,

@@ -223,11 +223,13 @@ pub fn heatmap_gap_style() -> String {
 /// The series ships `YYYY-MM-DD` and NOTHING else.
 ///
 /// Deliberately not `iso.parse::<Date>()`: jiff's default temporal parser is
-/// documented to accept "anything that contains a date", so a full RFC 3339
-/// timestamp, a space-separated date-time, or a bracketed annotation would
-/// all parse (measured) — and this parser keys `value_by_date` and the gap
+/// documented to accept "anything that contains a date", so a numeric offset
+/// stamp, a space-separated date-time, or a bracketed annotation would all
+/// parse (measured) — and this parser keys `value_by_date` and the gap
 /// decisions, so a looser accept-set silently turns malformed series input
-/// into a rendered column instead of the documented empty grid. The shape is
+/// into a rendered column instead of the documented empty grid. (`Z`-suffixed
+/// stamps are the one shape jiff itself refuses: it asks for a `Timestamp`
+/// first. Measured, so the guard is not motivated by that row.) The shape is
 /// checked byte-wise first; the calendar range is then narrowed to the same
 /// `1..=9999` the picker's helpers use, so a `0000-01-01` cannot reach the
 /// grid through this path while its siblings reject it.
@@ -882,8 +884,10 @@ mod tests {
     ///
     /// jiff's default temporal parser is documented to accept "anything that
     /// contains a date", so the plain `iso.parse::<Date>()` this migration
-    /// started with took full RFC 3339 timestamps, space-separated
-    /// date-times, and bracketed annotations (all measured as `Ok`). Because
+    /// started with took offset-bearing stamps (`+09:00`), space-separated
+    /// date-times, and bracketed annotations (all measured as `Ok`; the
+    /// `Z`-suffixed form jiff rejects itself, so it is not part of the case
+    /// for this guard). Because
     /// this parser keys `value_by_date` and the gap decisions, that looser
     /// accept-set silently turned malformed input into a rendered column
     /// instead of the documented empty grid. These assertions pin the strict

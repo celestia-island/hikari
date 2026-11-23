@@ -7,10 +7,11 @@
 // module itself could not be imported, which in a real app is a blank `#app`
 // and one uncaught error.
 //
-// This file MUST stay in the facade's own directory: `vi.mock` resolves its
-// specifier against the test file, and the facade's dynamic `import()` uses its
-// own relative one — from a different depth the two never refer to the same
-// module and the stub is silently ignored (measured).
+// The `vi.mock` specifier must resolve to the SAME module the facade's dynamic
+// `import()` loads. Sitting beside the facade is the easy way to get that (the
+// two relative paths coincide); it is convention, not a requirement — measured,
+// a pin one directory away with a corrected specifier is still applied and
+// still bites. What matters is the resolved module id, not the depth.
 //
 // MUT:* anchors each behavioural claim to the mutation that shows it; do not
 // restate a claim here without re-running its probe.

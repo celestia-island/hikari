@@ -127,7 +127,13 @@ describe("useAnchoredTop — correction wiring (fake ResizeObserver)", () => {
     vi.restoreAllMocks();
   });
 
-  function mountWithTop(top: { value: number }) {
+  function mountWithTop(
+    top: { value: number },
+    /** `deferred`: the block is behind a v-if and only appears after mount
+     *  (a host that gates the panel on async data). */
+    options: { deferred?: boolean } = {},
+  ) {
+    const visible = ref(options.deferred !== true);
     const fakes: FakeRO[] = [];
     vi.stubGlobal(
       "ResizeObserver",
@@ -164,7 +170,9 @@ describe("useAnchoredTop — correction wiring (fake ResizeObserver)", () => {
     const Host = defineComponent({
       setup() {
         useAnchoredTop(target);
-        return () => h("div", { ref: target, class: "probe" });
+        return () => (visible.value
+          ? h("div", { ref: target, class: "probe" })
+          : h("span", { class: "placeholder" }));
       },
     });
     const container = document.createElement("div");
@@ -175,8 +183,9 @@ describe("useAnchoredTop — correction wiring (fake ResizeObserver)", () => {
     return {
       container,
       app,
+      visible,
       fake: fakes[0]!,
-      probe: container.querySelector<HTMLElement>(".probe")!,
+      probe: () => container.querySelector<HTMLElement>(".probe"),
     };
   }
 
@@ -187,44 +196,69 @@ describe("useAnchoredTop — correction wiring (fake ResizeObserver)", () => {
     // MUT:anchor-wiring-noop (dropping the shift write in correct()
     // leaves the transform empty and this goes red).
     const top = { value: 100 };
-    const { fake, probe } = mountWithTop(top);
+    const { fake, probe: probeEl } = mountWithTop(top);
     // The hook observed the element it was handed (a disconnect inside
     // observe() is the re-arm, not a teardown).
-    expect(fake.targets).toContain(probe);
-    expect(probe.style.transform).toBe("");
+    expect(fake.targets).toContain(probeEl());
+    expect(probeEl()!.style.transform).toBe("");
 
     top.value = 80; // a centered growth lifted the top by 20px
     fake.callback();
-    expect(probe.style.transform).toBe("translateY(20px)");
+    expect(probeEl()!.style.transform).toBe("translateY(20px)");
 
     // Converged: the transform is part of the measured top, so the next
     // frame reads drift 0 and only re-bases (a loop that re-applied the
     // full drift would overshoot to 40px here).
     fake.callback();
-    expect(probe.style.transform).toBe("translateY(20px)");
+    expect(probeEl()!.style.transform).toBe("translateY(20px)");
 
     // The symmetric leg comes back and the shift returns to zero, i.e.
     // the transform is REMOVED rather than left at a stale offset.
     top.value = 100;
     fake.callback();
-    expect(probe.style.transform).toBe("");
+    expect(probeEl()!.style.transform).toBe("");
   });
 
   it("is a no-op where the host does not re-center", () => {
     const top = { value: 100 };
-    const { fake, probe } = mountWithTop(top);
+    const { fake, probe: probeEl } = mountWithTop(top);
     // A top-anchored layout: size changes, the top never moves.
     fake.callback();
     fake.callback();
-    expect(probe.style.transform).toBe("");
+    expect(probeEl()!.style.transform).toBe("");
   });
 
   it("stops observing after unmount", () => {
     const top = { value: 100 };
-    const { app, fake, container, probe } = mountWithTop(top);
-    expect(fake.targets).toContain(probe);
+    const { app, fake, container, probe: probeEl } = mountWithTop(top);
+    expect(fake.targets).toContain(probeEl());
     app.unmount();
     container.remove();
     expect(fake.targets).toHaveLength(0);
+  });
+
+  it("observes a target that only appears AFTER mount (v-if hosts)", async () => {
+    // The hook is public API and hosts gate the panel on async data: an
+    // observe() that ran once against a null target would leave the
+    // instance unanchored forever, silently.
+    // MUT:anchor-late-target (deleting `watch(target, () => observe())`
+    // leaves the fake observer with no target and this goes red).
+    const top = { value: 100 };
+    const { visible, fake, probe: probeEl } = mountWithTop(top, { deferred: true });
+    expect(probeEl()).toBeNull();
+    expect(fake.targets).toHaveLength(0);
+
+    visible.value = true;
+    for (let i = 0; i < 4; i++) await nextTick();
+
+    const el = probeEl();
+    expect(el).not.toBeNull();
+    expect(fake.targets).toContain(el);
+
+    // The late arrival becomes the anchor: the first drift after it is
+    // measured against the position it landed in.
+    top.value = 90;
+    fake.callback();
+    expect(el!.style.transform).toBe("translateY(10px)");
   });
 });

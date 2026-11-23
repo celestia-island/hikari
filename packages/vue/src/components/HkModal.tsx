@@ -431,7 +431,7 @@ export default defineComponent({
      *  (the frame's height unchanged across two consecutive frames) covers
      *  every morph path without depending on another module's bookkeeping. */
     let crossingRaf: number | null = null;
-    let crossingFrames = 0;
+    let crossingStart = 0;
     let lastHeight = -1;
     let stableFrames = 0;
     function cancelCrossingWait(): void {
@@ -439,7 +439,6 @@ export default defineComponent({
         cancelAnimationFrame(crossingRaf);
       }
       crossingRaf = null;
-      crossingFrames = 0;
       stableFrames = 0;
       lastHeight = -1;
     }
@@ -449,16 +448,19 @@ export default defineComponent({
       const h = Math.round(el.getBoundingClientRect().height);
       stableFrames = h === lastHeight ? stableFrames + 1 : 0;
       lastHeight = h;
-      if (stableFrames >= 1) {
-        cancelCrossingWait();
-        anchor.reset();
-        return;
-      }
-      // Bounded in FRAMES, not seconds: a backgrounded tab throttles rAF to
-      // ~1 fps, so a time bound expressed this way would be a lie. Past the
-      // bound the frame is stuck for an unrelated reason and a stale anchor
-      // is the lesser evil.
-      if (++crossingFrames > 120) {
+      const elapsed = performance.now() - crossingStart;
+      // "At rest" needs BOTH: the settle window over (useSizeMorph debounces
+      // its observer by 150 ms before its post-change remeasure, so a height
+      // can look stable for a beat and then move again when that lands), AND
+      // the height actually stable across frames. Re-basing inside the
+      // window adopts a transient geometry — the R4 kill case.
+      const settled = elapsed >= 220 && stableFrames >= 1;
+      // Hard bound in WALL TIME (2 s), not frames: happy-dom fires rAF as
+      // fast as ~0.5 ms/frame, so a frame count is not a duration. Past the
+      // bound a stuck frame is the lesser evil vs a silently disarmed
+      // anchor.
+      const expired = elapsed > 2000;
+      if (settled || expired) {
         cancelCrossingWait();
         anchor.reset();
         return;
@@ -467,6 +469,7 @@ export default defineComponent({
     }
     watch(sheetMobile, (isSheet) => {
       cancelCrossingWait();
+      crossingStart = performance.now();
       if (isSheet) anchor.reset();
       else reanchorWhenAtRest();
     });

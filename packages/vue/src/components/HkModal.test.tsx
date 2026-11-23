@@ -1263,35 +1263,45 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       // already moved the top edge — anything that re-bases NOW records a
       // geometry the frame will not rest at.
       morphHeight.value = 300;
-      top.value = 170;
-      for (const cb of callbacks) cb();
-      await nextTick();
       (window as { innerWidth: number }).innerWidth = 500;
       window.dispatchEvent(new Event("resize"));
       for (let i = 0; i < 6; i++) await nextTick();
       (window as { innerWidth: number }).innerWidth = 1200;
       window.dispatchEvent(new Event("resize"));
-      for (let i = 0; i < 6; i++) await nextTick();
-      // Still morphing: the re-anchor must NOT have run yet.
-      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
-
-      // The morph LANDS: the marker comes off in the same instant the frame
-      // reaches its natural top (that is how useSizeMorph ends a morph), and
-      // only then does the deferred re-anchor run — on its next frame
-      // (happy-dom's rAF is a timer, so give it a real beat).
-      top.value = 200;
-      morphHeight.value = 400;
+      // The drift fires MID-MORPH, just after the way-out crossing (the
+      // height is still stepping; the top is still at the sheet-leg 180).
+      // The fixed shape's deferred re-anchor has NOT fired yet (we are
+      // inside the 220 ms settle window), so the anchor is still armed at
+      // the pre-crossing 200 and a lift to 170 folds in as -30. The naive
+      // shape reset at the crossing (adopting the transient 180) — its own
+      // arms are already wrong.
       await new Promise((r) => setTimeout(r, 60));
-      for (let i = 0; i < 4; i++) await nextTick();
-      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
-
-      // The morph lands at the frame's natural top. The settled frame must
-      // carry no correction: a re-base taken mid-morph (the naive shape)
-      // adopted the TRANSIENT top instead and leaves the difference as a
-      // standing offset here — the snap-then-lift.
+      top.value = 170;
       for (const cb of callbacks) cb();
       await nextTick();
+      // The crossing back lands MID-MORPH (the height is still stepping and
+      // the frame still sits at the sheet-leg top). Two things happen at a
+      // real crossing: the hook's own resize re-base adopts the geometry the
+      // frame has at that instant (a viewport change legitimately moves the
+      // block), and the deferred anchor reset re-bases again once the frame
+      // has settled. The settle window is what keeps that second re-base
+      // honest: a naive immediate reset re-bases on the TRANSIENT top and
+      // the landed geometry then disagrees with it by 10px.
+      top.value = 200;
+      morphHeight.value = 400;
+      await new Promise((r) => setTimeout(r, 320));
+      for (let i = 0; i < 6; i++) await nextTick();
+      // Settled: the anchor re-based onto the landed top, so no correction.
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // A fresh drift after the crossing corrects from the LANDED anchor:
+      // 200 → 170 is a 30px lift the loop folds back in. MUT:modal-crossing-
+      // rebase-midmorph (a naive immediate reset at the crossing re-based on
+      // the transient 180 and leaves only 10px here).
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
     } finally {
       (window as { innerWidth: number }).innerWidth = previousWidth;
       vi.unstubAllGlobals();

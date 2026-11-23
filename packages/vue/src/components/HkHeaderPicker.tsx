@@ -120,6 +120,11 @@ export default defineComponent({
 
     const options = computed(() => props.options ?? []);
 
+    /** The chosen option, whose tag flags the trigger mirrors. */
+    const selected = computed(() =>
+      options.value.find((o) => o.value === props.modelValue),
+    );
+
     const displayLabel = computed(() => {
       if (!props.modelValue) return props.placeholder || "";
       return (
@@ -318,7 +323,18 @@ export default defineComponent({
           onClick={toggle}
           onKeydown={onTriggerKeydown}
         >
-          <span class="hk-select-value">{displayLabel.value || props.placeholder}</span>
+          <span class="hk-select-value">
+            {selected.value?.labelTag && displayLabel.value ? (
+              <HkTag size="sm">{displayLabel.value}</HkTag>
+            ) : (
+              displayLabel.value || props.placeholder
+            )}
+            {selected.value?.badge ? (
+              <HkTag size="sm" variant={selected.value.badgeVariant ?? "default"}>
+                {selected.value.badge}
+              </HkTag>
+            ) : null}
+          </span>
           <ChevronDown size={16} class="hk-select-arrow" />
         </button>
         <HkSelectPanel

@@ -225,6 +225,40 @@ describe("HkHeaderPicker", () => {
     expect(row.querySelector(".hk-header-picker-option-group .hk-tag")).toBeTruthy();
   });
 
+  it("mirrors the option's tags on the trigger", () => {
+    // A picker whose rows are chips but whose trigger is plain text reads
+    // as two different controls: the closed state must show the SAME two
+    // tags the row does.
+    const c = mountPicker(
+      {
+        modelValue: "a@example.test",
+        options: [
+          {
+            value: "a@example.test",
+            label: "a@example.test",
+            labelTag: true,
+            badge: "personal",
+            badgeVariant: "primary",
+          },
+        ],
+      },
+      {},
+    );
+    const value = c.querySelector(".hk-header-picker-trigger .hk-select-value")!;
+    const tags = Array.from(value.querySelectorAll(".hk-tag"));
+    expect(tags.length, "label tag plus badge, in the trigger").toBe(2);
+    expect(tags[0].textContent?.trim()).toBe("a@example.test");
+    expect(tags[1].textContent?.trim()).toBe("personal");
+    expect(tags[1].className).toContain("hk-tag-primary");
+  });
+
+  it("keeps the trigger plain when the option asks for no tags", () => {
+    const c = mountPicker({}, {});
+    const value = c.querySelector(".hk-header-picker-trigger .hk-select-value")!;
+    expect(value.querySelector(".hk-tag")).toBeNull();
+    expect(value.textContent?.trim()).toBe("Hub One");
+  });
+
   it("disables the trigger when disabled", () => {
     const c = mountPicker({ disabled: true }, {});
     expect(

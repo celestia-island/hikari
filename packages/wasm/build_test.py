@@ -14,8 +14,9 @@ Two independent defences are pinned here:
 * ``artifact_path`` — the name the crate's artifact takes. A rename here would
   make every build read ``None`` and fail; a rename in cargo's output would do
   the same, which is why the path is built in one place.
-* ``build`` — the mtime/size comparison that refuses a build whose artifact did
-  not change (``MUT:stale-artifact-check``).
+* ``build`` — the guard that the path it clears and checks is the one cargo
+  reported (``MUT:defence-follows-cargo``), and that an artifact is there
+  afterwards (``MUT:artifact-present``).
 
 ``build()`` is driven with ``subprocess.run`` and ``ensure_artifact_fresh``
 replaced, so no compiler is needed: the cases are about what the script does

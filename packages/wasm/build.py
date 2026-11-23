@@ -56,21 +56,21 @@ def crate_package(comp: str) -> str:
 
 
 def target_dir() -> pathlib.Path:
-    """The cargo target directory this build writes into.
+    """A best-effort guess at the cargo target directory, for callers that have no cargo.
+
+    **``build`` does not use this** — it asks ``cargo_target_dir()``, because a
+    guess and cargo's answer can disagree (a ``config.toml`` ``target-dir``, a
+    relative value resolved against a different directory) and every such
+    disagreement aims the build's own staleness guard at a file cargo never
+    wrote. This exists as ``artifact_path``'s default so the path rule is
+    stated in one place for tests and readers.
 
     ``CARGO_TARGET_DIR`` is part of the workspace's normal workflow (a task
-    picks ``/mnt/work/target-<task>`` so the shared checkout stays clean), and
-    reading the artifact from a hardcoded ``ROOT/target`` silently missed it:
-    the build succeeded, then this script reported ``no wasm for qr at
-    <checkout>/target/...`` while the file sat in the task directory.
+    picks ``/mnt/work/target-<task>`` so the shared checkout stays clean).
+    cargo is spawned with ``cwd=ROOT`` here, so a relative value is joined to
+    ROOT rather than to whatever directory this script was invoked from.
     """
     configured = os.environ.get("CARGO_TARGET_DIR")
-    # cargo is spawned with ``cwd=ROOT``, so a RELATIVE ``CARGO_TARGET_DIR`` is
-    # resolved by cargo against the repository — **not** against whatever
-    # directory this script was invoked from. Joining it to ROOT here is what
-    # keeps the existence check below looking where cargo actually wrote;
-    # leaving it unresolved made a build run from another directory report its
-    # own success as a failure (reported in review round 2).
     return (ROOT / configured) if configured else ROOT / "target"
 
 
@@ -131,8 +131,10 @@ def cargo_target_dir() -> pathlib.Path:
 def signature(path: pathlib.Path) -> tuple[int, int] | None:
     """``(st_mtime_ns, st_size)`` of an artifact, or ``None`` when it is absent.
 
-    A function rather than an inline stat so ``build.py`` can be driven in a
-    test without a compiler; see ``packages/wasm/build_test.py``.
+    ``build`` uses it for presence only; the tuple keeps a change observable to
+    a caller that has the previous value. A function rather than an inline stat
+    so the lane can be driven in a test without a compiler; see
+    ``packages/wasm/build_test.py``.
     """
     if not path.is_file():
         return None
@@ -143,14 +145,27 @@ def signature(path: pathlib.Path) -> tuple[int, int] | None:
 def build(comp: str) -> pathlib.Path:
     """Compile one component and return its ``.wasm``.
 
-    The returned file is the one cargo wrote **during this call**. That is what
-    ``ensure_artifact_fresh`` buys: the previous file is deleted first, so its
-    reappearance can only come from the build, and the mtime check below refuses
-    a run where cargo finished without writing it at all. Without those two,
-    "the file exists after a successful build" is true of any stale artifact
-    left in the target directory (measured in review round 3: a foreign but
-    valid ``.wasm`` planted under the expected name was transpiled verbatim
-    into the shipped bindings while the build reported success).
+    The returned file is the one cargo wrote **during this call**, and there
+    are exactly two reasons that is true:
+
+    * the location is ``cargo_target_dir()``'s answer, not a prediction — a
+      guess that disagrees with cargo makes the guard below aim at a file
+      cargo never wrote (review round 4);
+    * ``ensure_artifact_fresh`` deletes the previous file first, so its
+      reappearance can only come from this build, and the presence check after
+      the spawn rejects a run that left nothing behind.
+
+    What this does **not** have is a byte or mtime comparison against the
+    earlier build: cargo may finish without rewriting an artifact (a build
+    script re-run is not something this script can observe), so such a check
+    would both miss that case and reject legitimate rebuilds. The unlink is the
+    defence; ``build_test.py`` pins it.
+
+    Without all of that, "the file exists after a successful build" is true of
+    any stale artifact left in the target directory — measured in review round
+    3: a foreign but valid ``.wasm`` planted under the expected name was
+    transpiled verbatim into the shipped bindings while the build reported
+    success.
     """
     crate_dir = HERE / comp
     if not (crate_dir / "Cargo.toml").exists():

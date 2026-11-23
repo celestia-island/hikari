@@ -81,7 +81,17 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
 });
 
 const { highlight } = await import("./useHighlight");
-const realWrapper = await import("../wasm/highlight/hikari_wasm_highlight.js");
+// Generated artifact (jco output, gitignored) — see the qr host-surface suite.
+type Artifact = typeof import("../wasm/highlight/hikari_wasm_highlight.js");
+let realWrapper: Artifact | undefined;
+try {
+  realWrapper = await import("../wasm/highlight/hikari_wasm_highlight.js");
+} catch {
+  realWrapper = undefined;
+  console.warn(
+    "[wasm] highlight bindings absent — build them: python3 packages/wasm/build.py",
+  );
+}
 
 const CODE = "fn main() { println!(\"hi\"); }";
 const LANG = "rust";

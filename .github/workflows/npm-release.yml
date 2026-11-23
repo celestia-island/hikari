@@ -56,6 +56,22 @@ jobs:
           cd packages/vue
           pnpm install --frozen-lockfile
 
+      # The package also ships the jco bindings under packages/vue/src/wasm/**,
+      # which are no longer checked in — build them before anything looks at
+      # the tree. `prepublishOnly` (check_npm_pack.py) refuses a publish whose
+      # tarball would lack them; this step is what makes that guard pass.
+      - name: Setup Rust (wasm32-wasip2)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Build wasm bindings
+        run: |
+          # `node`/`npm` ship on this runner; jco needs a Node >= 20, which every
+          # job here already provides (setup-node 24, or the self-hosted default).
+          command -v jco >/dev/null || npm install --global @bytecodealliance/jco@1
+          python3 packages/wasm/build.py
+
       # The Vue package ships as source; its Vitest suite (happy-dom) is the
       # only automated behavioral gate for it, so a release must never go out
       # with a red suite. Type check runs via prepublishOnly on `npm publish`.

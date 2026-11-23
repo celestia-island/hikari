@@ -889,11 +889,11 @@ mod tests {
         // 10-byte ISO shape, and the shipped value must be FOUND by the
         // `value_by_date` lookup — a space-padded key misses it, which is
         // what this measures.
-        let shippped = [HeatmapDay {
+        let shipped = [HeatmapDay {
             date: "0987-01-06".to_string(),
             value: 3.0,
         }];
-        let grid = heatmap_calendar_grid(&shippped, "0987-01-31", None, None);
+        let grid = heatmap_calendar_grid(&shipped, "0987-01-31", None, None);
         assert!(!grid.is_empty(), "the sub-1000 window must render");
         for cell in &grid {
             let key = cell.date();

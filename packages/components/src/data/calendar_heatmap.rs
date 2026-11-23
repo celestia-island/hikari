@@ -228,7 +228,9 @@ pub fn heatmap_gap_style() -> String {
 /// all parse (measured) — and this parser keys `value_by_date` and the gap
 /// decisions, so a looser accept-set silently turns malformed series input
 /// into a rendered column instead of the documented empty grid. The shape is
-/// checked byte-wise first, exactly like `parse_iso_date` in `date_picker`.
+/// checked byte-wise first; the calendar range is then narrowed to the same
+/// `1..=9999` the picker's helpers use, so a `0000-01-01` cannot reach the
+/// grid through this path while its siblings reject it.
 fn heatmap_parse_iso(iso: &str) -> Option<Date> {
     let bytes = iso.as_bytes();
     if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-' {
@@ -241,7 +243,10 @@ fn heatmap_parse_iso(iso: &str) -> Option<Date> {
     {
         return None;
     }
-    iso.parse::<Date>().ok()
+    let date = iso.parse::<Date>().ok()?;
+    // `civil::Date` spans `-9999..=9999`; the series' contract is the
+    // four-digit common era, matching `date_picker_date`.
+    (1..=9999).contains(&date.year()).then_some(date)
 }
 
 /// ISO date ± n days (UTC arithmetic only — no local timezone leaks).
@@ -901,6 +906,8 @@ mod tests {
             "2024-1-6",
             "24-10-06",
             "",
+            // The calendar range matches the picker's `1..=9999`.
+            "0000-01-01",
         ] {
             assert_eq!(
                 heatmap_shift_iso(raw, 0),

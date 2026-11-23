@@ -1754,6 +1754,21 @@ mod tests {
         assert_eq!(march[41], date(2024, 4, 6));
     }
 
+    /// `parse_iso_date` keeps the `1..=9999` range the picker's other paths
+    /// enforce, so year `0` (which `civil::Date` can represent) cannot enter
+    /// through the ISO wire.
+    #[test]
+    fn date_picker_parse_iso_date_rejects_the_year_zero_the_range_excludes() {
+        assert_eq!(parse_iso_date("2024-10-06"), Some(date(2024, 10, 6)));
+        assert_eq!(parse_iso_date("0001-01-01"), Some(date(1, 1, 1)));
+        assert_eq!(parse_iso_date("9999-12-31"), Some(date(9999, 12, 31)));
+        // `civil::Date` itself would take both of these.
+        assert_eq!(parse_iso_date("0000-01-01"), None);
+        // Width and separators are unchanged.
+        assert_eq!(parse_iso_date("2024-1-6"), None);
+        assert_eq!(parse_iso_date("2024-02-31"), None);
+    }
+
     #[test]
     fn date_picker_bounds_compare_as_iso_day_keys() {
         let day = date(2024, 10, 6);

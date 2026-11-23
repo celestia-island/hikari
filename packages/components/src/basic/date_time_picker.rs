@@ -1399,6 +1399,33 @@ mod tests {
         assert_eq!(parse_native_input_value("2024-10-06T9:5"), None);
     }
 
+    /// `native_input_day` keeps the `1..=9999` calendar range.
+    ///
+    /// The parts parser accepts the string, but the DAY it builds must stay in
+    /// the range the rest of the picker enforces: `civil::Date` can represent
+    /// year 0, and a native `<input type=date>` can emit it.
+    #[test]
+    fn date_time_picker_native_day_rejects_year_zero() {
+        assert_eq!(
+            native_input_day(2024, 10, 6),
+            Some(Date::new(2024, 10, 6).expect("valid"))
+        );
+        assert_eq!(
+            native_input_day(1, 1, 1),
+            Some(Date::new(1, 1, 1).expect("valid"))
+        );
+        assert_eq!(
+            native_input_day(9999, 12, 31),
+            Some(Date::new(9999, 12, 31).expect("valid"))
+        );
+        // `civil::Date` itself would take year 0 and year 10000 is out of its
+        // range; both are OUT of the accepted set here.
+        assert_eq!(native_input_day(0, 1, 1), None);
+        assert_eq!(native_input_day(10000, 1, 1), None);
+        // Non-existent days stay rejected.
+        assert_eq!(native_input_day(2026, 2, 31), None);
+    }
+
     #[test]
     fn date_time_picker_clock_math_wraps_and_clamps() {
         // Vue: `(cur.getHours() + delta + 24) % 24`.

@@ -905,15 +905,17 @@ mod tests {
                 "grid cell key must be digits and dashes only, got {key:?}"
             );
         }
-        // The shipped value survived the lookup rather than being dimmed to a
-        // gap by a mismatched key.
-        let shipped_cell = grid
-            .iter()
-            .find(|cell| cell.date() == "0987-01-06")
-            .expect("the shipped day must be a cell of the grid");
+        // The shipped day is a cell of the grid at all. Deliberately NOT an
+        // assertion on its `Day` VARIANT: a day that is both the grid's first
+        // row and shipped can never be gapped, so that assertion cannot be
+        // falsified by any mutant — it would observe only itself. The value
+        // surviving the `value_by_date` lookup is covered by
+        // `heatmap_grid_dims_only_before_the_first_activity_anchor`; what this
+        // test contributes is the KEY SHAPE, which the space-padded renderer
+        // breaks and which the loop above measures.
         assert!(
-            matches!(shipped_cell, HeatmapCell::Day { .. }),
-            "a space-padded key would miss `value_by_date` and dim the              shipped day into a gap: {shipped_cell:?}"
+            grid.iter().any(|cell| cell.date() == "0987-01-06"),
+            "the shipped day must be a cell of the grid"
         );
     }
 

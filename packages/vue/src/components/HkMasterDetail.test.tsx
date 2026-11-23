@@ -298,6 +298,23 @@ describe("HkMasterDetail — the split", () => {
     expect(c.querySelector(".hk-master-detail-list"), "no roster behind it").toBeNull();
   });
 
+  it("renders the actions once in the narrow in-flow column", async () => {
+    // The column has a sticky head band of its own; the sheet-body helper
+    // (which carries the actions row) belongs to the WINDOW form alone.
+    setWidth(600);
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+        list: ROSTER,
+        detail: DETAIL,
+        actions: () => h("button", { class: "detail-action" }, "Copy"),
+      }),
+    );
+    await nextTick();
+    expect(c.querySelectorAll(".detail-action").length).toBe(1);
+    expect(c.querySelector(".hk-master-detail-detail-head .detail-action")).toBeTruthy();
+    expect(c.querySelector(".hk-master-detail-sheet-body")).toBeNull();
+  });
+
   it("keeps the modal mounted so its own close path runs (focus restored)", async () => {
     // Mount-driven modals never reach the leave finalizer: the exit motion
     // is skipped and keyboard focus is dropped on <body>. The pane must
@@ -651,10 +668,12 @@ describe("the bounded host — stage swap rule", () => {
     expect(rule, "the stage swap rule exists").toBeTruthy();
     expect(rule!).toContain("flex: 1 1 0%");
     expect(rule!).toContain("min-height: 0");
-    // …but it must NOT declare `display`: the element IS HkCrossfade's
-    // one-cell grid host, and flex there lays the leaving and entering
-    // pages side by side for the length of every stage swap.
-    expect(rule!).not.toContain("display:");
+    // …but it must NOT turn the element into a flex column: it IS
+    // HkCrossfade's one-cell grid host, and a column layout there stacks
+    // the leaving page above the entering one for the length of every
+    // stage swap (the grid row's stretch is what gives the page its
+    // definite height). A legitimate display:grid/contents stays allowed.
+    expect(rule!).not.toMatch(/display:\s*flex/);
   });
 });
 

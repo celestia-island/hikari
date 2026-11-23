@@ -164,7 +164,10 @@ export const HkMasterDetail = defineComponent({
     // — the only place the bound listener is still visible is the
     // instance's own vnode props. Read per render (the vnode is replaced
     // on every parent patch), never cached at setup.
-    const hasCloseListener = computed(() => Boolean(instance?.vnode.props?.onClose));
+    // …and because the FORM depends on it, it must be read per render —
+    // a computed with no dependencies caches the first value forever and
+    // would lock a host that binds `@close` later into the wrong form.
+    const hasCloseListener = () => Boolean(instance?.vnode.props?.onClose);
     const closeLabel = computed(
       () => props.closeLabel || t("hikari::masterDetail.close", "Close"),
     );
@@ -175,21 +178,21 @@ export const HkMasterDetail = defineComponent({
 
     /** The narrow WINDOW form: an overlay only a dismissable host may get
      *  (see the component doc's dismissal rule). */
-    const windowForm = computed(() => narrow.value && hasCloseListener.value);
+    const windowForm = computed(() => narrow.value && hasCloseListener());
     /** The narrow IN-FLOW form: the detail is the entire column, no
      *  overlay — for hosts whose navigation owns deselection. */
     const inlineNarrow = computed(
-      () => narrow.value && !hasCloseListener.value && props.detailOpen,
+      () => narrow.value && !hasCloseListener() && props.detailOpen,
     );
 
     // ── the pane's overlay scrollbar ───────────────────────────────────
     // The pane is a scroll surface, so it wears the family chrome: native
     // SCROLLING mechanics, the library's overlay rail (nativeScrollbar
     // contract). The rail host is the PANE, never the scroll region — a
-    // track inside a scrolling box would travel with the content. The
-    // narrow forms have no in-flow scroll pane of their own (HkModal's
-    // body, or the narrow column's single flow), so the rail is attached
-    // only while the wide pane exists.
+    // track inside a scrolling box would travel with the content. Both
+    // in-flow forms (the wide pane and the narrow single column) own one;
+    // the WINDOW form has none of its own — HkModal's body scrolls, and
+    // its rail is the modal's.
     const paneRef = ref<HTMLElement>();
     const scrollRef = ref<HTMLElement>();
     let rail: OverlayScrollbarHandle | null = null;
@@ -244,7 +247,10 @@ export const HkMasterDetail = defineComponent({
                     <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
                   </div>
                 ) : null}
-                <div class="hk-master-detail-detail-body">{detailBody()}</div>
+                {/* The band above already carries the actions — the body
+                 *  takes the bare detail slot (the sheet body helper is
+                 *  the WINDOW form's, which has no band of its own). */}
+                <div class="hk-master-detail-detail-body">{slots.detail?.()}</div>
               </div>
             </section>
           ) : (
@@ -281,12 +287,12 @@ export const HkMasterDetail = defineComponent({
                   the native bar never paints — the library's scroll
                   contract (nativeScrollbar.contract.test.ts). */}
               <div ref={scrollRef} class="hk-master-detail-detail-scroll">
-                {slots.actions || hasCloseListener.value ? (
+                {slots.actions || hasCloseListener() ? (
                   <div class="hk-master-detail-detail-head">
                     {slots.actions ? (
                       <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
                     ) : null}
-                    {hasCloseListener.value ? (
+                    {hasCloseListener() ? (
                       <HkIconButton
                         class="hk-master-detail-close"
                         size={28}

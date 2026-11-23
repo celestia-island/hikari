@@ -831,9 +831,10 @@
  *
  * `display` is deliberately NOT written here: the wrapper is HkCrossfade's
  * own host element, whose one-cell grid is what stacks the leaving and
- * entering items in the SAME box during a swap. Declaring flex here would
- * lay them out side by side instead (the leaving page visible above the
- * entering one) for the length of every stage swap. The chain works
+ * entering items in the SAME box during a swap. Declaring a flex column
+ * here would stack them one above the other instead (the leaving page
+ * holding the top of the box, the entering one pushed below it) for the
+ * length of every stage swap. The chain works
  * through the grid: this rule gives the host a definite height, the single
  * auto row stretches to it, and the item's default `stretch` alignment
  * then hands each page the same definite height its height:100% needs. */

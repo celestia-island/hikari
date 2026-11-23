@@ -63,13 +63,16 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit",
-    "build:docs": "vite build",
-    "lint": "vue-tsc --noEmit",
+    "pretest": "python3 ../wasm/ensure_bindings.py",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prebuild": "python3 ../wasm/ensure_bindings.py",
+    "build": "vue-tsc --noEmit",
+    "build:docs": "vite build",
+    "prelint": "python3 ../wasm/ensure_bindings.py",
+    "lint": "vue-tsc --noEmit",
     "gen:boot-landing-css": "node scripts/gen-boot-landing-css.js",
-    "prepublishOnly": "npm run build:types",
+    "prepublishOnly": "python3 ../wasm/check_npm_pack.py && npm run build:types",
     "build:types": "vue-tsc --project tsconfig.build.json"
   },
   "peerDependencies": {

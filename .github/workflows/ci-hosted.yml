@@ -51,6 +51,22 @@ jobs:
       - name: Install dependencies
         working-directory: packages/vue
         run: $PNPM_HOME/pnpm install --frozen-lockfile
+      # packages/vue/src/wasm/** is jco output and is not checked in: the Vue
+      # suites import those modules for real and `vue-tsc` type-checks them, so
+      # a checkout without them fails on a missing module rather than on a
+      # defect. `pnpm test` / `pnpm lint` regenerate them through their pre*
+      # hooks; this step is the explicit one, so a toolchain problem surfaces
+      # here (with the compiler's own message) instead of inside a test run.
+      - name: Setup Rust (wasm32-wasip2)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+      - name: Build wasm bindings
+        run: |
+          # `node`/`npm` ship on this runner; jco needs a Node >= 20, which every
+          # job here already provides (setup-node 24, or the self-hosted default).
+          command -v jco >/dev/null || npm install --global @bytecodealliance/jco@1
+          python3 packages/wasm/build.py
       - name: Unit tests (vitest)
         working-directory: packages/vue
         run: $PNPM_HOME/pnpm test

@@ -105,8 +105,20 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
 const { buildFleetSceneSpecWasm, scene3dCapabilities, scene3dReady } = await import(
   "./wasmFleetSpec"
 );
-// The artifact itself, for the door-substitution probe.
-const realWrapper = await import("../wasm/scene3d/hikari_wasm_scene3d.js");
+// The artifact itself, for the door-substitution probe. Generated (jco output,
+// gitignored) — see the qr host-surface suite for why the load is guarded.
+type Artifact = typeof import("../wasm/scene3d/hikari_wasm_scene3d.js");
+let realWrapper: Artifact | undefined;
+try {
+  realWrapper = await import("../wasm/scene3d/hikari_wasm_scene3d.js");
+} catch {
+  realWrapper = undefined;
+  console.warn(
+    "[wasm] scene3d bindings absent — build them: python3 packages/wasm/build.py",
+  );
+}
+// Narrowed once: the raw export the substitution case delegates to.
+const artifact = realWrapper as Artifact;
 const { SCENE3D_CAPABILITIES } = await import("./declare-caps");
 import type { FleetRowLike } from "./holographicFleetSpec";
 
@@ -271,8 +283,8 @@ describe("scene3d spec builder goes through the host client", () => {
 
   // The raw export, for the substitution case. Named so the override above can
   // delegate to it (the door wraps this same function).
-  function rawBuild(rows: Parameters<typeof realWrapper.buildFleetScene>[0]) {
-    return realWrapper.buildFleetScene(rows);
+  function rawBuild(rows: Parameters<Artifact["buildFleetScene"]>[0]) {
+    return artifact.buildFleetScene(rows);
   }
 
   it("publishes the empty declaration the sync door requires", () => {

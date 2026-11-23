@@ -6,6 +6,7 @@
 #   just --summary       - Briefly list all recipe names
 #
 # Main tasks:
+#   just wasm            - Generate the wasm bindings the Vue package consumes
 #   just build           - Build everything (Release)
 #   just build-dev       - Build everything (Debug)
 #   just dev             - Development mode (build and start website)
@@ -168,6 +169,19 @@ type-escape-ratchet:
 type-escape-ratchet-update:
     @echo "  →  Regenerating .type-escapes-baseline.json..."
     @celestia-devtools type-escapes --update-baseline .type-escapes-baseline.json
+
+# ------
+# wasm bindings
+# ------
+
+# Generate packages/vue/src/wasm/** — jco output, gitignored, run once per clone.
+wasm:
+    @echo "  →  Building wasm bindings..."
+    @{{py}} packages/wasm/build.py
+
+# Fail when the npm tarball would ship without those bindings (part of publish).
+check-wasm-pack:
+    @{{py}} packages/wasm/check_npm_pack.py
 
 # ------
 # Cleaning

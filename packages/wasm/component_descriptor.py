@@ -59,6 +59,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import os
 import re
 import sys
 import tomllib
@@ -82,6 +83,13 @@ HERE = Path(__file__).resolve().parent
 #: Where ``cargo build --target wasm32-wasip2 --release`` puts a component by
 #: default; the build lane can point ``--artifacts`` elsewhere.
 DEFAULT_ARTIFACT_DIR = "target/wasm32-wasip2/release"
+
+#: The one command that produces every input this gate reads (the ``.wasm``
+#: artifacts, and — for the callers that then type-check or test the Vue layer
+#: — the jco bindings beside them). Named in every "absent" message: those
+#: messages used to stop at "build it", which assumes the reader already knows
+#: which of several cargo invocations is the supported one.
+BUILD_COMMAND = "python3 packages/wasm/build.py"
 
 #: ``package celestia:hikari-qr@0.1.0;`` -- the id and version the descriptors
 #: must agree with. The namespace and component stem are not hardcoded past
@@ -409,8 +417,9 @@ def check_component(
         if candidate is None or not candidate.is_file():
             verdict.unreached.append(
                 f"{world.component}: artifact for {declared_path!r} not found at "
-                f"{candidate} -- digest unverified (build it, then re-run with "
-                f"--artifacts <dir>)"
+                f"{candidate} -- digest unverified. Build it: {BUILD_COMMAND} "
+                f"(honours CARGO_TARGET_DIR; pass --artifacts <dir> to point this "
+                f"gate somewhere else)"
             )
             continue
         actual = _sha256(candidate)
@@ -421,6 +430,37 @@ def check_component(
                 f"this descriptor pins"
             )
     return verdict
+
+
+def _default_artifact_dir(repo: Path) -> Path | None:
+    """Where this checkout's build leaves the ``.wasm`` files, or ``None``.
+
+    The descriptors declare ``target/wasm32-wasip2/release/<c>.wasm`` — a path
+    relative to the *repository* — which is exactly where an unconfigured
+    ``cargo build`` writes. It is not where a configured one writes: the
+    workspace convention is a task-local ``CARGO_TARGET_DIR``
+    (``/mnt/work/target-<task>``), and the build that satisfies this gate then
+    leaves the artifact outside the checkout entirely. Without this the gate
+    said "digest unverified" about an artifact the caller had just produced,
+    and the only way through was to repeat the path by hand.
+
+    An explicit ``--artifacts`` still wins; this only fills the default.
+    """
+    configured = os.environ.get("CARGO_TARGET_DIR")
+    if configured:
+        # cargo resolves a RELATIVE CARGO_TARGET_DIR against the directory it
+        # runs in, and every build in this repository is spawned with that set
+        # to the checkout root (`build.py`, the CI steps, the task lanes). A
+        # bare ``Path(configured)`` resolves against THIS process's cwd
+        # instead, so running the gate from anywhere else reported "artifacts
+        # absent" for artifacts that exist — the same class of defect `build.py`
+        # had in review round 2, found here in round 4. An absolute value is
+        # unaffected by the join.
+        candidate = (repo / configured / "wasm32-wasip2" / "release").resolve()
+
+        if candidate.is_dir():
+            return candidate
+    return None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -436,7 +476,9 @@ def main(argv: list[str] | None = None) -> int:
         "--artifacts",
         default=None,
         help=f"directory holding the built .wasm files (default: the descriptor's "
-        f"own path, i.e. {DEFAULT_ARTIFACT_DIR}/)",
+        f"own path, i.e. {DEFAULT_ARTIFACT_DIR}/ -- but that path is resolved "
+        f"under CARGO_TARGET_DIR when it is set, which is where `{BUILD_COMMAND}` "
+        f"leaves them)",
     )
     parser.add_argument("--quiet", action="store_true", help="only print failures")
     parser.add_argument(
@@ -451,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
     if not repo.is_dir():
         print(f"component-descriptor: --repo is not a directory: {repo}", file=sys.stderr)
         return EXIT_USAGE
-    artifacts = Path(args.artifacts).resolve() if args.artifacts else None
+    artifacts = Path(args.artifacts).resolve() if args.artifacts else _default_artifact_dir(repo)
 
     worlds = discover(repo)
     if not worlds:

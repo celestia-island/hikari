@@ -259,6 +259,8 @@ Package-level docs:
 - Rust 1.85+ (edition 2024)
 - `just` (command runner) — `cargo install just`
 - Node.js + pnpm (for the Vue port)
+- For the Vue port: the `wasm32-wasip2` Rust target and `jco`
+  (`rustup target add wasm32-wasip2`; `npm install -g @bytecodealliance/jco`)
 
 ### Build Commands
 
@@ -281,6 +283,23 @@ just clippy
 # Start the development server
 just dev
 ```
+
+### Vue port: generate the wasm bindings first
+
+The four wasm-backed Vue components (`qr`, `mermaid`, `scene3d`, `highlight`)
+import generated jco bindings from `packages/vue/src/wasm/`. Those files are
+**build output and are not checked in** — `packages/wasm/build.py` is the only
+thing that produces them:
+
+```bash
+just wasm                       # = python3 packages/wasm/build.py
+```
+
+`pnpm test` and `pnpm lint` in `packages/vue` run it for you when the bindings
+are absent (their `pretest` / `prelint` hooks), so a fresh clone needs nothing
+extra; run it yourself after bumping `jco`, the `wasm32-wasip2` toolchain, or
+any component's Rust source, because those all change the output. The
+`check-wasm-pack` recipe refuses an npm tarball that would ship without them.
 
 ## Contributing
 

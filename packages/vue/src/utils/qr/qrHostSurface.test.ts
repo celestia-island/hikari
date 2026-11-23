@@ -93,8 +93,24 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
 });
 
 const { qrMatrix, qrCapabilities, qrReady } = await import("./qrEncoder");
-// The artifact itself, for the door-substitution probe.
-const realWrapper = await import("../../wasm/qr/hikari_wasm_qr.js");
+// The artifact itself, for the door-substitution probe. Guarded, because the
+// artifact is generated (jco output, gitignored): a checkout that has not run
+// `python3 packages/wasm/build.py` fails the *import* here, which is a resume
+// line no reader can turn into an action — and it would take the whole file
+// down for a suite that has plenty to say without the artifact.
+type Artifact = typeof import("../../wasm/qr/hikari_wasm_qr.js");
+let realWrapper: Artifact | undefined;
+try {
+  realWrapper = await import("../../wasm/qr/hikari_wasm_qr.js");
+} catch {
+  realWrapper = undefined;
+  console.warn(
+    "[wasm] qr bindings absent — build them: python3 packages/wasm/build.py",
+  );
+}
+// Narrowed once: every case below asserts against the real artifact, and the
+// only test that reaches it says so when the build is missing.
+const artifact = realWrapper as Artifact;
 const { QR_CAPABILITIES } = await import("./declare-caps");
 
 const PAYLOAD = "https://example.com/";
@@ -153,10 +169,8 @@ describe("QR engine goes through the host client", () => {
     seam.doorOverride = (name, ...args) => {
       void original;
       // The artifact's own export — the same function the real door wraps.
-      const options = args[1] as
-        | Parameters<typeof realWrapper.encode>[1]
-        | undefined;
-      const value = realWrapper.encode(args[0] as string, options);
+      const options = args[1] as Parameters<Artifact["encode"]>[1] | undefined;
+      const value = artifact.encode(args[0] as string, options);
       if (name !== "encode") return value;
       // Same shape, but every module flipped: a caller that consumed this
       // would produce an inverted matrix.

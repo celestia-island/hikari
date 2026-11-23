@@ -25,7 +25,8 @@ artifacts. The corpus control runs against the real checkout.
 
 Mutation anchors for the claim block above (each id names the gate branch whose
 removal the listed test covers): MUT:no-world-check MUT:no-contract-check
-MUT:no-capability-check MUT:no-digest-check
+MUT:no-capability-check MUT:no-digest-check MUT:build-command-guidance
+MUT:no-cargo-target-dir
 """
 
 from __future__ import annotations
@@ -40,6 +41,22 @@ import pytest
 
 #: This file lives in ``packages/wasm/``; two levels up is the checkout root.
 REPO = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def _isolate_cargo_target_dir(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every case starts with NO ``CARGO_TARGET_DIR``.
+
+    The gate now resolves its default artifact directory under
+    ``CARGO_TARGET_DIR`` when that variable is set (``_default_artifact_dir``),
+    which is what makes a task-lane build readable. Without this fixture the
+    suite would inherit whatever the developer's shell exported and the
+    "artifact absent" cases would silently find the real ones — their
+    assertions would pass or fail depending on the ambient environment rather
+    than on the code under test. The one case that WANTS the variable sets it
+    itself, on top of this empty baseline.
+    """
+    monkeypatch.delenv("CARGO_TARGET_DIR", raising=False)
 
 _gate_spec = importlib.util.spec_from_file_location(
     "component_descriptor", REPO / "packages" / "wasm" / "component_descriptor.py"
@@ -344,6 +361,58 @@ def test_allow_unverified_opts_out_explicitly(tmp_path: Path) -> None:
     result = _run_cli(repo, "--allow-unverified")
     assert result.returncode == gate.EXIT_OK, result.stdout + result.stderr
     assert "could not be verified" in result.stderr, "the opt-out must still announce"
+
+
+def test_an_absent_artifact_names_the_build_command(tmp_path: Path) -> None:
+    # Retiring the checked-in jco bindings made "the tree has no artifacts" the
+    # FIRST state a fresh clone is in, so the message has to be actionable on
+    # its own. "build it, then re-run with --artifacts <dir>" was not: it named
+    # neither the supported command nor the fact that the command honours
+    # CARGO_TARGET_DIR, which is where a task-lane build actually leaves the
+    # file. MUT:build-command-guidance -- dropping BUILD_COMMAND from the
+    # unreached message leaves the build lane with no next step.
+    repo = make_repo(tmp_path / "repo", "qr")
+    result = _run_cli(repo)
+    assert gate.BUILD_COMMAND in result.stderr, result.stderr
+
+
+def test_a_configured_cargo_target_dir_is_where_the_artifacts_are(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The descriptors declare a repo-relative path, which is where an
+    # unconfigured `cargo build` writes -- NOT where the workspace convention
+    # (a task-local CARGO_TARGET_DIR) writes. Before this resolution the gate
+    # reported "digest unverified" for an artifact the caller had just built
+    # into that directory, and passing --artifacts by hand was the only way
+    # through. MUT:no-cargo-target-dir -- with `_default_artifact_dir`
+    # returning None unconditionally, this case exits EXIT_UNVERIFIED.
+    repo = make_repo(tmp_path / "repo", "qr")
+    lane = tmp_path / "lane"
+    (lane / "wasm32-wasip2" / "release").mkdir(parents=True)
+    (lane / "wasm32-wasip2" / "release" / "hikari_wasm_qr.wasm").write_bytes(ARTIFACT)
+    monkeypatch.setenv("CARGO_TARGET_DIR", str(lane))
+    result = _run_cli(repo)
+    assert result.returncode == gate.EXIT_OK, result.stdout + result.stderr
+    assert "digests verified" in result.stdout, result.stdout
+
+
+def test_an_explicit_artifacts_dir_still_wins_over_cargo_target_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The new default must not quietly override the operator's own choice: a
+    # lane directory that does not hold the artifact must still be reported
+    # absent rather than replaced by CARGO_TARGET_DIR's copy.
+    # MUT:explicit-artifacts-wins -- dropping the `if args.artifacts` branch
+    # would let the default silently replace the named directory.
+    repo = make_repo(tmp_path / "repo", "qr")
+    lane = tmp_path / "lane"
+    (lane / "wasm32-wasip2" / "release").mkdir(parents=True)
+    (lane / "wasm32-wasip2" / "release" / "hikari_wasm_qr.wasm").write_bytes(ARTIFACT)
+    monkeypatch.setenv("CARGO_TARGET_DIR", str(lane))
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    result = _run_cli(repo, "--artifacts", str(empty))
+    assert result.returncode == gate.EXIT_UNVERIFIED, result.stdout + result.stderr
 
 
 def test_a_verified_artifact_exits_zero(tmp_path: Path) -> None:

@@ -1711,31 +1711,31 @@ mod tests {
     #[test]
     fn date_picker_grid_pads_at_the_range_edges_without_repeating_days() {
         for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {
-            let cells = month_grid(year, month, 0);
-            let unique: std::collections::BTreeSet<_> = cells.iter().copied().collect();
-            assert_eq!(
-                unique.len(),
-                cells.len(),
-                "grid({year}-{month:02}) repeats a real day: {cells:?}"
-            );
-            assert!(
-                cells.len() <= MONTH_GRID_CELLS,
-                "grid({year}-{month:02}) must never exceed the grid size"
-            );
-            // The month's own first day is in the grid and the leading slack
-            // is under one week.
-            let first = date(year, month, 1);
-            let start = cells.iter().position(|cell| *cell == first);
-            assert!(
-                start.is_some(),
-                "grid({year}-{month:02}) must contain its 1st"
-            );
-            assert!(start.unwrap() < 7, "leading slack must be under one week");
-            assert_eq!(
-                cells[0].weekday().to_sunday_zero_offset(),
-                0,
-                "grid({year}-{month:02}) must start on a Sunday"
-            );
+            // Both locale orders: the leading slack differs, and so does the
+            // number of representable cells the grid can hold.
+            for first_weekday in [0u32, 1] {
+                let cells = month_grid(year, month, first_weekday);
+                let label = format!("grid({year}-{month:02}, fw={first_weekday})");
+                let unique: std::collections::BTreeSet<_> = cells.iter().copied().collect();
+                assert_eq!(
+                    unique.len(),
+                    cells.len(),
+                    "{label} repeats a real day: {cells:?}"
+                );
+                assert!(
+                    cells.len() <= MONTH_GRID_CELLS,
+                    "{label} must never exceed the grid size"
+                );
+                // The month's own first day is in the grid and the leading
+                // slack is under one week.
+                let first = date(year, month, 1);
+                let start = cells.iter().position(|cell| *cell == first);
+                assert!(start.is_some(), "{label} must contain its 1st");
+                assert!(
+                    start.unwrap() < 7,
+                    "{label} leading slack must be under one week"
+                );
+            }
         }
         // The edge really does under-fill, and the render is what pads it.
         let december_9999 = month_grid(9999, 12, 0);

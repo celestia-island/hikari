@@ -106,8 +106,8 @@ use jiff::civil::DateTime as CivilDateTime;
 
 use crate::basic::date_picker::{
     DateLocale, DatePickerNavGlyph, date_locale, date_picker_month, date_picker_nav,
-    date_picker_year, day_view_month_label, is_disabled_day, locale_month_grid, month_pick_label,
-    parse_iso_date, to_iso_date, year_block_start,
+    date_picker_pad_cells, date_picker_year, day_view_month_label, is_disabled_day,
+    locale_month_grid, month_pick_label, parse_iso_date, to_iso_date, year_block_start,
 };
 use crate::basic::date_tag::{active_language, date_tag_parse_value};
 use crate::platform;
@@ -1127,7 +1127,8 @@ fn dtp_build_content(
                 .collect();
 
             let cells = locale_month_grid(locale, view_year, view_month);
-            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
+            let pad_cells = date_picker_pad_cells(cells.len());
+            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len() + pad_cells);
             for day in cells {
                 let out_of_month =
                     date_picker_month(day) != view_month || date_picker_year(day) != view_year;
@@ -1162,6 +1163,14 @@ fn dtp_build_content(
                             span { class: "hk-dtp-cell-dot" }
                         }
                     }
+                });
+            }
+            // Past December 9999 the calendar has no representable day: fill
+            // the final row with inert cells instead of leaving it short (the
+            // same rule the date picker's grid follows).
+            for _ in 0..pad_cells {
+                day_buttons.push(rsx! {
+                    div { class: "hk-dtp-cell is-out" }
                 });
             }
 
@@ -1545,6 +1554,70 @@ mod tests {
         // Inline mode renders no trigger and no popup wrapper.
         assert!(!html.contains("hk-dtp-popup-root"), "{html}");
         assert!(!html.contains("hk-dtp-trigger"), "{html}");
+    }
+
+    /// The date-time picker's grid must pad its short row too.
+    ///
+    /// The December-9999 grid has only 34 representable days; the DATE
+    /// picker was given an inert-cell pad for this and the date-time picker
+    /// was not — the same shortfall stayed live in this component (and no
+    /// test watched it, so the suite was green for the wrong reason).
+    fn grid_html(html: &str) -> &str {
+        let start = html.find("hk-dtp-grid\"").expect("a day grid");
+        let rest = &html[start..];
+        // The grid div closes before the time row; cutting at the next
+        // `hk-dtp-time` keeps the count to this panel's cells only.
+        match rest.find("hk-dtp-time") {
+            Some(end) => &rest[..end],
+            None => rest,
+        }
+    }
+
+    #[test]
+    fn date_time_picker_render_pads_the_range_edge_grid() {
+        let edge = DateTimePicker(DateTimePickerProps {
+            model_value: Some("9999-12-31T09:05".to_string()),
+            today: Some("9999-12-31T09:05".to_string()),
+            view_state: Some(DateTimePickerViewState::anchored(
+                Date::new(9999, 12, 1).expect("valid"),
+            )),
+            ..Default::default()
+        })
+        .render_to_html();
+        let grid = grid_html(&edge);
+        // Real days are `<button>`s, the shortfall is inert `<div>`s; note
+        // `hk-dtp-cell-num` contains the same prefix, so count the element
+        // openings rather than the substring.
+        let buttons = grid.matches("<button").count();
+        let inert = grid.matches("<div class=\"hk-dtp-cell").count();
+        assert_eq!(
+            buttons + inert,
+            42,
+            "the range-edge grid must render 42 cells"
+        );
+        assert_eq!(inert, 8, "the shortfall must be inert cells");
+        assert_eq!(buttons, 34, "34 real day buttons");
+        // An ordinary month pads nothing.
+        let ordinary = DateTimePicker(DateTimePickerProps {
+            model_value: Some("2024-10-06T09:05".to_string()),
+            today: Some("2024-10-06T09:05".to_string()),
+            view_state: Some(DateTimePickerViewState::anchored(
+                Date::new(2024, 10, 6).expect("valid"),
+            )),
+            ..Default::default()
+        })
+        .render_to_html();
+        let grid = grid_html(&ordinary);
+        assert_eq!(
+            grid.matches("<button").count(),
+            42,
+            "an ordinary month is 42 cells from real days alone"
+        );
+        assert_eq!(
+            grid.matches("<div class=\"hk-dtp-cell").count(),
+            0,
+            "an ordinary month must not render inert cells"
+        );
     }
 
     #[test]

@@ -59,10 +59,15 @@ def explain() -> None:
     print(FIX, file=sys.stderr)
     absent = [name for name in ("cargo", "jco") if shutil.which(name) is None]
     if absent:
+        hint = {
+            "cargo": "install Rust (rustup) and run `rustup target add wasm32-wasip2`",
+            "jco": "run `npm install -g @bytecodealliance/jco`",
+        }
         print(
             f"       note: {' and '.join(absent)} "
             f"{'is' if len(absent) == 1 else 'are'} not on PATH — "
-            "install it before the build can run",
+            + "; ".join(hint[name] for name in absent)
+            + " before the build can run",
             file=sys.stderr,
         )
 

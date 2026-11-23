@@ -64,7 +64,13 @@ def target_dir() -> pathlib.Path:
     <checkout>/target/...`` while the file sat in the task directory.
     """
     configured = os.environ.get("CARGO_TARGET_DIR")
-    return pathlib.Path(configured) if configured else ROOT / "target"
+    # cargo is spawned with ``cwd=ROOT``, so a RELATIVE ``CARGO_TARGET_DIR`` is
+    # resolved by cargo against the repository — **not** against whatever
+    # directory this script was invoked from. Joining it to ROOT here is what
+    # keeps the existence check below looking where cargo actually wrote;
+    # leaving it unresolved made a build run from another directory report its
+    # own success as a failure (reported in review round 2).
+    return (ROOT / configured) if configured else ROOT / "target"
 
 
 def ensure_artifact_fresh(wasm: pathlib.Path) -> None:
@@ -111,11 +117,28 @@ def main() -> int:
         if out.exists():
             shutil.rmtree(out)
         out.mkdir(parents=True)
-        subprocess.run(
-            ["jco", "transpile", str(wasm), "-o", str(out),
-             "--base64-cutoff", BASE64_CUTOFF],
-            check=True,
-        )
+        try:
+            subprocess.run(
+                ["jco", "transpile", str(wasm), "-o", str(out),
+                 "--base64-cutoff", BASE64_CUTOFF],
+                check=True,
+            )
+        except FileNotFoundError:
+            raise SystemExit(
+                f"error: jco is not on PATH, so {comp} could not be transpiled. "
+                f"Install it: npm install -g @bytecodealliance/jco"
+            ) from None
+        except subprocess.CalledProcessError as failure:
+            # The output directory was emptied before the run, so a failure
+            # here (bad WIT, jco crash, disk full) leaves nothing usable behind.
+            # Say that instead of dying with a traceback: "the tree looks built
+            # but the component is gone" is the shape that wastes an afternoon,
+            # and the message has to name the command that redoes it.
+            raise SystemExit(
+                f"error: jco transpile failed for {comp} (exit {failure.returncode}).\n"
+                f"       {out} was cleared for the regeneration and holds no bindings now;\n"
+                f"       fix the cause, then re-run: python3 packages/wasm/build.py {comp}"
+            ) from None
         size = sum(f.stat().st_size for f in out.rglob("*") if f.is_file())
         print(f"── {comp} → {out} ({size // 1024}KB)", flush=True)
     print("done")

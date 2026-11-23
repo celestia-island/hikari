@@ -13,4 +13,4 @@ kind = "wasm.component"
 
 [resources.payload.File]
 path = "target/wasm32-wasip2/release/hikari_wasm_scene3d.wasm"
-sha256 = "8cd711adebfe969314ab323c99c7fd79ec0a5eb48bc3284193fa8fbbf4749984"
+sha256 = "0a87425089f0f110f7b66eb75677f648990f879078e60a68ee487ed243cbb1ba"

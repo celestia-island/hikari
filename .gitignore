@@ -1,8 +1,13 @@
 target/
 Cargo.lock
 
-# Local-only cargo patches (e.g. path overrides for unreleased tairitsu)
-.cargo/
+# Local-only cargo settings (e.g. path overrides for unreleased tairitsu).
+# Tracked exceptions are re-included below, one file at a time, so adding a new
+# machine-local file under `.cargo/` stays ignored by default.
+.cargo/*
+!.cargo/config.toml
+!.cargo/audit.toml
+!.cargo/watch.toml
 
 # E2E test logs
 logs/

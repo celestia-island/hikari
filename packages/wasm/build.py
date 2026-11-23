@@ -24,6 +24,20 @@ Environment:
   builds elsewhere still works). ``ensure_artifact_fresh`` below removes the
   previous artifact first, so a stale one can never be mistaken for this
   build's output.
+* ``CARGO_HOME`` / ``RUSTUP_HOME`` decide the two ``--remap-path-prefix`` flags
+  ``component_reproducibility`` derives for **this script's own**
+  ``cargo build``, so the artifact does not depend on what the caller's shell
+  exported. **An unset home is fine**: cargo and rustup fall back to
+  ``~/.cargo`` / ``~/.rustup``, and the derived flag names that fallback --
+  which is exactly what a stock CI runner provides. What ``main`` refuses is an
+  environment that cannot produce pinned bytes: a global ``RUSTFLAGS`` (cargo
+  discards the per-target variable when it is set), or a home that cannot be a
+  remap operand (a quote/space, ``/``, a relative path). Without the remap
+  rustc bakes this machine's absolute paths into the artifact, the bytes stop
+  matching the ``sha256`` this repository's descriptors pin, and akivili rejects
+  the plugin at scan, feed and pack. *Why* the flag is derived from an
+  environment variable rather than written into ``.cargo/config.toml`` is
+  documented in that module.
 """
 import json
 import os
@@ -31,6 +45,8 @@ import pathlib
 import shutil
 import subprocess
 import sys
+
+import component_reproducibility
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -173,10 +189,27 @@ def build(comp: str) -> pathlib.Path:
     wasm = artifact_path(comp, cargo_target_dir())
     ensure_artifact_fresh(wasm)
     print(f"── building {comp}...", flush=True)
+    # A global RUSTFLAGS makes cargo DISCARD the per-target variable, so the
+    # injected value below would be inert and the artifact would carry host
+    # paths while this script reported success. Checked here (not only in
+    # `main`) because `build` is called directly by tests and by any future
+    # caller -- and it is a check about the subprocess env, which is what
+    # `build` builds.
+    blocking = [
+        problem
+        for problem in component_reproducibility.problems(require_flags=False)
+        if problem.variable == component_reproducibility.GLOBAL_RUSTFLAGS_VAR
+    ]
+    if blocking:
+        raise SystemExit(f"error: {blocking[0].detail}")
+    environment = {
+        **os.environ,
+        component_reproducibility.RUSTFLAGS_VAR: component_reproducibility.rustflags(),
+    }
     try:
         subprocess.run(
             ["cargo", "build", "--target", "wasm32-wasip2", "--release", "-p", crate_package(comp)],
-            cwd=ROOT, check=True,
+            cwd=ROOT, check=True, env=environment,
         )
     except FileNotFoundError:
         raise SystemExit(
@@ -199,6 +232,23 @@ def build(comp: str) -> pathlib.Path:
 
 def main() -> int:
     comps = sys.argv[1:] or [d.name for d in HERE.iterdir() if (d / "Cargo.toml").exists()]
+    # Refuse before compiling anything: an unnormalized environment does not
+    # fail this script (cargo succeeds, jco succeeds, the Vue tests pass) -- it
+    # fails LATER, as a registry rejection of a digest nobody thinks they
+    # changed. Checking here is the only point where the fix is still one line.
+    # Homes only -- `build` rewrites the flags from them below, so judging the
+    # caller's `CARGO_TARGET_WASM32_WASIP2_RUSTFLAGS` here would refuse a shell
+    # whose stale value this script cannot be harmed by, and would demand an
+    # export that the very next line overrides.
+    if component_reproducibility.main(require_flags=False) != 0:
+        return 1
+    # FROM THIS POINT THE ARTIFACT BYTES ARE PINNED *TO THESE TWO DIRECTORIES*.
+    # Not to the caller's shell -- `build` rewrites the variable from the homes
+    # above -- so a stale export left in a shell from an older CARGO_HOME cannot
+    # silently produce bytes nobody's descriptor pins. The scope is deliberate:
+    # the rest of reproducibility (same toolchain, same `Cargo.lock`, same
+    # profile) is cargo's usual guarantee and is NOT checked here -- see
+    # `component_reproducibility`'s "what it does NOT claim".
     for comp in sorted(comps):
         wasm = build(comp)
         out = VUE_DST / comp

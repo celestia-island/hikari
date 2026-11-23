@@ -1,0 +1,44 @@
+# Cargo configuration that is part of the reproducibility contract.
+#
+# DELIBERATELY EMPTY OF rustflags. The four wasm components
+# (`packages/wasm/{qr,mermaid,scene3d,highlight}`) ship a `sha256` in their
+# `component.toml`, and akivili's registry compares that digest at scan, feed
+# and pack -- a mismatch rejects the plugin, it is not a warning. For the digest
+# to describe the component rather than the machine that built it, rustc must
+# not bake this host's absolute paths into the artifact:
+#
+#   <CARGO_HOME>/registry/src/<crate>/src/<file>.rs     (inlined qrcode / pest / memchr)
+#   <RUSTUP_HOME>/toolchains/<t>/lib/rustlib/src/...     (core / alloc)
+#
+# `packages/wasm/component_reproducibility.py` derives the two
+# `--remap-path-prefix` flags from those homes and `packages/wasm/build.py`
+# hands them to its `cargo build`. Build the components with both homes set:
+#
+#   export CARGO_HOME=... RUSTUP_HOME=...
+#   python3 packages/wasm/build.py        # prints the exact export line if unset
+#
+# WHY NOT A `[target.wasm32-wasip2] rustflags` TABLE HERE -- measured on hikari
+# 2026-11-24, clean target, `cargo check -p hikari-components`:
+#
+#   no flags                                        825 fingerprint files
+#   CARGO_TARGET_WASM32_WASIP2_RUSTFLAGS=...        825  (byte-identical to baseline)
+#   [target.wasm32-wasip2] rustflags = [...]       1650  (all 825 rewritten)
+#   RUSTFLAGS=... (global)                         1650  (all 825 rewritten)
+#
+# A table under `[target.<triple>]` is folded into the fingerprint of every
+# compiled unit, host target included, exactly like a global RUSTFLAGS -- so a
+# checked-in one would force a full rebuild on every CI run. The per-target
+# *environment variable* is the only spelling that stays narrow.
+#
+# And on this cargo (1.100.0) a target table's rustflags do NOT combine with the
+# per-target environment variable -- measured: with both set, the variable wins
+# and the table's flag is absent from the artifact entirely. So putting a remap
+# here would not back up the env path, it would be dead weight that also costs
+# the full rebuild above.
+#
+# The value cannot be a static table anyway: its operands are the ambient
+# CARGO_HOME / RUSTUP_HOME, which differ per machine and per lane.
+#
+# If you add local-only settings here, keep them out of the committed file --
+# git tracks this one now, and a machine-specific `[patch]` or `rustflags` in it
+# would reach everyone.

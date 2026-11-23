@@ -314,10 +314,10 @@ pub fn start_of_day(value: CivilDateTime) -> Date {
 
 /// Today's wall clock in the SYSTEM time zone — the `today` prop's fallback.
 ///
-/// `ZonedDateTime::now()` reads the host's zone explicitly and degrades to UTC
-/// only when the zone cannot be resolved; the old `Local::now()` had
-/// the same native behaviour but reached UTC silently on a target without TZ
-/// data. An unknown zone is not an error here: a picker still needs a today.
+/// `ZonedDateTime::now()` resolves the host zone explicitly; the value matches
+/// the old `Local::now()` on every target where a clock exists. On
+/// `wasm32-unknown-unknown` it needs jiff's `js` feature — without it jiff
+/// panics outright (see the workspace `jiff` declaration).
 pub fn today_wall_clock() -> CivilDateTime {
     jiff::ZonedDateTime::now().datetime()
 }

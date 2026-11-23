@@ -414,6 +414,13 @@ pub fn shift_month(year: i32, month: u32, delta: i32) -> (i32, u32) {
 
 /// The 42 day cells of a month grid (6 rows × 7 columns), starting on the
 /// locale's first weekday — Vue's `cells` computed, one to one.
+///
+/// The grid is ALWAYS 42 cells, including where it spills past the calendar's
+/// own bounds: `1..=9999` is the accepted input range, but December 9999's
+/// trailing row runs into 10000, and `civil::Date` stops at 9999 — so the
+/// tail is rendered from the INDEX rather than by stepping the date. Stepping
+/// and stopping at the range edge (the obvious shape) silently shortened that
+/// month to 34 cells and left the last row ragged.
 pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
     let Some(first) = date_picker_date(year, clamp_month(month), 1) else {
         return Vec::new();
@@ -421,20 +428,19 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
     // Vue: `(first.getDay() - firstDay + 7) % 7` days of leading slack.
     let lead =
         (i32::from(first.weekday().to_sunday_zero_offset()) + 7 - (first_weekday % 7) as i32) % 7;
-    let mut cursor = first;
-    for _ in 0..lead {
-        cursor = match cursor.yesterday().ok() {
-            Some(previous) => previous,
-            None => return Vec::new(),
-        };
-    }
     let mut cells = Vec::with_capacity(42);
-    for _ in 0..42usize {
-        cells.push(cursor);
-        cursor = match cursor.tomorrow().ok() {
-            Some(next) => next,
-            None => break,
-        };
+    // Walk by index from the first cell, so `0..42` is unconditional.
+    for index in 0..42usize {
+        let offset = index as i32 - lead;
+        let date = first
+            .checked_add(jiff::Span::new().days(i64::from(offset)))
+            .ok();
+        match date {
+            Some(date) => cells.push(date),
+            // Only reachable outside `1..=9999` — the grid still needs a slot,
+            // and `first` is the closest representable date to it.
+            None => cells.push(first),
+        }
     }
     cells
 }
@@ -752,11 +758,10 @@ pub fn date_locale(language: Language) -> DateLocale {
 /// Today's calendar date in the SYSTEM time zone (Vue: `new Date()`,
 /// refreshed on every open).
 ///
-/// `ZonedDateTime::now()` reads the host's zone explicitly and falls back to
-/// UTC only when the zone cannot be resolved. The old `Local::now()`
-/// had the same native behaviour but degraded to UTC silently on a target
-/// without TZ data, which is the failure mode this shape names instead of
-/// inheriting.
+/// `ZonedDateTime::now()` resolves the host zone explicitly; the value matches
+/// the old `Local::now()` on every target where a clock exists. On
+/// `wasm32-unknown-unknown` it needs jiff's `js` feature — without it jiff
+/// panics outright (see the workspace `jiff` declaration).
 pub fn today_date() -> Date {
     jiff::ZonedDateTime::now().date()
 }
@@ -1665,6 +1670,49 @@ mod tests {
         for month in 1..=12u32 {
             assert_eq!(month_grid(2024, month, 0).len(), 42, "month {month}");
         }
+    }
+
+    /// Every month that the picker can actually navigate to renders 42 cells.
+    ///
+    /// The range EDGES are the interesting ones: December 9999's trailing row
+    /// runs into 10000, which `civil::Date` cannot represent. A grid built by
+    /// stepping the date and stopping at the range edge returned **34** cells
+    /// there (measured) — a ragged final row — where chrono produced a full
+    /// 6x7 (it allowed year 10000). The state machine clamps to
+    /// `min_year`/`max_year` only in the prop-typed paths, so the edge is
+    /// reachable. January 1 is the other edge; it has no leading slack, but
+    /// its trailing row is checked too, and year 9999 is the largest the
+    /// accepted input range allows.
+    #[test]
+    fn date_picker_grid_is_six_rows_at_the_range_edges() {
+        for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {
+            let cells = month_grid(year, month, 0);
+            assert_eq!(
+                cells.len(),
+                42,
+                "grid({year}-{month}) must be 42 cells, got {}",
+                cells.len()
+            );
+            // The month's own first day is in the grid, and the leading slack
+            // is still a Sunday-first run.
+            let first = date(year, month, 1);
+            let start = cells.iter().position(|cell| *cell == first);
+            assert!(start.is_some(), "grid({year}-{month}) must contain its 1st");
+            assert!(start.unwrap() < 7, "leading slack must be under one week");
+            assert_eq!(
+                cells[0].weekday().to_sunday_zero_offset(),
+                0,
+                "grid({year}-{month}) must start on a Sunday"
+            );
+        }
+        // A non-edge month keeps rendering the real trailing month, so the
+        // edge fallback cannot have replaced the ordinary path. 2024-03-01 is
+        // a Friday, so a Sunday-first grid opens on 2024-02-25 and its 42nd
+        // cell is 2024-04-06.
+        let march = month_grid(2024, 3, 0);
+        assert_eq!(march.len(), 42);
+        assert_eq!(march[0], date(2024, 2, 25));
+        assert_eq!(march[41], date(2024, 4, 6));
     }
 
     #[test]

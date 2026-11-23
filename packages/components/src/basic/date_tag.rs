@@ -516,11 +516,15 @@ mod tests {
 
     /// The epoch arm reads UTC, and the year range is chrono's `1..=9999`.
     ///
-    /// Pins the two places the `chrono` -> `jiff` swap could have moved a
-    /// contract: `civil::Date` spans `-9999..=9999` (so year `0` and negative
-    /// years would parse without the explicit guard) while chrono rejected
-    /// them, and `civil::DateTime`'s `Display` carries an offset (`+00:00`)
-    /// whereas the shipped value shape has none.
+    /// Pins what the `chrono` -> `jiff` swap could have moved here.
+    ///
+    /// Two real ones: `civil::Date` spans `-9999..=9999`, so year `0` and
+    /// negative years would parse without the explicit guard where chrono
+    /// rejected them; and the epoch arm must stay UTC-anchored. (An earlier
+    /// version of this comment also claimed `civil::DateTime`'s `Display`
+    /// carries an offset — it does not: it renders `2024-10-06T00:00:00`.
+    /// The assertion below pins the offset-free shape by value, which is the
+    /// useful part.)
     #[test]
     fn date_tag_epoch_arm_is_utc_and_the_year_range_is_chronos() {
         // A positive epoch instants pin that the reading is UTC and not the

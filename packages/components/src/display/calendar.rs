@@ -6,12 +6,14 @@ use hikari_palette::classes::{CalendarClass, ClassesBuilder, UtilityClass};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
-/// Today's year and month in the SYSTEM time zone.
+/// Today's year and month in the system time zone.
 ///
-/// `ZonedDateTime::now()` names the zone explicitly and degrades to UTC only
-/// when it cannot be resolved; the old `Local::now()` reached UTC silently on
-/// a target without TZ data. `Date::year()` is `i16` and the props are `i32`,
-/// so the widening is explicit here rather than a silent `as`.
+/// `ZonedDateTime::now()` resolves the host zone explicitly, so the value is
+/// the same as the old `Local::now()` on every target where a clock exists.
+/// On `wasm32-unknown-unknown` it needs jiff's `js` feature — without it jiff
+/// panics outright (see the workspace `jiff` declaration). `Date::year()` is
+/// `i16` and the props are `i32`, so the widening is explicit here rather than
+/// a silent `as`.
 fn get_current_date() -> (i32, u32) {
     let now = jiff::ZonedDateTime::now().date();
     (i32::from(now.year()), u32::from(now.month().unsigned_abs()))

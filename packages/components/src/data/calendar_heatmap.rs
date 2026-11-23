@@ -220,21 +220,39 @@ pub fn heatmap_gap_style() -> String {
 
 // ── dates (pure; UTC day boundaries only) ───────────────────────────────
 
+/// The series ships `YYYY-MM-DD` and NOTHING else.
+///
+/// Deliberately not `iso.parse::<Date>()`: jiff's default temporal parser is
+/// documented to accept "anything that contains a date", so a full RFC 3339
+/// timestamp, a space-separated date-time, or a bracketed annotation would
+/// all parse (measured) — and this parser keys `value_by_date` and the gap
+/// decisions, so a looser accept-set silently turns malformed series input
+/// into a rendered column instead of the documented empty grid. The shape is
+/// checked byte-wise first, exactly like `parse_iso_date` in `date_picker`.
 fn heatmap_parse_iso(iso: &str) -> Option<Date> {
-    // `civil::Date`'s `FromStr` accepts exactly the `YYYY-MM-DD` shape
-    // this series ships (jiff rejects the unpadded and offset-bearing
-    // forms a bare date parser would wave through).
+    let bytes = iso.as_bytes();
+    if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-' {
+        return None;
+    }
+    if !bytes
+        .iter()
+        .enumerate()
+        .all(|(index, byte)| index == 4 || index == 7 || byte.is_ascii_digit())
+    {
+        return None;
+    }
     iso.parse::<Date>().ok()
 }
 
 /// ISO date ± n days (UTC arithmetic only — no local timezone leaks).
+///
+/// Out-of-range offsets are `None`, never a panic: `Span::days` panics past
+/// ±7_304_484 days and negating `i64::MIN` would overflow, so the shift is
+/// built fallibly and the magnitude handled without a negation.
 pub fn heatmap_shift_iso(iso: &str, days: i64) -> Option<String> {
     let date = heatmap_parse_iso(iso)?;
-    let shifted = if days >= 0 {
-        date.checked_add(jiff::Span::new().days(days)).ok()?
-    } else {
-        date.checked_sub(jiff::Span::new().days(-days)).ok()?
-    };
+    let span = jiff::Span::new().try_days(days).ok()?;
+    let shifted = date.checked_add(span).ok()?;
     Some(shifted.strftime("%Y-%m-%d").to_string())
 }
 
@@ -810,15 +828,20 @@ mod tests {
 
     // ── date math ──────────────────────────────────────────────────────
 
-    /// The ISO rendering must be STRICTLY zero-padded, byte for byte.
+    /// The ISO rendering must be strictly zero-padded, byte for byte.
     ///
-    /// Negative control, measured: swapping these two `strftime("%Y-%m-%d")`
-    /// calls for chrono's `format("%Y-%m-%d")` — which space-pads a 4-digit
-    /// year to `"  24"` — left all fourteen pre-existing heatmap tests green,
-    /// because every grid fixture is a 3-digit-free 4-digit year and the
-    /// padding only shows up at the day-boundary cells' ISO keys. Without this
-    /// test the `chrono` -> `jiff` swap could have changed the series' wire
-    /// shape (and the `value_by_date` lookups that key on it) unnoticed.
+    /// Correction to an earlier version of this test: it claimed chrono's
+    /// `%Y` space-pads a sub-1000 year (so the `jiff` swap had something to
+    /// preserve). That is **false** — measured on chrono 0.4.45, `%Y` renders
+    /// year 987 as `"0987"`, exactly like jiff's `strftime`. Both renderers
+    /// zero-pad, so this was never a behavioural delta of the swap.
+    ///
+    /// The assertion is kept because the invariant itself is worth pinning:
+    /// the series' wire shape and the `value_by_date` lookups key on it, and
+    /// fourteen pre-existing heatmap tests do not watch a sub-1000 year at
+    /// all. It stays falsifiable — a renderer that padded with spaces fails
+    /// it (verified by mutation), which is what makes it a guard rather than
+    /// a restatement.
     #[test]
     fn heatmap_iso_rendering_is_zero_padded_not_space_padded() {
         // Four-digit years: both renderers agree, so pin it anyway.
@@ -826,8 +849,8 @@ mod tests {
             heatmap_shift_iso("2025-12-01", 0).as_deref(),
             Some("2025-12-01")
         );
-        // Below 1000 chrono emitted `" 987-01-06"`; nothing may carry the
-        // space, and the grid key must stay the ISO shape.
+        // Below 1000 the padding is the only thing keeping the width stable;
+        // the grid key must stay the 10-byte ISO shape.
         assert_eq!(
             heatmap_shift_iso("0987-01-06", 1).as_deref(),
             Some("0987-01-07")
@@ -848,6 +871,63 @@ mod tests {
         );
         assert_eq!(&today[4..5], "-");
         assert_eq!(&today[7..8], "-");
+    }
+
+    /// The series parser accepts ONLY the 10-byte `YYYY-MM-DD` shape.
+    ///
+    /// jiff's default temporal parser is documented to accept "anything that
+    /// contains a date", so the plain `iso.parse::<Date>()` this migration
+    /// started with took full RFC 3339 timestamps, space-separated
+    /// date-times, and bracketed annotations (all measured as `Ok`). Because
+    /// this parser keys `value_by_date` and the gap decisions, that looser
+    /// accept-set silently turned malformed input into a rendered column
+    /// instead of the documented empty grid. These assertions pin the strict
+    /// set back; each row was `Err` under chrono's `%Y-%m-%d` parser too.
+    #[test]
+    fn heatmap_parse_iso_accepts_only_the_plain_iso_day() {
+        // In-contract shape.
+        assert_eq!(
+            heatmap_shift_iso("2024-10-06", 0).as_deref(),
+            Some("2024-10-06")
+        );
+        // Out-of-contract shapes must be rejected, not silently truncated to
+        // the date part.
+        for raw in [
+            "2024-10-06T00:00:00Z",
+            "2024-10-06T12:34:56+09:00",
+            "2024-10-06 12:34:56",
+            "2024-10-06T12:34:56[America/New_York]",
+            "20241006",
+            "2024-1-6",
+            "24-10-06",
+            "",
+        ] {
+            assert_eq!(
+                heatmap_shift_iso(raw, 0),
+                None,
+                "{raw:?} must not parse as an ISO day"
+            );
+        }
+    }
+
+    /// Shift arithmetic is total: out-of-range offsets are `None`, not a panic.
+    ///
+    /// `Span::days` panics past +/-7_304_484 days and `-i64::MIN` overflows on
+    /// negation, so the fallible `try_days` + `checked_add` pair is what keeps
+    /// this public function panic-free where chrono's `checked_*_days`
+    /// returned `None`.
+    #[test]
+    fn heatmap_shift_is_total_at_the_numeric_edges() {
+        assert_eq!(heatmap_shift_iso(MON, i64::MAX), None);
+        assert_eq!(heatmap_shift_iso(MON, i64::MIN), None);
+        assert_eq!(heatmap_shift_iso(MON, 7_304_485), None);
+        assert_eq!(heatmap_shift_iso(MON, -7_304_485), None);
+        // A shift that fits the CALENDAR still works — the span bound is
+        // ~20k years while `civil::Date` stops at 9999, so a large-but-sane
+        // offset must not be rejected by the span guard.
+        assert_eq!(heatmap_shift_iso(MON, 365).as_deref(), Some("2026-12-01"));
+        // Past the calendar's own edge is `None`, not a panic.
+        assert_eq!(heatmap_shift_iso("9999-12-31", 1), None);
     }
 
     #[test]

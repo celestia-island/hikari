@@ -89,11 +89,17 @@ export function hkMfaVerifySubtitle(
   t: HkMfaTranslate,
   options: { subtitle?: string; proven?: string | null; accountName?: string } = {},
 ): string {
-  if (options.subtitle !== undefined) return options.subtitle;
   const name = options.accountName ?? "";
   const proven = options.proven && hkIsMfaFactor(options.proven)
     ? hkMfaFactorLabel(t, options.proven)
     : null;
+  // A host override wins over the derived sentence, but the placeholders
+  // still interpolate: a host that passes its own wording is usually
+  // keeping the account name in it, and a literal `{name}` on screen is
+  // exactly the kind of silent difference this helper exists to remove.
+  if (options.subtitle !== undefined) {
+    return fill(options.subtitle, { name, proven: proven ?? "" });
+  }
   if (proven) {
     return name
       ? fill(t("hikari::mfaVerify.step2Subtitle",

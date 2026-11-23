@@ -738,6 +738,42 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     expect(document.activeElement).not.toBe(input);
   });
 
+  it("leaves no focus inside the inert leaving generation on either leg", async () => {
+    // The invariant behind the blur watch, asserted directly instead of
+    // through "the field I typed in is not focused": a control that stays
+    // focused inside a generation HkCrossfade has marked `inert` is dead
+    // focus — the browser refuses it, and on Android it makes the autofill
+    // panel chase the morph.
+    // MUT:step-swap-no-blur (dropping the step watch leaves the account
+    // input focused inside the inert item on the first leg).
+    // A passkey factor: its action is ENABLED with no input, so the
+    // second leg can actually put focus on it (a disabled submit refuses
+    // focus and would make this leg vacuous).
+    const { container, step } = mountStepHost({ factors: ["passkey"] });
+    const focusedInsideInert = () =>
+      Array.from(container.querySelectorAll<HTMLElement>("[inert]"))
+        .some((inert) => inert.contains(document.activeElement));
+
+    // leg 1: account → verify with the username field focused
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="signin-username"]',
+    )!;
+    input.focus();
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(focusedInsideInert()).toBe(false);
+
+    // leg 2: verify → account with the step-up action focused
+    const action = container.querySelector<HTMLButtonElement>(
+      '.hk-crossfade-item[data-crossfade-key="verify"] .hk-btn-primary',
+    )!;
+    action.focus();
+    expect(document.activeElement).toBe(action);
+    step.value = "account";
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(focusedInsideInert()).toBe(false);
+  });
+
   it("marks the verify body as the swapped region, and never the tabs", async () => {
     // `hk-login-flow-body` is the blur scope: it must match the swapped
     // body of whichever generation is on stage. The account generation's
@@ -798,6 +834,57 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
       .toBe("Confirm it's you");
     expect(branded.querySelector(".s-auth-subtitle")?.textContent)
       .toBe("Acme keeps your account safe");
+  });
+
+  it("wires the anchor hook to the card's top edge (behaviour, not just the wrapper)", async () => {
+    // The structural pin below only sees the wrapper. THIS one proves the
+    // flow actually hands that wrapper to useAnchoredTop: a stubbed
+    // observer + a stubbed rect let the probe drive the real hook.
+    // MUT:flow-drops-anchor-hook (deleting `useAnchoredTop(anchorRef)`
+    // leaves the wrapper in place but no transform ever appears).
+    const renders: Array<() => void> = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        private readonly cb: () => void;
+        constructor(cb: () => void) {
+          this.cb = cb;
+          renders.push(cb);
+        }
+        observe() {}
+        disconnect() {}
+        unobserve() {}
+      },
+    );
+    const top = ref(100);
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const own = (this as HTMLElement).style?.transform ?? "";
+        const shift = Number(/translateY\((-?[\d.]+)px\)/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return {
+          top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}),
+        } as DOMRect;
+      },
+    );
+
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "account",
+      }),
+    );
+    const anchor = c.querySelector(".hk-login-flow-anchor") as HTMLElement;
+    expect(anchor.style.transform).toBe("");
+    // A centered host lifts the top edge by 12px while the card grows.
+    top.value = 88;
+    for (const cb of renders) cb();
+    expect(anchor.style.transform).toBe("translateY(12px)");
+
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("anchors the card's top edge on a growing frame (structural pin)", async () => {

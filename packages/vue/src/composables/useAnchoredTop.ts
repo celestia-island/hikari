@@ -58,9 +58,10 @@ export function needsAnchorCorrection(
  *   than a second opinion on the layout).
  * - The transform is paint-only: it never feeds back into layout, so the
  *   loop cannot oscillate and the correction is exact after one step.
- * - The shift is kept (not released) when the morph settles: releasing it
- *   would slide the block back to its layout position, i.e. replay the
- *   very motion this removes. It therefore ACCUMULATES across swaps, and a
+ * - The shift is kept (not released) when the morph settles: the held
+ *   offset is part of the resting arrangement now, and dropping it would
+ *   move the block by that offset the next time it re-enters the
+ *   measurement path. It therefore ACCUMULATES across swaps, and a
  *   symmetric pair returns it to where it started only when both legs are
  *   measured the same way — the shipped symmetric swaps (account → verify
  *   → account, channel A → B → A) do, verified on the browser rig, but

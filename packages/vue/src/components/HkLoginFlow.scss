@@ -7,6 +7,13 @@
 // justify-items the crossfade items — the chest blueprint's hard-won
 // rule. Hosts that embed the panel in a wider stage can override the
 // CSS var locally.
+//
+// Scope of that guarantee, stated honestly: the width contract is
+// enforced by `styles/authCardWidth.test.ts`, which reads the COMPOSED
+// sheet; a rule in a component sheet (like this one) can therefore carry
+// a `max-width` without the guard seeing it. Nothing here does — the
+// rules below only carry `width: 100%` — and a future cap added here
+// would have to extend that guard first.
 
 .hk-login-flow {
   width: 100%;

@@ -258,39 +258,35 @@ export const HkLoginFlow = defineComponent({
 
     // Anti-strobe on EVERY swap (the chest round-22 field report
     // HkStepFlow's dropFlowFocus used to cover): a field still focused
-    // INSIDE the leaving body re-anchors the Android autofill panel on
-    // every layout beat of the morph — and HkCrossfade marks the leaving
-    // item `inert`, so a field that survives into the dissolve is blurred
-    // by the browser at the START of it and the caret lands wherever the
-    // next node puts it. Both triggers watch the same thing:
+    // inside the LEAVING generation re-anchors the Android autofill panel
+    // on every layout beat of the morph — and HkCrossfade marks the
+    // leaving item `inert`, so a control that survives into the dissolve
+    // is blurred by the browser only when that attribute lands, i.e. one
+    // beat into the motion. Both triggers blur EARLY, before the patch
+    // (a pre-flush watch), with scopes that keep the channel rule's
+    // accessibility promise:
     //
-    // - the CHANNEL swap (the credentials/sso body below the tabs),
-    // - the STEP swap (account ↔ verify): the focused username field is
-    //   inside the generation that is about to leave, so the early blur
-    //   is what keeps the autofill panel from chasing the morph. The
-    //   entering step-up body then claims focus itself (autofocus on the
-    //   proof field / the passkey action).
+    // - CHANNEL swap: only `.hk-login-flow-body` (the swapped body) — the
+    //   tab buttons live outside it and the activated tab must keep focus
+    //   (keyboard a11y).
+    // - STEP swap: the WHOLE panel. Everything on stage takes part in the
+    //   dissolve (tabs included — the verify generation has none), so no
+    //   control may stay focused inside the leaving item. The entering
+    //   step-up body claims the caret itself (autofocus).
     //
-    // The tab buttons are deliberately OUTSIDE the blur scope — the
-    // activated tab must keep focus (keyboard a11y): they live in the
-    // shell's form block, while `hk-login-flow-body` marks the swapped
-    // body of the generation on stage (the inner channel container, or
-    // the verify generation's form block).
-    // MUT:step-swap-no-blur (dropping props.step from this watch leaves
-    // the username field focused through the inert window — the
-    // account→verify focus pin goes red).
-    watch(
-      () => `${props.step}|${currentChannel.value?.key ?? ""}`,
-      () => {
-        const active = document.activeElement;
-        if (
-          active instanceof HTMLElement &&
-          active.closest(".hk-login-flow-body")
-        ) {
-          active.blur();
-        }
-      },
-    );
+    // MUT:step-swap-no-blur (dropping the step watch leaves the username
+    // field focused through the inert window — the account→verify focus
+    // pin goes red). MUT:channel-blur-scope-fold (widening the channel
+    // watch to the whole flow blurs the activated tab and its pin goes
+    // red).
+    function blurFocusIn(scope: string): void {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.closest(scope)) {
+        active.blur();
+      }
+    }
+    watch(() => props.step, () => blurFocusIn(".hk-login-flow"));
+    watch(() => currentChannel.value?.key, () => blurFocusIn(".hk-login-flow-body"));
 
     /** Segment label precedence: explicit label > the conventional-key
      *  locale > the raw key. The conventional keys cover every Celestia

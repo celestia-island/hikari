@@ -397,7 +397,22 @@ describe("HkMfaVerifyCard — bare mode (host-owned card shell)", () => {
       "TOTP authenticator app passed — choose one more method to finish signing in to demiurge");
     expect(hkMfaVerifySubtitle(flat, { proven: "totp" })).toBe(
       "Verified via TOTP authenticator app — choose one more method to finish signing in");
+    // A host override keeps its own wording but still interpolates: a
+    // literal `{name}` on screen is the silent difference this helper
+    // exists to remove (the prop's doc promises the interpolation).
+    // MUT:subtitle-override-raw (returning the override verbatim leaves
+    // the placeholders in and this goes red).
     expect(hkMfaVerifySubtitle(flat, { subtitle: "Custom" })).toBe("Custom");
+    expect(
+      hkMfaVerifySubtitle(flat, {
+        subtitle: "Acme needs {proven} from {name}",
+        accountName: "demiurge",
+        proven: "passkey",
+      }),
+    ).toBe("Acme needs Passkey from demiurge");
+    expect(
+      hkMfaVerifySubtitle(flat, { subtitle: "Acme needs nothing else", accountName: "demiurge" }),
+    ).toBe("Acme needs nothing else");
     // Shell mode and bare mode name the factors identically.
     expect(hkMfaFactorLabel(flat, "password")).toBe("Account password");
   });

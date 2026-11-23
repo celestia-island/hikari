@@ -37,13 +37,20 @@ _spec.loader.exec_module(build_lane)
 
 @pytest.fixture()
 def lane(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A fake target directory and a no-op spawn."""
-    monkeypatch.setenv("CARGO_TARGET_DIR", str(tmp_path))
+    """A fake target directory, reported the way cargo reports it.
+
+    ``build`` asks ``cargo metadata`` where it is writing instead of deriving
+    the path itself (review round 4: a second implementation of that rule is a
+    defence aimed at a directory cargo might not be using). The fixture stubs
+    the answer, so the cases are about what the script does with the file, not
+    about the environment variable.
+    """
+    monkeypatch.setattr(build_lane, "cargo_target_dir", lambda: tmp_path)
     return tmp_path
 
 
 def artifact(lane: Path, comp: str = "qr") -> Path:
-    path = build_lane.artifact_path(comp)
+    path = build_lane.artifact_path(comp, lane)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -51,9 +58,34 @@ def artifact(lane: Path, comp: str = "qr") -> Path:
 def test_the_artifact_path_is_the_crate_name(lane: Path) -> None:
     # ``cargo build -p hikari-wasm-scene3d`` writes ``hikari_wasm_scene3d.wasm``.
     # Getting this wrong turns every build into "no wasm", so it is pinned.
-    assert build_lane.artifact_path("scene3d") == (
+    assert build_lane.artifact_path("scene3d", lane) == (
         lane / "wasm32-wasip2" / "release" / "hikari_wasm_scene3d.wasm"
     )
+
+
+def test_the_defence_follows_cargo_not_the_environment(
+    lane: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # MUT:defence-follows-cargo -- if ``build`` derived the path from
+    # CARGO_TARGET_DIR instead of asking cargo, the unlink and the presence
+    # check would both aim at ``elsewhere`` while cargo wrote under ``lane``,
+    # and a planted file under ``elsewhere`` would be transpiled as this
+    # build's output (round-4 reproduction: scene3d's bytes shipped as qr's
+    # bindings, build rc=0).
+    elsewhere = tmp_path / "elsewhere"
+    (elsewhere / "wasm32-wasip2" / "release").mkdir(parents=True)
+    planted = elsewhere / "wasm32-wasip2" / "release" / "hikari_wasm_qr.wasm"
+    planted.write_bytes(b"foreign")
+    monkeypatch.setenv("CARGO_TARGET_DIR", str(elsewhere))
+
+    def fake_run(*args, **kwargs):
+        # cargo only writes under the directory it reported.
+        artifact(lane, "qr").write_bytes(b"this build")
+        return None
+
+    monkeypatch.setattr(build_lane.subprocess, "run", fake_run)
+    assert build_lane.build("qr") == build_lane.artifact_path("qr", lane)
+    assert planted.read_bytes() == b"foreign", "the foreign file must not be the one read back"
 
 
 def test_a_rebuilt_artifact_is_accepted(lane: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -110,6 +142,21 @@ def test_the_unlink_runs_before_the_build(lane: Path, monkeypatch: pytest.Monkey
     monkeypatch.setattr(build_lane.subprocess, "run", fake_run)
     assert build_lane.build("qr") == path
     assert seen == ["gone"], seen
+
+
+def test_a_missing_cargo_in_the_metadata_probe_names_the_install(
+    monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # ``cargo_target_dir`` runs the real ``cargo metadata``; only the spawn is
+    # stubbed. (The ``lane`` fixture stubs ``cargo_target_dir`` itself, so the
+    # probe has to be exercised without it.)
+    def no_cargo(*args, **kwargs):
+        raise FileNotFoundError(2, "No such file or directory", "cargo")
+
+    monkeypatch.setattr(build_lane.subprocess, "run", no_cargo)
+    with pytest.raises(SystemExit) as failure:
+        build_lane.cargo_target_dir()
+    assert "cargo is not on PATH" in str(failure.value.code), failure.value.code
 
 
 def test_a_missing_cargo_names_the_install(lane: Path, monkeypatch: pytest.MonkeyPatch) -> None:

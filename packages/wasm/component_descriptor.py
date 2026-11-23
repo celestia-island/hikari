@@ -432,7 +432,7 @@ def check_component(
     return verdict
 
 
-def _default_artifact_dir() -> Path | None:
+def _default_artifact_dir(repo: Path) -> Path | None:
     """Where this checkout's build leaves the ``.wasm`` files, or ``None``.
 
     The descriptors declare ``target/wasm32-wasip2/release/<c>.wasm`` — a path
@@ -448,10 +448,18 @@ def _default_artifact_dir() -> Path | None:
     """
     configured = os.environ.get("CARGO_TARGET_DIR")
     if configured:
-        candidate = Path(configured) / "wasm32-wasip2" / "release"
+        # cargo resolves a RELATIVE CARGO_TARGET_DIR against the directory it
+        # runs in, and every build in this repository is spawned with that set
+        # to the checkout root (`build.py`, the CI steps, the task lanes). A
+        # bare ``Path(configured)`` resolves against THIS process's cwd
+        # instead, so running the gate from anywhere else reported "artifacts
+        # absent" for artifacts that exist — the same class of defect `build.py`
+        # had in review round 2, found here in round 4. An absolute value is
+        # unaffected by the join.
+        candidate = (repo / configured / "wasm32-wasip2" / "release").resolve()
 
         if candidate.is_dir():
-            return candidate.resolve()
+            return candidate
     return None
 
 
@@ -485,7 +493,7 @@ def main(argv: list[str] | None = None) -> int:
     if not repo.is_dir():
         print(f"component-descriptor: --repo is not a directory: {repo}", file=sys.stderr)
         return EXIT_USAGE
-    artifacts = Path(args.artifacts).resolve() if args.artifacts else _default_artifact_dir()
+    artifacts = Path(args.artifacts).resolve() if args.artifacts else _default_artifact_dir(repo)
 
     worlds = discover(repo)
     if not worlds:

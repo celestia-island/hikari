@@ -38,7 +38,6 @@
     ]
   },
   "include": [
-    "src/wasm/**/*.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.d.ts",

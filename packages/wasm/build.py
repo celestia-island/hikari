@@ -25,6 +25,7 @@ Environment:
   previous artifact first, so a stale one can never be mistaken for this
   build's output.
 """
+import json
 import os
 import pathlib
 import shutil
@@ -88,9 +89,43 @@ def ensure_artifact_fresh(wasm: pathlib.Path) -> None:
     wasm.unlink(missing_ok=True)
 
 
-def artifact_path(comp: str) -> pathlib.Path:
-    """Where cargo leaves this component's ``.wasm``."""
-    return target_dir() / "wasm32-wasip2" / "release" / f"hikari_wasm_{comp.replace('-', '_')}.wasm"
+def artifact_path(comp: str, target: pathlib.Path | None = None) -> pathlib.Path:
+    """Where cargo leaves this component's ``.wasm`` under ``target``.
+
+    ``target`` defaults to ``target_dir()``. ``build`` asks cargo where it is
+    actually writing (``cargo metadata``) instead of trusting the prediction —
+    a guess that disagrees with cargo is exactly how a stale artifact gets
+    read: the defence would unlink and check the wrong file (review round 4).
+    """
+    return (target or target_dir()) / "wasm32-wasip2" / "release" / f"hikari_wasm_{comp.replace('-', '_')}.wasm"
+
+
+def cargo_target_dir() -> pathlib.Path:
+    """The target directory **cargo** uses for this workspace, asked of cargo.
+
+    ``cargo metadata`` reports ``target_directory`` after applying
+    ``CARGO_TARGET_DIR`` (relative values against the process cwd), any
+    ``config.toml`` override, and the workspace default. Deriving it here in
+    Python instead would be a second implementation of that rule — and every
+    divergence between the two is a build that transpiles bytes from somewhere
+    other than the compilation it just ran.
+    """
+    try:
+        completed = subprocess.run(
+            ["cargo", "metadata", "--no-deps", "--format-version", "1", "--manifest-path", str(ROOT / "Cargo.toml")],
+            cwd=ROOT, check=True, capture_output=True, text=True,
+        )
+    except FileNotFoundError:
+        raise SystemExit(
+            "error: cargo is not on PATH — install Rust (rustup), then run "
+            "`rustup target add wasm32-wasip2`"
+        ) from None
+    except subprocess.CalledProcessError as failure:
+        raise SystemExit(
+            f"error: `cargo metadata` failed (exit {failure.returncode}) — "
+            f"see the output above"
+        ) from None
+    return pathlib.Path(json.loads(completed.stdout)["target_directory"])
 
 
 def signature(path: pathlib.Path) -> tuple[int, int] | None:
@@ -120,7 +155,7 @@ def build(comp: str) -> pathlib.Path:
     crate_dir = HERE / comp
     if not (crate_dir / "Cargo.toml").exists():
         raise SystemExit(f"error: no Cargo.toml for component {comp!r} at {crate_dir}")
-    wasm = artifact_path(comp)
+    wasm = artifact_path(comp, cargo_target_dir())
     ensure_artifact_fresh(wasm)
     print(f"── building {comp}...", flush=True)
     try:
@@ -141,8 +176,8 @@ def build(comp: str) -> pathlib.Path:
     if signature(wasm) is None:
         raise SystemExit(
             f"error: cargo reported success but {wasm} does not exist — "
-            f"CARGO_TARGET_DIR is {target_dir()}; check it points at the "
-            f"directory cargo actually writes"
+            f"`cargo metadata` reports target_directory "
+            f"{wasm.parent.parent.parent}; check the workspace config"
         )
     return wasm
 

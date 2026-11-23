@@ -88,19 +88,57 @@ def ensure_artifact_fresh(wasm: pathlib.Path) -> None:
     wasm.unlink(missing_ok=True)
 
 
+def artifact_path(comp: str) -> pathlib.Path:
+    """Where cargo leaves this component's ``.wasm``."""
+    return target_dir() / "wasm32-wasip2" / "release" / f"hikari_wasm_{comp.replace('-', '_')}.wasm"
+
+
+def signature(path: pathlib.Path) -> tuple[int, int] | None:
+    """``(st_mtime_ns, st_size)`` of an artifact, or ``None`` when it is absent.
+
+    A function rather than an inline stat so ``build.py`` can be driven in a
+    test without a compiler; see ``packages/wasm/build_test.py``.
+    """
+    if not path.is_file():
+        return None
+    stat = path.stat()
+    return (stat.st_mtime_ns, stat.st_size)
+
+
 def build(comp: str) -> pathlib.Path:
-    """Compile one component and return its ``.wasm``."""
+    """Compile one component and return its ``.wasm``.
+
+    The returned file is the one cargo wrote **during this call**. That is what
+    ``ensure_artifact_fresh`` buys: the previous file is deleted first, so its
+    reappearance can only come from the build, and the mtime check below refuses
+    a run where cargo finished without writing it at all. Without those two,
+    "the file exists after a successful build" is true of any stale artifact
+    left in the target directory (measured in review round 3: a foreign but
+    valid ``.wasm`` planted under the expected name was transpiled verbatim
+    into the shipped bindings while the build reported success).
+    """
     crate_dir = HERE / comp
     if not (crate_dir / "Cargo.toml").exists():
         raise SystemExit(f"error: no Cargo.toml for component {comp!r} at {crate_dir}")
-    wasm = target_dir() / "wasm32-wasip2" / "release" / f"hikari_wasm_{comp.replace('-', '_')}.wasm"
+    wasm = artifact_path(comp)
     ensure_artifact_fresh(wasm)
     print(f"── building {comp}...", flush=True)
-    subprocess.run(
-        ["cargo", "build", "--target", "wasm32-wasip2", "--release", "-p", crate_package(comp)],
-        cwd=ROOT, check=True,
-    )
-    if not wasm.exists():
+    try:
+        subprocess.run(
+            ["cargo", "build", "--target", "wasm32-wasip2", "--release", "-p", crate_package(comp)],
+            cwd=ROOT, check=True,
+        )
+    except FileNotFoundError:
+        raise SystemExit(
+            "error: cargo is not on PATH — install Rust (rustup), then run "
+            "`rustup target add wasm32-wasip2`"
+        ) from None
+    except subprocess.CalledProcessError as failure:
+        raise SystemExit(
+            f"error: cargo build failed for {comp} (exit {failure.returncode}) — "
+            f"see the compiler output above"
+        ) from None
+    if signature(wasm) is None:
         raise SystemExit(
             f"error: cargo reported success but {wasm} does not exist — "
             f"CARGO_TARGET_DIR is {target_dir()}; check it points at the "

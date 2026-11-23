@@ -222,6 +222,10 @@ export const HkLoginFlow = defineComponent({
     verifyLoading: { type: Boolean, default: false },
     verifyResending: { type: Boolean, default: false },
     passkeyRetryHint: { type: String, default: undefined },
+    /** Forwarded to the step-up body's factor picker. A deployment that
+     *  announces exactly one factor (a plain password) passes false — a
+     *  one-option chooser above the field is decoration. */
+    verifyShowFactorPicker: { type: Boolean, default: true },
     /** Alternative sign-in rows on the verify step: the third-party
      *  providers the account can still sign in through (a linked OAuth
      *  identity). A row is not a factor — see HkMfaVerifyCard.methods.
@@ -503,6 +507,7 @@ export const HkLoginFlow = defineComponent({
                         loading={props.verifyLoading}
                         resending={props.verifyResending}
                         passkeyRetryHint={props.passkeyRetryHint}
+                        showFactorPicker={props.verifyShowFactorPicker}
                         methods={props.verifyMethods}
                         methodsDivider={props.verifyMethodsDivider}
                         autofocus

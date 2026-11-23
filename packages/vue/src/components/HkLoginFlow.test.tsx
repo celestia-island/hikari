@@ -718,6 +718,7 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     accountName?: string;
     proven?: string;
     factors?: string[];
+    showFactorPicker?: boolean;
   } = {}) {
     const step = ref<"account" | "verify">("account");
     const Host = defineComponent({
@@ -729,6 +730,7 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
           verifyFactors: options.factors ?? ["password"],
           verifyAccountName: options.accountName ?? "demiurge",
           verifyProven: options.proven,
+          verifyShowFactorPicker: options.showFactorPicker ?? true,
         }),
     });
     return { container: mount(h(Host)), step };
@@ -805,6 +807,22 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     // The announced factor (totp here) drives the body inside the frame —
     // the bare fragment is live, not a header-only stub.
     expect(verifyGen!.querySelectorAll(".hk-otp-cell")).toHaveLength(6);
+  });
+
+  it("drops the factor picker when the host says there is nothing to pick", async () => {
+    // A deployment announcing ONE factor has no choice to offer; the strip
+    // above the field would be decoration. The default stays on, so the
+    // multi-factor ladders keep their switch.
+    const c = mountStepHost({ factors: ["password"], showFactorPicker: false });
+    c.step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    const gen = c.container.querySelector(
+      '.hk-crossfade-item[data-crossfade-key="verify"]',
+    ) as HTMLElement | null;
+    expect(gen).not.toBeNull();
+    expect(gen!.querySelector(".s-mfa-factors"), "no lone factor chip").toBeNull();
+    // …and the proof field is still there (the body is live, not stubbed).
+    expect(gen!.querySelector('input[type="password"]')).not.toBeNull();
   });
 
   it("keeps the step-up copy derivable by the host (the card's own vocabulary)", () => {

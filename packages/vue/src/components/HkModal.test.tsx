@@ -1257,8 +1257,6 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       // bakes it into the resting position (a visible snap-then-lift).
       // `data-hk-morphing` is useSizeMorph's own marker, so the way-out
       // re-anchor defers until the frame settles.
-      // MUT:modal-crossing-rebase-midmorph (calling anchor.reset() directly
-      // on the way out leaves a live offset here — `expected '10px' to be ''`).
       // The morph is LIVE (the frame's own height is still changing) and has
       // already moved the top edge — anything that re-bases NOW records a
       // geometry the frame will not rest at.
@@ -1301,6 +1299,9 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       top.value = 170;
       for (const cb of callbacks) cb();
       await nextTick();
+      // MUT:modal-crossing-rebase-midmorph (a naive immediate reset at the
+      // crossing re-bases on the transient 180 and lands 10px here instead
+      // of 30px).
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
     } finally {
       (window as { innerWidth: number }).innerWidth = previousWidth;

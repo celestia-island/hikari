@@ -821,6 +821,20 @@
   min-height: 0;
 }
 
+/* Stage mode + a keyed content stage: the swap wrapper is the ONLY box
+ * between the flex-column main and the page, and a stage page owns its
+ * own geometry against a definite height (HkMasterDetail's full-height
+ * flex row is the first consumer). Without this rule the wrapper stays
+ * content-height and every height:100% / flex:1 chain beneath it
+ * collapses. Document mode is untouched — there the wrapper sits inside
+ * the padded scroll box where auto height is correct. */
+.s-admin-shell-main[data-content-mode="stage"] .s-admin-shell-swap {
+  flex: 1 1 0%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Nav sidebar labels (HkNavSidebar) ─ */
 .s-nav-item-label {
   overflow: hidden;

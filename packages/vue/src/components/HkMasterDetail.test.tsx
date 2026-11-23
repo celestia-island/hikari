@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -491,6 +492,27 @@ describe("HkMasterDetail — stylesheet contract", () => {
     expect(head).toContain("position: sticky");
     expect(head).toContain("top: 0");
     expect(head).toContain("border-bottom: 1px solid var(--border-faint)");
+  });
+});
+
+describe("the bounded host — stage swap rule", () => {
+  // The component's height:100% contract needs a DEFINITE height from
+  // its host; in the admin shells' stage mode the keyed swap wrapper is
+  // the only box between the flex-column main and the page. The rule is
+  // pinned at the SOURCE level (chromeBand.contract.test.ts's
+  // admin-tokens precedent): a DOM assertion cannot see a wrapper that
+  // only takes its height from flex layout.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(join(here, "..", "styles", "admin-tokens.scss"), "utf-8");
+
+  it("gives the stage-mode swap wrapper the flex chain a full-height page needs", () => {
+    const rule = source.match(
+      /\.s-admin-shell-main\[data-content-mode="stage"\] \.s-admin-shell-swap \{([^}]*)\}/,
+    )?.[1];
+    expect(rule, "the stage swap rule exists").toBeTruthy();
+    expect(rule!).toContain("flex: 1 1 0%");
+    expect(rule!).toContain("min-height: 0");
+    expect(rule!).toContain("display: flex");
   });
 });
 

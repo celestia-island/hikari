@@ -412,15 +412,22 @@ pub fn shift_month(year: i32, month: u32, delta: i32) -> (i32, u32) {
     (year + year_delta, month as u32)
 }
 
-/// The 42 day cells of a month grid (6 rows × 7 columns), starting on the
-/// locale's first weekday — Vue's `cells` computed, one to one.
+/// The number of cells a month grid always renders (6 rows × 7 columns).
+pub const MONTH_GRID_CELLS: usize = 42;
+
+/// The REAL calendar days of a month grid (6 rows × 7 columns), starting on
+/// the locale's first weekday — Vue's `cells` computed, one to one.
 ///
-/// The grid is ALWAYS 42 cells, including where it spills past the calendar's
-/// own bounds: `1..=9999` is the accepted input range, but December 9999's
-/// trailing row runs into 10000, and `civil::Date` stops at 9999 — so the
-/// tail is rendered from the INDEX rather than by stepping the date. Stepping
-/// and stopping at the range edge (the obvious shape) silently shortened that
-/// month to 34 cells and left the last row ragged.
+/// This yields at most [`MONTH_GRID_CELLS`] days and can yield FEWER: the
+/// accepted input range is `1..=9999`, but December 9999's trailing row runs
+/// into 10000, which `civil::Date` cannot represent. The missing tail is
+/// padded by the RENDER as inert out-of-range cells
+/// ([`date_picker_pad_cells`]) — never by repeating a real date, which would
+/// draw a duplicate day button.
+///
+/// Walking the date and stopping at the range edge (the shape this function
+/// started with after the `chrono` -> `jiff` swap) is what shortened that
+/// month to 34 cells: chrono allowed year 10000, jiff does not.
 pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
     let Some(first) = date_picker_date(year, clamp_month(month), 1) else {
         return Vec::new();
@@ -428,21 +435,27 @@ pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
     // Vue: `(first.getDay() - firstDay + 7) % 7` days of leading slack.
     let lead =
         (i32::from(first.weekday().to_sunday_zero_offset()) + 7 - (first_weekday % 7) as i32) % 7;
-    let mut cells = Vec::with_capacity(42);
-    // Walk by index from the first cell, so `0..42` is unconditional.
-    for index in 0..42usize {
-        let offset = index as i32 - lead;
-        let date = first
+    let mut cells = Vec::with_capacity(MONTH_GRID_CELLS);
+    // One linear walk over the grid's columns: cell `i` is `first` shifted by
+    // `i - lead`, so the first `lead` cells are the previous month's tail.
+    for index in 0..MONTH_GRID_CELLS as i32 {
+        let offset = index - lead;
+        match first
             .checked_add(jiff::Span::new().days(i64::from(offset)))
-            .ok();
-        match date {
+            .ok()
+        {
             Some(date) => cells.push(date),
-            // Only reachable outside `1..=9999` — the grid still needs a slot,
-            // and `first` is the closest representable date to it.
-            None => cells.push(first),
+            // Off the end of `civil::Date` (only past December 9999): stop
+            // and let the render pad the remainder with inert cells.
+            None => break,
         }
     }
     cells
+}
+
+/// How many inert cells the render must append to fill a 42-cell grid.
+pub fn date_picker_pad_cells(real_cells: usize) -> usize {
+    MONTH_GRID_CELLS.saturating_sub(real_cells)
 }
 
 /// The 42 day cells of a locale's month grid (Vue: the `cells` computed, one
@@ -1444,7 +1457,8 @@ fn build_content(
                 .collect();
 
             let cells = locale_month_grid(locale, view_year, view_month);
-            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
+            let pad_cells = date_picker_pad_cells(cells.len());
+            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len() + pad_cells);
             for day in cells {
                 let out_of_month =
                     date_picker_month(day) != view_month || date_picker_year(day) != view_year;
@@ -1476,6 +1490,14 @@ fn build_content(
                         onclick: move |_event: MouseEvent| cell_wiring.commit_day(day),
                         {u32::from(day.day().unsigned_abs())}
                     }
+                });
+            }
+            // Past December 9999 the calendar has no representable day, so the
+            // grid's final row is filled with inert out-of-month cells rather
+            // than left ragged (or, worse, repeated real dates).
+            for _ in 0..pad_cells {
+                day_buttons.push(rsx! {
+                    div { class: "hk-dp-cell is-out" }
                 });
             }
 
@@ -1672,45 +1694,62 @@ mod tests {
         }
     }
 
-    /// Every month that the picker can actually navigate to renders 42 cells.
+    /// The grid is 42 cells at the range edges, and never repeats a real day.
     ///
-    /// The range EDGES are the interesting ones: December 9999's trailing row
-    /// runs into 10000, which `civil::Date` cannot represent. A grid built by
-    /// stepping the date and stopping at the range edge returned **34** cells
-    /// there (measured) — a ragged final row — where chrono produced a full
-    /// 6x7 (it allowed year 10000). The state machine clamps to
-    /// `min_year`/`max_year` only in the prop-typed paths, so the edge is
-    /// reachable. January 1 is the other edge; it has no leading slack, but
-    /// its trailing row is checked too, and year 9999 is the largest the
-    /// accepted input range allows.
+    /// Two separate regressions meet here. First: December 9999's trailing row
+    /// runs into 10000, which `civil::Date` cannot represent, so `month_grid`
+    /// yields FEWER real days there — chrono allowed year 10000 and produced a
+    /// full 6x7 (measured: 42 cells), jiff cannot, so the render pads the row
+    /// with inert cells. Second, and the reason this test checks uniqueness:
+    /// a padding scheme that substitutes the anchor date for unrepresentable
+    /// cells would still return 42 cells (measured: 42 cells, **34 unique**),
+    /// drawing the same day button eight times. The grid must never duplicate.
     #[test]
-    fn date_picker_grid_is_six_rows_at_the_range_edges() {
+    fn date_picker_grid_pads_at_the_range_edges_without_repeating_days() {
         for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {
             let cells = month_grid(year, month, 0);
+            let unique: std::collections::BTreeSet<_> = cells.iter().copied().collect();
             assert_eq!(
+                unique.len(),
                 cells.len(),
-                42,
-                "grid({year}-{month}) must be 42 cells, got {}",
-                cells.len()
+                "grid({year}-{month:02}) repeats a real day: {cells:?}"
             );
-            // The month's own first day is in the grid, and the leading slack
-            // is still a Sunday-first run.
+            assert!(
+                cells.len() <= MONTH_GRID_CELLS,
+                "grid({year}-{month:02}) must never exceed the grid size"
+            );
+            // The month's own first day is in the grid and the leading slack
+            // is under one week.
             let first = date(year, month, 1);
             let start = cells.iter().position(|cell| *cell == first);
-            assert!(start.is_some(), "grid({year}-{month}) must contain its 1st");
+            assert!(
+                start.is_some(),
+                "grid({year}-{month:02}) must contain its 1st"
+            );
             assert!(start.unwrap() < 7, "leading slack must be under one week");
             assert_eq!(
                 cells[0].weekday().to_sunday_zero_offset(),
                 0,
-                "grid({year}-{month}) must start on a Sunday"
+                "grid({year}-{month:02}) must start on a Sunday"
             );
         }
-        // A non-edge month keeps rendering the real trailing month, so the
-        // edge fallback cannot have replaced the ordinary path. 2024-03-01 is
-        // a Friday, so a Sunday-first grid opens on 2024-02-25 and its 42nd
+        // The edge really does under-fill, and the render is what pads it.
+        let december_9999 = month_grid(9999, 12, 0);
+        assert_eq!(december_9999.len(), 34);
+        assert_eq!(date_picker_pad_cells(december_9999.len()), 8);
+        assert_eq!(
+            december_9999.len() + date_picker_pad_cells(december_9999.len()),
+            MONTH_GRID_CELLS
+        );
+        // The last representable day is still in it; nothing past it is.
+        assert_eq!(december_9999.last().copied(), Some(date(9999, 12, 31)));
+        // An ordinary month fills the grid itself, so the padding stays zero
+        // and the edge path cannot have replaced the normal one. 2024-03-01
+        // is a Friday: a Sunday-first grid opens on 2024-02-25 and its 42nd
         // cell is 2024-04-06.
         let march = month_grid(2024, 3, 0);
-        assert_eq!(march.len(), 42);
+        assert_eq!(march.len(), MONTH_GRID_CELLS);
+        assert_eq!(date_picker_pad_cells(march.len()), 0);
         assert_eq!(march[0], date(2024, 2, 25));
         assert_eq!(march[41], date(2024, 4, 6));
     }

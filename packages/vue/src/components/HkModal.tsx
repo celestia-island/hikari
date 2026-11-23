@@ -387,7 +387,7 @@ export default defineComponent({
      * pinned to the lower edge, where growth already goes upward from a
      * fixed bottom — anchoring the top there would invert the motion.
      *
-     * The offset is CLEARED on every open edge (see the machine watcher)
+     * The offset is CLEARED on every open edge (see the phase machine's open edge)
      * and on every breakpoint crossing (the watch below), so neither a
      * reopen nor a resize that turns the dialog into a sheet can inherit a
      * previous cycle's lift. Clearing is not "releasing the promise": the
@@ -424,30 +424,53 @@ export default defineComponent({
      *  position (a visible snap-then-lift; R4's kill experiment). So this
      *  leg waits for the frame to be at rest first.
      *
-     *  `data-hk-morphing` is useSizeMorph's own in-flight marker, so the
-     *  wait rides the morph's real lifecycle rather than a guessed delay. */
-    let crossingRestFrames = 0;
+     *  "At rest" is measured HERE rather than read off `data-hk-morphing`:
+     *  that marker is set only inside `heightMorph` (the stepflow swap),
+     *  while the ordinary content-growth morph rides `remeasure` — the
+     *  primary path of this very feature. A self-contained stability probe
+     *  (the frame's height unchanged across two consecutive frames) covers
+     *  every morph path without depending on another module's bookkeeping. */
+    let crossingRaf: number | null = null;
+    let crossingFrames = 0;
+    let lastHeight = -1;
+    let stableFrames = 0;
+    function cancelCrossingWait(): void {
+      if (crossingRaf !== null && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(crossingRaf);
+      }
+      crossingRaf = null;
+      crossingFrames = 0;
+      stableFrames = 0;
+      lastHeight = -1;
+    }
     function reanchorWhenAtRest(): void {
       const el = contentRef.value;
-      if (!el) return;
-      if (!el.hasAttribute("data-hk-morphing")) {
+      if (!el) return void cancelCrossingWait();
+      const h = Math.round(el.getBoundingClientRect().height);
+      stableFrames = h === lastHeight ? stableFrames + 1 : 0;
+      lastHeight = h;
+      if (stableFrames >= 1) {
+        cancelCrossingWait();
         anchor.reset();
         return;
       }
-      // Bounded: 2s of frames covers the longest morph; past that the frame
-      // is stuck for another reason and a stale anchor is the lesser evil.
-      if (++crossingRestFrames > 120) {
-        crossingRestFrames = 0;
+      // Bounded in FRAMES, not seconds: a backgrounded tab throttles rAF to
+      // ~1 fps, so a time bound expressed this way would be a lie. Past the
+      // bound the frame is stuck for an unrelated reason and a stale anchor
+      // is the lesser evil.
+      if (++crossingFrames > 120) {
+        cancelCrossingWait();
         anchor.reset();
         return;
       }
-      requestAnimationFrame(reanchorWhenAtRest);
+      crossingRaf = requestAnimationFrame(reanchorWhenAtRest);
     }
     watch(sheetMobile, (isSheet) => {
-      crossingRestFrames = 0;
+      cancelCrossingWait();
       if (isSheet) anchor.reset();
       else reanchorWhenAtRest();
     });
+    onBeforeUnmount(cancelCrossingWait);
 
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the

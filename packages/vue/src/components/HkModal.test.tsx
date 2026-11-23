@@ -1216,6 +1216,8 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       unobserve() {}
     });
     const top = { value: 200 };
+    /** The frame's live height — the stability probe's only clock. */
+    const morphHeight = { value: 200 };
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
       function (this: Element) {
         const el = this as HTMLElement;
@@ -1223,7 +1225,8 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
         const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
         const rendered = top.value + shift;
         return { top: rendered, left: 0, bottom: rendered, right: 0,
-          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}) } as DOMRect;
+          width: 0, height: morphHeight.value, x: 0, y: rendered,
+          toJSON: () => ({}) } as DOMRect;
       },
     );
     try {
@@ -1256,10 +1259,10 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       // re-anchor defers until the frame settles.
       // MUT:modal-crossing-rebase-midmorph (calling anchor.reset() directly
       // on the way out leaves a live offset here — `expected '10px' to be ''`).
-      frame.setAttribute("data-hk-morphing", "");
-      // The morph is LIVE and has already moved the top edge (a centred
-      // growth lifts it): anything that re-bases NOW records a geometry the
-      // frame will not rest at.
+      // The morph is LIVE (the frame's own height is still changing) and has
+      // already moved the top edge — anything that re-bases NOW records a
+      // geometry the frame will not rest at.
+      morphHeight.value = 300;
       top.value = 170;
       for (const cb of callbacks) cb();
       await nextTick();
@@ -1277,7 +1280,7 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       // only then does the deferred re-anchor run — on its next frame
       // (happy-dom's rAF is a timer, so give it a real beat).
       top.value = 200;
-      frame.removeAttribute("data-hk-morphing");
+      morphHeight.value = 400;
       await new Promise((r) => setTimeout(r, 60));
       for (let i = 0; i < 4; i++) await nextTick();
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");

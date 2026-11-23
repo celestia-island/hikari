@@ -22,7 +22,7 @@ const CASES: Array<{ name: string; source: string }> = [
 describe("mermaid golden snapshots (wasm is the reference)", () => {
   for (const { name, source } of CASES) {
     it(`mermaid: ${name}`, async () => {
-    await mermaidReady;
+      await mermaidReady;
       const doc = wasmMermaidEngine.parse(source);
       expect(doc).not.toBeNull();
       // Pin the full JSON output — any semantic change is a snapshot diff.

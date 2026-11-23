@@ -1140,6 +1140,7 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       await nextTick();
       // MUT:modal-anchor-on-sheet (dropping the enabled gate writes the
       // variable on the sheet branch and this goes red).
+
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
     } finally {
       (window as { innerWidth: number }).innerWidth = previousWidth;
@@ -1194,6 +1195,93 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       const reopened = (document.querySelector(".hk-modal-content")
         ?? frame) as HTMLElement;
       expect(reopened.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("re-anchors only after the settle window has passed (controlled clock)", async () => {
+    // The floor VALUE is what R7 flagged unpinnable: with real (sub-ms)
+    // happy-dom rAF, any floor in 0-320 ms collapses into the same sample.
+    // With the clock and the rAF queue under test control, the floor is
+    // directly observable: inside the window the armed correction survives;
+    // past it the re-anchor re-bases onto the landed top.
+    // MUT:modal-settle-floor (setting the settle floor to 160 makes the
+    // probe reset at the now=200 step and this goes red at the second
+    // assertion).
+    const callbacks: Array<() => void> = [];
+    const rafQueue: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    vi.stubGlobal("requestAnimationFrame", (cb: () => void) => {
+      rafQueue.push(cb);
+      return rafQueue.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const clock = { value: 0 };
+    vi.spyOn(performance, "now").mockImplementation(() => clock.value);
+    const top = { value: 200 };
+    const height = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const m = /(-?([\d.]+))px/.exec(own);
+        const shift = m ? Number(m[1]) : 0;
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: height.value, x: 0, y: rendered,
+          toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    const drive = (at: number) => {
+      clock.value = at;
+      const queued = rafQueue.splice(0);
+      const run = () => { for (const cb of queued) cb(); return nextTick(); };
+      return run();
+    };
+    try {
+      (window as { innerWidth: number }).innerWidth = 1200;
+      const { frame, open } = mountModal();
+      open.value = true;
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 4; i++) await nextTick();
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 4; i++) await nextTick();
+
+      // The height is deliberately left UNCHANGED here (the stability probe
+      // is satisfied from its second frame), so the ONLY variable left in
+      // the wait is elapsed vs the settle floor.
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // The armed correction folded in: +30 (anchor at the pre-crossing
+      // 200; the lift to 170 needs the frame painted 30px LOWER). Written
+      // IMMEDIATELY — the drift cb runs regardless of the pending probe.
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
+
+      // Inside the settle window (now=200 < 320): a probe frame runs but
+      // the re-anchor must not fire; the correction stays. MUT:modal-settle-
+      // floor (a 160 ms floor makes the probe re-anchor HERE, zeroing the
+      // correction to "" — this is the assertion that pins the floor value).
+      await drive(200);
+      await drive(200);
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
+
+      await drive(400);
+
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
     } finally {
       vi.unstubAllGlobals();
       vi.restoreAllMocks();

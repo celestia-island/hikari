@@ -139,6 +139,23 @@ const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 
+/**
+ * Crossing re-anchor timing (the top-edge anchor, see useAnchoredTop):
+ *
+ * - `CROSSING_SETTLE_MS` — how long a breakpoint crossing waits before
+ *   re-anchoring the frame. The worst case is useSizeMorph's observer
+ *   debounce (150 ms) plus the height transition it then starts
+ *   (`--duration-fast`, 150 ms): inside those ~300 ms the frame's height is
+ *   still moving, and a re-base would adopt a transient geometry. 320 ms
+ *   covers both plus a small margin; the height-stability probe extends the
+ *   wait on its own if the morph ends later than that.
+ * - `CROSSING_SETTLE_MAX_MS` — hard wall-time cap (2 s) for a frame that
+ *   never settles for an unrelated reason; a stale anchor is the lesser
+ *   evil vs a silently disarmed one.
+ */
+const CROSSING_SETTLE_MS = 320;
+const CROSSING_SETTLE_MAX_MS = 2000;
+
 export default defineComponent({
   name: "HkModal",
   props: {
@@ -454,12 +471,12 @@ export default defineComponent({
       // can look stable for a beat and then move again when that lands), AND
       // the height actually stable across frames. Re-basing inside the
       // window adopts a transient geometry — the R4 kill case.
-      const settled = elapsed >= 220 && stableFrames >= 1;
+      const settled = elapsed >= CROSSING_SETTLE_MS && stableFrames >= 1;
       // Hard bound in WALL TIME (2 s), not frames: happy-dom fires rAF as
       // fast as ~0.5 ms/frame, so a frame count is not a duration. Past the
       // bound a stuck frame is the lesser evil vs a silently disarmed
       // anchor.
-      const expired = elapsed > 2000;
+      const expired = elapsed > CROSSING_SETTLE_MAX_MS;
       if (settled || expired) {
         cancelCrossingWait();
         anchor.reset();

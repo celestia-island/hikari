@@ -178,6 +178,53 @@ describe("HkHeaderPicker", () => {
     expect(scss).toContain("max-width: var(--hk-header-picker-max-w, 16rem);");
   });
 
+  it("wraps an identifier label in a tag and shows the kind badge", async () => {
+    // A mailbox address / handle is an IDENTIFIER, not prose: the tag
+    // chrome separates it from the affordances beside it, and the badge
+    // names what kind of thing it is. The host owns both the wording and
+    // the tone.
+    const c = mountPicker({}, {});
+    (c.querySelector("button.hk-select-trigger") as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll(".hk-header-picker-option").length).toBe(3);
+    });
+    // …but THIS host passes neither flag, so the family default (plain
+    // text, no badge) must be untouched.
+    const plainRow = document.querySelector(".hk-header-picker-option")!;
+    expect(plainRow.querySelector(".hk-tag")).toBeNull();
+    void c;
+  });
+
+  it("renders labelTag and badge when the option asks for them", async () => {
+    const c = mountPicker(
+      {
+        modelValue: "a@example.test",
+        options: [
+          {
+            value: "a@example.test",
+            label: "a@example.test",
+            labelTag: true,
+            badge: "personal",
+            badgeVariant: "primary",
+          },
+        ],
+      },
+      {},
+    );
+    (c.querySelector("button.hk-select-trigger") as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll(".hk-header-picker-option").length).toBe(1);
+    });
+    const row = document.querySelector(".hk-header-picker-option")!;
+    const tags = Array.from(row.querySelectorAll(".hk-tag"));
+    expect(tags.length, "the label tag plus the badge").toBe(2);
+    expect(tags[0].textContent?.trim()).toBe("a@example.test");
+    expect(tags[1].textContent?.trim()).toBe("personal");
+    expect(tags[1].className).toContain("hk-tag-primary");
+    // Both ride the leading group, so the action lane keeps the far edge.
+    expect(row.querySelector(".hk-header-picker-option-group .hk-tag")).toBeTruthy();
+  });
+
   it("disables the trigger when disabled", () => {
     const c = mountPicker({ disabled: true }, {});
     expect(

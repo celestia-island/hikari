@@ -13,6 +13,7 @@ import { useBreakpoint } from "../runtime/useBreakpoint";
 import HkDraggableList from "./HkDraggableList";
 import HkIconButton from "./HkIconButton";
 import HkSelectPanel, { type SelectPanelPlacement } from "./HkSelectPanel";
+import HkTag, { type TagVariant } from "./HkTag";
 import "./HkHeaderPicker.scss";
 
 /** One choice of a header picker. The selection surface is the same
@@ -35,6 +36,15 @@ export interface HkPickerOption {
    *  itself never confirms — removal is the HOST's decision; this just
    *  makes the affordance uniform. */
   removable?: boolean;
+  /** Render the label inside an HkTag: for options whose label IS an
+   *  identifier (a mailbox address, a handle, a slug) rather than prose —
+   *  the tag chrome separates the value from the affordances beside it. */
+  labelTag?: boolean;
+  /** A kind badge rendered as an HkTag after the label ("personal" /
+   *  "shared", an environment, a tier). The host owns the wording. */
+  badge?: string;
+  /** Badge tone (defaults to `default`). */
+  badgeVariant?: TagVariant;
 }
 
 /**
@@ -233,7 +243,19 @@ export default defineComponent({
           ? { onPointerenter: () => { highlightedIndex.value = i; } }
           : {})}
       >
-        <span class="hk-header-picker-option-label">{opt.label}</span>
+        {/* Label and badge travel together on the leading edge; the
+         *  action lane keeps the trailing edge (the row's space-between
+         *  would otherwise park a bare badge in the middle). */}
+        <span class="hk-header-picker-option-group">
+          <span class="hk-header-picker-option-label">
+            {opt.labelTag ? <HkTag size="sm">{opt.label}</HkTag> : opt.label}
+          </span>
+          {opt.badge ? (
+            <HkTag size="sm" variant={opt.badgeVariant ?? "default"}>
+              {opt.badge}
+            </HkTag>
+          ) : null}
+        </span>
         <span class="hk-header-picker-option-actions">
           {opt.editable && (
             <HkIconButton

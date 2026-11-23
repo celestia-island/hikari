@@ -1702,8 +1702,11 @@ mod tests {
     /// full 6x7 (measured: 42 cells), jiff cannot, so the render pads the row
     /// with inert cells. Second, and the reason this test checks uniqueness:
     /// a padding scheme that substitutes the anchor date for unrepresentable
-    /// cells would still return 42 cells (measured: 42 cells, **34 unique**),
-    /// drawing the same day button eight times. The grid must never duplicate.
+    /// cells still returns 42 cells but repeats a real one — measured 42 cells
+    /// with **34 unique** days on Sunday-first (8 duplicates) and **33 unique**
+    /// on Monday-first (9 duplicates), because the two locales leave a
+    /// different number of real days inside the grid. The grid must never
+    /// duplicate, whatever the count.
     #[test]
     fn date_picker_grid_pads_at_the_range_edges_without_repeating_days() {
         for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {

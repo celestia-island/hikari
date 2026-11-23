@@ -37,9 +37,12 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
  * test the fake instead of the shipped script.
  */
 
-/** The default script's bytes, pinned so an accidental default change fails. */
+/** The default script's bytes, pinned so an accidental default change fails.
+ *  Updated 2026-11-23 (#1497): the boot panel embeds the compiled landing
+ *  CSS, and #1496's token addition (--hi-color-bg-container in the seed)
+ *  re-byted that sheet on purpose — the commit documents it. */
 const DEFAULT_SCRIPT_SHA256 =
-  "0ce4b7206fa51cbd83188a5d4e8094bf313eb0fd2ef2c20a475af8d4e621d2b1";
+  "4def6c962105be9f762c9a1b435e070b36babf7bb74749045a0fc1501bb5b960";
 /** The heal-only script's bytes (the other shape a host may hash). */
 const HEAL_ONLY_SCRIPT_SHA256 =
   "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";

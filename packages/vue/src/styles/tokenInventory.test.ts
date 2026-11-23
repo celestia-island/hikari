@@ -120,6 +120,15 @@ describe("theme token inventory", () => {
     expect(missing, "channels missing from the static seed").toEqual([]);
   });
 
+  it("the runtime emitter still emits the #1496 surface alias", () => {
+    // Independent of the derived set below: that one is derived FROM the
+    // emitter, so deleting the emission moves the expectation with it and
+    // nothing fails (round 8's M3). This names the promise #1496 makes —
+    // the theme layer must define the alias the crate's code/editor
+    // surfaces consume.
+    expect(RUNTIME_VARS["--hi-color-bg-container"]).toBe("rgb(var(--color-surface))");
+  });
+
   it("static seed carries every --hi-* alias the runtime writes", () => {
     const defs = harvestDefinitions(seedFiles);
     const missing = RUNTIME_ALIAS_KEYS.filter(
@@ -302,5 +311,73 @@ describe("theme token inventory", () => {
       }
     }
     expect(rgbaDeviants, "non-canonical rgba fallbacks").toEqual([]);
+  });
+
+  // MUT: M2 (seed deleted) · MUT: M3 (tokens.scss deleted) ·
+  // MUT: M4 (mirror deleted) — the layer test and the cargo drift test
+  // catch each independently.
+  it("#1496: every shipped layer defines the surface alias as a live colour", () => {
+    // The defect was never in the crate's markup — it was that this name
+    // had no theme-aware definition anywhere a host could reach (the
+    // runtime did not emit it, the seeds did not carry it, and the shipped
+    // sheet pinned it to a literal). The sites in the components crate
+    // consume `var(--hi-color-bg-container, <light literal>)` exactly as
+    // they always have; once the layer defines the alias, they follow the
+    // theme with no markup change. Guarding the LAYERS is therefore the
+    // whole contract, and it is what this test asserts:
+    //   runtime (presets.ts) — pinned by the emitter test above;
+    //   static seed (channels.scss ← tokens.scss) — pinned by the
+    //     "static seed carries every --hi-* alias" test above;
+    //   vendored mirror — pinned by the crate's mirror-bodies test;
+    //   shipped sheet (index.scss) — pinned by the composition test below.
+    // A definition that is NOT a live colour reference breaks the chain
+    // silently (a fixed literal renders light-on-dark), so assert the
+    // shape here as well.
+    for (const layer of [
+      read(resolve(stylesDir, "theme/channels.scss")),
+      read(resolve(stylesDir, "../tokens.scss")),
+      read(resolve(stylesDir, "../../../components/src/styles/vue-mirror/tokens.scss")),
+    ]) {
+      const decl = layer.match(/--hi-color-bg-container:\s*([^;]+);/);
+      expect(decl, "--hi-color-bg-container must be defined in every layer").not.toBeNull();
+      // Exact value, not a prefix match: `rgb(rgb(var(--color-surface)))`
+      // and `rgb(var(--color-surface, 255 255 255))` both start with the
+      // right text yet are invalid / shadow the channel (round 30).
+      expect(
+        decl![1].trim(),
+        "--hi-color-bg-container must BE rgb(var(--color-surface)) — a prefix match admits nested rgb()",
+      ).toBe("rgb(var(--color-surface))");
+    }
+  });
+
+  // MUT: M5 (bare literal — RED) · MUT: M10c/d (a comment merely naming
+  // the token stays GREEN since the strip fix — round 24) — the round-9
+  // defect shape.
+  it("#1496: the shipped sheet does not pin the surface alias to a literal", () => {
+    // The sheet imports the vendored seed (which defines the alias against
+    // --color-surface) and used to override it with a fixed `#ffffff` — the
+    // defect. Any literal here shadows the seed, so the guard is simply
+    // "no fixed-colour declaration of this name in the shipped sheet".
+    // Comments are stripped first: a future edit that merely DOCUMENTS
+    // "the vendored seed owns --hi-color-bg-container" must not fail a
+    // guard about declarations (round 24).
+    const index = stripComments(
+      read(resolve(stylesDir, "../../../components/src/styles/index.scss")),
+    );
+    const decl = index.match(/--hi-color-bg-container:\s*([^;]+);/);
+    // Either the sheet leaves the name to the vendored seed it imports (the
+    // shape this commit ships — no declaration at all), or it declares it on
+    // the channel. A fixed-colour declaration here is the #1496 defect, and
+    // a bare `if (decl)` would pass vacuously after the deletion (round 21).
+    if (decl) {
+      expect(
+        decl[1],
+        "--hi-color-bg-container must resolve through --color-surface, not a literal",
+      ).toMatch(/rgb\(var\(--color-surface/);
+    }
+    expect(
+      index.includes("--hi-color-bg-container") && !decl,
+      "the sheet must not mention the name without a channel-resolving value",
+    ).toBe(false);
   });
 });

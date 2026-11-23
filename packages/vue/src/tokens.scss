@@ -153,6 +153,7 @@
    * no-JS consumers resolve them instead of invalid var(). */
   --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);
   --hi-color-bg-elevated: rgb(var(--color-surface));
+  --hi-color-bg-container: rgb(var(--color-surface));
   --hi-color-bg-canvas: rgb(var(--color-background));
   --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
   --hi-color-accent: rgb(var(--color-accent));

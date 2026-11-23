@@ -744,6 +744,12 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     // focused inside a generation HkCrossfade has marked `inert` is dead
     // focus — the browser refuses it, and on Android it makes the autofill
     // panel chase the morph.
+    //
+    // Which leg discriminates what: the SECOND leg (focused step-up
+    // action) is the one this test kills the step-watch mutation on — the
+    // first leg also passes whenever the entering action claims the caret
+    // on the same tick, so the first leg's own teeth live in the sibling
+    // "blurs a field focused inside the LEAVING body on a step swap".
     // MUT:step-swap-no-blur (dropping the step watch leaves the account
     // input focused inside the inert item on the first leg).
     // A passkey factor: its action is ENABLED with no input, so the

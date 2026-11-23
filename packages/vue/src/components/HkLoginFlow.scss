@@ -27,8 +27,11 @@
 // therefore limited to the sizing the box needs to be a faithful copy of
 // its parent's content lane (the width) — a margin or padding here would
 // shift the card relative to the frame the rest of the panel geometry was
-// built against, and a `position` other than static would make it a
-// containing block for the card's own overlays.
+// built against. It must also stay `position: static` as a forward rule:
+// hikari's overlay roots are body-level today, so nothing under this box
+// currently anchors to it — but the moment a descendant ever grew an
+// overlay that resolves against its nearest positioned ancestor, a
+// `relative`/`absolute` here would silently become that ancestor.
 //
 // `.hk-login-flow-card` next to `.s-auth-card` is the one card frame of
 // the WHOLE session (account, verify and every channel share it): the

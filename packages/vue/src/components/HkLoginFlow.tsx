@@ -81,6 +81,11 @@ export interface HkLoginSsoChannel {
    *  label. */
   buttonLabel?: string;
   disabled?: boolean;
+  /** Navigation target forwarded to the channel row: the row becomes a
+   *  real link (`sso-click` still fires first, navigation is not
+   *  prevented). Default undefined — the row is a button and the host
+   *  navigates on `sso-click`, as before. */
+  href?: string;
 }
 
 export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
@@ -429,6 +434,7 @@ export const HkLoginFlow = defineComponent({
                 label: channel.buttonLabel ?? channelLabel(channel),
                 icon: channel.icon,
                 disabled: channel.disabled,
+                href: channel.href,
               },
             ]}
             onSelect={() => emit("sso-click", channel.key)}

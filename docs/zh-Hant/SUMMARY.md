@@ -62,3 +62,4 @@
 - [UserGuide 使用者引導](./components/layer3/user_guide.md)
 - [Visualization 視覺化元件](./components/layer3/visualization.md)
 - [ZoomControls 縮放控制](./components/layer3/zoom_controls.md)
+- [登入模式](./components/layer3/login-modes.md)

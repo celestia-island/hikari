@@ -1,0 +1,79 @@
+// AI-generated: developed with the DeepSeek Harness agent (model GLM-5.4), directed and
+// reviewed by the lead agent — SySL-1.0 §2.3 disclosure.
+
+// HkAuthHandoff — the no-form sign-in screens (relay splash, completing,
+// success / failed / expired). The shell is HkAuthScreen and the frame is
+// the shared `.s-auth-card` grammar from admin-tokens.scss (vendored); this
+// sheet only adds what the card never had: a logo, a centred body with a
+// spinner or a status line, and an action row.
+
+.hk-auth-handoff {
+  width: 100%;
+  max-width: var(--hk-auth-card-max-width, 28rem);
+  box-sizing: border-box;
+}
+
+.hk-auth-handoff-card {
+  overflow-wrap: anywhere;
+}
+
+.hk-auth-handoff-header {
+  gap: var(--space-12, 0.75rem);
+}
+
+.hk-auth-handoff-logo {
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  object-fit: contain;
+  border-radius: var(--hi-radius-lg, 12px);
+}
+
+.hk-auth-handoff-title {
+  margin: 0;
+}
+
+.hk-auth-handoff-description {
+  max-width: 36ch;
+}
+
+.hk-auth-handoff-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-24, 1.5rem);
+  padding: var(--space-24, 1.5rem) var(--space-24, 1.5rem) var(--space-32, 2rem);
+}
+
+.hk-auth-handoff-state {
+  display: flex;
+  justify-content: center;
+}
+
+.hk-auth-handoff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-12, 0.75rem);
+  width: 100%;
+}
+
+// A body with nothing to show (no actions, no spinner) keeps no padding.
+.hk-auth-handoff-body:empty {
+  display: none;
+}
+
+@media (max-width: 360px) {
+  .hk-auth-handoff-header {
+    padding: var(--space-24, 1.5rem) var(--space-16, 1rem) 0;
+  }
+
+  .hk-auth-handoff-body {
+    padding: var(--space-16, 1rem) var(--space-16, 1rem) var(--space-24, 1.5rem);
+  }
+
+  .hk-auth-handoff-logo {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}

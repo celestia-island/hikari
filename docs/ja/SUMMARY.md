@@ -62,3 +62,4 @@
 - [ユーザーガイド](./components/layer3/user_guide.md)
 - [ビジュアライゼーションコンポーネント](./components/layer3/visualization.md)
 - [ズームコントロール](./components/layer3/zoom_controls.md)
+- [ログインモード](./components/layer3/login-modes.md)

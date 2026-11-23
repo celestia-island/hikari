@@ -396,10 +396,11 @@ export default defineComponent({
      * window by the residual before its own exit animation starts.
      */
     const anchor = useAnchoredTop(contentRef, {
-      // The gate only stops the loop from correcting; the watch below is
-      // what clears the offset the loop already wrote. `enabled` alone
-      // freezes (a real defect in the first cut: crossing to the sheet
-      // kept the var, and coming back re-applied a stale lift).
+      // The gate only stops the loop from CORRECTING; the watch below is
+      // what CLEARS the offset the loop already wrote. The two are not
+      // redundant: gating alone would freeze the value, so a crossing into
+      // the sheet would keep it and the crossing back would resume from a
+      // lift that belongs to a layout the frame no longer has.
       enabled: () => !sheetMobile.value,
       apply: (px) => {
         const el = contentRef.value;
@@ -409,10 +410,11 @@ export default defineComponent({
       },
     });
 
-    /** Breakpoint crossings re-anchor: entering the sheet branch drops the
-     *  desktop offset (the sheet's own translate: none would hide it, and
-     *  returning to desktop would re-apply it stale), and returning to
-     *  desktop re-bases against where the frame actually lands. */
+    /** Breakpoint crossings re-anchor: crossing into the sheet branch drops
+     *  the desktop offset (the sheet ignores it — its own `translate: none`
+     *  — so nothing would ever refresh it), and crossing back re-bases
+     *  against where the frame actually lands. One unconditional reset
+     *  serves both directions because `reset()` re-bases as it clears. */
     watch(sheetMobile, () => anchor.reset());
 
     /** The window ride's own state, translated from the surface phases:

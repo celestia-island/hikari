@@ -262,3 +262,55 @@ describe("useAnchoredTop — correction wiring (fake ResizeObserver)", () => {
     expect(el!.style.transform).toBe("translateY(10px)");
   });
 });
+
+describe("useAnchoredTop — reset / shift handle", () => {
+  const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
+  afterEach(() => {
+    for (const { app, container } of mounts.splice(0)) { app.unmount(); container.remove(); }
+    vi.unstubAllGlobals(); vi.restoreAllMocks();
+  });
+
+  it("reset() clears the correction and re-bases", async () => {
+    // The handle the modal uses on its reopen and breakpoint edges: a
+    // surface that holds the offset after a morph must be able to drop it.
+    // MUT:anchor-reset-keeps-shift (making reset() only re-base leaves the
+    // shift applied and this goes red).
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const applied: number[] = [];
+    const top = { value: 100 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ top: top.value, left: 0, bottom: top.value, right: 0,
+        width: 0, height: 0, x: 0, y: top.value, toJSON: () => ({}) }) as DOMRect,
+    );
+    const target = ref<HTMLElement | null>(null);
+    let handle: ReturnType<typeof useAnchoredTop> | null = null;
+    const Host = defineComponent({
+      setup() {
+        handle = useAnchoredTop(target, { apply: (px) => applied.push(px) });
+        return () => h("div", { ref: target, class: "probe" });
+      },
+    });
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp(Host);
+    app.mount(container);
+    mounts.push({ app, container });
+    await nextTick();
+
+    top.value = 90;
+    for (const cb of callbacks) cb();
+    expect(applied.at(-1)).toBe(10);
+    expect(handle!.shift()).toBe(10);
+
+    handle!.reset();
+    expect(applied.at(-1)).toBe(0);
+    expect(handle!.shift()).toBe(0);
+  });
+});

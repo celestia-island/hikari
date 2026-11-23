@@ -91,8 +91,9 @@ export interface UseAnchoredTopOptions {
 
 export interface AnchoredTopHandle {
   /** Drop the correction and adopt the element's current top as the new
-   *  anchor (a reopen/remount edge). Returns without touching anything
-   *  when the element is gone. */
+   *  anchor (a reopen/remount edge). The sink always runs with 0, so a
+   *  surface whose offset is not a DOM transform still gets its clear; the
+   *  re-base itself is a no-op when the element is gone. */
   reset: () => void;
   /** The correction currently applied, in px. */
   shift: () => number;

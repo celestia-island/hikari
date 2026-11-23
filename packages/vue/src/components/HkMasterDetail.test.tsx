@@ -32,9 +32,10 @@ import { asIndexable } from "../utils/typing";
  *   `splitAt` and its boundary (>= is two-pane) — a hand-picked width in
  *   one test cannot see an off-by-one or a hardcoded 768;
  * - the dismissal contract: the close affordance appears ONLY with a
- *   bound `onClose` (a declared emit is stripped from $attrs, so the
- *   detection is the component's own vnode props); the narrow form
- *   forwards the MODAL's close as the pane's `close` emit;
+ *   bound `onClose` AND an open detail (a declared emit is stripped from
+ *   $attrs, so the detection is the component's own vnode props — read
+ *   per render, never through a dependency-free computed); the narrow
+ *   form forwards the MODAL's close as the pane's `close` emit;
  * - the scss contract (the flush column, the separator hairline, the
  *   scroll region's native-bar suppression) — a class-name-only test
  *   cannot see the layout rules that make the pane usable.
@@ -244,6 +245,44 @@ describe("HkMasterDetail — two-pane layout", () => {
     );
     expect(c.querySelector(".hk-master-detail-detail-head .detail-action")).toBeTruthy();
     expect(c.querySelector(".hk-master-detail-close")).toBeNull();
+  });
+
+  it("follows a close channel bound AFTER mount for the wide affordance", async () => {
+    // Same untracked-read trap as the form selectors: a computed `&&`
+    // over the vnode props latches — and with no listener at first render
+    // it has no dependency at all, so even a detailOpen flip cannot
+    // re-run it. The ✕ must appear when the host binds later.
+    setWidth(1280);
+    const bound = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkMasterDetail,
+            {
+              detailOpen: true,
+              detailTitle: "Message",
+              ...(bound.value ? { onClose: () => {} } : {}),
+            },
+            { list: ROSTER, detail: DETAIL },
+          );
+      },
+    });
+    const c = mount(h(Wrapper));
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-close")).toBeNull();
+
+    bound.value = true;
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-close"), "the ✕ appears").toBeTruthy();
+
+    // …and disappears again when the host unbinds while the detail stays
+    // open (otherwise it is a button emitting into nobody).
+    bound.value = false;
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-close"), "the ✕ leaves").toBeNull();
   });
 
   it("renders the actions slot ahead of the close affordance", async () => {
@@ -712,9 +751,18 @@ describe("HkMasterDetail — stylesheet contract", () => {
 
   it("centres the empty state on both axes while nothing is selected", () => {
     const emptyBody = ruleBody(css, ".hk-master-detail:not([data-open]) .hk-master-detail-detail-body");
-    expect(emptyBody).toContain("justify-content: center");
     expect(emptyBody).toContain("align-items: center");
     expect(emptyBody).toContain("min-height: var(--hk-master-detail-empty-min-h, 14rem)");
+    // Vertical centring rides the child's auto margins — NOT
+    // justify-content: center, whose overflow splits above the scrollport
+    // where no scroll offset can reach it (the card's top would clip).
+    expect(emptyBody).not.toContain("justify-content: center");
+    expect(
+      ruleBody(
+        css,
+        ".hk-master-detail:not([data-open]) .hk-master-detail-detail-body > .hk-empty-state",
+      ),
+    ).toContain("margin-block: auto");
     // Centring needs the body to fill the scroll region, which is the base
     // rule's job — a dropped flex there would leave the card at the top.
     expect(ruleBody(css, ".hk-master-detail-detail-body")).toContain("flex: 1 1 auto");

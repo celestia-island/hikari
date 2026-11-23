@@ -138,11 +138,20 @@
 // from collapsing the pane to a sliver on a short box.
 .hk-master-detail:not([data-open]) .hk-master-detail-detail-body {
   min-height: var(--hk-master-detail-empty-min-h, 14rem);
-  justify-content: center;
   align-items: center;
-  // A long description must not push the box past the pane: the card
-  // keeps its own intrinsic width inside a bounded measure.
-  text-align: center;
+}
+
+// Vertical centring rides AUTO MARGINS on the empty state, not
+// justify-content: a centred flex item overflowing a scroll container
+// overflows on BOTH sides, and the top half is unreachable (a scrollport
+// cannot scroll to a negative offset) — a pane near the floor plus a
+// two-line description would clip the card's top edge. Auto margins centre
+// while there is room and collapse to zero when there is not, so the
+// overflow goes downward where the rail can reach it. Naming the part (not
+// `> *`) keeps the rule out of the selection controls' mover table: it is
+// the empty state being placed, not arbitrary children.
+.hk-master-detail:not([data-open]) .hk-master-detail-detail-body > .hk-empty-state {
+  margin-block: auto;
 }
 
 // The narrow sheet's body shim: HkModal's body already insets; the

@@ -153,22 +153,20 @@ describe("HkHeaderPicker", () => {
     expect(scss).toContain("background: var(--c-primary-light);");
   });
 
-  it("lets a host class widen the trigger past the cap", () => {
-    // The hook is not just text: a style scoped to the picker's class
-    // resolves the trigger's max-width through it.
-    const host = document.createElement("style");
-    host.textContent =
-      ".wide-picker .hk-select-trigger.hk-header-picker-trigger { max-width: var(--hk-header-picker-max-w, 16rem); }" +
-      ".wide-picker { --hk-header-picker-max-w: none; }";
-    document.head.appendChild(host);
+  it("lands a host class on the picker root, where the hook resolves", () => {
+    // The width hook is a custom property, so it must be settable on the
+    // element the host can reach: the picker's own ROOT. (A wrapper works
+    // too — custom properties inherit — but the root is the documented
+    // handle, and attrs fall through to it.)
     const c = mountPicker(
       { modelValue: "a", options: [{ value: "a", label: "Ayane Test <someone@example.test>" }] },
       { class: "wide-picker" },
     );
-    const trigger = c.querySelector(".hk-select-trigger") as HTMLElement;
-    expect(trigger).toBeTruthy();
-    expect(trigger.classList.contains("hk-header-picker-trigger")).toBe(true);
-    host.remove();
+    const root = c.querySelector(".hk-header-picker") as HTMLElement;
+    expect(root, "the picker root exists").toBeTruthy();
+    expect(root.classList.contains("wide-picker"), "the host class lands on it").toBe(true);
+    // …and the trigger the cap applies to lives inside it.
+    expect(root.querySelector(".hk-select-trigger.hk-header-picker-trigger")).toBeTruthy();
   });
 
   it("keeps the trigger cap a hook so a host with long labels can opt out", () => {

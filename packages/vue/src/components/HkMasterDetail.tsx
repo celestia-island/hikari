@@ -97,13 +97,16 @@ export function resolveListWidth(width: string): string {
  *
  * The head band (`.hk-master-detail-detail-head`) carries the host's
  * `actions` slot and the close affordance; it renders only when it has at
- * least one of those (plus the overlay-scrollbar rail, which the
+ * least one of those — and the close affordance itself only while a detail
+ * is OPEN (a closed pane has nothing to dismiss). It also carries the
+ * overlay-scrollbar rail, which the
  * component attaches to the pane over its own scroll region — native
  * MECHANICS, the library's chrome).
  *
  * Emits `close` when the user dismisses the selection. The close
- * affordance renders only when a listener is bound (`@close` /
- * `onClose`) — a pane whose host cannot deselect has no button to press.
+ * affordance renders only when a listener is bound (`@close` / `onClose`)
+ * AND a detail is open — a pane whose host cannot deselect has no button
+ * to press, and a closed pane has nothing to dismiss.
  *
  * ```tsx
  * <HkMasterDetail
@@ -173,8 +176,11 @@ export const HkMasterDetail = defineComponent({
     );
     /** The affordance exists only while a detail is open: closed, the pane
      *  shows the empty state and there is nothing to dismiss — a ✕ beside
-     *  "pick a message" is a control with no subject. */
-    const canClose = computed(() => hasCloseListener() && props.detailOpen);
+     *  "pick a message" is a control with no subject. A plain function for
+     *  the same reason the form selectors are (see above): `&&` short-
+     *  circuits, so a host with no listener at first render would leave a
+     *  dependency-free computed latched on `false` forever. */
+    const canClose = () => hasCloseListener() && props.detailOpen;
     const emptyTitle = computed(
       () => props.emptyTitle || t("hikari::masterDetail.emptyTitle", "Nothing selected"),
     );
@@ -296,12 +302,12 @@ export const HkMasterDetail = defineComponent({
                   the native bar never paints — the library's scroll
                   contract (nativeScrollbar.contract.test.ts). */}
               <div ref={scrollRef} class="hk-master-detail-detail-scroll">
-                {slots.actions || canClose.value ? (
+                {slots.actions || canClose() ? (
                   <div class="hk-master-detail-detail-head">
                     {slots.actions ? (
                       <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
                     ) : null}
-                    {canClose.value ? (
+                    {canClose() ? (
                       <HkIconButton
                         class="hk-master-detail-close"
                         size={28}

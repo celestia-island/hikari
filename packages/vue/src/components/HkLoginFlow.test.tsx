@@ -176,6 +176,59 @@ describe("HkLoginFlow — credentials channel", () => {
     expect(c.querySelector(".hk-auth-channel-list")).toBeNull();
     expect(c.querySelector(".hk-auth-channel-divider")).toBeNull();
   });
+
+  it("keeps a channel's own gate on its body: disabled closes the fields and the submit", async () => {
+    const onSubmit = vi.fn();
+    const active = ref<"create" | "bind">("create");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          // Two credentials channels with DIFFERENT gates: erp's register
+          // body waits for its anti-abuse challenge, the bind body is
+          // submittable from the start. The guard is per channel, so it
+          // must travel with the swapped body rather than the flow.
+          channels: [
+            { key: "create", mode: "credentials", disabled: true, submitLabel: "Create" },
+            { key: "bind", mode: "credentials", submitLabel: "Continue" },
+          ],
+          modelValue: active.value,
+          initialUsername: "demiurge",
+          onAccountSubmit: onSubmit,
+        }),
+    });
+    const c = mount(h(Host));
+    // Mid-dissolve BOTH bodies are mounted (the inner transition keeps
+    // the leaving item for its fade), so the probes read the settled
+    // item — the same scoping the stable-shell pins above use.
+    const settled = () =>
+      c.querySelector<HTMLElement>(
+        ".hk-login-flow-body .hk-crossfade-item:not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
+      )!;
+    const fieldOf = () =>
+      settled().querySelector<HTMLInputElement>('input[name="signin-username"]')!;
+    const submitOf = () =>
+      settled().querySelector<HTMLButtonElement>(".hk-btn-primary")!;
+    expect(fieldOf().disabled).toBe(true);
+    // MUT:channel-disabled-dropped (ignoring the channel's `disabled`
+    // leaves the gated body's submit enabled with a name in the field
+    // and this goes red).
+    expect(submitOf().disabled).toBe(true);
+
+    active.value = "bind";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // The settled body is the bind one: its gate is open with the same
+    // typed name, which is what tells a per-channel guard apart from a
+    // flow-level one.
+    expect(submitOf().textContent).toContain("Continue");
+    expect(fieldOf().disabled).toBe(false);
+    expect(submitOf().disabled).toBe(false);
+    fieldOf().value = "langyo";
+    fieldOf().dispatchEvent(new Event("input"));
+    await nextTick();
+    submitOf().click();
+    await nextTick();
+    expect(onSubmit).toHaveBeenCalledWith("bind", "langyo", "");
+  });
 });
 
 describe("HkLoginFlow — sso channel", () => {
@@ -337,6 +390,65 @@ describe("HkLoginFlow — verify step", () => {
     // The verify step owns the whole card; a channel switch mid-verify
     // would drop the ladder state, so the tabs never render here.
     expect(c.querySelector(".hk-tabs")).toBeNull();
+  });
+
+  it("lists third-party sign-in rows on the verify step and forwards their selection", async () => {
+    const onVerify = vi.fn();
+    const onSelect = vi.fn();
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["password"],
+        verifyAccountName: "langyo",
+        verifyMethods: [{ key: "github", label: "GitHub" }],
+        verifyMethodsDivider: "or continue with",
+        onVerify,
+        onVerifyMethodSelect: onSelect,
+      }),
+    );
+    const row = c.querySelector<HTMLButtonElement>('[data-key="github"]');
+    expect(row).not.toBeNull();
+    expect(c.querySelector(".hk-auth-channel-divider")?.textContent)
+      .toContain("or continue with");
+    // The rows live INSIDE the one card frame (the verify generation's
+    // body), not in a second card or below the panel.
+    expect(
+      c.querySelector(".s-auth-card")!.contains(c.querySelector(".hk-auth-channel-list")!),
+    ).toBe(true);
+    row!.click();
+    await nextTick();
+    // MUT:flow-verify-method-unforwarded (dropping the `onMethod-select`
+    // forwarding leaves the host's handler uncalled and this goes red).
+    expect(onSelect).toHaveBeenCalledWith("github");
+    expect(onVerify).not.toHaveBeenCalled();
+  });
+
+  it("keeps the verify-step rows off the account step and off an empty list", () => {
+    const onAccount = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        verifyMethods: [{ key: "github", label: "GitHub" }],
+      }),
+    );
+    // MUT:flow-verify-methods-on-account (rendering the rows in the
+    // account generation as well puts a channel list on this probe and
+    // this goes red).
+    expect(onAccount.querySelector(".hk-auth-channel-list")).toBeNull();
+    const empty = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+        verifyMethods: [],
+        verifyMethodsDivider: "or",
+      }),
+    );
+    expect(empty.querySelector(".hk-auth-channel-list")).toBeNull();
+    expect(empty.querySelector(".hk-auth-channel-divider")).toBeNull();
   });
 
   it("morphs account → verify → back when the host flips the step prop reactively", async () => {

@@ -2,6 +2,7 @@ import { computed, defineComponent, nextTick, ref, watch, type PropType } from "
 import { Asterisk, Fingerprint, KeyRound, MessageSquareText } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
+import HkAuthChannelList, { type HkAuthChannelListEntry } from "./HkAuthChannelList";
 import { HkAuthCard } from "./HkAuthCard";
 import HkAlert from "./HkAlert";
 import HkAuthSubmitButton from "./HkAuthSubmitButton";
@@ -137,6 +138,14 @@ export function hkMfaVerifySubtitle(
  * "one more verification" wording. The card re-selects and clears its
  * fields whenever the announced set or the proven factor changes.
  *
+ * Alternative sign-in rows (`methods`) are a SEPARATE lane from the
+ * factors: a host whose ladder also accepts a linked third-party
+ * identity for this account lists the providers under the proof field,
+ * and picking one emits `method-select(key)` instead of `verify` — the
+ * provider's own authorization round trip is the proof, and it happens
+ * on the host's side. The rows share the credentials card's channel
+ * list, so a provider reads the same on both steps.
+ *
  * i18n: every visible string defaults to the `hikari::mfaVerify.*` locales
  * (11 languages ship with the card); `title` / `subtitle` overrides win
  * when a host needs its own wording. `{name}` / `{proven}` placeholders in
@@ -183,6 +192,23 @@ export const HkMfaVerifyCard = defineComponent({
      *  nudging toward the picker's other entries). Rendered only when
      *  set — the consumer owns the failure bookkeeping that decides it. */
     passkeyRetryHint: { type: String, default: undefined },
+    /** Alternative sign-in rows UNDER the factor's proof field: the
+     *  third-party providers this account can still sign in through (a
+     *  linked OAuth identity — the erp "bind an existing account" ladder
+     *  offers them beside password / totp). A row is NOT a factor: it
+     *  never enters the picker and never emits `verify`; picking one
+     *  hands the whole sign-in to the host (`method-select`), which
+     *  usually leaves the page for the provider's authorization round
+     *  trip. Rendered only when non-empty — the credentials card's
+     *  `methods` rule: an empty list must not pad a dead strip under
+     *  the submit. */
+    methods: {
+      type: Array as PropType<readonly HkAuthChannelListEntry[]>,
+      default: () => [],
+    },
+    /** Divider text above the rows; consumer-localized on purpose (the
+     *  credentials channel's `methodsDivider` is the same contract). */
+    methodsDivider: { type: String, default: undefined },
     /** Focus the factor ON STAGE when the card mounts (the verify step
      *  just opened) and whenever the selected factor changes: the proof
      *  field for `totp` / `sms` (HkOtpInput owns that one) / `password`,
@@ -215,6 +241,8 @@ export const HkMfaVerifyCard = defineComponent({
     resend: () => true,
     /** Abandon the step-up (back to the credentials card). */
     back: () => true,
+    /** An alternative sign-in row was picked — the provider's key. */
+    "method-select": (_key: string) => true,
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
@@ -345,6 +373,19 @@ export const HkMfaVerifyCard = defineComponent({
         proven: provenKind.value,
         accountName: props.accountName,
       }));
+
+    /** The alternative sign-in rows, in host order. While the card is
+     *  busy (`loading` / `disabled`) every row is closed: the prop
+     *  contract is "disables every control", and a provider round trip
+     *  started mid-verify would strand the in-flight proof. A row the
+     *  host closed itself stays closed. */
+    const methodsList = computed<HkAuthChannelListEntry[]>(() => {
+      // A fresh mutable list in both arms: the prop accepts a readonly
+      // array, the channel list's own prop is mutable.
+      return !props.loading && !props.disabled
+        ? [...props.methods]
+        : props.methods.map((row) => ({ ...row, disabled: true }));
+    });
 
     /** Glyph per factor for the icon-only picker — the labels ride the
      *  tooltip. The password entry wears the asterisk, the dot-matrix
@@ -491,6 +532,13 @@ export const HkMfaVerifyCard = defineComponent({
             {props.resending ? busyLabel()
               : t("hikari::mfaVerify.resend", "Resend code")}
           </HkButton>
+        )}
+        {methodsList.value.length > 0 && (
+          <HkAuthChannelList
+            divider={props.methodsDivider}
+            methods={methodsList.value}
+            onSelect={(key: string) => emit("method-select", key)}
+          />
         )}
         <HkButton
           variant="ghost"

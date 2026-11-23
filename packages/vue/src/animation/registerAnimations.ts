@@ -158,10 +158,3 @@ registerCssAnimation("hk-edge-glow-breathe", { infinite: true });
 registerCssAnimation("hk-emergency-breathe", { infinite: true });
 registerCssAnimation("hk-emergency-signal", { infinite: true });
 
-// components/HkMasterDetail.scss — the drawer form's entry (two one-shots):
-// the detail pane slides in from the right edge and its veil fades in. Both
-// play once (the pane unmounts on close, so no leave keyframe); the host's
-// global animation switch and reduced motion clamp them (the component's
-// own sheet carries both opt-outs).
-registerCssAnimation("hk-master-detail-drawer-in");
-registerCssAnimation("hk-master-detail-scrim-in");

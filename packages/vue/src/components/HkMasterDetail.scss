@@ -1,77 +1,75 @@
-// HkMasterDetail — the standard two-pane roster+detail surface.
+// HkMasterDetail — the standard two-pane roster+detail console.
 //
-// One grid, two modes:
-//   wide  (data-split="two"):   [list][detail] in the tracks the props write
-//   narrow (data-split="single"): one full-width column; the detail pane
-//                                 becomes an overlay drawer over a scrim
+// Two modes, one full-height flex row the HOST bounds (height: 100% on
+// the root — the wowsp replay/resources contract, 2026-11-23 user
+// direction: the detail is a LAYOUT REGION, not a floating card):
+//   wide  (data-split="two"):   [roster column][detail region]
+//   narrow (data-split="single"): the roster takes the whole width; the
+//                                 detail rides HkModal (bottom sheet on
+//                                 phones) — no styles needed here, the
+//                                 family window owns that surface.
 //
-// The surface declarations on the detail pane MIRROR HkCard's (surface
-// blend + --border-subtle + --radius-lg + --shadow-elevated) rather than
-// reusing its class: the pane is a column of a grid track that has to keep
-// a rail-host box (position: relative) around its OWN scroll region, and
-// .hk-card's single body slot cannot express that. Same chrome, one
-// structure deeper, so the declarations are copied with the host hatch
-// (--hk-card-blur) intact.
+// The roster column is a flush sidebar: fixed track, 1px separator, the
+// surface tint IS the page (no card chrome anywhere). The detail region
+// takes the remaining width and scrolls internally.
 
 @use "../styles/polyfill" as *;
 
 .hk-master-detail {
-  display: grid;
-  // The props write the two custom properties (listWidth / detailWidth);
-  // the fallbacks are the component's documented defaults, so a host that
-  // prefers pure CSS can drive the tracks through the same hooks.
-  grid-template-columns:
-    var(--hk-master-detail-list-w, minmax(360px, 1fr))
-    var(--hk-master-detail-detail-w, minmax(0, 1.15fr));
-  gap: var(--space-12, 0.75rem);
-  align-items: start;
+  display: flex;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
 }
 
-// Below `splitAt` the component lifts the detail into its own layer; the
-// roster takes the whole row. `align-items: start` keeps a short roster
-// from stretching and gives the sticky pane the slack it needs to stick.
-.hk-master-detail[data-split="single"] {
-  grid-template-columns: minmax(0, 1fr);
-}
-
+// The roster column: a flush secondary sidebar (the replay list's shape).
+// The SLOT owns its internals — a flex-none head row over its own
+// scroller — so the column shell only bounds: track width, the separator
+// hairline, the surface tint and the clip.
 .hk-master-detail-list {
-  // Grid children default to min-content width: a table inside the roster
-  // would refuse to shrink below its widest cell. The track owns the
-  // width, the pane may overflow-scroll inside it.
-  min-width: 0;
-}
-
-.hk-master-detail-detail {
-  // The card, positioned: it is the overlay scrollbar RAIL's host (tracks
-  // are absolute children, so they must not live inside the scroller) and
-  // it clips its own rounded corners.
-  position: relative;
+  width: var(--hk-master-detail-list-w, 20rem);
+  flex: none;
   display: flex;
   flex-direction: column;
-  align-self: start;
   min-width: 0;
+  min-height: 0;
+  border-inline-end: 1px solid rgb(var(--color-border) / 20%);
+  // Opaque base first, the ui-opacity blend behind the calc() fallback
+  // (the IACVT rule: a var() fallback with color-mix() resolves to unset
+  // on engines without it — the blend rides the same var on both sides
+  // of the feature query below).
+  background: var(--hk-master-detail-list-bg, rgb(var(--color-surface)));
   overflow: hidden;
-  // Opaque base first: color-mix() inside a var() fallback is VALID at
-  // parse time but resolves to unset (IACVT) on engines without it, so
-  // the tint must sit behind a feature query (the HkScrollPin lesson)
-  // rather than in a cascade that would keep a transparent background.
-  background: var(--hk-master-detail-bg, rgb(var(--color-surface) / 70%));
-  @include backdrop-filter(var(--hk-card-blur, blur(var(--blur-md))));
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-elevated);
 }
 
 @supports (background: color-mix(in srgb, white 70%, transparent)) {
-  .hk-master-detail-detail {
-    // The SAME hook as the base rule: a host that retunes the tint keeps
-    // it on both sides of the feature query instead of silently reverting.
+  .hk-master-detail-list {
     background: var(
-      --hk-master-detail-bg,
-      color-mix(in srgb, rgb(var(--color-surface)) 70%, transparent)
+      --hk-master-detail-list-bg,
+      rgb(var(--color-surface) / min(100%, calc(50% + 50% * var(--ui-opacity, 1))))
     );
   }
+}
+
+// Narrow form: the roster is the whole page — no separator against
+// nothing, no fixed track (the sheet owns the detail surface).
+.hk-master-detail[data-split="single"] .hk-master-detail-list {
+  width: auto;
+  flex: 1;
+  border-inline-end: none;
+}
+
+// The detail region: flush, chrome-less — NO border, NO radius, NO
+// shadow, NO gutter (the 2026-11-23 direction). It is the overlay
+// scrollbar RAIL's host (tracks are absolute children, so they must not
+// live inside the scroller) and it bounds its own scroll region.
+.hk-master-detail-detail {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 // The pane's own scroll region (native MECHANICS, the library's overlay
@@ -92,22 +90,9 @@
   }
 }
 
-// Sticky is the HOST's declaration (data-sticky), the two-pane mode is
-// where it applies: a fixed-position drawer is already out of the flow.
-// --hk-master-detail-sticky-top lets a host with its own pinned chrome
-// park the pane below it.
-.hk-master-detail[data-split="two"] .hk-master-detail-detail[data-sticky] {
-  position: sticky;
-  top: var(--hk-master-detail-sticky-top, 0px);
-  // vh first, dvh where supported (the family's mobile-chrome rule): the
-  // pane must never exceed the viewport the browser shows.
-  max-height: var(--hk-master-detail-max-h, calc(100vh - var(--space-32, 2rem)));
-  max-height: var(--hk-master-detail-max-h, calc(100dvh - var(--space-32, 2rem)));
-}
-
-// The head band: title (drawer form), the host's header actions and the
-// close affordance. Sticky INSIDE the pane's own scroll region, so a long
-// detail never hides the way to dismiss it.
+// The head band: the host's header actions and the close affordance.
+// Sticky INSIDE the pane's own scroll region, so a long detail never
+// hides the way to dismiss it.
 .hk-master-detail-detail-head {
   position: sticky;
   top: 0;
@@ -125,25 +110,13 @@
   @include backdrop-filter(blur(var(--blur-sm, 8px)));
 }
 
-.hk-master-detail-detail-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  color: rgb(var(--color-text));
-  font-size: var(--text-base, 0.875rem);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .hk-master-detail-detail-actions {
   display: flex;
   flex: none;
   align-items: center;
   gap: var(--space-8, 0.5rem);
-  // Without the drawer-form title the actions still ride the band's
-  // trailing edge, beside the close affordance.
+  // Without a title the actions still ride the band's trailing edge,
+  // beside the close affordance.
   margin-inline-start: auto;
 }
 
@@ -151,96 +124,33 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-12, 0.75rem);
+  flex: 1 1 auto;
   min-width: 0;
   // The pane owns its inset so a detail slot needs no wrapper of its own;
-  // hosts that render a flush table set --hk-master-detail-detail-pad: 0.
+  // hosts that render a flush canvas set --hk-master-detail-detail-pad: 0.
   padding: var(--hk-master-detail-detail-pad, var(--space-16, 1rem));
 }
 
-// The empty state must not collapse the pane to a title-sized sliver: a
-// floor only while nothing is selected (a real detail keeps its own
-// height). Gallery-hall geometry, not a layout rule for content.
+// The empty state must not collapse the pane to a sliver: a floor only
+// while nothing is selected (a real detail keeps its own height).
+// Gallery-hall geometry, not a layout rule for content.
 .hk-master-detail:not([data-open]) .hk-master-detail-detail-body {
   min-height: var(--hk-master-detail-empty-min-h, 14rem);
 }
 
-// ------
-// Drawer form (single column): the SAME detail element, lifted out of the
-// grid into a fixed panel on the physical right edge.
-//
-// HkDrawer is not reused here on purpose: its header owns the close
-// affordance (closable is a single switch for both the button and
-// Escape), which would put a second, hardcoded-label close beside the
-// host's `closeLabel`/-detail-head close, and it teleports out of the
-// page. The dismissal paths this pane needs are three small additions
-// here, not a capture-semantics overlay: see the component doc.
-// ------
+// The narrow sheet's body shim: HkModal's body already insets; the
+// actions row rides the top edge, flush right, and the detail content
+// keeps the pane's own gap rhythm.
+.hk-master-detail-sheet-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12, 0.75rem);
+  min-width: 0;
 
-.hk-master-detail-drawer {
-  position: fixed;
-  top: var(--hk-chrome-band-inset, 0px);
-  right: 0;
-  bottom: 0;
-  width: min(var(--hk-master-detail-drawer-w, 28rem), 92vw);
-  // Above the roster and its sticky chrome, below every teleported layer
-  // (--hk-z-float and up): the drawer is page chrome, not a window.
-  z-index: var(--hk-z-sidebar, 900);
-  border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px);
-  // Scope invalidation to the panel — the roster behind a phone drawer is
-  // usually streaming, and containment keeps the two from cascading.
-  contain: layout style;
-  animation: hk-master-detail-drawer-in var(--duration-normal, 0.3s)
-    var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
-}
-
-.hk-master-detail-scrim {
-  position: fixed;
-  top: var(--hk-chrome-band-inset, 0px);
-  right: 0;
-  bottom: 0;
-  left: 0;
-  // Same band as the panel: it paints first (DOM order), so the detail
-  // stays above its own veil without a second z arithmetic.
-  z-index: var(--hk-z-sidebar, 900);
-  // The drawer family's veil, so a host that retunes HkDrawer's overlay
-  // retunes this one too instead of inventing a second scrim colour.
-  background: var(
-    --hk-master-detail-scrim-bg,
-    var(--hk-drawer-overlay-bg, rgb(0 0 0 / 45%))
-  );
-  animation: hk-master-detail-scrim-in var(--duration-normal, 0.3s)
-    var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
-}
-
-@keyframes hk-master-detail-drawer-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes hk-master-detail-scrim-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-// Opt-outs: the host's global animation switch and the OS's reduced-motion
-// preference both apply — an inline-less rule can carry the media query
-// (the HkPaneHolder precedent), and neither may leave a panel mid-slide.
-html[data-css-animations="0"] .hk-master-detail-drawer,
-html[data-css-animations="0"] .hk-master-detail-scrim {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hk-master-detail-drawer,
-  .hk-master-detail-scrim {
-    animation-duration: var(--duration-fast, 0.15s);
+  .hk-master-detail-detail-actions {
+    // Inside the sheet the actions lead the body (no close sibling —
+    // the modal header owns that affordance there).
+    margin-inline-start: 0;
+    justify-content: flex-end;
   }
 }

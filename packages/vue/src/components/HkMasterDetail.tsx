@@ -2,9 +2,9 @@ import {
   computed,
   defineComponent,
   getCurrentInstance,
-  onBeforeUnmount,
   ref,
   watch,
+  onBeforeUnmount,
   type Component,
   type PropType,
   type SlotsType,
@@ -19,6 +19,7 @@ import {
 } from "../composables/useOverlayScrollbar";
 import HkEmptyState from "./HkEmptyState";
 import HkIconButton from "./HkIconButton";
+import HkModal from "./HkModal";
 import "./HkMasterDetail.scss";
 
 /**
@@ -27,12 +28,13 @@ import "./HkMasterDetail.scss";
  * whatever row the roster drew), never this component's.
  */
 export type HkMasterDetailSlots = SlotsType<{
-  /** The roster: typically an `HkAdminTablePage` / `HkTable`, a card list
-   *  or any scrolling list. Required in practice — an empty list slot
-   *  leaves the left column blank. */
+  /** The roster column's content — typically a flex-none head row (title,
+   *  count, tools) over a scrolling list (HkScrollContainer / HkTable).
+   *  Required in practice — an empty list slot leaves the column blank. */
   list?: () => VNode[];
   /** The selected item's body. Rendered only while `detailOpen`; closed,
-   *  the pane shows the empty state instead. */
+   *  the pane shows the empty state instead. A canvas child (a 3D scene)
+   *  fills the region with `flex: 1; min-height: 0` of its own. */
   detail?: () => VNode[];
   /** Trailing header actions inside the detail pane (refresh, copy, a
    *  "open full page" link…) — rendered BEFORE the close affordance. */
@@ -40,40 +42,32 @@ export type HkMasterDetailSlots = SlotsType<{
 }>;
 
 /**
- * HkMasterDetail — the family's standard two-pane roster+detail surface
- * (mail inbox, ticket queue, audit log: any host list that picks one row
- * and shows it beside the list).
+ * HkMasterDetail — the family's standard two-pane roster+detail console
+ * (mail inbox, replay browser, mod roster, audit log: any host list that
+ * picks one row and shows it beside the list).
  *
- * Layout: one CSS grid, `[list][detail]` with the family's `--space-12`
- * gutter; the detail pane is a CARD (HkCard's chrome: the surface blend,
- * `border-subtle`, `--radius-lg`, `--shadow-elevated`) that STICKS while
- * the roster scrolls — `sticky: false` for hosts that embed the pane in a
- * container that is already shorter than the viewport. The column tracks
- * come from `listWidth` / `detailWidth` (host-tunable through
- * `--hk-master-detail-list-w` / `-detail-w`, which the props write).
+ * Geometry — the WoWSP replay/resources contract (2026-11-23 user
+ * direction: the detail is a LAYOUT REGION, not a floating card): one
+ * full-height flex row the HOST bounds (`height: 100%` on the root; the
+ * host hands it a definite height — a stage-mode shell content box, or a
+ * page wrapper with a definite height). The roster column is a fixed
+ * flush sidebar (`listWidth`, 1px separator, the surface tint IS the
+ * page); the detail region takes the remaining width, scrolls
+ * internally, and carries NO card chrome — no radius, no shadow, no
+ * gutter. Each column owns its own scroll; the page never scrolls.
  *
- * Narrow viewports (`splitAt`, default 1100px, driven by the shared
- * `useBreakpoint` width): ONE column — the roster keeps the full width and
- * the detail pane becomes an OVERLAY DRAWER from the right over a scrim.
- * The drawer mounts only while a detail is open (nothing to show behind a
- * closed one) and closes through the same `close` emit the header
- * affordance uses: Escape anywhere on the drawer face, a tap on the scrim,
- * or the labelled close button. Escape's precedence follows HkDrawer /
- * HkModal — a nested control that already consumed the key owns it.
+ * Narrow viewports (`splitAt`, default 768 — the family phone
+ * breakpoint): the roster keeps the whole width and the detail rides
+ * HkModal — the family window, which docks as the standard bottom sheet
+ * on phones (scrim, grabber, Escape, back-gesture: all the modal's, not
+ * re-implemented here). The modal mounts only while a detail is open
+ * (nothing to show behind a closed one).
  *
- * The head band (`.hk-master-detail-detail-head`) carries the drawer-form
- * title, the `actions` slot and the close affordance; it renders only when
- * it has at least one of those. A wide, closed, action-less pane therefore
- * shows just the empty state — a band holding nothing would be blank
- * chrome above a placeholder.
- *
- * NOT a focus-trapping window: the drawer is a page region laid OVER the
- * roster (fixed position, dialog-sized), not a teleported overlay. It
- * paints in the page-chrome band (`--hk-z-sidebar`), so a host popup or
- * window teleported to `#hk-overlay-root` (--hk-z-float and up) covers it
- * by design. Hosts that need capture semantics (focus trap, body scroll
- * lock, back-gesture handling) mount HkDrawer themselves; this component
- * deliberately does not re-implement that surface family.
+ * The head band (`.hk-master-detail-detail-head`) carries the host's
+ * `actions` slot and the close affordance; it renders only when it has
+ * at least one of those (plus the overlay-scrollbar rail, which the
+ * component attaches to the pane over its own scroll region — native
+ * MECHANICS, the library's chrome).
  *
  * Emits `close` when the user dismisses the selection. The close
  * affordance renders only when a listener is bound (`@close` /
@@ -86,7 +80,7 @@ export type HkMasterDetailSlots = SlotsType<{
  *   emptyTitle={t("inbox.pickOne", "Pick a message")}
  *   onClose={() => (selected.value = null)}
  * >
- *   {{ list: () => <InboxTable … />, detail: () => <MessageBody … /> }}
+ *   {{ list: () => <InboxRoster … />, detail: () => <MessageBody … /> }}
  * </HkMasterDetail>
  * ```
  */
@@ -95,10 +89,10 @@ export const HkMasterDetail = defineComponent({
   slots: Object as HkMasterDetailSlots,
   props: {
     /** Whether a detail is selected. Closed, the detail pane renders the
-     *  empty state (two-pane) or nothing at all (drawer form). */
+     *  empty state (two-pane) or nothing at all (narrow modal form). */
     detailOpen: { type: Boolean, default: false },
-    /** Accessible name of the detail region — and, in the drawer form,
-     *  the visible header title. */
+    /** Accessible name of the detail region — and, in the narrow form,
+     *  the modal's visible title. */
     detailTitle: { type: String, required: true },
     /** Empty-state heading. An empty value falls back to the localized
      *  "Nothing selected" message. */
@@ -107,17 +101,11 @@ export const HkMasterDetail = defineComponent({
     /** Empty-state icon (lucide-vue-next style), forwarded to
      *  HkEmptyState. */
     emptyIcon: { type: [Object, Function] as PropType<Component>, default: undefined },
-    /** Roster column track. */
-    listWidth: { type: String, default: "minmax(360px, 1fr)" },
-    /** Detail column track. */
-    detailWidth: { type: String, default: "minmax(0, 1.15fr)" },
-    /** Stick the detail pane while the roster scrolls. Hosts embedding
-     *  the pane in an already-bounded container pass false — a sticky
-     *  child inside a short box just scrolls with it. */
-    sticky: { type: Boolean, default: true },
-    /** Viewport width (px) below which the two panes collapse into one
-     *  column with the detail in the overlay drawer. */
-    splitAt: { type: Number, default: 1100 },
+    /** Roster column width (any CSS width). The detail takes the rest. */
+    listWidth: { type: String, default: "20rem" },
+    /** Viewport width (px) below which the roster takes the whole width
+     *  and the detail rides the HkModal sheet. */
+    splitAt: { type: Number, default: 768 },
     /** Accessible label of the close affordance (defaults to the
      *  localized "Close"). */
     closeLabel: { type: String, default: undefined },
@@ -133,10 +121,10 @@ export const HkMasterDetail = defineComponent({
     // could not read from its props.
     const { width } = useBreakpoint();
     const instance = getCurrentInstance();
-    // A server pass has no viewport: `useBreakpoint`'s server fallback is a
-    // placeholder, not a measurement, so the composer renders the WIDE
-    // layout there (the same desktop assumption its `isDesktop` makes) and
-    // the split only ever answers a real width.
+    // A server pass has no viewport: `useBreakpoint`'s server fallback is
+    // a placeholder, not a measurement, so the composer renders the WIDE
+    // layout there (the same desktop assumption its `isDesktop` makes)
+    // and the split only ever answers a real width.
     const hasViewport = typeof window !== "undefined";
 
     const narrow = computed(() => hasViewport && width.value < props.splitAt);
@@ -152,43 +140,13 @@ export const HkMasterDetail = defineComponent({
       () => props.emptyTitle || t("hikari::masterDetail.emptyTitle", "Nothing selected"),
     );
 
-    /**
-     * Escape closes the drawer face only: in the two-pane layout every
-     * selection is one click away, so swallowing the key there would be a
-     * surprise. `defaultPrevented` keeps a nested control that already
-     * consumed Escape (a popup, an inline editor) the owner of the key.
-     */
-    function onEscape(e: KeyboardEvent): void {
-      if (e.key !== "Escape" || e.defaultPrevented) return;
-      emit("close");
-    }
-
-    let listening = false;
-    function listenForEscape(on: boolean): void {
-      // SSR / non-DOM hosts: the drawer form only exists in a window.
-      if (typeof document === "undefined") return;
-      if (on && !listening) {
-        document.addEventListener("keydown", onEscape);
-        listening = true;
-      } else if (!on && listening) {
-        document.removeEventListener("keydown", onEscape);
-        listening = false;
-      }
-    }
-
-    // The listener tracks the drawer's actual visibility — not the prop
-    // alone: a closed detail on a narrow viewport has nothing to dismiss.
-    watch(() => narrow.value && props.detailOpen, listenForEscape, { immediate: true });
-    onBeforeUnmount(() => listenForEscape(false));
-
     // ── the pane's overlay scrollbar ───────────────────────────────────
     // The pane is a scroll surface, so it wears the family chrome: native
     // SCROLLING mechanics, the library's overlay rail (nativeScrollbar
     // contract). The rail host is the PANE, never the scroll region — a
-    // track inside a scrolling box would travel with the content. Re-synced
-    // through the refs because the wide pane and the drawer form are
-    // different element lifetimes (a mode flip unmounts one, mounts the
-    // other).
+    // track inside a scrolling box would travel with the content. The
+    // narrow form has no in-flow pane (HkModal's body owns scrolling
+    // there), so the rail is attached only while the wide pane exists.
     const paneRef = ref<HTMLElement>();
     const scrollRef = ref<HTMLElement>();
     let rail: OverlayScrollbarHandle | null = null;
@@ -207,56 +165,64 @@ export const HkMasterDetail = defineComponent({
       rail = null;
     });
 
-    const onScrimClick = () => emit("close");
-
     return () => {
       const isNarrow = narrow.value;
-      // Two-pane: the pane always exists (empty state when closed). Drawer:
-      // it exists only while open — an overlay holding an empty state over
-      // the roster would be a dead layer.
-      const detailVisible = props.detailOpen || !isNarrow;
-      const headVisible = isNarrow || Boolean(slots.actions) || hasCloseListener.value;
       return (
         <div
           class="hk-master-detail"
           data-split={isNarrow ? "single" : "two"}
           data-open={props.detailOpen || undefined}
-          style={{
-            "--hk-master-detail-list-w": props.listWidth,
-            "--hk-master-detail-detail-w": props.detailWidth,
-          }}
+          style={{ "--hk-master-detail-list-w": props.listWidth }}
         >
           <div class="hk-master-detail-list">{slots.list?.()}</div>
-          {isNarrow && props.detailOpen ? (
-            // Purely visual + input-blocking: it keeps the roster from
-            // being tapped behind the drawer. Tapping it dismisses, the
-            // family's overlay convention (HkModal / HkDrawer).
-            <div class="hk-master-detail-scrim" aria-hidden="true" onClick={onScrimClick} />
-          ) : null}
-          {detailVisible ? (
+          {isNarrow ? (
+            // Narrow form: the detail rides the family window. HkModal
+            // docks as the standard bottom sheet on phones and owns every
+            // dismissal path (close button, scrim, Escape, back gesture)
+            // — declining the close (closable=false) is not offered here
+            // because a host that cannot deselect never sees this form
+            // with detailOpen=true in the first place.
+            props.detailOpen ? (
+              <HkModal
+                modelValue={true}
+                title={props.detailTitle}
+                width="lg"
+                contentClass="hk-master-detail-sheet"
+                onUpdate:modelValue={(open: boolean) => {
+                  if (!open) emit("close");
+                }}
+              >
+                {{
+                  default: () => (
+                    <div class="hk-master-detail-sheet-body">
+                      {slots.actions ? (
+                        <div class="hk-master-detail-detail-actions">
+                          {slots.actions()}
+                        </div>
+                      ) : null}
+                      {slots.detail?.()}
+                    </div>
+                  ),
+                }}
+              </HkModal>
+            ) : null
+          ) : (
+            // Two-pane: the detail region always exists (empty state when
+            // closed) — a blank right half would read as a broken layout.
             <section
               ref={paneRef}
-              class={[
-                "hk-master-detail-detail",
-                isNarrow ? "hk-master-detail-drawer" : "",
-              ]}
-              // The HOST's declaration, not the mode: the two-pane layout
-              // is where stickiness applies (scss gates on data-split).
-              data-sticky={props.sticky || undefined}
+              class="hk-master-detail-detail"
               role="region"
               aria-label={props.detailTitle}
             >
-              {/* The pane's own scroll region. It is a CHILD of the card
+              {/* The pane's own scroll region. It is a CHILD of the pane
                   (the HkCard-scrollable / HkTable shape) so the shared
                   overlay rail can attach to the non-scrolling pane and
                   the native bar never paints — the library's scroll
                   contract (nativeScrollbar.contract.test.ts). */}
               <div ref={scrollRef} class="hk-master-detail-detail-scroll">
-                {headVisible ? (
+                {slots.actions || hasCloseListener.value ? (
                   <div class="hk-master-detail-detail-head">
-                    {isNarrow ? (
-                      <h2 class="hk-master-detail-detail-title">{props.detailTitle}</h2>
-                    ) : null}
                     {slots.actions ? (
                       <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
                     ) : null}
@@ -286,7 +252,7 @@ export const HkMasterDetail = defineComponent({
                 </div>
               </div>
             </section>
-          ) : null}
+          )}
         </div>
       );
     };

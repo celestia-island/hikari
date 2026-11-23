@@ -14,11 +14,12 @@ import { HkMasterDetail } from "./HkMasterDetail";
  *
  * The split has no measurement on a server, so the component renders the WIDE
  * layout (the same desktop assumption `useBreakpoint`'s own server fallback
- * declares) instead of guessing at the drawer form and hydrating into a
- * different tree. What this file pins is that the whole surface — grid, detail
- * card, empty state and the overlay-scrollbar setup — is reachable without a
- * DOM: a `window`/`document` read in setup or in the render function would
- * throw here (the HkWallpaperBackdrop.ssr.test.ts precedent).
+ * declares) instead of guessing at the narrow form and hydrating into a
+ * different tree. What this file pins is that the whole surface — the flex
+ * row, the detail region, the empty state and the overlay-scrollbar setup —
+ * is reachable without a DOM: a `window`/`document` read in setup or in the
+ * render function would throw here (the HkWallpaperBackdrop.ssr.test.ts
+ * precedent).
  */
 describe("HkMasterDetail on a server", () => {
   it("renders the wide layout with the boxed empty state and no DOM globals", async () => {
@@ -40,13 +41,13 @@ describe("HkMasterDetail on a server", () => {
     );
 
     expect(html).toContain('class="hk-master-detail"');
-    // No viewport to measure ⇒ the wide layout, never the drawer form.
-    // Dropping the `hasViewport` guard turns this assertion red — the
-    // server fallback (1024) sits below the default `splitAt` (1100)
-    // [MUT:hasviewport-guard-dropped].
+    // No viewport to measure ⇒ the wide layout, never the narrow modal
+    // form. The default split (768) sits below the server fallback
+    // (1024), so the guard is pinned through an explicit LARGER splitAt
+    // further down — dropping `hasViewport` would render the HkModal
+    // branch here and red that one.
     expect(html).toContain('data-split="two"');
-    expect(html).not.toContain("hk-master-detail-drawer");
-    expect(html).not.toContain("hk-master-detail-scrim");
+    expect(html).not.toContain("hk-modal-root");
     // Closed: the empty state stands in for the detail slot.
     expect(html).toContain("hk-empty-state--boxed");
     expect(html).toContain("Nothing selected");
@@ -55,6 +56,29 @@ describe("HkMasterDetail on a server", () => {
     // The region keeps its accessible name server-side.
     expect(html).toContain('role="region"');
     expect(html).toContain('aria-label="Message"');
+  });
+
+  it("keeps a splitAt above the server fallback on the wide layout", async () => {
+    // The server fallback width is 1024: a host splitting at 1200 would
+    // take the narrow form if the component trusted it. `hasViewport`
+    // keeps the server on the wide layout — dropping the guard renders
+    // HkModal into this string and reds the assertion
+    // [MUT:hasviewport-guard-dropped].
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            HkMasterDetail,
+            { detailOpen: true, detailTitle: "Message", splitAt: 1200 },
+            {
+              list: () => h("div", { class: "roster" }, "ROSTER"),
+              detail: () => h("div", { class: "detail-payload" }, "DETAIL"),
+            },
+          ),
+      }),
+    );
+    expect(html).toContain('data-split="two"');
+    expect(html).not.toContain("hk-modal-root");
   });
 
   it("renders a selected detail without the empty state", async () => {

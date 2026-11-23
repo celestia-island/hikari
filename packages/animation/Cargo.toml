@@ -20,7 +20,15 @@ tairitsu-hooks = "^0.5"
 tairitsu-macros = "^0.5"
 tairitsu-style = "^0.5"
 
-# WASM dependencies (for wasm feature)
+# WASM dependencies (for the wasm feature), gated on the browser target.
+#
+# These live in a target table, not in `[dependencies]` behind `optional = true`,
+# because optionality is decided by a *feature* and Cargo resolves features
+# package-wide — it never splits them across `--target`. Anything a wasip2
+# consumer enables would therefore drag web-sys into the guest closure. The
+# browser target is the only place these crates can be used at all, so the
+# target is the correct gate (D6: the wasip2 delivery closure stays bindgen-free).
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 wasm-bindgen = { version = "^0.2", optional = true }
 web-sys = { version = "^0.3", optional = true, features = [
     "Window",
@@ -39,4 +47,7 @@ js-sys = { version = "^0.3", optional = true }
 
 [features]
 default = []
+# The `dep:` entries stay: the crates are still optional, so the feature is what
+# turns them on for the browser build. On any other target the same feature
+# resolves against an empty table, which is exactly the point.
 wasm = ["dep:wasm-bindgen", "dep:web-sys", "dep:js-sys"]

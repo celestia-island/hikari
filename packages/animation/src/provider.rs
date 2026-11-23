@@ -7,6 +7,11 @@ use tairitsu_macros::{component, define_props, rsx};
 use tairitsu_vdom::{Callback, Signal, VNode as Element};
 
 use crate::config::AnimationConfig;
+// Only the browser build has a system preference to read. On every other target
+// `prefers_reduced_motion` is a constant `false`, and `provider` still has to
+// compile there because `wasm` is a package-level feature that Cargo resolves
+// for all targets at once.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::prefers_reduced_motion::prefers_reduced_motion;
 
 /// Animation context for accessing configuration
@@ -98,7 +103,14 @@ pub struct AnimationProviderProps {
 #[component]
 pub fn AnimationProvider(props: AnimationProviderProps) -> Element {
     let system_reduced = if props.respect_reduced_motion {
-        prefers_reduced_motion()
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+        {
+            prefers_reduced_motion()
+        }
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+        {
+            false
+        }
     } else {
         false
     };

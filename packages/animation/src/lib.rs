@@ -60,56 +60,56 @@ pub use timeline::*;
 pub use tween::*;
 
 // Modules that use browser APIs (and, for some, tairitsu hooks)
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod builder;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod context;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod events;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod lifecycle;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod prefers_reduced_motion;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod scrollbar;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod style;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod timer;
 
 // Re-export WASM-specific items
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use builder::*;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use context::AnimationContext;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use events::*;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use lifecycle::*;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use prefers_reduced_motion::{prefers_reduced_motion, watch_prefers_reduced_motion};
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use scrollbar::*;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use style::*;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use timer::*;
 
 // tairitsu-specific modules (require the wasm feature + browser APIs)
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod glow;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod hooks;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod provider;
 
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub mod global_manager;
 
 // Re-export tairitsu-specific items
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use glow::Glow;
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use hooks::*;
 // Re-export transition presets for convenience (only available with wasm feature)
 #[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
@@ -117,7 +117,7 @@ pub use presets::transition::{
     SlideDirection, bounce_in, fade_in, fade_out, rotate_in, rotate_out, shake, slide_in,
     slide_out, zoom_in, zoom_out,
 };
-#[cfg(feature = "wasm")]
+#[cfg(all(feature = "wasm", target_arch = "wasm32", target_os = "unknown"))]
 pub use provider::{
     AnimationContext as AnimationProviderContext, AnimationProvider, try_use_animation_config,
     use_animation_config, use_animation_duration_scale, use_animation_enabled,

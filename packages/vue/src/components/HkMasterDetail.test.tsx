@@ -315,6 +315,40 @@ describe("HkMasterDetail — the split", () => {
     expect(c.querySelector(".hk-master-detail-sheet-body")).toBeNull();
   });
 
+  it("follows a close channel bound AFTER mount (the form is per-render)", async () => {
+    // `instance.vnode.props` is an untracked read: wrapping the form
+    // selection in a computed latched the first answer, so a host that
+    // binds `@close` later kept the in-flow column — or, in the other
+    // direction, kept a window whose close channel went nowhere while its
+    // scroll lock and focus trap stayed up.
+    setWidth(600);
+    const bound = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkMasterDetail,
+            {
+              detailOpen: true,
+              detailTitle: "Message",
+              ...(bound.value ? { onClose: () => {} } : {}),
+            },
+            { list: ROSTER, detail: DETAIL },
+          );
+      },
+    });
+    const c = mount(h(Wrapper));
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-detail--column")).toBeTruthy();
+    expect(document.querySelector(".hk-modal-root")).toBeNull();
+
+    bound.value = true;
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-detail--column"), "the column form is gone").toBeNull();
+    expect(document.querySelector(".hk-modal-root"), "the window form took over").toBeTruthy();
+  });
+
   it("keeps the modal mounted so its own close path runs (focus restored)", async () => {
     // Mount-driven modals never reach the leave finalizer: the exit motion
     // is skipped and keyboard focus is dropped on <body>. The pane must
@@ -673,7 +707,7 @@ describe("the bounded host — stage swap rule", () => {
     // the leaving page above the entering one for the length of every
     // stage swap (the grid row's stretch is what gives the page its
     // definite height). A legitimate display:grid/contents stays allowed.
-    expect(rule!).not.toMatch(/display:\s*flex/);
+    expect(rule!).not.toMatch(/display:\s*(inline-)?flex/);
   });
 });
 

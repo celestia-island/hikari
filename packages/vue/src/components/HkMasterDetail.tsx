@@ -177,13 +177,18 @@ export const HkMasterDetail = defineComponent({
     const listWidth = computed(() => resolveListWidth(props.listWidth));
 
     /** The narrow WINDOW form: an overlay only a dismissable host may get
-     *  (see the component doc's dismissal rule). */
-    const windowForm = computed(() => narrow.value && hasCloseListener());
+     *  (see the component doc's dismissal rule).
+     *
+     *  Plain functions, NOT computeds: `instance.vnode.props` is an
+     *  untracked read, so a computed would latch the first answer and a
+     *  host that binds `@close` after mount would keep the wrong form —
+     *  the in-flow column for a dismissable host, or worse, a window
+     *  whose close channel goes nowhere while its scroll lock and focus
+     *  trap stay up. */
+    const windowForm = () => narrow.value && hasCloseListener();
     /** The narrow IN-FLOW form: the detail is the entire column, no
      *  overlay — for hosts whose navigation owns deselection. */
-    const inlineNarrow = computed(
-      () => narrow.value && !hasCloseListener() && props.detailOpen,
-    );
+    const inlineNarrow = () => narrow.value && !hasCloseListener() && props.detailOpen;
 
     // ── the pane's overlay scrollbar ───────────────────────────────────
     // The pane is a scroll surface, so it wears the family chrome: native
@@ -234,7 +239,7 @@ export const HkMasterDetail = defineComponent({
           {/* Narrow in-flow form: the detail IS the column (no roster
            *  behind a non-dismissable host — the same refusal the wide
            *  layout applies to the close affordance). */}
-          {inlineNarrow.value ? (
+          {inlineNarrow() ? (
             <section
               ref={paneRef}
               class="hk-master-detail-detail hk-master-detail-detail--column"
@@ -256,7 +261,7 @@ export const HkMasterDetail = defineComponent({
           ) : (
             <div class="hk-master-detail-list">{slots.list?.()}</div>
           )}
-          {windowForm.value ? (
+          {windowForm() ? (
             // Narrow window form: MOUNTED while this mode is active and
             // DRIVEN by detailOpen — a mount-driven modal skips its own
             // exit motion and posts keyboard focus back to <body>.

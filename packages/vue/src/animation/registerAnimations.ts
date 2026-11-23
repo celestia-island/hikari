@@ -157,4 +157,3 @@ registerCssAnimation("hk-edge-glow-breathe", { infinite: true });
 // band and drops the loops (house pattern, see HkSkeleton).
 registerCssAnimation("hk-emergency-breathe", { infinite: true });
 registerCssAnimation("hk-emergency-signal", { infinite: true });
-

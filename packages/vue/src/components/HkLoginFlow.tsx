@@ -115,9 +115,10 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * (`.s-auth-card`) for the whole session:
  *
  * - the frame, its padding and its mount animation belong to the panel,
- *   not to a step — a step move never remounts it (a fresh
- *   `.s-auth-card` per step replayed the frame's own entrance keyframes
- *   and handed the user a second "card appears" animation mid-flow);
+ *   not to a step: the frame node is static, so neither a step nor a
+ *   channel swap remounts it (a fresh `.s-auth-card` per step replayed
+ *   the frame's own entrance keyframes and handed the user a second
+ *   "card appears" animation mid-flow);
  * - the STEP swap crossfades the card's own contents (header copy + body)
  *   inside that frame, keyed on the step: the account generation carries
  *   the channel tabs over the sign-in body, the verify generation carries
@@ -175,7 +176,7 @@ export const HkLoginFlow = defineComponent({
     /** Logo image URL forwarded to the card header. */
     logoSrc: { type: String, default: undefined },
     /** The card's header title on the ACCOUNT step — one stable header
-     *  across every channel (2026-11-24 user direction: a channel switch
+     *  across every channel (2026-11-22 user direction: a channel switch
      *  must morph only the content below the tabs, never dissolve the
      *  card). Falls back to the ACTIVE channel's `title` (then the
      *  conventional sign-in copy) for hosts that still brand per channel;
@@ -187,6 +188,17 @@ export const HkLoginFlow = defineComponent({
     title: { type: String, default: undefined },
     /** The card's header subtitle — same stability contract as `title`. */
     subtitle: { type: String, default: undefined },
+    /** The VERIFY step's header title override. Undefined (the default)
+     *  takes the step-up vocabulary through `hkMfaVerifyTitle`, i.e. what
+     *  the standalone step-up card has always said — the flow does NOT
+     *  reuse `title` here (a sign-in title frozen over a step-up body
+     *  reads as a stuck page), but a host that brands its panel must be
+     *  able to brand BOTH steps, or the header contradicts the marketing
+     *  copy on the second one. */
+    verifyTitle: { type: String, default: undefined },
+    /** The verify step's header subtitle override (see `verifyTitle`);
+     *  the `{name}` / `{proven}` interpolation still applies. */
+    verifySubtitle: { type: String, default: undefined },
     /** Seed for the credentials body's username field — survives the
      *  verify round-trip (see HkSignInCard.initialUsername). */
     initialUsername: { type: String, default: "" },
@@ -244,21 +256,41 @@ export const HkLoginFlow = defineComponent({
         props.channels[0],
     );
 
-    // Anti-strobe on the channel swap (the chest round-22 field report
+    // Anti-strobe on EVERY swap (the chest round-22 field report
     // HkStepFlow's dropFlowFocus used to cover): a field still focused
     // INSIDE the leaving body re-anchors the Android autofill panel on
-    // every layout beat of the morph. The tab buttons are deliberately
-    // OUTSIDE the blur scope — the activated tab must keep focus
-    // (keyboard a11y).
-    watch(() => currentChannel.value?.key, () => {
-      const active = document.activeElement;
-      if (
-        active instanceof HTMLElement &&
-        active.closest(".hk-login-flow-body")
-      ) {
-        active.blur();
-      }
-    });
+    // every layout beat of the morph — and HkCrossfade marks the leaving
+    // item `inert`, so a field that survives into the dissolve is blurred
+    // by the browser at the START of it and the caret lands wherever the
+    // next node puts it. Both triggers watch the same thing:
+    //
+    // - the CHANNEL swap (the credentials/sso body below the tabs),
+    // - the STEP swap (account ↔ verify): the focused username field is
+    //   inside the generation that is about to leave, so the early blur
+    //   is what keeps the autofill panel from chasing the morph. The
+    //   entering step-up body then claims focus itself (autofocus on the
+    //   proof field / the passkey action).
+    //
+    // The tab buttons are deliberately OUTSIDE the blur scope — the
+    // activated tab must keep focus (keyboard a11y): they live in the
+    // shell's form block, while `hk-login-flow-body` marks the swapped
+    // body of the generation on stage (the inner channel container, or
+    // the verify generation's form block).
+    // MUT:step-swap-no-blur (dropping props.step from this watch leaves
+    // the username field focused through the inert window — the
+    // account→verify focus pin goes red).
+    watch(
+      () => `${props.step}|${currentChannel.value?.key ?? ""}`,
+      () => {
+        const active = document.activeElement;
+        if (
+          active instanceof HTMLElement &&
+          active.closest(".hk-login-flow-body")
+        ) {
+          active.blur();
+        }
+      },
+    );
 
     /** Segment label precedence: explicit label > the conventional-key
      *  locale > the raw key. The conventional keys cover every Celestia
@@ -405,8 +437,9 @@ export const HkLoginFlow = defineComponent({
           {/* The anchored box: the card grows DOWNWARD from here, and the
            * hook paints it back onto this top whenever a centered host
            * re-centers the taller frame (see useAnchoredTop). Wrapping
-           * the frame instead of the panel root keeps a notice appearing
-           * above the card from dragging the card with it. */}
+           * the FRAME (rather than the panel root) keeps a notice
+           * appearing above the card from dragging the card with it:
+           * the notice takes its own row above this box. */}
           <div class="hk-login-flow-anchor" ref={anchorRef}>
             {/* ONE card frame for the whole session: the step swap below
              * is a swap of this frame's CONTENTS. .s-auth-card also
@@ -424,13 +457,23 @@ export const HkLoginFlow = defineComponent({
                 {verifying ? (
                   <div key="verify" class="hk-login-flow-step">
                     {headerEl(
-                      hkMfaVerifyTitle(t, { proven: props.verifyProven }),
+                      hkMfaVerifyTitle(t, {
+                        title: props.verifyTitle,
+                        proven: props.verifyProven,
+                      }),
                       hkMfaVerifySubtitle(t, {
+                        subtitle: props.verifySubtitle,
                         proven: props.verifyProven,
                         accountName: props.verifyAccountName,
                       }),
                     )}
-                    <div class="s-auth-form">
+                    {/* `hk-login-flow-body` marks the SWAPPED body of a
+                     *  generation (see the anti-strobe watch): the verify
+                     *  generation's body block is its form block, the
+                     *  account generation's is the inner channel
+                     *  container. No tabs render in this generation, so
+                     *  scoping here can never capture a tab trigger. */}
+                    <div class="s-auth-form hk-login-flow-body">
                       <HkMfaVerifyCard
                         ref={mfaRef}
                         bare

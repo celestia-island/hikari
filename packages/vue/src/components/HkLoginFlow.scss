@@ -14,13 +14,14 @@
   margin-inline: auto;
 }
 
-// The anchored box around the card (useAnchoredTop). It carries ONLY the
-// paint-level `transform` that keeps the card's top edge still while the
-// card grows: the rule is deliberately empty of layout declarations — a
-// width, margin or padding here would shift the card relative to the
-// frame the rest of the panel geometry was built against, and a
-// `position` other than static would make it a containing block for the
-// card's own overlays.
+// The anchored box around the card (useAnchoredTop). The hook writes ONLY
+// a paint-level `transform` here, which is what keeps the card's top edge
+// still while the card grows. The declarations this rule may carry are
+// therefore limited to the sizing the box needs to be a faithful copy of
+// its parent's content lane (the width) — a margin or padding here would
+// shift the card relative to the frame the rest of the panel geometry was
+// built against, and a `position` other than static would make it a
+// containing block for the card's own overlays.
 //
 // `.hk-login-flow-card` next to `.s-auth-card` is the one card frame of
 // the WHOLE session (account, verify and every channel share it): the

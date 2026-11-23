@@ -229,7 +229,7 @@ export const HkMfaVerifyCard = defineComponent({
       selected.value = hkPreferredMfaFactor(list) ?? list[0] ?? "password";
       code.value = "";
       password.value = "";
-      if (props.autofocus && selected.value === "password") focusPassword();
+      focusStage();
     }
 
     watch(
@@ -240,12 +240,37 @@ export const HkMfaVerifyCard = defineComponent({
 
     // ── proof-field focus ────────────────────────────────────────────
     const passwordRef = ref<{ $el?: HTMLElement } | null>(null);
+    /** The passkey action — the only focusable proof entry for a factor
+     *  without a text field. */
+    const passkeyRef = ref<{ $el?: HTMLElement } | null>(null);
     function focusPassword() {
       void nextTick(() => {
         (passwordRef.value?.$el as HTMLElement | undefined)
           ?.querySelector("input")
           ?.focus();
       });
+    }
+
+    /** Focus the factor on stage. `autofocus` covers the whole card, not
+     *  just its text fields: a passkey-only account has no input, and
+     *  leaving focus on `<body>` after a step swap strands keyboard and
+     *  screen-reader users (A2 review finding — the entering generation
+     *  must claim the caret whenever the leaving one loses it). */
+    function focusStage() {
+      if (!props.autofocus) return;
+      if (selected.value === "password") {
+        focusPassword();
+        return;
+      }
+      if (selected.value === "passkey") {
+        void nextTick(() => {
+          (passkeyRef.value?.$el as HTMLElement | undefined)
+            ?.querySelector("button")
+            ?.focus();
+        });
+        return;
+      }
+      // totp / sms: HkOtpInput owns its own autofocus (first cell).
     }
 
     /** Switching factors starts a fresh proof (a half-typed code must
@@ -258,7 +283,7 @@ export const HkMfaVerifyCard = defineComponent({
       selected.value = value;
       code.value = "";
       password.value = "";
-      if (props.autofocus && value === "password") focusPassword();
+      focusStage();
     }
 
     async function attemptVerify(): Promise<void> {
@@ -373,6 +398,7 @@ export const HkMfaVerifyCard = defineComponent({
                 code submit drew two equal-weight buttons that ran
                 the same handler (user report 2026-09-18). */}
             <HkAuthSubmitButton
+              ref={passkeyRef}
               label={props.loading ? busyLabel()
                 : t("hikari::mfaVerify.usePasskey", "Verify with Passkey")}
               block

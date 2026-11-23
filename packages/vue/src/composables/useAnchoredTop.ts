@@ -1,4 +1,4 @@
-import { onBeforeUnmount, onMounted, type Ref } from "vue";
+import { onBeforeUnmount, onMounted, watch, type Ref } from "vue";
 
 /** Drift (px) small enough to read as "still at rest" — sub-pixel churn
  *  and the 1px rounding of a centered box must not buy a correction. */
@@ -122,18 +122,35 @@ export function useAnchoredTop(
     applyShift();
   }
 
+  /** Point the observer at whatever the target is now: a host that mounts
+   *  the block behind a `v-if`, swaps it, or hands the ref over later must
+   *  still be anchored — an observe() that only ever ran once against a
+   *  `null` target would disable the hook for the whole instance,
+   *  silently (A2 review finding: the composable is public API). */
+  function observe(): void {
+    if (typeof ResizeObserver === "undefined") return;
+    if (!observer) observer = new ResizeObserver(() => correct());
+    observer.disconnect();
+    const el = target.value;
+    if (!el) return;
+    // Re-anchor to where the element actually landed before watching it:
+    // a late target is a late resting position, not a stale one.
+    rebase();
+    observer.observe(el);
+  }
+
   onMounted(() => {
     // Record the resting top BEFORE any morph: the mount frame is the
     // only moment guaranteed to be the design's intended position.
     rebase();
-    if (typeof ResizeObserver === "undefined") return;
-    observer = new ResizeObserver(() => correct());
-    if (target.value) observer.observe(target.value);
+    observe();
     // A viewport change re-centers the host, i.e. legitimately moves the
     // block: re-base AFTER the browser settled the new layout so the old
     // anchor does not get defended on the next morph.
     window.addEventListener("resize", rebase);
   });
+
+  watch(target, () => observe());
 
   onBeforeUnmount(() => {
     observer?.disconnect();

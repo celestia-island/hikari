@@ -708,6 +708,87 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     ).toBe("Account password passed — choose one more method to finish signing in to demiurge");
   });
 
+  it("blurs a field focused inside the LEAVING body on a step swap", async () => {
+    // The user's real sequence: type the name, click 登录. The focused
+    // field is inside the generation that is about to be marked inert, so
+    // the flow blurs it BEFORE the dissolve (HkCrossfade's own note: a
+    // control focused in the leaving item is blurred when inert lands,
+    // and the autofill panel chases every layout beat until it does).
+    // MUT:step-swap-no-blur (dropping props.step from the watch leaves
+    // the field focused and this goes red).
+    const { container, step } = mountStepHost();
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="signin-username"]',
+    )!;
+    input.focus();
+    expect(document.activeElement).toBe(input);
+    step.value = "verify";
+    await nextTick();
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  it("marks the verify body as the swapped region, and never the tabs", async () => {
+    // `hk-login-flow-body` is the blur scope: it must match the swapped
+    // body of whichever generation is on stage. The account generation's
+    // is the inner channel container (the tabs stay outside it); the
+    // verify generation's is its form block (no tabs there at all).
+    // MUT:verify-body-unscoped (dropping the class from the verify form
+    // block leaves a focused proof field inside the leaving body on the
+    // verify→account leg and this goes red).
+    const { container, step } = mountStepHost({ factors: ["totp"] });
+    const accountBody = container.querySelector(".hk-login-flow-body");
+    expect(accountBody).not.toBeNull();
+    expect(accountBody!.querySelector(".hk-tabs")).toBeNull();
+
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    const verifyGen = container.querySelector(
+      '.hk-crossfade-item[data-crossfade-key="verify"]',
+    ) as HTMLElement;
+    const verifyBody = verifyGen.querySelector(".hk-login-flow-body");
+    expect(verifyBody).not.toBeNull();
+    expect(verifyBody!.querySelectorAll(".hk-otp-cell").length).toBe(6);
+  });
+
+  it("hands the caret to the entering step-up action for a passkey account", async () => {
+    // A passkey-only account has no input: the card's autofocus must
+    // still land somewhere, or the step swap drops the caret on <body>.
+    // MUT:passkey-focus-drop (reverting focusStage to the password-only
+    // branch leaves activeElement === body and this goes red).
+    const { container, step } = mountStepHost({ factors: ["passkey"] });
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    await new Promise((r) => setTimeout(r, 20));
+    const verifyGen = container.querySelector(
+      '.hk-crossfade-item[data-crossfade-key="verify"]',
+    ) as HTMLElement;
+    const action = verifyGen.querySelector<HTMLButtonElement>(".hk-btn-primary")!;
+    expect(document.activeElement).toBe(action);
+  });
+
+  it("lets a host brand the verify header without touching the account copy", async () => {
+    // The flow-level `title`/`subtitle` are the ACCOUNT header contract;
+    // the verify step has its own overrides, and leaving them undefined
+    // keeps the step-up vocabulary (the card's own wording).
+    // MUT:verify-header-props-dropped (not forwarding verifyTitle /
+    // verifySubtitle leaves the default title here and this goes red).
+    const branded = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+        title: "Sign in to Acme",
+        verifyTitle: "Confirm it's you",
+        verifySubtitle: "Acme keeps your account safe",
+      }),
+    );
+    expect(branded.querySelector(".s-auth-title")?.textContent)
+      .toBe("Confirm it's you");
+    expect(branded.querySelector(".s-auth-subtitle")?.textContent)
+      .toBe("Acme keeps your account safe");
+  });
+
   it("anchors the card's top edge on a growing frame (structural pin)", async () => {
     const { container } = mountStepHost();
     // The anchor wrapper is the element useAnchoredTop owns: a centered

@@ -30,6 +30,12 @@
 # checked-in one would force a full rebuild on every CI run. The per-target
 # *environment variable* is the only spelling that stays narrow.
 #
+# And on this cargo (1.100.0) a target table's rustflags do NOT combine with the
+# per-target environment variable -- measured: with both set, the variable wins
+# and the table's flag is absent from the artifact entirely. So putting a remap
+# here would not back up the env path, it would be dead weight that also costs
+# the full rebuild above.
+#
 # The value cannot be a static table anyway: its operands are the ambient
 # CARGO_HOME / RUSTUP_HOME, which differ per machine and per lane.
 #

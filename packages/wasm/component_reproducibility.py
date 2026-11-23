@@ -31,14 +31,16 @@ Two spellings express it, and they are **not** equivalent:
   *looks* narrow and is not: measured on hikari 2026-11-24, a native
   ``cargo check -p hikari-components`` against a clean target wrote **1650**
   fingerprint files under ``debug/build/*/*/fingerprint`` where the no-flag
-  baseline writes 825 -- the same 825 extra units, byte-identical in shape,
-  that a global ``RUSTFLAGS`` produces (180 of them carry the flag string in
-  ``lib-*.json``'s ``rustflags``). Cargo folds ``[target.<triple>] rustflags``
-  into the fingerprint of every compiled unit, host target included, so a
-  checked-in table there means a full rebuild on every CI run.
+  baseline writes 825 -- i.e. the same 825 units written a second time under a
+  different hash, the way a global ``RUSTFLAGS`` also does it (180 of them carry
+  the flag string in ``lib-*.json``'s ``rustflags``). Cargo folds
+  ``[target.<triple>] rustflags`` into the fingerprint of every compiled unit,
+  host target included, so a checked-in table there means a full rebuild on
+  every CI run.
 * ``CARGO_TARGET_WASM32_WASIP2_RUSTFLAGS`` -- cargo's per-target environment
-  variable. Same 825/825 fingerprints, byte-identical to the no-flag baseline;
-  the flag reaches only wasm32-wasip2 compilation.
+  variable. Measured: the same **825** files, and their content hashes are
+  identical to the no-flag baseline's -- the flag reaches only wasm32-wasip2
+  compilation and leaves the host units untouched.
 
 **The per-target variable is silently discarded when a global ``RUSTFLAGS`` is
 set** (measured: with both exported, ``cargo build -v`` shows the global value
@@ -198,15 +200,16 @@ def problems(
        because it *does* change the artifact and the remaining home still
        leaks;
     5. it names a home this process would not resolve (a stale export pointing
-       at a directory that is not the one in use);
-    6. (``require_flags=False`` only) nothing but the homes is checked.
+       at a directory that is not the one in use).
 
-    ``require_flags=False`` is the shape a caller that INJECTS the value needs:
-    ``build.py`` overwrites the variable from these same homes, so a stale
-    export in somebody's shell neither helps nor hurts it, and refusing on one
-    would be advice no reader can act on. A global ``RUSTFLAGS`` is still
-    refused in that mode, because overwriting the per-target variable does not
-    help against it.
+    Shapes 3-5 are the FLAGS-CONSISTENCY half, and they are the only ones
+    ``require_flags=False`` relaxes. That mode is what a caller that INJECTS the
+    value needs: ``build.py`` rewrites the variable from these same homes before
+    spawning cargo, so a stale export in somebody's shell neither helps nor
+    hurts it, and refusing on one would be advice no reader can act on. The
+    home checks (2) and the global ``RUSTFLAGS`` check (1) still apply there --
+    rewriting the per-target variable does not help against a global
+    ``RUSTFLAGS``, which cargo discards it in favour of.
 
     A home that is unset is NOT a problem: :func:`resolve_home` supplies the
     fallback cargo/rustup use.

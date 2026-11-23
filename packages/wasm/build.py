@@ -242,11 +242,13 @@ def main() -> int:
     # export that the very next line overrides.
     if component_reproducibility.main(require_flags=False) != 0:
         return 1
-    # FROM THIS POINT THE ARTIFACT BYTES ARE PINNED. Not to the caller's shell
-    # -- `build` overwrites the variable with the value derived from the homes
-    # above -- but to those two directories. A stale export left in a shell from
-    # an older CARGO_HOME therefore cannot silently produce bytes nobody's
-    # descriptor pins.
+    # FROM THIS POINT THE ARTIFACT BYTES ARE PINNED *TO THESE TWO DIRECTORIES*.
+    # Not to the caller's shell -- `build` rewrites the variable from the homes
+    # above -- so a stale export left in a shell from an older CARGO_HOME cannot
+    # silently produce bytes nobody's descriptor pins. The scope is deliberate:
+    # the rest of reproducibility (same toolchain, same `Cargo.lock`, same
+    # profile) is cargo's usual guarantee and is NOT checked here -- see
+    # `component_reproducibility`'s "what it does NOT claim".
     for comp in sorted(comps):
         wasm = build(comp)
         out = VUE_DST / comp

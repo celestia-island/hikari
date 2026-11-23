@@ -215,8 +215,9 @@ def test_a_relative_home_is_refused() -> None:
     """A relative value is not the string rustc would bake in.
 
     The homes-only view is the one that must catch it alone: with the strict
-    view it is also reported a second time as "no remap for CARGO_HOME", which
-    is true but not the actionable half.
+    view, "no remap for CARGO_HOME" is reported as well (true, but not the
+    actionable half), alongside the stale-export report when a flag names some
+    *other* directory for the same home.
     """
     env = {"CARGO_HOME": "rel/cargo", "RUSTUP_HOME": RUSTUP_HOME}
     found = repro.problems(env, require_flags=False)
@@ -311,8 +312,14 @@ def test_homes_only_mode_ignores_the_callers_flags() -> None:
     """
     env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
     assert repro.problems(env, require_flags=False) == []
-    # Unusable homes are still refused in this mode: they decide the operand.
+    # An empty value is UNSET, which resolves to the toolchain default -- so it
+    # is clean here too, exactly as it is in the strict view.
     assert repro.problems({**env, "CARGO_HOME": ""}, require_flags=False) == []
+    # A home that cannot be a remap operand IS still refused in this mode: it
+    # decides the operand, which is the half `build` injects.
+    assert [p.variable for p in repro.problems({**env, "CARGO_HOME": "/"}, require_flags=False)] == [
+        "CARGO_HOME"
+    ]
 
 
 # ── the remap target constants are part of the contract ──────────────────

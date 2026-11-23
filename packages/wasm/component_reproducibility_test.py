@@ -25,7 +25,7 @@ MUT:no-single-home-report (``test_half_the_contract_is_refused``)
 MUT:no-hostile-home-guard (``test_a_root_home_is_refused`` / ``test_a_quote_in_a_home_is_refused``)
 MUT:no-stale-export-report (``test_a_remap_for_another_home_is_reported``)
 MUT:export-drift (``test_rustflags_is_the_value_the_export_line_prints``)
-MUT:no-inject-guard (``test_homes_only_mode_ignores_the_callers_flags``)
+MUT:no-relaxed-mode (``test_homes_only_mode_ignores_the_callers_flags``)
 """
 
 from __future__ import annotations
@@ -188,9 +188,11 @@ def test_a_global_rustflags_is_refused_in_homes_only_mode_too() -> None:
 
 def test_a_root_home_is_refused() -> None:
     """Remapping ``/`` would rewrite EVERY absolute path, not just the toolchain's."""
-    # MUT:no-hostile-home-guard -- without it the gate derives
-    # `--remap-path-prefix=/=/cargo` and, once the caller exports it, calls the
-    # resulting artifact normalized.
+    # MUT:no-hostile-home-guard -- the root refusal's real guardian. Measured:
+    # deleting ONLY the `filesystem root` assertion below leaves the suite green
+    # (the guard still reports `CARGO_HOME`, so the list assertion holds); the
+    # guard and that assertion have to go together for this case to redden. The
+    # assertion is here to pin the *message*, not to be the sole guard.
     env = {"CARGO_HOME": "/", "RUSTUP_HOME": RUSTUP_HOME}
     found = repro.problems({**env, repro.RUSTFLAGS_VAR: repro.rustflags(env)})
     assert [p.variable for p in found] == ["CARGO_HOME"], found

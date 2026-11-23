@@ -189,7 +189,7 @@ def problems(
     """Every way ``environ`` fails the reproducibility contract, in a stable order.
 
     Read-only and total: an empty list means a build here produces the pinned
-    bytes. Six failure shapes, each reported separately because they need
+    bytes. Five failure shapes, each reported separately because they need
     different fixes:
 
     1. a global ``RUSTFLAGS`` is set -- it *replaces* the per-target variable,

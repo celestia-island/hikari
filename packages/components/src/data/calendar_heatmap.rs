@@ -846,9 +846,14 @@ mod tests {
     /// The assertion is kept because the invariant itself is worth pinning:
     /// the series' wire shape and the `value_by_date` lookups key on it, and
     /// fourteen pre-existing heatmap tests do not watch a sub-1000 year at
-    /// all. It stays falsifiable — a renderer that padded with spaces fails
-    /// it (verified by mutation), which is what makes it a guard rather than
-    /// a restatement.
+    /// all.
+    ///
+    /// It is falsifiable only because of the GRID case below. An earlier
+    /// version of this test exercised just `heatmap_shift_iso`, which the
+    /// space-padding mutant of the grid's own `strftime` never touches —
+    /// mutating that renderer left the whole module green. The grid
+    /// assertion is what actually observes it: a padded key fails to match
+    /// `value_by_date`, so every shipped value disappears.
     #[test]
     fn heatmap_iso_rendering_is_zero_padded_not_space_padded() {
         // Four-digit years: both renderers agree, so pin it anyway.
@@ -878,6 +883,38 @@ mod tests {
         );
         assert_eq!(&today[4..5], "-");
         assert_eq!(&today[7..8], "-");
+
+        // THE case that observes the grid's own renderer: a sub-1000 year
+        // through `heatmap_calendar_grid`. Every cell key must stay the
+        // 10-byte ISO shape, and the shipped value must be FOUND by the
+        // `value_by_date` lookup — a space-padded key misses it, which is
+        // what this measures.
+        let shippped = [HeatmapDay {
+            date: "0987-01-06".to_string(),
+            value: 3.0,
+        }];
+        let grid = heatmap_calendar_grid(&shippped, "0987-01-31", None, None);
+        assert!(!grid.is_empty(), "the sub-1000 window must render");
+        for cell in &grid {
+            let key = cell.date();
+            assert_eq!(key.len(), 10, "grid cell key must be 10 bytes, got {key:?}");
+            assert_eq!(&key[4..5], "-", "grid cell key: {key:?}");
+            assert_eq!(&key[7..8], "-", "grid cell key: {key:?}");
+            assert!(
+                key.bytes().all(|b| b.is_ascii_digit() || b == b'-'),
+                "grid cell key must be digits and dashes only, got {key:?}"
+            );
+        }
+        // The shipped value survived the lookup rather than being dimmed to a
+        // gap by a mismatched key.
+        let shipped_cell = grid
+            .iter()
+            .find(|cell| cell.date() == "0987-01-06")
+            .expect("the shipped day must be a cell of the grid");
+        assert!(
+            matches!(shipped_cell, HeatmapCell::Day { .. }),
+            "a space-padded key would miss `value_by_date` and dim the              shipped day into a gap: {shipped_cell:?}"
+        );
     }
 
     /// The series parser accepts ONLY the 10-byte `YYYY-MM-DD` shape.

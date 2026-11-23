@@ -93,6 +93,8 @@ def test_rustflags_is_the_value_the_export_line_prints() -> None:
     One derivation, two spellings: if they ever drift, a developer follows advice
     that does not satisfy the gate and the loop never converges.
     """
+    # MUT:export-drift -- appending a space to `rustflags()`'s return makes the
+    # two spellings disagree, and this comparison is what notices.
     env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
     value = repro.rustflags(env)
     assert (
@@ -221,6 +223,8 @@ def test_a_relative_home_is_refused() -> None:
     actionable half), alongside the stale-export report when a flag names some
     *other* directory for the same home.
     """
+    # MUT:no-hostile-home-guard -- with the operand check gone this home is
+    # accepted and the list assertion below has nothing to match.
     env = {"CARGO_HOME": "rel/cargo", "RUSTUP_HOME": RUSTUP_HOME}
     found = repro.problems(env, require_flags=False)
     assert [p.variable for p in found] == ["CARGO_HOME"], found

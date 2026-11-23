@@ -430,6 +430,35 @@ describe("HkMfaVerifyCard — alternative sign-in rows", () => {
     ).toBe(true);
   });
 
+  it("keeps a row the host closed ITSELF closed, busy or idle", () => {
+    // The prop doc promises "a row the host closed itself stays closed":
+    // the busy arm must ADD the flag, never overwrite the host's own. Both
+    // arms are probed because two different implementations each break
+    // exactly one of them (`disabled: loading || disabled` wipes the gate
+    // while idle, coercing idle rows to `false` wipes it too, and a
+    // clone that DROPS the field is the same defect).
+    // MUT:verify-rows-host-gateidle (coercing the idle arm to `disabled:
+    // false`) reds the first assertion; MUT:verify-rows-host-gatebusy
+    // (`disabled: props.loading || props.disabled` on every row) reds it
+    // as well once the card is idle.
+    const closed = [{ key: "github", label: "GitHub", disabled: true }, { key: "feishu", label: "Feishu" }];
+    const idle = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], methods: closed }));
+    const idleGithub = idle.container.querySelector<HTMLButtonElement>('[data-key="github"]')!;
+    const idleFeishu = idle.container.querySelector<HTMLButtonElement>('[data-key="feishu"]')!;
+    expect(idleGithub.disabled).toBe(true);
+    expect(idleFeishu.disabled).toBe(false);
+
+    const busy = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], methods: closed, loading: true }));
+    expect(
+      busy.container.querySelector<HTMLButtonElement>('[data-key="github"]')!.disabled,
+    ).toBe(true);
+    expect(
+      busy.container.querySelector<HTMLButtonElement>('[data-key="feishu"]')!.disabled,
+    ).toBe(true);
+  });
+
   it("renders the rows in bare mode too (one body, two shells)", () => {
     const { container } = mount(() =>
       h(HkMfaVerifyCard, { bare: true, factors: ["password"], methods: rows }));

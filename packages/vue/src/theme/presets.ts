@@ -403,6 +403,11 @@ export function tokensToCSSVars(
     "--hi-color-info-fg": `rgb(${infoFg.r} ${infoFg.g} ${infoFg.b})`,
     "--hi-color-bg-subtle": "rgb(var(--color-surface) / 0.5)",
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
+    // hikari-components (the Rust registry CSS) consumes this legacy name
+    // for its code/editor surfaces (issue #1496) — alias it onto the
+    // channel so embedded hosts follow the live theme instead of the
+    // hardcoded light fallback their own sheets carry.
+    "--hi-color-bg-container": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",
     "--hi-secondary-bg": "rgb(var(--color-surface) / 0.5)",
     ...groupVars,

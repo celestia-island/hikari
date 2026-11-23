@@ -1044,3 +1044,103 @@ describe("HkModal blur plate", () => {
     }
   });
 });
+
+describe("HkModal top-edge anchor (centred frame must not fly)", () => {
+  // 2026-11-23 user direction: "where the content can change inside the
+  // card, do not let the whole card fly." The frame is centred by
+  // `translate: -50% -50%`, so a height morph of Δ lifts the whole window
+  // by Δ/2; the anchor folds the measured drift into --hk-modal-anchor-y.
+  function mountModal() {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: open.value, title: "Anchor" },
+            { default: () => h("div", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return { container, frame: document.querySelector(".hk-modal-content") as HTMLElement };
+  }
+
+  it("folds a centred height drift into the anchor variable", async () => {
+    // A stubbed observer + a rect that composes the frame's own anchor
+    // variable (an engine reports the PAINTED box) makes the closed loop
+    // observable without a browser.
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return {
+          top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}),
+        } as DOMRect;
+      },
+    );
+    try {
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame).not.toBeNull();
+      // A centred growth lifted the top edge by 20px.
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // MUT:modal-no-anchor (dropping the useAnchoredTop wiring leaves the
+      // variable unset and this goes red).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("never writes the anchor on the mobile sheet branch", async () => {
+    // ≤767px the frame is a BOTTOM sheet: growth already goes upward from
+    // a fixed bottom edge, so anchoring the TOP would invert the motion.
+    const previousWidth = window.innerWidth;
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ top: top.value, left: 0, bottom: top.value, right: 0,
+        width: 0, height: 0, x: 0, y: top.value, toJSON: () => ({}) }) as DOMRect,
+    );
+    try {
+      (window as { innerWidth: number }).innerWidth = 500;
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // MUT:modal-anchor-on-sheet (dropping the enabled gate writes the
+      // variable on the sheet branch and this goes red).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      (window as { innerWidth: number }).innerWidth = previousWidth;
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+});

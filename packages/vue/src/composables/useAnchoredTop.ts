@@ -75,10 +75,35 @@ export function needsAnchorCorrection(
  *   no-op — a block that never animates never drifts, so there is nothing
  *   to correct.
  */
+export interface UseAnchoredTopOptions {
+  /** Gate the correction (a surface that is not in its anchored mode). */
+  enabled?: () => boolean;
+  /** Where the correction goes, in px (0 = no correction active).
+   *
+   *  Defaults to an inline `transform: translateY(…)` on the target —
+   *  right for a host that owns nothing else on that element. A surface
+   *  that already animates `transform` (HkModal's open/close ride) or
+   *  composes its offset through a CSS custom property supplies its own
+   *  writer instead, so the anchor and the surface's own choreography
+   *  never fight over one property. */
+  apply?: (shiftPx: number) => void;
+}
+
+export interface AnchoredTopHandle {
+  /** Drop the correction and adopt the element's current top as the new
+   *  anchor (a reopen/remount edge). Returns without touching anything
+   *  when the element is gone. */
+  reset: () => void;
+  /** The correction currently applied, in px. */
+  shift: () => number;
+}
+
 export function useAnchoredTop(
-  target: Ref<HTMLElement | null>,
-  options: { enabled?: () => boolean } = {},
-): void {
+  // `undefined` is accepted alongside `null`: a host ref declared without
+  // an initial value (`ref<HTMLElement>()`) reads as undefined until mount.
+  target: Ref<HTMLElement | null | undefined>,
+  options: UseAnchoredTopOptions = {},
+): AnchoredTopHandle {
   let observer: ResizeObserver | null = null;
   /** Translate currently written on the target (px, 0 = none). */
   let shift = 0;
@@ -94,6 +119,10 @@ export function useAnchoredTop(
   }
 
   function applyShift(): void {
+    if (options.apply) {
+      options.apply(shift);
+      return;
+    }
     const el = target.value;
     if (!el) return;
     // `translateY(0)` would still create a containing block and a
@@ -166,6 +195,18 @@ export function useAnchoredTop(
       window.removeEventListener("resize", rebase);
     }
   });
+
+  /** Reopen edge: forget the correction and re-anchor where the block is
+   *  now. A surface that holds its frame through a leave (HkModal) needs
+   *  this, or the next open would inherit the previous cycle's offset. */
+  function reset(): void {
+    shift = 0;
+    anchored = false;
+    applyShift();
+    rebase();
+  }
+
+  return { reset, shift: () => shift };
 }
 
 export default useAnchoredTop;

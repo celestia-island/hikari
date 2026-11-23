@@ -14,6 +14,7 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
+import { useAnchoredTop } from "../composables/useAnchoredTop";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -369,6 +370,35 @@ export default defineComponent({
       },
     });
 
+    /**
+     * Top-edge anchoring (2026-11-23 user direction: "where the content
+     * can change inside the card, do not let the whole card fly").
+     *
+     * The frame is centred by `top: 50%; translate: -50% -50%`, so a height
+     * morph of Δ moves the TOP edge up by Δ/2 and the whole body travels
+     * with it — the wizard step / async-detail growth the field keeps
+     * reporting. This closed loop folds that measured drift into
+     * `--hk-modal-anchor-y`, which composes into the SAME `translate`
+     * property the centring already uses (so the open/close ride, which
+     * animates `transform` only, stays untouched and the two never fight
+     * over one property — that is why this is NOT written as a transform).
+     *
+     * Desktop only: the ≤767px branch is a BOTTOM sheet whose frame is
+     * pinned to the lower edge, where growth already goes upward from a
+     * fixed bottom — anchoring the top there would invert the motion.
+     * The offset resets on every open edge (see the machine watcher), like
+     * the drag shift, so a reopen never inherits a previous cycle's lift.
+     */
+    const anchor = useAnchoredTop(contentRef, {
+      enabled: () => !sheetMobile.value,
+      apply: (px) => {
+        const el = contentRef.value;
+        if (!el) return;
+        if (px === 0) el.style.removeProperty("--hk-modal-anchor-y");
+        else el.style.setProperty("--hk-modal-anchor-y", `${px}px`);
+      },
+    });
+
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the
      *  natural end (`--to`). Between and after them no ride class is
@@ -652,8 +682,15 @@ export default defineComponent({
           // under the base height transition (a growth that landed in the
           // last tick of the enter animates instead of snapping).
           morph.start();
+          // A reopen must not inherit the previous cycle's lift: the
+          // anchor re-bases to the frame's fresh resting top before the
+          // enter finishes settling, exactly like the drag shift.
+          anchor.reset();
           void nextTick(() => {
-            if (machine.phase.value === "open") morph.remeasure();
+            if (machine.phase.value === "open") {
+              morph.remeasure();
+              anchor.reset();
+            }
           });
         } else if (to === "closingFrom") {
           // Close-request bookkeeping (was the watcher's close arm): the

@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { wasmMermaidEngine } from "./wasmEngine";
+import { wasmMermaidEngine, mermaidReady } from "./wasmEngine";
 
 const CASES: Array<{ name: string; source: string }> = [
   { name: "graph-basic", source: "graph TD\n  A --> B\n  B --> C" },
@@ -21,7 +21,8 @@ const CASES: Array<{ name: string; source: string }> = [
 
 describe("mermaid golden snapshots (wasm is the reference)", () => {
   for (const { name, source } of CASES) {
-    it(`mermaid: ${name}`, () => {
+    it(`mermaid: ${name}`, async () => {
+    await mermaidReady;
       const doc = wasmMermaidEngine.parse(source);
       expect(doc).not.toBeNull();
       // Pin the full JSON output — any semantic change is a snapshot diff.

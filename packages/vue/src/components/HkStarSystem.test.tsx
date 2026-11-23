@@ -3,6 +3,7 @@ import { createApp, h, nextTick, reactive, type App } from "vue";
 
 import type { StarSystemBodyInput } from "../scene3d/holographicFleetSpec";
 import HkStarSystem from "./HkStarSystem";
+import { scene3dReady } from "../scene3d/wasmFleetSpec";
 
 const mocks = vi.hoisted(() => ({
   engine: {},
@@ -50,6 +51,10 @@ const BODIES: readonly StarSystemBodyInput[] = [
 const mounts: Array<{ app: App; container: HTMLElement }> = [];
 
 async function settle(): Promise<void> {
+  // The scene3d component loads asynchronously now, and the component retries
+  // its first draw once `scene3dReady` resolves — so a settled assertion has to
+  // include that load, not just a render tick.
+  await scene3dReady;
   await nextTick();
   await new Promise((resolve) => setTimeout(resolve, 0));
   await nextTick();

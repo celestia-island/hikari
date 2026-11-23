@@ -8,11 +8,12 @@
 // traffic through the wasm component.
 //
 // The facade is SYNCHRONOUS (user ruling: callers do not change). The host
-// client's synchronous door (`createSurface`) is what makes that possible: the
-// wrapper is in this module graph, so its exports are callable as soon as the
-// module is evaluated — no readiness dance in the common path.
+// client's synchronous door (`createSurface`) is what makes that possible. The
+// wrapper is loaded with a DYNAMIC import so a broken artifact degrades this
+// builder instead of aborting the module graph that hosts it: a static import
+// is evaluated before this file's body runs, so no `try` here could ever catch
+// its failure and the whole page went blank (#1498).
 import { SCENE3D_CAPABILITIES, SCENE3D_DECLARATION_PUBLISHED } from "./declare-caps";
-import * as scene3dWrapper from "../wasm/scene3d/hikari_wasm_scene3d.js";
 import {
   createSurface,
   HostClientError,
@@ -61,26 +62,41 @@ export class Scene3dNotReadyError extends Error {
 
 let surface: HostComponent | undefined;
 let loadFailure: Scene3dNotReadyError | undefined;
+let loadPromise: Promise<void> | undefined;
 
-try {
-  surface = createSurface(
-    scene3dWrapper as unknown as Record<string, unknown>,
-    // Hand the declaration to the door, don't just publish it: with the
-    // parameter omitted it defaults to `{}`, so the door's own refusal
-    // (`sync-door-cannot-provide`) can never fire and a wrong declaration would
-    // pass unnoticed. Passing it makes the declaration checkable here.
-    SCENE3D_CAPABILITIES,
-  );
-} catch (error) {
-  // Recognisable at the call site: callers that can wait use `scene3dReady`.
-  // The underlying cause is kept.
-  loadFailure = new Scene3dNotReadyError(error);
+/** Start loading; cached so every caller shares one attempt. */
+function ensureLoadedOnce(): Promise<void> {
+  if (!loadPromise) {
+    loadPromise = import("../wasm/scene3d/hikari_wasm_scene3d.js")
+      .then((wrapper) =>
+        createSurface(
+          wrapper as unknown as Record<string, unknown>,
+          // Hand the declaration to the door, don't just publish it: with the
+          // parameter omitted it defaults to `{}`, so the door's own refusal
+          // (`sync-door-cannot-provide`) can never fire and a wrong declaration
+          // would pass unnoticed. Passing it makes the declaration checkable.
+          SCENE3D_CAPABILITIES,
+        ),
+      )
+      .then((built) => {
+        surface = built;
+      })
+      .catch((error: unknown) => {
+        // Kept as the component's own error type so a caller can recognise it,
+        // and re-thrown so the ready promise REJECTS: resolving here would tell
+        // a waiting host the component is usable when it is not (measured — the
+        // facade stayed silent and every later call returned nothing).
+        loadFailure = new Scene3dNotReadyError(error);
+        throw loadFailure;
+      });
+  }
+  return loadPromise;
 }
 
 /** Resolves once the component is usable; rejects if it could not be built. */
-export const scene3dReady: Promise<void> = surface
-  ? Promise.resolve()
-  : Promise.reject(loadFailure ?? new Scene3dNotReadyError());
+export const scene3dReady: Promise<void> = ensureLoadedOnce().then(() => {
+  if (!surface) throw loadFailure ?? new Scene3dNotReadyError();
+});
 
 /** Keeps the declaration module live for bundlers that honour `sideEffects`. */
 export const scene3dCapabilities = SCENE3D_CAPABILITIES;

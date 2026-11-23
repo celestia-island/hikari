@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildFleetSceneSpecWasm } from "./wasmFleetSpec";
+import { buildFleetSceneSpecWasm, scene3dReady } from "./wasmFleetSpec";
 import type { FleetRowLike } from "./holographicFleetSpec";
 
 const ROWS: FleetRowLike[] = [
@@ -17,7 +17,8 @@ const ROWS: FleetRowLike[] = [
 ];
 
 describe("scene3d golden snapshot (wasm is the reference)", () => {
-  it("fleet scene spec golden", () => {
+  it("fleet scene spec golden", async () => {
+    await scene3dReady;
     const spec = buildFleetSceneSpecWasm(ROWS);
     expect(spec.stars.length).toBeGreaterThan(0);
     expect(spec.planets.length).toBeGreaterThan(0);

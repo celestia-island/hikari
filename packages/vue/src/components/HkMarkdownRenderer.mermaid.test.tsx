@@ -4,6 +4,7 @@ import { marked } from "marked";
 
 import HkMarkdownRenderer from "./HkMarkdownRenderer";
 import { setMermaidEngineForTests } from "../mermaid/engine";
+import { mermaidReady } from "../mermaid/wasmEngine";
 import { mermaidParser } from "../mermaid";
 
 /**
@@ -71,6 +72,7 @@ describe("HkMarkdownRenderer mermaid fences", () => {
 
   it("with an engine the fence mounts a diagram sub-app inside the markdown body", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
@@ -88,6 +90,7 @@ describe("HkMarkdownRenderer mermaid fences", () => {
 
   it("re-parsing new content replaces the old diagram (no stale sub-app)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container, set } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const first = container.querySelector(".hk-mermaid") as HTMLElement;
@@ -106,6 +109,7 @@ describe("HkMarkdownRenderer mermaid fences", () => {
 
   it("hostile source text stays text through the whole pipeline", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const hostile = ["```mermaid", "graph TD", 'A<img src=x onerror="alert(1)"> --> B', "```"].join("\n");
     const { container } = mount(hostile);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
@@ -122,6 +126,7 @@ describe("HkMarkdownRenderer mermaid fences", () => {
 describe("mermaid sub-app lifecycle pins", () => {
   it("re-parse unmounts the stale sub-app (no leaked __vue_app__)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container, set } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const stale = container.querySelector(".hk-md-mermaid") as HTMLElement;
@@ -136,6 +141,7 @@ describe("mermaid sub-app lifecycle pins", () => {
 
   it("renderer teardown unmounts every mermaid sub-app", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
@@ -166,6 +172,7 @@ describe("mermaid streaming reuse", () => {
 
   it("reuses the mounted diagram when the fence source is unchanged", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const parseSpy = vi.spyOn(marked, "parse");
     try {
       const { container, set } = mount(DOC);
@@ -194,6 +201,7 @@ describe("mermaid streaming reuse", () => {
 
   it("still rebuilds the diagram when the fence source itself changes", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container, set } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const first = container.querySelector(".hk-md-mermaid") as HTMLElement;
@@ -211,6 +219,7 @@ describe("mermaid streaming reuse", () => {
 
   it("retires the sub-app when the fence disappears from the body", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const { container, set } = mount(DOC);
     await settleFor(container, ".hk-md-mermaid[data-mermaid='mounted']");
     const host = container.querySelector(".hk-md-mermaid") as HTMLElement;

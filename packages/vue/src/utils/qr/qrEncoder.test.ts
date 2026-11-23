@@ -1,13 +1,14 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
 
-import { qrMatrix } from "./qrEncoder";
+import { qrMatrix, qrReady } from "./qrEncoder";
 
 const OTPAUTH =
   "otpauth://totp/Example:langyo%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example";
 
 describe("qrMatrix", () => {
-  it("returns a square boolean matrix for a real otpauth URI", () => {
+  it("returns a square boolean matrix for a real otpauth URI", async () => {
+    await qrReady;
     const m = qrMatrix(OTPAUTH);
     expect(m.length).toBeGreaterThan(0);
     for (const row of m) {
@@ -15,11 +16,13 @@ describe("qrMatrix", () => {
     }
   });
 
-  it("is deterministic for the same payload", () => {
+  it("is deterministic for the same payload", async () => {
+    await qrReady;
     expect(qrMatrix(OTPAUTH)).toEqual(qrMatrix(OTPAUTH));
   });
 
-  it("places three 7x7 finder patterns on the corners", () => {
+  it("places three 7x7 finder patterns on the corners", async () => {
+    await qrReady;
     const m = qrMatrix("HELLO WORLD");
     const n = m.length;
     // Finder pattern: dark border ring, light 1-module gap ring, dark 3x3
@@ -38,7 +41,8 @@ describe("qrMatrix", () => {
     expectFinderAt(n - 7, 0);
   });
 
-  it("encodes a balanced module population", () => {
+  it("encodes a balanced module population", async () => {
+    await qrReady;
     const m = qrMatrix(OTPAUTH);
     const dark = m.flat().filter(Boolean).length;
     const total = m.length * m.length;
@@ -48,7 +52,8 @@ describe("qrMatrix", () => {
     expect(dark).toBeLessThan(total * 0.8);
   });
 
-  it("throws when the payload overflows the largest version", () => {
+  it("throws when the payload overflows the largest version", async () => {
+    await qrReady;
     expect(() => qrMatrix("x".repeat(5000))).toThrow();
   });
 });

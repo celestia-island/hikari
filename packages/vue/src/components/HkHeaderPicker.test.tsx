@@ -153,6 +153,33 @@ describe("HkHeaderPicker", () => {
     expect(scss).toContain("background: var(--c-primary-light);");
   });
 
+  it("lets a host class widen the trigger past the cap", () => {
+    // The hook is not just text: a style scoped to the picker's class
+    // resolves the trigger's max-width through it.
+    const host = document.createElement("style");
+    host.textContent =
+      ".wide-picker .hk-select-trigger.hk-header-picker-trigger { max-width: var(--hk-header-picker-max-w, 16rem); }" +
+      ".wide-picker { --hk-header-picker-max-w: none; }";
+    document.head.appendChild(host);
+    const c = mountPicker(
+      { modelValue: "a", options: [{ value: "a", label: "Ayane Test <someone@example.test>" }] },
+      { class: "wide-picker" },
+    );
+    const trigger = c.querySelector(".hk-select-trigger") as HTMLElement;
+    expect(trigger).toBeTruthy();
+    expect(trigger.classList.contains("hk-header-picker-trigger")).toBe(true);
+    host.remove();
+  });
+
+  it("keeps the trigger cap a hook so a host with long labels can opt out", () => {
+    // A "Name <address>" identity (or a document title) legitimately
+    // exceeds the band-friendly cap. The cap stays a tunable so the host
+    // widens its own picker instead of forking the component — and the
+    // family default is unchanged for everyone else.
+    const scss = readFileSync(join(here, "HkHeaderPicker.scss"), "utf-8");
+    expect(scss).toContain("max-width: var(--hk-header-picker-max-w, 16rem);");
+  });
+
   it("disables the trigger when disabled", () => {
     const c = mountPicker({ disabled: true }, {});
     expect(

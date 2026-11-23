@@ -209,6 +209,43 @@ describe("HkMasterDetail — two-pane layout", () => {
     expect(c.querySelector(".hk-master-detail-detail-head")).toBeNull();
   });
 
+  it("hides the close affordance while nothing is selected", () => {
+    // A ✕ beside "pick a message" is a control with no subject: closed,
+    // the pane has nothing to dismiss, so the affordance and its head
+    // band stay away even though the host bound a listener.
+    setWidth(1280);
+    const closed = mount(
+      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message", onClose: () => {} }, {
+        list: ROSTER,
+        detail: DETAIL,
+      }),
+    );
+    expect(closed.querySelector(".hk-master-detail-close")).toBeNull();
+    expect(closed.querySelector(".hk-master-detail-detail-head")).toBeNull();
+
+    // …and it returns the moment a detail is open.
+    const open = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose: () => {} }, {
+        list: ROSTER,
+        detail: DETAIL,
+      }),
+    );
+    expect(open.querySelector(".hk-master-detail-close")).toBeTruthy();
+  });
+
+  it("keeps the actions band while closed (the affordance is not the whole band)", () => {
+    setWidth(1280);
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message", onClose: () => {} }, {
+        list: ROSTER,
+        detail: DETAIL,
+        actions: () => h("button", { class: "detail-action" }, "Refresh"),
+      }),
+    );
+    expect(c.querySelector(".hk-master-detail-detail-head .detail-action")).toBeTruthy();
+    expect(c.querySelector(".hk-master-detail-close")).toBeNull();
+  });
+
   it("renders the actions slot ahead of the close affordance", async () => {
     setWidth(1280);
     const c = mount(
@@ -671,6 +708,16 @@ describe("HkMasterDetail — stylesheet contract", () => {
     expect(ruleBody(css, ".hk-master-detail-list")).toContain(
       "background: var(--hk-master-detail-list-bg, rgb(var(--color-surface)))",
     );
+  });
+
+  it("centres the empty state on both axes while nothing is selected", () => {
+    const emptyBody = ruleBody(css, ".hk-master-detail:not([data-open]) .hk-master-detail-detail-body");
+    expect(emptyBody).toContain("justify-content: center");
+    expect(emptyBody).toContain("align-items: center");
+    expect(emptyBody).toContain("min-height: var(--hk-master-detail-empty-min-h, 14rem)");
+    // Centring needs the body to fill the scroll region, which is the base
+    // rule's job — a dropped flex there would leave the card at the top.
+    expect(ruleBody(css, ".hk-master-detail-detail-body")).toContain("flex: 1 1 auto");
   });
 
   it("gives the narrow in-flow column the whole width", () => {

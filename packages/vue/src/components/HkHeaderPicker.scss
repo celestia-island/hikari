@@ -22,7 +22,13 @@
   padding-inline: var(--space-12) var(--space-28);
   font-size: var(--text-sm);
   font-weight: 600;
-  max-width: 16rem;
+  /* The trigger hugs its label, capped so a long one cannot push the
+   * header's centre band around. The cap is a HOOK, not a constant: a
+   * host whose labels are legitimately long (a mailbox identity written
+   * "Name <address>", a document title) opts out with
+   * `--hk-header-picker-max-w: none` on the picker's own class instead of
+   * forking the component. */
+  max-width: var(--hk-header-picker-max-w, 16rem);
   /* Ghost chrome (2026-10-18 user direction: the top-centre dropdown
    * must read like the bottom-centre platform pill — no field border,
    * hover tint only). Mirrors HkButton's ghost variant. */

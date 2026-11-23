@@ -130,11 +130,19 @@
   padding: var(--hk-master-detail-detail-pad, var(--space-16, 1rem));
 }
 
-// The empty state must not collapse the pane to a sliver: a floor only
-// while nothing is selected (a real detail keeps its own height).
-// Gallery-hall geometry, not a layout rule for content.
+// The empty state lives in the middle of the pane, both axes (2026-11-23
+// user direction: the pick-a-message card is the pane's own content, so it
+// belongs at the optical centre rather than pinned to the top edge). The
+// body already fills the scroll region (flex: 1 1 auto against the pane's
+// definite height), so centring here is enough; the floor keeps the card
+// from collapsing the pane to a sliver on a short box.
 .hk-master-detail:not([data-open]) .hk-master-detail-detail-body {
   min-height: var(--hk-master-detail-empty-min-h, 14rem);
+  justify-content: center;
+  align-items: center;
+  // A long description must not push the box past the pane: the card
+  // keeps its own intrinsic width inside a bounded measure.
+  text-align: center;
 }
 
 // The narrow sheet's body shim: HkModal's body already insets; the

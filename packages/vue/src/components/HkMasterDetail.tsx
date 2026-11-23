@@ -171,6 +171,10 @@ export const HkMasterDetail = defineComponent({
     const closeLabel = computed(
       () => props.closeLabel || t("hikari::masterDetail.close", "Close"),
     );
+    /** The affordance exists only while a detail is open: closed, the pane
+     *  shows the empty state and there is nothing to dismiss — a ✕ beside
+     *  "pick a message" is a control with no subject. */
+    const canClose = computed(() => hasCloseListener() && props.detailOpen);
     const emptyTitle = computed(
       () => props.emptyTitle || t("hikari::masterDetail.emptyTitle", "Nothing selected"),
     );
@@ -292,12 +296,12 @@ export const HkMasterDetail = defineComponent({
                   the native bar never paints — the library's scroll
                   contract (nativeScrollbar.contract.test.ts). */}
               <div ref={scrollRef} class="hk-master-detail-detail-scroll">
-                {slots.actions || hasCloseListener() ? (
+                {slots.actions || canClose.value ? (
                   <div class="hk-master-detail-detail-head">
                     {slots.actions ? (
                       <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
                     ) : null}
-                    {hasCloseListener() ? (
+                    {canClose.value ? (
                       <HkIconButton
                         class="hk-master-detail-close"
                         size={28}

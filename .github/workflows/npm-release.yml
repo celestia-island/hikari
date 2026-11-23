@@ -59,18 +59,30 @@ jobs:
       # The Vue package ships as source; its Vitest suite (happy-dom) is the
       # only automated behavioral gate for it, so a release must never go out
       # with a red suite. Type check runs via prepublishOnly on `npm publish`.
-      - name: Run Vitest suite
+      # SHARDED, and the sharding is load-bearing (2026-11-23, v0.55.468):
+      # the suite has a memory regression on master (bisected by exclusion:
+      # `HkModal.test.tsx` is the tipping file), so a worker that walks ~145
+      # files accumulates past 6 GB. Raising the heap alone does not help —
+      # the runner has 4 vCPUs and 16 GB, so 4 workers x 8 GB cannot fit and
+      # the run still dies inside `Ineffective mark-compacts` (it did, with
+      # the OOM then corrupting a focus-trap assertion in another worker).
+      # Two sequential shards halve what any single worker walks, which is
+      # the only shape that fits this box. The gate is unchanged: every
+      # shard must pass, and the union is the same 581 files / 6904 tests
+      # the single invocation walked.
+      - name: Run Vitest suite (shard 1 of 2)
         env:
-          # The suite outgrew the runner's default Node heap (~4 GB): two
-          # consecutive release runs died in `Ineffective mark-compacts`
-          # at 6894/6895 green (2026-11-23, v0.55.468). 6 GB was not
-          # enough either (it died at 6109 MB); 8 GB completes the whole
-          # suite. Measured on the farm: full run at 8 GB green except the
-          # three ledger-listed load flakes (all green in isolation).
-          NODE_OPTIONS: --max-old-space-size=8192
+          NODE_OPTIONS: --max-old-space-size=6144
         run: |
           cd packages/vue
-          pnpm test
+          pnpm exec vitest run --shard=1/2
+
+      - name: Run Vitest suite (shard 2 of 2)
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: |
+          cd packages/vue
+          pnpm exec vitest run --shard=2/2
 
       - name: Resolve version
         id: ver

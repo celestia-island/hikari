@@ -772,6 +772,16 @@ describe("HkMasterDetail — stylesheet contract", () => {
     expect(ruleBody(css, ".hk-master-detail-detail--column")).toContain("flex: 1");
   });
 
+  it("parks the head band's contents on the trailing edge", () => {
+    // A band holding only the close affordance left the ✕ at the reading
+    // text's first column; both it and the actions slot belong on the way
+    // out edge.
+    const head = ruleBody(css, ".hk-master-detail-detail-head");
+    expect(head).toContain("justify-content: flex-end");
+    const actions = ruleBody(css, ".hk-master-detail-detail-actions");
+    expect(actions).not.toContain("margin-inline-start: auto");
+  });
+
   it("keeps the head band pinned inside the pane's scroll", () => {
     const head = ruleBody(css, ".hk-master-detail-detail-head");
     expect(head).toContain("position: sticky");

@@ -44,7 +44,7 @@ const channel = ref(plan.defaultChannel ?? "");
 | --- | --- |
 | `hkLoginPlanFromDiscovery(doc, copy?)` | `{ mode, channels, defaultChannel }`؛ في وضع relay تكون `channels` هي `[]` و`defaultChannel` هي `null` |
 | `hkRelayEntryHref(doc, returnTo?)` | `null` خارج وضع relay؛ وإلا فعنوان URL للدخول، مع إضافة عنوان العودة فقط إذا كان مسارًا من الأصل نفسه |
-| `hkIsSameOriginPath(raw)` | `true` لـ `/x`؛ `false` لـ `//host` و`/` وعناوين URL النسبية أو المطلقة |
+| `hkIsSameOriginPath(raw)` | `true` لـ `/x`؛ `false` لـ `//host` و`/` وعناوين URL النسبية أو المطلقة، ولكل مسار يحتوي شرطة مائلة عكسية أو محرف تحكم أو محرف تنسيق يعيد تشكيل العرض (القاعدة نفسها التي يطبّقها kirino على أهداف التنقل) |
 
 تُتجاهل أنواع الطرق غير المعروفة والطرق التي يكون فيها `id` فارغًا — فالمحوّل لا يرمي استثناءً أبدًا بسبب مستند لا يفهمه.
 

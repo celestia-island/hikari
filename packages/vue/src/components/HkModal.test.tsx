@@ -1248,6 +1248,47 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       window.dispatchEvent(new Event("resize"));
       for (let i = 0; i < 6; i++) await nextTick();
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // R4's kill case: the frame is MID-MORPH when the crossing arrives.
+      // A re-base at that instant adopts a transient top, and the loop then
+      // bakes it into the resting position (a visible snap-then-lift).
+      // `data-hk-morphing` is useSizeMorph's own marker, so the way-out
+      // re-anchor defers until the frame settles.
+      // MUT:modal-crossing-rebase-midmorph (calling anchor.reset() directly
+      // on the way out leaves a live offset here — `expected '10px' to be ''`).
+      frame.setAttribute("data-hk-morphing", "");
+      // The morph is LIVE and has already moved the top edge (a centred
+      // growth lifts it): anything that re-bases NOW records a geometry the
+      // frame will not rest at.
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      // Still morphing: the re-anchor must NOT have run yet.
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // The morph LANDS: the marker comes off in the same instant the frame
+      // reaches its natural top (that is how useSizeMorph ends a morph), and
+      // only then does the deferred re-anchor run — on its next frame
+      // (happy-dom's rAF is a timer, so give it a real beat).
+      top.value = 200;
+      frame.removeAttribute("data-hk-morphing");
+      await new Promise((r) => setTimeout(r, 60));
+      for (let i = 0; i < 4; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // The morph lands at the frame's natural top. The settled frame must
+      // carry no correction: a re-base taken mid-morph (the naive shape)
+      // adopted the TRANSIENT top instead and leaves the difference as a
+      // standing offset here — the snap-then-lift.
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
     } finally {
       (window as { innerWidth: number }).innerWidth = previousWidth;
       vi.unstubAllGlobals();

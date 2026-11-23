@@ -410,12 +410,44 @@ export default defineComponent({
       },
     });
 
-    /** Breakpoint crossings re-anchor: crossing into the sheet branch drops
-     *  the desktop offset (the sheet ignores it — its own `translate: none`
-     *  — so nothing would ever refresh it), and crossing back re-bases
-     *  against where the frame actually lands. One unconditional reset
-     *  serves both directions because `reset()` re-bases as it clears. */
-    watch(sheetMobile, () => anchor.reset());
+    /** Breakpoint crossings re-anchor.
+     *
+     *  INTO the sheet: drop the offset immediately. The sheet discards the
+     *  variable anyway (`translate: none`), so this is invisible whatever
+     *  the frame was doing — and it is what stops a stale lift from coming
+     *  back later.
+     *
+     *  BACK to desktop: the offset is already 0, so what is owed is only the
+     *  RE-BASE — and a re-base adopts whatever top the frame has at that
+     *  instant. Doing that mid-morph pins the anchor to a transient
+     *  geometry and the loop then bakes the transient into the resting
+     *  position (a visible snap-then-lift; R4's kill experiment). So this
+     *  leg waits for the frame to be at rest first.
+     *
+     *  `data-hk-morphing` is useSizeMorph's own in-flight marker, so the
+     *  wait rides the morph's real lifecycle rather than a guessed delay. */
+    let crossingRestFrames = 0;
+    function reanchorWhenAtRest(): void {
+      const el = contentRef.value;
+      if (!el) return;
+      if (!el.hasAttribute("data-hk-morphing")) {
+        anchor.reset();
+        return;
+      }
+      // Bounded: 2s of frames covers the longest morph; past that the frame
+      // is stuck for another reason and a stale anchor is the lesser evil.
+      if (++crossingRestFrames > 120) {
+        crossingRestFrames = 0;
+        anchor.reset();
+        return;
+      }
+      requestAnimationFrame(reanchorWhenAtRest);
+    }
+    watch(sheetMobile, (isSheet) => {
+      crossingRestFrames = 0;
+      if (isSheet) anchor.reset();
+      else reanchorWhenAtRest();
+    });
 
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the
@@ -699,16 +731,13 @@ export default defineComponent({
           // later, the follow-up remeasure re-checks the natural height
           // under the base height transition (a growth that landed in the
           // last tick of the enter animates instead of snapping).
-          morph.start();
           // A reopen must not inherit the previous cycle's lift. The reset
-          // runs HERE, at the open edge — after the enter, on a frame the
-          // choreography has already landed. It zeroes the offset (removing
-          // the variable) and re-anchors against the fresh resting top; the
-          // remeasure on the next tick then measures the settled height.
-          // (Not the drag shift's shape: that one resets in the
-          // `modelValue` watcher because the drag lives on the frame
-          // permanently, while this offset has meaning only while open.)
+          // runs BEFORE the morph arms: at this instant the enter has landed
+          // and nothing has pinned a height yet, so the top it adopts is the
+          // frame's true resting geometry — then the morph's own remeasure
+          // grows the frame from there with the anchor already live.
           anchor.reset();
+          morph.start();
           void nextTick(() => {
             if (machine.phase.value === "open") morph.remeasure();
           });

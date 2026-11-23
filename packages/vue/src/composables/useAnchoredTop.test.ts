@@ -307,10 +307,10 @@ describe("useAnchoredTop — reset / shift handle", () => {
     top.value = 90;
     for (const cb of callbacks) cb();
     expect(applied.at(-1)).toBe(10);
-    expect(handle!.shift()).toBe(10);
 
     handle!.reset();
+    // The handle's only observable contract is what it hands the sink: a
+    // clear (0) after a live correction.
     expect(applied.at(-1)).toBe(0);
-    expect(handle!.shift()).toBe(0);
   });
 });

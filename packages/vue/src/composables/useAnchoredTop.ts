@@ -93,10 +93,14 @@ export interface AnchoredTopHandle {
   /** Drop the correction and adopt the element's current top as the new
    *  anchor (a reopen/remount edge). The sink always runs with 0, so a
    *  surface whose offset is not a DOM transform still gets its clear; the
-   *  re-base itself is a no-op when the element is gone. */
+   *  re-base itself is a no-op when the element is gone.
+   *
+   *  ⚠️ Only call this on a frame at REST: the re-base adopts whatever top
+   *  the element has at that instant, so calling it mid-morph pins the
+   *  anchor to a transient geometry and the loop then bakes that transient
+   *  into the resting position. A host that can be mid-motion (HkModal,
+   *  during a height transition) must defer until it settles. */
   reset: () => void;
-  /** The correction currently applied, in px. */
-  shift: () => number;
 }
 
 export function useAnchoredTop(
@@ -207,7 +211,7 @@ export function useAnchoredTop(
     rebase();
   }
 
-  return { reset, shift: () => shift };
+  return { reset };
 }
 
 export default useAnchoredTop;

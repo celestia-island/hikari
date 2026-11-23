@@ -1,52 +1,43 @@
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { compile } from "sass";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import { HkMasterDetail } from "./HkMasterDetail";
+import { HkMasterDetail, resolveListWidth } from "./HkMasterDetail";
 import * as barrel from "../index";
 import { asIndexable } from "../utils/typing";
 
 /**
- * HkMasterDetail — the standard two-pane roster+detail surface.
+ * HkMasterDetail — the standard two-pane roster+detail console.
  *
  * Repo convention: raw createApp + container queries, no @vue/test-utils
- * (HkAdminShell.test.tsx / HkEmptyState.test.tsx). The width comes from the
- * SHARED `useBreakpoint` ref, so every mount seeds `window.innerWidth`
+ * (HkAdminShell.test.tsx / HkEmptyState.test.tsx). The width comes from
+ * the SHARED `useBreakpoint` ref, so every mount seeds `window.innerWidth`
  * first — the component reads it at setup, exactly like the shells do.
+ * The narrow form renders through HkModal, which teleports — those
+ * assertions query the DOCUMENT, not the mount container (HkModal's own
+ * suite is the precedent).
  *
  * What is pinned here, and why each one would otherwise rot silently:
  * - both panes and the empty state (the whole point of the component);
- * - the split contract: `data-split`, the drawer/scrim pair, the custom
+ * - THE 2026-11-23 DIRECTION: the detail is a flush layout region — the
+ *   stylesheet must NOT paint card chrome (border/radius/shadow) on it,
+ *   and the root must be the full-height flex row (a reverted
+ *   floating-card pane reds the stylesheet group);
+ * - the split contract: `data-split`, the narrow HkModal form, the custom
  *   `splitAt` and its boundary (>= is two-pane) — a hand-picked width in
- *   one test cannot see an off-by-one or a hardcoded 1100;
- * - the dismissal contract: the close affordance appears ONLY with a bound
- *   `onClose` (a declared emit is stripped from $attrs, so the detection is
- *   the component's own vnode props), and Escape answers on the drawer face
- *   only — plus the precedence rule (a nested control that consumed the key
- *   owns it);
- * - the scss contract (sticky gated on the two-pane mode, the head band,
- *   the fixed drawer + veil) — a class-name-only test cannot see the layout
- *   rules that make the pane usable.
- *
- * Each behaviour claim above is anchored to the mutation that proved it (the
- * PR body carries the full table with the red counts):
- * - the split is width-driven — forcing `narrow` false reds the whole
- *   single-column / drawer / resize group [MUT:split-always-wide];
- * - Escape answers the drawer face only — ungating that watcher reds
- *   "keeps Escape away from the two-pane layout" [MUT:escape-ungated];
- * - the close affordance keys off the BOUND listener — rendering it
- *   unconditionally reds the "only when a close listener is bound" case
- *   [MUT:close-always];
- * - a closed pane shows the empty state — dropping that branch reds both
- *   boxed-empty-state tests [MUT:empty-state-dropped];
- * - the barrel re-export is load-bearing — deleting the line reds the
- *   barrel pin [MUT:barrel-line-deleted];
- * - the compiled sheet carries the drawer edge — flipping `right: 0` to
- *   `left: 0` reds the stylesheet contract [MUT:drawer-edge-flipped].
+ *   one test cannot see an off-by-one or a hardcoded 768;
+ * - the dismissal contract: the close affordance appears ONLY with a
+ *   bound `onClose` (a declared emit is stripped from $attrs, so the
+ *   detection is the component's own vnode props); the narrow form
+ *   forwards the MODAL's close as the pane's `close` emit;
+ * - the scss contract (the flush column, the separator hairline, the
+ *   scroll region's native-bar suppression) — a class-name-only test
+ *   cannot see the layout rules that make the pane usable.
  */
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -74,6 +65,11 @@ afterEach(() => {
     app.unmount();
     container.remove();
   }
+  // Teleported modal layers do not live in the mount containers — sweep
+  // the document so a later narrow test cannot match a stale sheet.
+  for (const layer of Array.from(document.querySelectorAll(".hk-modal-root"))) {
+    layer.remove();
+  }
   // Every test also states its own width at the top; this reset keeps the
   // value from leaking into the next FILE.
   setWidth(1280);
@@ -96,12 +92,6 @@ function detailPane(container: HTMLElement): HTMLElement | null {
   return container.querySelector(".hk-master-detail-detail");
 }
 
-function escapeOn(target: EventTarget = document) {
-  target.dispatchEvent(
-    new KeyboardEvent("keydown", { key: "Escape", cancelable: true, bubbles: true }),
-  );
-}
-
 describe("HkMasterDetail — two-pane layout", () => {
   it("renders the roster and the selected detail in the wide layout", () => {
     setWidth(1280);
@@ -118,14 +108,13 @@ describe("HkMasterDetail — two-pane layout", () => {
     expect(
       c.querySelector(".hk-master-detail-detail .detail-payload")?.textContent,
     ).toBe("DETAIL");
-    // Wide layout: no overlay layer of any kind.
-    expect(c.querySelector(".hk-master-detail-drawer")).toBeNull();
-    expect(c.querySelector(".hk-master-detail-scrim")).toBeNull();
+    // Wide layout: no teleported window of any kind.
+    expect(document.querySelector(".hk-modal-root")).toBeNull();
     // …and no empty state beside a live selection.
     expect(c.querySelector(".hk-empty-state")).toBeNull();
   });
 
-  it("renders the boxed empty state inside the detail card when nothing is selected", () => {
+  it("renders the boxed empty state inside the detail region when nothing is selected", () => {
     setWidth(1280);
     const c = mount(
       h(HkMasterDetail, {
@@ -144,7 +133,7 @@ describe("HkMasterDetail — two-pane layout", () => {
     // stands in its place (not beside it).
     expect(c.querySelector(".detail-payload")).toBeNull();
     const empty = c.querySelector(".hk-master-detail-detail .hk-empty-state");
-    expect(empty, "the empty state lives INSIDE the detail card").toBeTruthy();
+    expect(empty, "the empty state lives INSIDE the detail region").toBeTruthy();
     expect(empty!.className).toContain("hk-empty-state--boxed");
     expect(c.querySelector(".hk-empty-title")?.textContent).toBe("Pick a message");
     expect(c.querySelector(".hk-empty-desc")?.textContent).toBe("Choose a row from the roster.");
@@ -161,16 +150,13 @@ describe("HkMasterDetail — two-pane layout", () => {
     expect(c.querySelector(".hk-empty-title")?.textContent).toBe("Nothing selected");
   });
 
-  it("writes the column tracks from the props (and the defaults)", () => {
+  it("writes the roster track from the prop (and the default)", () => {
     setWidth(1280);
     const defaults = mount(
       h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, { list: ROSTER, detail: DETAIL }),
     );
     expect(pane(defaults).getAttribute("style")).toContain(
-      "--hk-master-detail-list-w: minmax(360px, 1fr)",
-    );
-    expect(pane(defaults).getAttribute("style")).toContain(
-      "--hk-master-detail-detail-w: minmax(0, 1.15fr)",
+      "--hk-master-detail-list-w: 20rem",
     );
 
     const custom = mount(
@@ -179,33 +165,34 @@ describe("HkMasterDetail — two-pane layout", () => {
         {
           detailOpen: true,
           detailTitle: "Message",
-          listWidth: "20rem",
-          detailWidth: "minmax(0, 2fr)",
+          listWidth: "24rem",
         },
         { list: ROSTER, detail: DETAIL },
       ),
     );
-    expect(pane(custom).getAttribute("style")).toContain("--hk-master-detail-list-w: 20rem");
-    expect(pane(custom).getAttribute("style")).toContain(
-      "--hk-master-detail-detail-w: minmax(0, 2fr)",
-    );
+    expect(pane(custom).getAttribute("style")).toContain("--hk-master-detail-list-w: 24rem");
   });
 
-  it("marks the pane sticky by default and drops the marker on request", () => {
-    setWidth(1280);
-    const sticky = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, { list: ROSTER, detail: DETAIL }),
-    );
-    expect(detailPane(sticky)?.hasAttribute("data-sticky")).toBe(true);
+  it("rejects a grid-track listWidth and falls back to the documented width", () => {
+    // The retired grammar was a grid track; it is INVALID as a CSS width,
+    // so the browser drops it and the column collapses to content width.
+    expect(resolveListWidth("20rem")).toBe("20rem");
+    expect(resolveListWidth("minmax(360px, 1fr)")).toBe("20rem");
+    expect(resolveListWidth("minmax(0, 2fr)")).toBe("20rem");
+    expect(resolveListWidth("repeat(2, 1fr)")).toBe("20rem");
+    expect(resolveListWidth("18em")).toBe("18em");
+  });
 
-    const flowing = mount(
+  it("writes the resolved width to the column hook", () => {
+    setWidth(1280);
+    const c = mount(
       h(
         HkMasterDetail,
-        { detailOpen: true, detailTitle: "Message", sticky: false },
+        { detailOpen: true, detailTitle: "Message", listWidth: "minmax(360px, 1fr)" },
         { list: ROSTER, detail: DETAIL },
       ),
     );
-    expect(detailPane(flowing)?.hasAttribute("data-sticky")).toBe(false);
+    expect(pane(c).getAttribute("style")).toContain("--hk-master-detail-list-w: 20rem");
   });
 
   it("names the detail region with detailTitle and shows no bare head band", () => {
@@ -216,9 +203,9 @@ describe("HkMasterDetail — two-pane layout", () => {
     const detail = detailPane(c)!;
     expect(detail.getAttribute("role")).toBe("region");
     expect(detail.getAttribute("aria-label")).toBe("Message");
-    // Wide layout with no actions and no close channel: no empty band,
-    // because the region's NAME already carries the title (the drawer form
-    // is the one that must SHOW it).
+    // Wide layout with no actions and no close channel: no empty band —
+    // the region's NAME already carries the title (the narrow modal is
+    // the one that must SHOW it).
     expect(c.querySelector(".hk-master-detail-detail-head")).toBeNull();
   });
 
@@ -247,10 +234,10 @@ describe("HkMasterDetail — two-pane layout", () => {
 });
 
 describe("HkMasterDetail — the split", () => {
-  it("collapses to one column below splitAt with the detail as an overlay drawer", () => {
-    setWidth(900);
+  it("collapses to one column below splitAt with the detail in the family modal", async () => {
+    setWidth(600);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
@@ -258,32 +245,161 @@ describe("HkMasterDetail — the split", () => {
     const root = pane(c);
     expect(root.getAttribute("data-split")).toBe("single");
     expect(root.hasAttribute("data-open")).toBe(true);
-    // The SAME detail element takes the drawer dress and the veil appears.
-    const detail = detailPane(c)!;
-    expect(detail.classList.contains("hk-master-detail-drawer")).toBe(true);
-    expect(detail.getAttribute("aria-label")).toBe("Message");
-    expect(c.querySelector(".hk-master-detail-scrim")).toBeTruthy();
-    expect(c.querySelector(".hk-master-detail-drawer .detail-payload")).toBeTruthy();
+    // The in-flow detail region is GONE — the narrow face is the family
+    // window (HkModal docks as the standard bottom sheet on phones and
+    // owns scrim / Escape / back-gesture itself).
+    expect(detailPane(c)).toBeNull();
+    await nextTick();
+    const frame = document.querySelector<HTMLElement>(".hk-modal-content");
+    expect(frame, "the detail rides HkModal").toBeTruthy();
+    expect(frame?.querySelector(".hk-master-detail-sheet-body .detail-payload")).toBeTruthy();
+    expect(document.querySelector(".hk-modal-title")?.textContent).toBe("Message");
     // Single column: the roster keeps the full width, nothing beside it.
     const list = c.querySelector(".hk-master-detail-list") as HTMLElement;
     expect(list).toBeTruthy();
   });
 
-  it("renders no drawer and no veil while the narrow detail is closed", () => {
-    setWidth(900);
+  it("renders no window while the narrow detail is closed", async () => {
+    setWidth(600);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
     );
     expect(pane(c).getAttribute("data-split")).toBe("single");
-    // An overlay holding an empty state would be a dead layer over the
-    // roster — the narrow form simply shows the roster.
+    // A window holding an empty state would be a dead layer over the
+    // roster — the narrow form simply shows the roster (HkModal is
+    // mounted but renders nothing until detailOpen).
     expect(detailPane(c)).toBeNull();
-    expect(c.querySelector(".hk-master-detail-scrim")).toBeNull();
+    await nextTick();
+    expect(document.querySelector(".hk-modal-root")).toBeNull();
     expect(c.querySelector(".hk-empty-state")).toBeNull();
     expect(c.querySelector(".hk-master-detail-list .roster")).toBeTruthy();
+  });
+
+  it("renders the detail as the whole column when the host binds no close channel", async () => {
+    // A modal for a host that cannot deselect would trap the user behind
+    // its scrim, focus trap and body-scroll lock. The narrow form is then
+    // the detail AS the column — no overlay, no roster behind it.
+    setWidth(600);
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+        list: ROSTER,
+        detail: DETAIL,
+      }),
+    );
+    await nextTick();
+    expect(document.querySelector(".hk-modal-root"), "no window is opened").toBeNull();
+    expect(document.body.style.overflow, "and no scroll lock is taken").not.toBe("hidden");
+    const column = c.querySelector(".hk-master-detail-detail--column");
+    expect(column, "the detail is the column").toBeTruthy();
+    expect(column!.querySelector(".detail-payload")).toBeTruthy();
+    expect(c.querySelector(".hk-master-detail-list"), "no roster behind it").toBeNull();
+  });
+
+  it("renders the actions once in the narrow in-flow column", async () => {
+    // The column has a sticky head band of its own; the sheet-body helper
+    // (which carries the actions row) belongs to the WINDOW form alone.
+    setWidth(600);
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+        list: ROSTER,
+        detail: DETAIL,
+        actions: () => h("button", { class: "detail-action" }, "Copy"),
+      }),
+    );
+    await nextTick();
+    expect(c.querySelectorAll(".detail-action").length).toBe(1);
+    expect(c.querySelector(".hk-master-detail-detail-head .detail-action")).toBeTruthy();
+    expect(c.querySelector(".hk-master-detail-sheet-body")).toBeNull();
+  });
+
+  it("follows a close channel bound AFTER mount (the form is per-render)", async () => {
+    // `instance.vnode.props` is an untracked read: wrapping the form
+    // selection in a computed latched the first answer, so a host that
+    // binds `@close` later kept the in-flow column — or, in the other
+    // direction, kept a window whose close channel went nowhere while its
+    // scroll lock and focus trap stayed up.
+    setWidth(600);
+    const bound = ref(false);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkMasterDetail,
+            {
+              detailOpen: true,
+              detailTitle: "Message",
+              ...(bound.value ? { onClose: () => {} } : {}),
+            },
+            { list: ROSTER, detail: DETAIL },
+          );
+      },
+    });
+    const c = mount(h(Wrapper));
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-detail--column")).toBeTruthy();
+    expect(document.querySelector(".hk-modal-root")).toBeNull();
+
+    bound.value = true;
+    await nextTick();
+    await nextTick();
+    expect(c.querySelector(".hk-master-detail-detail--column"), "the column form is gone").toBeNull();
+    expect(document.querySelector(".hk-modal-root"), "the window form took over").toBeTruthy();
+  });
+
+  it("keeps the modal mounted so its own close path runs (focus restored)", async () => {
+    // Mount-driven modals never reach the leave finalizer: the exit motion
+    // is skipped and keyboard focus is dropped on <body>. The pane must
+    // keep HkModal mounted and drive modelValue instead.
+    setWidth(600);
+    const open = ref(true);
+    const trigger = document.createElement("button");
+    trigger.className = "roster-trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkMasterDetail,
+            {
+              detailOpen: open.value,
+              detailTitle: "Message",
+              onClose: () => {
+                open.value = false;
+              },
+            },
+            { list: ROSTER, detail: DETAIL },
+          );
+      },
+    });
+    const c = mount(h(Wrapper));
+    await nextTick();
+    const inside = document.querySelector<HTMLElement>(".hk-master-detail-sheet-body");
+    expect(inside, "the window opened").toBeTruthy();
+
+    (document.querySelector(".hk-modal-close") as HTMLElement).click();
+    // The window runs its leave (its surface transition is 320ms) and the
+    // focus restore lands when the leave finalizes.
+    const deadline = Date.now() + 2000;
+    while (
+      document.querySelector(".hk-modal-root") !== null &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    await nextTick();
+    expect(document.querySelector(".hk-modal-root"), "the window left").toBeNull();
+    expect(open.value).toBe(false);
+    expect(
+      document.activeElement,
+      "focus returns to where it came from, not to <body>",
+    ).not.toBe(document.body);
+    expect(c.querySelector(".hk-master-detail-list")).toBeTruthy();
+    trigger.remove();
   });
 
   it("treats splitAt itself as the wide layout and splitAt-1 as the narrow one", () => {
@@ -306,58 +422,50 @@ describe("HkMasterDetail — the split", () => {
     expect(pane(below).getAttribute("data-split")).toBe("single");
   });
 
-  it("honors a custom splitAt (the default would have split the same width)", () => {
-    // Default 1100: 1000px is narrow. A host that sets 700 keeps the
-    // two-pane layout there — a hardcoded 1100 fails this one.
+  it("keeps the two-pane layout at desktop widths the old card form split at", () => {
+    // 900–1100px windows keep BOTH panes now (the flush columns shrink,
+    // they do not fold) — the old 1100 threshold folded them into the
+    // overlay, which read as a broken layout on small desktops.
     setWidth(1000);
-    const custom = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", splitAt: 700 }, {
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
         list: ROSTER,
         detail: DETAIL,
       }),
     );
-    expect(pane(custom).getAttribute("data-split")).toBe("two");
+    expect(pane(c).getAttribute("data-split")).toBe("two");
+    expect(detailPane(c)).toBeTruthy();
   });
 
   it("follows a live resize in both directions", async () => {
     setWidth(1280);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
     );
     expect(pane(c).getAttribute("data-split")).toBe("two");
+    expect(detailPane(c)).toBeTruthy();
 
     setWidth(600);
     await nextTick();
     expect(pane(c).getAttribute("data-split")).toBe("single");
-    expect(c.querySelector(".hk-master-detail-drawer")).toBeTruthy();
+    // The in-flow pane is gone; the window form carries the detail.
+    expect(detailPane(c)).toBeNull();
+    expect(document.querySelector(".hk-modal-root")).toBeTruthy();
 
     setWidth(1400);
     await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(pane(c).getAttribute("data-split")).toBe("two");
-    expect(c.querySelector(".hk-master-detail-drawer")).toBeNull();
-    expect(c.querySelector(".hk-master-detail-scrim")).toBeNull();
-  });
-
-  it("shows the drawer header title on the narrow face", () => {
-    setWidth(600);
-    const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
-        list: ROSTER,
-        detail: DETAIL,
-      }),
-    );
-    const head = c.querySelector(".hk-master-detail-detail-head") as HTMLElement;
-    expect(head).toBeTruthy();
-    expect(c.querySelector(".hk-master-detail-detail-title")?.textContent).toBe("Message");
+    expect(detailPane(c)).toBeTruthy();
   });
 });
 
 describe("HkMasterDetail — dismissal", () => {
   it("renders the close affordance only when a close listener is bound", () => {
-    setWidth(600);
+    setWidth(1280);
     const silent = mount(
       h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
         list: ROSTER,
@@ -382,9 +490,9 @@ describe("HkMasterDetail — dismissal", () => {
     expect(close.querySelectorAll(".hk-icon-button-icon svg").length).toBe(1);
   });
 
-  it("takes the close label from closeLabel", () => {
-    setWidth(600);
-    const c = mount(
+  it("takes the close label from closeLabel in BOTH forms", async () => {
+    setWidth(1280);
+    const wide = mount(
       h(
         HkMasterDetail,
         {
@@ -397,12 +505,32 @@ describe("HkMasterDetail — dismissal", () => {
       ),
     );
     expect(
-      c.querySelector(".hk-master-detail-close")?.getAttribute("aria-label"),
+      wide.querySelector(".hk-master-detail-close")?.getAttribute("aria-label"),
+    ).toBe("Dismiss message");
+
+    // The narrow window's own X must read the host's wording too — it
+    // used to fall back to the generic modal label.
+    setWidth(600);
+    mount(
+      h(
+        HkMasterDetail,
+        {
+          detailOpen: true,
+          detailTitle: "Message",
+          closeLabel: "Dismiss message",
+          onClose: () => {},
+        },
+        { list: ROSTER, detail: DETAIL },
+      ),
+    );
+    await nextTick();
+    expect(
+      document.querySelector(".hk-modal-close")?.getAttribute("aria-label"),
     ).toBe("Dismiss message");
   });
 
-  it("emits close from the affordance, the veil and Escape (drawer face)", () => {
-    setWidth(600);
+  it("emits close from the wide affordance", () => {
+    setWidth(1280);
     const onClose = vi.fn();
     const c = mount(
       h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose }, {
@@ -412,15 +540,32 @@ describe("HkMasterDetail — dismissal", () => {
     );
     (c.querySelector(".hk-master-detail-close") as HTMLElement).click();
     expect(onClose).toHaveBeenCalledTimes(1);
-
-    (c.querySelector(".hk-master-detail-scrim") as HTMLElement).click();
-    expect(onClose).toHaveBeenCalledTimes(2);
-
-    escapeOn(document);
-    expect(onClose).toHaveBeenCalledTimes(3);
   });
 
-  it("keeps Escape away from the two-pane layout and from a closed drawer", async () => {
+  it("forwards the narrow window's close as the pane's close emit", async () => {
+    setWidth(600);
+    const onClose = vi.fn();
+    mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose }, {
+        list: ROSTER,
+        detail: DETAIL,
+      }),
+    );
+    await nextTick();
+    // The modal's OWN close button (its header affordance) declines the
+    // modelValue; the pane translates that into its close emit.
+    const modalClose = document.querySelector<HTMLElement>(".hk-modal-close");
+    expect(modalClose, "the modal header owns the affordance").toBeTruthy();
+    modalClose!.click();
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("keeps Escape away from the two-pane layout", () => {
+    // The wide layout never registers a document Escape listener: every
+    // selection is one click away, and HkModal (the narrow form) owns the
+    // key while it is mounted.
     setWidth(1280);
     const wideClose = vi.fn();
     mount(
@@ -429,59 +574,10 @@ describe("HkMasterDetail — dismissal", () => {
         detail: DETAIL,
       }),
     );
-    escapeOn(document);
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Escape", cancelable: true, bubbles: true }),
+    );
     expect(wideClose, "the wide layout never swallows Escape").not.toHaveBeenCalled();
-
-    setWidth(600);
-    const narrowClose = vi.fn();
-    mount(
-      h(
-        HkMasterDetail,
-        { detailOpen: false, detailTitle: "Message", onClose: narrowClose },
-        { list: ROSTER, detail: DETAIL },
-      ),
-    );
-    escapeOn(document);
-    expect(narrowClose, "nothing is open — no dismissal to answer").not.toHaveBeenCalled();
-  });
-
-  it("lets a nested control that consumed Escape own the key", () => {
-    setWidth(600);
-    const onClose = vi.fn();
-    const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose }, {
-        list: ROSTER,
-        detail: () => h("input", { class: "detail-input" }),
-      }),
-    );
-    const input = c.querySelector(".detail-input") as HTMLElement;
-    // The nested control (an inline editor, a popup) already handled the
-    // key: our listener must not close the pane underneath it.
-    input.addEventListener("keydown", (e) => e.preventDefault());
-    escapeOn(input);
-    expect(onClose).not.toHaveBeenCalled();
-
-    // …and a plain Escape still closes.
-    escapeOn(document);
-    expect(onClose).toHaveBeenCalledTimes(1);
-  });
-
-  it("detaches its Escape listener on unmount", () => {
-    setWidth(600);
-    const onClose = vi.fn();
-    const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose }, {
-        list: ROSTER,
-        detail: DETAIL,
-      }),
-    );
-    escapeOn(document);
-    expect(onClose).toHaveBeenCalledTimes(1);
-    const entry = mounts.shift()!;
-    entry.app.unmount();
-    entry.container.remove();
-    escapeOn(document);
-    expect(onClose, "an unmounted pane holds no document listener").toHaveBeenCalledTimes(1);
   });
 });
 
@@ -513,32 +609,43 @@ describe("HkMasterDetail — stylesheet contract", () => {
     throw new Error(`unbalanced block for ${selector}`);
   }
 
-  it("keeps the grid and its family gutter on the root", () => {
+  it("makes the root the full-height flex row the host bounds", () => {
     const root = ruleBody(css, ".hk-master-detail");
-    expect(root).toContain("display: grid");
-    expect(root).toContain("gap: var(--space-12");
-    expect(root).toContain("grid-template-columns:");
-    // The single-column mode overrides the tracks.
-    expect(ruleBody(css, ".hk-master-detail[data-split=single]")).toContain(
-      "grid-template-columns: minmax(0, 1fr)",
-    );
+    expect(root).toContain("display: flex");
+    expect(root).toContain("height: 100%");
+    expect(root).toContain("min-height: 0");
   });
 
-  it("gives the detail pane HkCard's chrome without painting the native bar", () => {
-    const detail = ruleBody(css, ".hk-master-detail-detail");
-    for (const declaration of [
-      "border: 1px solid var(--border-subtle)",
-      "border-radius: var(--radius-lg",
-      "box-shadow: var(--shadow-elevated)",
-      // The rail host: the overlay tracks are absolute children of the
-      // pane, so the pane itself has to stay a non-scroller.
-      "position: relative",
-    ]) {
-      expect(detail).toContain(declaration);
-    }
+  it("shields the roster column as a flush sidebar with the page tint", () => {
+    const list = ruleBody(css, ".hk-master-detail-list");
+    expect(list).toContain("width: var(--hk-master-detail-list-w, 20rem)");
+    expect(list).toContain("flex: none");
+    // sass normalises the slash spacing (`/ 20%` → `/20%`) — the pin is
+    // the hairline declaration, tolerant of either spelling.
+    expect(list).toMatch(/border-inline-end: 1px solid rgb\(var\(--color-border\) ?\/ ?20%\)/);
+    expect(list).toContain("overflow: hidden");
     // No hardcoded colour: every surface layer reads a channel triplet.
-    expect(detail).toContain("rgb(var(--color-surface)");
+    expect(list).toContain("rgb(var(--color-surface)");
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
+    // Narrow: the roster is the whole page — track and hairline drop.
+    const narrowList = ruleBody(css, ".hk-master-detail[data-split=single] .hk-master-detail-list");
+    expect(narrowList).toContain("flex: 1");
+    expect(narrowList).toContain("border-inline-end: none");
+  });
+
+  it("keeps the detail region flush — NO card chrome (the 2026-11-23 direction)", () => {
+    const detail = ruleBody(css, ".hk-master-detail-detail");
+    expect(detail).toContain("flex: 1");
+    expect(detail).toContain("min-width: 0");
+    // The rail host: the overlay tracks are absolute children of the
+    // pane, so the pane itself has to stay a non-scroller.
+    expect(detail).toContain("position: relative");
+    // THE DIRECTION: a layout region, not a floating card. Each absence
+    // is pinned — reverting any one of these reds this block.
+    expect(detail).not.toContain("border-radius");
+    expect(detail).not.toContain("box-shadow");
+    expect(detail).not.toContain("border: 1px solid");
+    expect(ruleBody(css, ".hk-master-detail")).not.toContain("gap:");
 
     // The scroll REGION keeps native mechanics and hides the native bar
     // (the shared overlay rail is the only chrome that may paint). The
@@ -551,46 +658,56 @@ describe("HkMasterDetail — stylesheet contract", () => {
     );
   });
 
-  it("applies sticky ONLY in the two-pane mode, and keeps the head band pinned", () => {
-    const sticky = ruleBody(
-      css,
-      ".hk-master-detail[data-split=two] .hk-master-detail-detail[data-sticky]",
+  it("keeps the roster tint on a hook with no calc()/color-mix() fallback", () => {
+    // A var() fallback holding calc()/color-mix() resolves to UNSET on an
+    // engine without it (IACVT), and a percentage-valued retune of a
+    // calc-based alpha is an invalid-at-computed-value-time type error with
+    // the same outcome — the column would paint transparent. The sheet
+    // therefore carries neither, and the dead @supports block that used to
+    // re-declare the same hook is gone.
+    expect(css).not.toContain("--ui-opacity");
+    expect(css).not.toContain("color-mix");
+    expect(css).not.toContain("@supports");
+    expect(ruleBody(css, ".hk-master-detail-list")).toContain(
+      "background: var(--hk-master-detail-list-bg, rgb(var(--color-surface)))",
     );
-    expect(sticky).toContain("position: sticky");
-    expect(sticky).toContain("top: var(--hk-master-detail-sticky-top, 0px)");
-    expect(sticky).toContain("max-height:");
+  });
+
+  it("gives the narrow in-flow column the whole width", () => {
+    expect(ruleBody(css, ".hk-master-detail-detail--column")).toContain("flex: 1");
+  });
+
+  it("keeps the head band pinned inside the pane's scroll", () => {
     const head = ruleBody(css, ".hk-master-detail-detail-head");
     expect(head).toContain("position: sticky");
     expect(head).toContain("top: 0");
+    expect(head).toContain("border-bottom: 1px solid var(--border-faint)");
   });
+});
 
-  it("lifts the drawer to the right edge above the roster, under a veil", () => {
-    const drawer = ruleBody(css, ".hk-master-detail-drawer");
-    expect(drawer).toContain("position: fixed");
-    expect(drawer).toContain("right: 0");
-    expect(drawer).toContain("bottom: 0");
-    expect(drawer).toContain("z-index: var(--hk-z-sidebar");
-    // The enter motion is a physical slide from the right edge — the
-    // keyframe is the only place that direction is written down.
-    expect(drawer).toContain("animation: hk-master-detail-drawer-in");
-    expect(css).toContain("transform: translateX(100%)");
-    // The rounded side is the one it slides against: the physical-right
-    // edge square, the two left corners rounded, in that 4-value order.
-    // Pinned as the whole shorthand: a swapped corner pairing, a dropped
-    // declaration or a changed order reds it [MUT:drawer-radius-flipped];
-    // a partial edit of one corner through another property is outside
-    // this pin's reach.
-    expect(drawer).toContain(
-      "border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px)",
-    );
-    const scrim = ruleBody(css, ".hk-master-detail-scrim");
-    expect(scrim).toContain("position: fixed");
-    expect(scrim).toContain("z-index: var(--hk-z-sidebar");
-    // The veil rides the drawer family's token instead of a new colour.
-    expect(scrim).toContain("var(--hk-drawer-overlay-bg");
-    // Reduced motion + the host's animation switch both clamp the slide.
-    expect(css).toContain('html[data-css-animations="0"] .hk-master-detail-drawer');
-    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+describe("the bounded host — stage swap rule", () => {
+  // The component's height:100% contract needs a DEFINITE height from
+  // its host; in the admin shells' stage mode the keyed swap wrapper is
+  // the only box between the flex-column main and the page. The rule is
+  // pinned at the SOURCE level (chromeBand.contract.test.ts's
+  // admin-tokens precedent): a DOM assertion cannot see a wrapper that
+  // only takes its height from flex layout.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(join(here, "..", "styles", "admin-tokens.scss"), "utf-8");
+
+  it("gives the stage-mode swap wrapper the flex chain a full-height page needs", () => {
+    const rule = source.match(
+      /\.s-admin-shell-main\[data-content-mode="stage"\] \.s-admin-shell-swap \{([^}]*)\}/,
+    )?.[1];
+    expect(rule, "the stage swap rule exists").toBeTruthy();
+    expect(rule!).toContain("flex: 1 1 0%");
+    expect(rule!).toContain("min-height: 0");
+    // …but it must NOT turn the element into a flex column: it IS
+    // HkCrossfade's one-cell grid host, and a column layout there stacks
+    // the leaving page above the entering one for the length of every
+    // stage swap (the grid row's stretch is what gives the page its
+    // definite height). A legitimate display:grid/contents stays allowed.
+    expect(rule!).not.toMatch(/display:\s*(inline-)?flex/);
   });
 });
 

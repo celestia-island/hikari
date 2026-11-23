@@ -935,6 +935,39 @@ describe("HkModal Escape precedence", () => {
 });
 
 describe("HkModal blur plate", () => {
+  it("lets a host name the close affordance (closeLabel)", async () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkModal,
+            {
+              modelValue: open.value,
+              "onUpdate:modelValue": (v: boolean) => {
+                open.value = v;
+              },
+              title: "Message",
+              closeLabel: "Dismiss message",
+            },
+            { default: () => h("div", "content") },
+          );
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    await nextTick();
+    // A host whose own wording is more specific than "Close" keeps it on
+    // the window's X; unset, the localized default stands (HkModal's
+    // long-standing behaviour, unchanged).
+    expect(
+      document.querySelector(".hk-modal-close")?.getAttribute("aria-label"),
+    ).toBe("Dismiss message");
+  });
+
   it("renders the plate as the aria-hidden last child of the root", async () => {
     // The plate is DOM-last so the sheet's stack-covered drop can be keyed
     // by attribute scoping without depending on paint order (z-indexes

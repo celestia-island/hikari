@@ -402,6 +402,8 @@ def test_an_explicit_artifacts_dir_still_wins_over_cargo_target_dir(
     # The new default must not quietly override the operator's own choice: a
     # lane directory that does not hold the artifact must still be reported
     # absent rather than replaced by CARGO_TARGET_DIR's copy.
+    # MUT:explicit-artifacts-wins -- dropping the `if args.artifacts` branch
+    # would let the default silently replace the named directory.
     repo = make_repo(tmp_path / "repo", "qr")
     lane = tmp_path / "lane"
     (lane / "wasm32-wasip2" / "release").mkdir(parents=True)

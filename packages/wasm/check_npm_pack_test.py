@@ -2,9 +2,11 @@
 """Tests for the npm-manifest guard (``packages/wasm/check_npm_pack.py``).
 
 The guard exists because the bindings it protects are no longer committed: a
-publish from a checkout that never built them ships a package whose four
-WASM-backed components fail to load, and ``npm publish`` would be happy to do
-it. Two things are pinned here.
+publish from a checkout that never built them would carry no runtime module
+for the four WASM-backed components, and ``npm publish`` would not object.
+comment-gate-ok: statement of intent for the guard; the pinned behaviours are the two items below and their tests
+
+Two things are pinned here.
 
 1. **The path list is the check.** ``REQUIRED_SUFFIXES`` decides what counts as
    "the directory travelled". A narrowed list silently turns the guard into a

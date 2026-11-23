@@ -2,12 +2,15 @@
 """Tests for the build lane's stale-artifact defence (``packages/wasm/build.py``).
 
 The bindings this script writes are shipped, and the ``.wasm`` they are
-transpiled from is a cargo artifact — which cargo leaves behind between runs.
-"A file exists after ``cargo build`` succeeded" therefore proves nothing, and
-the first version of this script treated it as proof. Measured in review round
-3: a *different but valid* ``.wasm`` planted under the expected name was
-transpiled verbatim into ``packages/vue/src/wasm/qr/`` while the build reported
-success, cargo having recompiled nothing.
+transpiled from is a cargo artifact — which cargo leaves behind between runs,
+so its mere existence after a successful build says nothing about which
+sources produced it.
+
+Provenance (not an assertion here): review round 3 planted a *different but
+valid* ``.wasm`` under the expected name and the build transpiled it verbatim
+into ``packages/vue/src/wasm/qr/`` while reporting success. The anchors below
+are what keeps that from coming back.
+comment-gate-ok: provenance note about a review finding; the enforceable claims are the anchors on the tests themselves
 
 Mutation anchors for the claims above (each id names the behaviour whose removal
 the listed test covers): MUT:defence-follows-cargo MUT:artifact-present

@@ -15,6 +15,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick } from "vue";
 
+/** An untouched canvas reports 300x150; a successful draw sets its own size. */
+const UNTOUCHED_CANVAS_WIDTH = 300;
+
 const state = { calls: 0, refused: false };
 
 vi.mock("../utils/qr/qrEncoder", async () => {
@@ -80,10 +83,17 @@ describe("HkQrCode ready re-render", () => {
 
     // The retry is scheduled on a microtask after the refusal; give the redraw
     // room to run, bounded so a regression cannot hang the worker.
-    for (let i = 0; i < 40 && state.calls < 2; i++) {
+    for (let i = 0; i < 40 && canvas.width === UNTOUCHED_CANVAS_WIDTH; i++) {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
+    // MUT:canvas-size — the canvas size is the evidence that a matrix really was
+    // drawn: it is the only thing a successful draw sets. Counting calls would
+    // also be satisfied by two refusals (a mock that refuses twice leaves the
+    // canvas at its default 300x150 and still reaches call 2).
     expect(state.calls).toBeGreaterThanOrEqual(2); // …the ready path ran again
+    // …and the draw really happened: a canvas nobody drew on keeps its default.
+    expect(canvas.width).not.toBe(UNTOUCHED_CANVAS_WIDTH);
+    expect(canvas.width).toBe(168); // props.size (168) × dpr (1)
   });
 
   it("stops asking after one retry when the surface keeps refusing", async () => {

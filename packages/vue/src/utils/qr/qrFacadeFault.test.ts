@@ -42,8 +42,9 @@ describe("QR facade survives a broken wrapper", () => {
   });
 
   it("keeps throwing on later calls rather than going quiet", () => {
-    // The load attempt is cached and never reset on failure, so a failed load
-    // stays failed for the session (measured: one import attempt, no retry).
+    // A failed load keeps refusing until something retries it; the facade
+    // exposes a lazy `when*Ready` for that (see the `*Retry.test.ts` file), but
+    // a plain call never silently returns a value.
     // MUT:entry-guard — deleting the `if (!surface) throw` at the top of this
     // entry point lets a raw `TypeError: Cannot read properties of undefined`
     // escape instead, which no caller recognises by type.
@@ -53,10 +54,13 @@ describe("QR facade survives a broken wrapper", () => {
   it("rejects the ready promise so a waiting host can surface the failure", async () => {
     // The interface the QR card relies on: `qrReady.then(draw).catch(console.error)`.
     //
-    // MUT:ready-both-layers — rejection has TWO layers: the `throw` in the load's
-    // catch, and the `if (!surface) throw` inside this promise. Removing either
-    // one alone leaves this case green; removing BOTH reds it. So this pins "the
-    // ready promise rejects when the load failed", not a single line.
+    // MUT:ready-both-layers — rejection has two layers: the `throw` in the load's
+    // catch, and the `if (!surface) throw` inside this promise. Removing the
+    // inner guard alone leaves this case green (measured); removing the
+    // re-throw alone also leaves it green; only removing both reds it. So this
+    // pins "the ready promise rejects when the load failed", not one line.
+    // Note it asserts the `*Ready` snapshot — the lazy `when*Ready` is covered
+    // by the retry pins, not here.
     await expect(mod.qrReady).rejects.toBeInstanceOf(mod.QrNotReadyError);
   });
 });

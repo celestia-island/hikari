@@ -42,8 +42,9 @@ describe("scene3d facade survives a broken wrapper", () => {
   });
 
   it("keeps throwing on later calls rather than going quiet", () => {
-    // The load attempt is cached and never reset on failure, so a failed load
-    // stays failed for the session (measured: one import attempt, no retry).
+    // A failed load keeps refusing until something retries it; the facade
+    // exposes a lazy `when*Ready` for that (see the `*Retry.test.ts` file), but
+    // a plain call never silently returns a value.
     // MUT:entry-guard — deleting the `if (!surface) throw` at the top of this
     // entry point lets a raw `TypeError: Cannot read properties of undefined`
     // escape instead, which no caller recognises by type.

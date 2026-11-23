@@ -9,6 +9,9 @@
 //! Note: These hooks are designed for use within tairitsu components.
 //! They provide state management and cleanup functionality.
 
+// `animated_value` reaches into `crate::context` / `crate::lifecycle`, which
+// only exist on the browser target (see `lib.rs`); same rule here.
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 mod animated_value;
 mod animation_frame;
 mod continuous;
@@ -16,11 +19,13 @@ mod tween;
 
 // Re-export state machine types for convenience
 // Re-export hook functions
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub use animated_value::*;
 pub use animation_frame::*;
 pub use continuous::*;
 pub use tween::*;
 
 // Re-export animation types
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub use crate::lifecycle::AnimationManager;
 pub use crate::state_machine::{ButtonEvent, ButtonState, ButtonStateMachine};

@@ -70,6 +70,10 @@ function ensureLoadedOnce(): Promise<void> {
         // a waiting host the component is usable when it is not (measured — the
         // facade stayed silent and every later call returned nothing).
         loadFailure = new MermaidNotReadyError(error);
+        // Clear the cached attempt so the next call retries, matching
+        // `useHighlight`: a transient failure (a 404, a dropped connection)
+        // otherwise degrades this component for the rest of the session.
+        loadPromise = undefined;
         throw loadFailure;
       });
   }
@@ -77,9 +81,20 @@ function ensureLoadedOnce(): Promise<void> {
 }
 
 /** Resolves once the component is usable; rejects if it could not be built. */
-export const mermaidReady: Promise<void> = ensureLoadedOnce().then(() => {
-  if (!surface) throw loadFailure ?? new MermaidNotReadyError();
-});
+export function whenMermaidReady(): Promise<void> {
+  const attempt = ensureLoadedOnce().then(() => {
+    if (!surface) throw loadFailure ?? new MermaidNotReadyError();
+  });
+  // Mark it handled. A caller that awaits sees the rejection; a caller that
+  // only *triggers* a retry (the entry point firing `ensureLoadedOnce` on the
+  // way to its own throw) must not leave a rejection nobody owns — measured: two
+  // retries from a failing load surfaced as two unhandled rejections.
+  attempt.catch(() => {});
+  return attempt;
+}
+
+/** Snapshot of the first attempt, kept for callers that only want a value. */
+export const mermaidReady: Promise<void> = whenMermaidReady();
 
 /** Keeps the declaration module live for bundlers that honour `sideEffects`. */
 export const mermaidCapabilities = MERMAID_CAPABILITIES;

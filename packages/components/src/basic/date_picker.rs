@@ -2095,6 +2095,62 @@ mod tests {
         assert_eq!(years.matches("data-variant=\"pick\"").count(), 13);
     }
 
+    /// The RENDER pads the short grid — deleting the pad loop must be visible.
+    ///
+    /// `month_grid` honestly returns 34 real days for December 9999, and the
+    /// grid is only 42 cells wide because the render appends inert cells.
+    /// Tested at the helper level only (the pad-count assertion), deleting the
+    /// render loop left the whole suite green — the user-visible 34-versus-42
+    /// difference had no observer. This asserts on the rendered HTML.
+    #[test]
+    fn date_picker_render_pads_the_range_edge_grid_to_six_rows() {
+        let edge = DatePicker(DatePickerProps {
+            model_value: Some("9999-12-31".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(9999, 12, 1))),
+            ..Default::default()
+        })
+        .render_to_html();
+        // 42 cells wide. Of those, 34 are REAL days (the 3 previous-month
+        // cells for a Sunday-first start plus December's 31), 3 of which are
+        // out-of-month, and the 8-cell shortfall is padded inert.
+        assert_eq!(
+            edge.matches("hk-dp-cell").count(),
+            42,
+            "the range-edge grid must render 42 cells"
+        );
+        // A real day is a `<button>`; the padded shortfall is a `<div>` with
+        // no day and no handler. Counting buttons is what separates "padded"
+        // from "repeated": the duplicate-day version rendered 42 BUTTONS.
+        assert_eq!(
+            edge.matches("hk-dp-cell").count()
+                - edge.matches("<div class=\"hk-dp-cell is-out\"").count(),
+            34,
+            "34 real day buttons + 8 inert cells"
+        );
+        assert!(
+            edge.contains("<div class=\"hk-dp-cell is-out\""),
+            "the shortfall must be inert out-of-range cells, not buttons"
+        );
+        // An ordinary month pads nothing, so the pad cannot be unconditional.
+        let ordinary = DatePicker(DatePickerProps {
+            model_value: Some("2024-10-06".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(2024, 10, 6))),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert_eq!(
+            ordinary.matches("hk-dp-cell").count(),
+            42,
+            "an ordinary month is 42 cells from real days alone"
+        );
+        assert!(
+            !ordinary.contains("<div class=\"hk-dp-cell is-out\""),
+            "an ordinary month must not render inert cells"
+        );
+    }
+
     #[test]
     fn date_picker_styles_come_from_the_canonical_vue_sheet() {
         let css = DatePickerComponent::styles();

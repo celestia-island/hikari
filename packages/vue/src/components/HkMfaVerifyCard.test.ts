@@ -338,6 +338,106 @@ describe("HkMfaVerifyCard — autofocus arms the factor on stage", () => {
   });
 });
 
+describe("HkMfaVerifyCard — alternative sign-in rows", () => {
+  // A host whose ladder also accepts a linked third-party identity lists
+  // the providers HERE (erp's "bind an existing account" verify step).
+  const rows = [
+    { key: "github", label: "GitHub" },
+    { key: "feishu", label: "Feishu" },
+  ];
+
+  it("renders the rows under the proof and forwards a picked row", async () => {
+    const onVerify = vi.fn();
+    const onSelect = vi.fn();
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, {
+        factors: ["password"],
+        methods: rows,
+        methodsDivider: "or continue with",
+        onVerify,
+        onMethodSelect: onSelect,
+      }));
+    const github = container.querySelector<HTMLButtonElement>('[data-key="github"]');
+    expect(github).not.toBeNull();
+    expect(github!.getAttribute("aria-label")).toBe("GitHub");
+    expect(container.querySelector('[data-key="feishu"]')).not.toBeNull();
+    expect(container.querySelector(".hk-auth-channel-divider")?.textContent)
+      .toContain("or continue with");
+    // Lane order: proof → submit → rows → back. The back action is the
+    // last control of the step; the rows sit above it, inside the
+    // step-up's own column.
+    // MUT:verify-rows-after-back (moving the list below the back action
+    // puts the back button before the list and this goes red).
+    const list = container.querySelector(".hk-auth-channel-list")!;
+    const back = buttonText(container, "Back to sign in")!;
+    expect(
+      (list.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0,
+      "the back action follows the rows",
+    ).toBe(true);
+    github!.click();
+    await flush();
+    // A row is not a factor: the pick reports the provider and leaves
+    // the verify lane alone.
+    // MUT:verify-rows-emit-verify (emitting `verify` from the row click
+    // calls onVerify here and this goes red).
+    expect(onSelect).toHaveBeenCalledWith("github");
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onVerify).not.toHaveBeenCalled();
+  });
+
+  it("omits the rows and the divider when no method is passed", () => {
+    // MUT:verify-rows-unconditional (dropping the length guard renders an
+    // empty list block under the proof — the divider-only list root
+    // appears and this goes red).
+    const { container } = mount(() => h(HkMfaVerifyCard, { factors: ["totp"] }));
+    expect(container.querySelector(".hk-auth-channel-list")).toBeNull();
+    expect(container.querySelector(".hk-auth-channel-divider")).toBeNull();
+    const empty = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["totp"], methods: [], methodsDivider: "or" }));
+    expect(empty.container.querySelector(".hk-auth-channel-list")).toBeNull();
+    expect(empty.container.querySelector(".hk-auth-channel-divider")).toBeNull();
+  });
+
+  it("keeps a provider row out of the factor picker", () => {
+    // The picker lists FACTORS only; a provider joins as a row below.
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password", "totp"], methods: rows }));
+    expect(pickerButtons(container)).toHaveLength(2);
+    expect(
+      pickerButtons(container).some((b) => b.textContent?.includes("GitHub")),
+    ).toBe(false);
+  });
+
+  it("closes every row while the card is busy", () => {
+    const busy = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], methods: rows, loading: true }));
+    const guarded = busy.container.querySelectorAll<HTMLButtonElement>(".hk-auth-channel-row");
+    expect(guarded).toHaveLength(2);
+    // MUT:verify-rows-live-while-busy (returning the rows untouched while
+    // `loading` leaves both enabled and this goes red).
+    expect(Array.from(guarded).every((row) => row.disabled)).toBe(true);
+    const disabled = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], methods: rows, disabled: true }));
+    expect(
+      Array.from(disabled.container.querySelectorAll<HTMLButtonElement>(".hk-auth-channel-row"))
+        .every((row) => row.disabled),
+    ).toBe(true);
+    const idle = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], methods: rows }));
+    expect(
+      Array.from(idle.container.querySelectorAll<HTMLButtonElement>(".hk-auth-channel-row"))
+        .every((row) => !row.disabled),
+    ).toBe(true);
+  });
+
+  it("renders the rows in bare mode too (one body, two shells)", () => {
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { bare: true, factors: ["password"], methods: rows }));
+    expect(container.querySelector('[data-key="github"]')).not.toBeNull();
+    expect(container.querySelector(".s-auth-card")).toBeNull();
+  });
+});
+
 describe("HkMfaVerifyCard — bare mode (host-owned card shell)", () => {
   const flat = (key: string, fallback?: string) => fallback ?? key;
 

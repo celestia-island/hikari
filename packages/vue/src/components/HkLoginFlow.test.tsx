@@ -252,6 +252,27 @@ describe("HkLoginFlow — sso channel", () => {
     expect(onClick).toHaveBeenCalledWith("org");
   });
 
+  it("forwards href: the destination row is a real link; without it, a button", () => {
+    const link = mount(
+      h(HkLoginFlow, {
+        channels: [{ ...orgChannel, href: "/auth/relay/begin" }],
+        modelValue: "org",
+      }),
+    );
+    const a = link.querySelector<HTMLAnchorElement>(".hk-login-flow-sso .hk-auth-channel-row")!;
+    expect(a.tagName).toBe("A");
+    // MUT:flow-sso-href-dropped (not forwarding the channel's href leaves
+    // the row a button — hosts must go back to window.location).
+    expect(a.getAttribute("href")).toBe("/auth/relay/begin");
+    expect(a.textContent).toContain("Organization login");
+
+    // Default (no href) is unchanged: today's button.
+    const button = mount(h(HkLoginFlow, { channels: [orgChannel], modelValue: "org" }));
+    const b = button.querySelector<HTMLButtonElement>(".hk-login-flow-sso .hk-auth-channel-row")!;
+    expect(b.tagName).toBe("BUTTON");
+    expect(b.hasAttribute("href")).toBe(false);
+  });
+
   it("does not enter the verify step on an sso channel (fail-safe)", () => {
     const c = mount(
       h(HkLoginFlow, {

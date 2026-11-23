@@ -129,6 +129,7 @@ components/HkMfaVerifyCard.scss	components/HkMfaVerifyCard.scss
 components/HkThirdPartySignInCard.scss	components/HkThirdPartySignInCard.scss
 components/HkAuthMethodList.scss	components/HkAuthMethodList.scss
 components/HkAuthSubmitButton.scss	components/HkAuthSubmitButton.scss
+components/HkAuthHandoff.scss	components/HkAuthHandoff.scss
 components/HkPasswordSurface.scss	components/HkPasswordSurface.scss
 components/HkCaptchaModal.scss	components/HkCaptchaModal.scss
 components/HkCaptchaWidget.scss	components/HkCaptchaWidget.scss

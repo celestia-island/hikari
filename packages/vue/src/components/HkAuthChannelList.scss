@@ -42,11 +42,12 @@
   color: rgb(var(--color-text, 25 30 40));
   font-size: 0.875rem;
   cursor: pointer;
+  text-decoration: none;
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;
 
-  &:hover:not(:disabled) {
+  &:hover:not(:disabled):not([aria-disabled="true"]) {
     border-color: color-mix(in srgb, rgb(var(--color-primary, 122 162 247)) 55%, transparent);
     background: color-mix(in srgb, rgb(var(--color-surface, 255 255 255)) 100%, transparent);
   }
@@ -56,7 +57,8 @@
     outline-offset: 2px;
   }
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled="true"] {
     opacity: 0.55;
     cursor: not-allowed;
   }

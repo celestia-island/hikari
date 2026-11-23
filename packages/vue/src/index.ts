@@ -673,6 +673,7 @@ export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
 export { HkThirdPartySignInCard as HThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
+export { HkAuthHandoff as HAuthHandoff } from "./components/HkAuthHandoff";
 export {
   HkMfaVerifyCard as HMfaVerifyCard,
   hkIsMfaFactor as isMfaFactor,
@@ -1113,6 +1114,23 @@ export { type HkLoginSsoChannel as HkLoginSsoChannel } from "./components/HkLogi
 export { HkAuthSsoButton as HkAuthSsoButton } from "./components/HkAuthSsoButton";
 export { HkAuthChannelList as HkAuthChannelList } from "./components/HkAuthChannelList";
 export { type HkAuthChannelListEntry as HkAuthChannelListEntry } from "./components/HkAuthChannelList";
+export { HkAuthHandoff as HkAuthHandoff } from "./components/HkAuthHandoff";
+export {
+  type HkAuthHandoffAction as HkAuthHandoffAction,
+  type HkAuthHandoffStatus as HkAuthHandoffStatus,
+} from "./components/HkAuthHandoff";
+// Login discovery adapter (pure functions): the login-policy wire document
+// → HkLoginFlow channels, or "mount the hand-off screen instead" (relay).
+export {
+  hkIsSameOriginPath as hkIsSameOriginPath,
+  hkLoginPlanFromDiscovery as hkLoginPlanFromDiscovery,
+  hkRelayEntryHref as hkRelayEntryHref,
+  type HkLoginDiscovery as HkLoginDiscovery,
+  type HkLoginMethod as HkLoginMethod,
+  type HkLoginMode as HkLoginMode,
+  type HkLoginPlan as HkLoginPlan,
+  type HkLoginPlanCopy as HkLoginPlanCopy,
+} from "./components/loginDiscovery";
 export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";
 export { HkAdminTablePage as HkAdminTablePage } from "./components/HkAdminTablePage";
 // The roster+detail twin of the table page (2026-11-23): one standard

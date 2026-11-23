@@ -229,6 +229,7 @@ OVERLAY_SHEETS: list[str] = [
     "HkThirdPartySignInCard.scss",
     "HkAuthMethodList.scss",
     "HkAuthSubmitButton.scss",
+    "HkAuthHandoff.scss",
     "HkPasswordSurface.scss",
     "HkCaptchaModal.scss",
     "HkCaptchaWidget.scss",

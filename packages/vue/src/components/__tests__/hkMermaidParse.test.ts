@@ -10,7 +10,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { MermaidDoc, MermaidGraphDoc, MermaidSequenceDoc } from "../../mermaid/types";
-import { wasmMermaidEngine } from "../../mermaid/wasmEngine";
+import { wasmMermaidEngine, mermaidReady } from "../../mermaid/wasmEngine";
 
 function mustParse(src: string): MermaidDoc {
   const doc = wasmMermaidEngine.parse(src);
@@ -19,7 +19,8 @@ function mustParse(src: string): MermaidDoc {
 }
 
 describe("parseFlowchart", () => {
-  it("parses direction, nodes and edges", () => {
+  it("parses direction, nodes and edges", async () => {
+    await mermaidReady;
     const doc = mustParse("graph TD\n  A --> B\n  B --> C");
     expect(doc.kind).toBe("graph");
     if (doc.kind === "graph") {
@@ -29,7 +30,8 @@ describe("parseFlowchart", () => {
     }
   });
 
-  it("parses node shapes", () => {
+  it("parses node shapes", async () => {
+    await mermaidReady;
     const doc = mustParse("flowchart LR\n  S[Start] --> D{Check}");
     if (doc.kind === "graph") {
       expect(doc.nodes.map((n) => n.shape)).toContain("rect");
@@ -37,20 +39,23 @@ describe("parseFlowchart", () => {
     }
   });
 
-  it("parses edge labels", () => {
+  it("parses edge labels", async () => {
+    await mermaidReady;
     const doc = mustParse("graph TD\n  A -->|yes| B");
     if (doc.kind === "graph") {
       expect(doc.edges[0]?.label).toBe("yes");
     }
   });
 
-  it("rejects non-diagram input", () => {
+  it("rejects non-diagram input", async () => {
+    await mermaidReady;
     expect(wasmMermaidEngine.parse("this is not a diagram")).toBeNull();
   });
 });
 
 describe("parseSequence", () => {
-  it("declares participants and messages", () => {
+  it("declares participants and messages", async () => {
+    await mermaidReady;
     const doc = mustParse("sequenceDiagram\n  Alice->>Bob: Hello\n  Bob-->>Alice: Hi");
     expect(doc.kind).toBe("sequence");
     if (doc.kind === "sequence") {
@@ -62,7 +67,8 @@ describe("parseSequence", () => {
     }
   });
 
-  it("longer arrow tokens win", () => {
+  it("longer arrow tokens win", async () => {
+    await mermaidReady;
     const doc = mustParse("sequenceDiagram\nA -->> B: x");
     if (doc.kind === "sequence") {
       expect(doc.messages[0]?.arrowKind).toBe("dotted-open");
@@ -71,35 +77,40 @@ describe("parseSequence", () => {
 });
 
 describe("parsePie", () => {
-  it("parses title and slices", () => {
+  it("parses title and slices", async () => {
+    await mermaidReady;
     const doc = mustParse('pie\n  title Sales\n  "Alpha" : 40\n  "Beta" : 60');
     expect(doc.kind).toBe("pie");
   });
 });
 
 describe("parseClassDiagram", () => {
-  it("parses class members and relationships", () => {
+  it("parses class members and relationships", async () => {
+    await mermaidReady;
     const doc = mustParse("classDiagram\n  class Animal {\n    +name: String\n  }\n  Dog <|-- Animal");
     expect(doc.kind).toBe("class");
   });
 });
 
 describe("parseGantt", () => {
-  it("parses sections and tasks", () => {
+  it("parses sections and tasks", async () => {
+    await mermaidReady;
     const doc = mustParse("gantt\n  title Project\n  section Design\n  Task1 :a1, 5d");
     expect(doc.kind).toBe("gantt");
   });
 });
 
 describe("parseQuadrant", () => {
-  it("parses axes and points", () => {
+  it("parses axes and points", async () => {
+    await mermaidReady;
     const doc = mustParse("quadrantChart\n  x-axis Low --> High\n  Point A: [0.5, 0.7]");
     expect(doc.kind).toBe("quadrant");
   });
 });
 
 describe("stateDiagram", () => {
-  it("parses state transitions as graph", () => {
+  it("parses state transitions as graph", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse("stateDiagram-v2\n  [*] --> Active\n  Active --> [*]");
     expect(doc).not.toBeNull();
     expect(doc!.kind).toBe("graph");

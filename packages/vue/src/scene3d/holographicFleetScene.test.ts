@@ -12,7 +12,7 @@ import {
   MOON_RADIUS,
   satelliteOrbit,
 } from "./holographicFleetSpec";
-import { buildFleetSceneSpecWasm as buildFleetSceneSpec } from "./wasmFleetSpec";
+import { buildFleetSceneSpecWasm as buildFleetSceneSpec, scene3dReady } from "./wasmFleetSpec";
 
 /**
  * fleetScene owns everything it puts into the board: meshes, lights,
@@ -191,7 +191,8 @@ describe("buildFleetScene follow cam", () => {
     }
   }
 
-  it("keeps the camera centred on the focused body while it revolves", () => {
+  it("keeps the camera centred on the focused body while it revolves", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -227,7 +228,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("ends the flight dead-centre even when the body moves through it", () => {
+  it("ends the flight dead-centre even when the body moves through it", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -246,7 +248,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("hands the camera back once the flight has landed", () => {
+  it("hands the camera back once the flight has landed", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -266,7 +269,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("flies a continuous path, not a snap at the end", () => {
+  it("flies a continuous path, not a snap at the end", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -292,7 +296,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("flies the eased curve, not a straight line", () => {
+  it("flies the eased curve, not a straight line", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -330,7 +335,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("hands the flight over to the follow without a jump-cut", () => {
+  it("hands the flight over to the follow without a jump-cut", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -364,7 +370,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("yields the flight to a user grab", () => {
+  it("yields the flight to a user grab", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -386,7 +393,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("stops the flight when the selection is dropped mid-flight", () => {
+  it("stops the flight when the selection is dropped mid-flight", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -404,7 +412,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("does not move the camera before a focus", () => {
+  it("does not move the camera before a focus", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -418,7 +427,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("stops following when the selection is dropped", () => {
+  it("stops following when the selection is dropped", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -435,7 +445,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("carries the follow across a rebuild without a jump", () => {
+  it("carries the follow across a rebuild without a jump", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     const spec = buildFleetSceneSpec(ROWS);
@@ -454,7 +465,8 @@ describe("buildFleetScene follow cam", () => {
     handle.dispose();
   });
 
-  it("ends the follow when the followed body leaves the fleet", () => {
+  it("ends the follow when the followed body leaves the fleet", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -474,7 +486,8 @@ describe("buildFleetScene follow cam", () => {
 });
 
 describe("buildFleetScene teardown", () => {
-  it("disposes its own geometries and materials on dispose", () => {
+  it("disposes its own geometries and materials on dispose", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -495,7 +508,8 @@ describe("buildFleetScene teardown", () => {
     expect(engine.registered.size).toBe(0);
   });
 
-  it("never disposes THREE's process-wide sprite geometry", () => {
+  it("never disposes THREE's process-wide sprite geometry", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -512,7 +526,8 @@ describe("buildFleetScene teardown", () => {
     expect(shared.attributes.position).toBeTruthy();
   });
 
-  it("owns and disposes one glow texture per builder, not one per rebuild", () => {
+  it("owns and disposes one glow texture per builder, not one per rebuild", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     const spec = buildFleetSceneSpec(ROWS);
@@ -538,7 +553,8 @@ describe("buildFleetScene teardown", () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it("burns the large bodies' halos brighter than the node baseline", () => {
+  it("burns the large bodies' halos brighter than the node baseline", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     // A hub (star tier) plus a gateway (planet tier, no halo at all).
@@ -568,7 +584,8 @@ describe("buildFleetScene teardown", () => {
     handle.dispose();
   });
 
-  it("frees real HUD textures when a body generation is replaced", () => {
+  it("frees real HUD textures when a body generation is replaced", async () => {
+    await scene3dReady;
     const gradient = fakeAs<CanvasGradient>({ addColorStop: vi.fn() });
     const context = fakeAs<CanvasRenderingContext2D>({
       clearRect: vi.fn(),
@@ -603,7 +620,8 @@ describe("buildFleetScene teardown", () => {
     }
   });
 
-  it("frees the registry-core marker on rebuild and on dispose", () => {
+  it("frees the registry-core marker on rebuild and on dispose", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     // No hubs → the registry core marker exists.
@@ -623,7 +641,8 @@ describe("buildFleetScene teardown", () => {
     for (const spy of spies) expect(spy).toHaveBeenCalled();
   });
 
-  it("frees the registry-core marker on dispose too", () => {
+  it("frees the registry-core marker on dispose too", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(
@@ -642,7 +661,8 @@ describe("buildFleetScene teardown", () => {
     expect(engine.registered.has("__star-system-core__")).toBe(false);
   });
 
-  it("dims offline hubs as well as offline nodes", () => {
+  it("dims offline hubs as well as offline nodes", async () => {
+    await scene3dReady;
     // ONE hub in the fleet, built twice from the SAME spec: the palette
     // assigns colours per roster position, so comparing two different
     // bodies would compare two different base colours.
@@ -681,7 +701,8 @@ describe("buildFleetScene body dressing", () => {
     return mesh as THREE.Mesh;
   }
 
-  it("builds every body as a disc-shell hologram with no solid sphere left", () => {
+  it("builds every body as a disc-shell hologram with no solid sphere left", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -742,7 +763,8 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("frees a superseded hologram on rebuild, not just on dispose", () => {
+  it("frees a superseded hologram on rebuild, not just on dispose", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     const spec = buildFleetSceneSpec(ROWS);
@@ -762,7 +784,8 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("keeps coronas and satellites out of recursive picking while the centre stays clickable", () => {
+  it("keeps coronas and satellites out of recursive picking while the centre stays clickable", async () => {
+    await scene3dReady;
     const starEngine = stubEngine();
     const starHandle = buildFleetScene(starEngine, callbacks());
     const starSpec = buildFleetSceneSpec([{ node_id: "hub-a", tier: 3, station_count: 0 }]);
@@ -800,7 +823,8 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("never resizes a body — the circular marks carry the affordances", () => {
+  it("never resizes a body — the circular marks carry the affordances", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -820,7 +844,8 @@ describe("buildFleetScene body dressing", () => {
     handle.dispose();
   });
 
-  it("dims a gateway's satellite holograms with the gateway itself", () => {
+  it("dims a gateway's satellite holograms with the gateway itself", async () => {
+    await scene3dReady;
     const online = stubEngine();
     buildFleetScene(online, callbacks()).update(buildFleetSceneSpec(ROWS), {});
     const offline = stubEngine();
@@ -856,7 +881,8 @@ describe("buildFleetScene body dressing", () => {
     }
   });
 
-  it("marks the selection with the scene's circular ring, never a corner frame", () => {
+  it("marks the selection with the scene's circular ring, never a corner frame", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -902,7 +928,8 @@ describe("buildFleetScene body dressing", () => {
     expect(engine.selections.at(-1)).toBe(null);
   });
 
-  it("opts every body out of the board's corner frames", () => {
+  it("opts every body out of the board's corner frames", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -918,7 +945,8 @@ describe("buildFleetScene body dressing", () => {
 });
 
 describe("buildFleetScene framing", () => {
-  it("frames the fleet on its own sphere: centroid + 10% of the enclosing radius", () => {
+  it("frames the fleet on its own sphere: centroid + 10% of the enclosing radius", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     // A real aspect, so the fit maths is exercised rather than a 1:1 stub.
     engine.camera.aspect = 16 / 9;
@@ -959,7 +987,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("keeps every orbiting body inside the frame, at every phase", () => {
+  it("keeps every orbiting body inside the frame, at every phase", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     engine.camera.aspect = 16 / 9;
     engine.camera.position.set(22, -19, 34);
@@ -1004,7 +1033,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("frames nothing when there is nothing, and still frames later", () => {
+  it("frames nothing when there is nothing, and still frames later", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     // An empty first spec (a fleet that emptied between the mount and the
@@ -1017,7 +1047,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("builds its satellites at the radius the enclosure measures", () => {
+  it("builds its satellites at the radius the enclosure measures", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     const spec = buildFleetSceneSpec(ROWS);
@@ -1050,7 +1081,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("widens the board's distance ceiling for a fleet that does not fit", () => {
+  it("widens the board's distance ceiling for a fleet that does not fit", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     // A large fleet: the fit needs to sit far outside the board's static
@@ -1111,7 +1143,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("frames from the CURRENT roster, not from the sky it first built", () => {
+  it("frames from the CURRENT roster, not from the sky it first built", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});
@@ -1141,7 +1174,8 @@ describe("buildFleetScene framing", () => {
     handle.dispose();
   });
 
-  it("reframes a rebuilt sky without losing the user's direction", () => {
+  it("reframes a rebuilt sky without losing the user's direction", async () => {
+    await scene3dReady;
     const engine = stubEngine();
     const handle = buildFleetScene(engine, callbacks());
     handle.update(buildFleetSceneSpec(ROWS), {});

@@ -24,6 +24,7 @@ import { computed, defineComponent, ref, type CSSProperties, type PropType, type
 import HkBoard, { type BoardEdgeInput, type BoardNodeInput } from "./HkBoard";
 import { buildBoardModel, createCanvasMeasureText, type LaidOutNode, type MeasureText } from "../mermaid/layout";
 import { getMermaidEngine } from "../mermaid/engine";
+import { mermaidReady } from "../mermaid/wasmEngine";
 import type { ClassDefinition, ClassVisibility, MermaidDoc, MermaidNodeShape } from "../mermaid/types";
 import "./HkMermaidDiagram.scss";
 
@@ -256,7 +257,21 @@ export default defineComponent({
     fitCap: { type: Number, default: undefined },
   },
   setup(props) {
+    // The engine loads asynchronously now, so the first parse can run before it
+    // is usable and would cache `parse-failed`. Re-run once the load settles —
+    // the same reactive-retry shape `HkQrCode` uses for `qrReady`.
+    const engineEpoch = ref(0);
+    void mermaidReady
+      .then(() => {
+        engineEpoch.value += 1;
+      })
+      .catch(() => {
+        // Leave the epoch alone: `parsed` keeps reporting parse-failed, which
+        // renders the source as a code block rather than a blank board.
+      });
+
     const parsed = computed<{ doc: MermaidDoc | null; error: string | null }>(() => {
+      void engineEpoch.value;
       const engine = getMermaidEngine();
       if (!engine) return { doc: null, error: "no-engine" };
       try {

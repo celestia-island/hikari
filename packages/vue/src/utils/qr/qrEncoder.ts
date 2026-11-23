@@ -5,17 +5,19 @@
 // Rust `qrcode` crate provides the encoding core, and this module adapts it to
 // the `qrMatrix` API HkQrCode has always consumed.
 //
-// The facade is SYNCHRONOUS (user ruling: callers do not change). The host
-// client's synchronous door (`createSurface`) is what makes that possible: the
-// wrapper is in this module graph, so its exports are callable as soon as the
-// module is evaluated — no readiness dance in the common path.
+// The facade is SYNCHRONOUS (user ruling: callers do not change). The wrapper is
+// loaded with a DYNAMIC import so a broken artifact degrades this component
+// instead of aborting the module graph that hosts it: a static import is
+// evaluated before this file's body runs, so no `try` here could ever catch its
+// failure and the whole page went blank (#1498). The load starts at module init
+// and the first calls render plaintext (or throw `QrNotReadyError`) until it
+// lands.
 import { QR_CAPABILITIES, QR_DECLARATION_PUBLISHED } from "./declare-caps";
 // The GENERATED result type, not a hand-written copy of it: this file is the
 // one path that consumes the component's contract, and re-typing the shape here
 // made the generated type inert — the whole `interfaces/` tree could drift or
 // be deleted with `vue-tsc` and the suite both green (measured).
 import type { QrCode } from "../../wasm/qr/hikari_wasm_qr.js";
-import * as qrWrapper from "../../wasm/qr/hikari_wasm_qr.js";
 import {
   createSurface,
   HostClientError,
@@ -44,26 +46,46 @@ export class QrNotReadyError extends Error {
 
 let surface: HostComponent | undefined;
 let loadFailure: QrNotReadyError | undefined;
+let loadPromise: Promise<void> | undefined;
 
-try {
-  surface = createSurface(
-    qrWrapper as unknown as Record<string, unknown>,
-    // Hand the declaration to the door, don't just publish it: with the
-    // parameter omitted it defaults to `{}`, so the door's own refusal
-    // (`sync-door-cannot-provide`) can never fire and a wrong declaration would
-    // pass unnoticed. Passing it makes the declaration checkable here.
-    QR_CAPABILITIES,
-  );
-} catch (error) {
-  // Recognisable at the call site: `HkQrCode` re-draws on it, and callers that
-  // can wait use `qrReady`. The underlying cause is kept.
-  loadFailure = new QrNotReadyError(error);
+/** Start loading; cached so every caller shares one attempt. */
+function ensureLoadedOnce(): Promise<void> {
+  if (!loadPromise) {
+    loadPromise = import("../../wasm/qr/hikari_wasm_qr.js")
+      .then((wrapper) =>
+        createSurface(
+          wrapper as unknown as Record<string, unknown>,
+          // Hand the declaration to the door, don't just publish it: with the
+          // parameter omitted it defaults to `{}`, so the door's own refusal
+          // (`sync-door-cannot-provide`) can never fire and a wrong declaration
+          // would pass unnoticed. Passing it makes the declaration checkable.
+          QR_CAPABILITIES,
+        ),
+      )
+      .then((built) => {
+        surface = built;
+      })
+      .catch((error: unknown) => {
+        // Kept as the component's own error type so a caller can recognise it,
+        // and re-thrown so the ready promise REJECTS: resolving here would tell
+        // a waiting host the component is usable when it is not (measured — the
+        // facade stayed silent and every later call returned nothing).
+        loadFailure = new QrNotReadyError(error);
+        throw loadFailure;
+      });
+  }
+  return loadPromise;
 }
 
-/** Resolves once the component is usable; rejects if it could not be built. */
-export const qrReady: Promise<void> = surface
-  ? Promise.resolve()
-  : Promise.reject(loadFailure ?? new QrNotReadyError());
+/**
+ * Resolves once the component is usable; rejects if it could not be built.
+ *
+ * Safe to ignore for the common path — `qrMatrix` works without waiting — but
+ * a host that can wait (`HkQrCode` re-draws on it) should.
+ */
+export const qrReady: Promise<void> = ensureLoadedOnce().then(() => {
+  if (!surface) throw loadFailure ?? new QrNotReadyError();
+});
 
 /** Keeps the declaration module live for bundlers that honour `sideEffects`. */
 export const qrCapabilities = QR_CAPABILITIES;

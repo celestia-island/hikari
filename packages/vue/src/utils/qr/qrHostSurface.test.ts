@@ -16,7 +16,7 @@
 // decoration. Verified here: dropping the argument leaves every other case green.
 //
 // (Run from `packages/vue` — that is where vite.config.ts registers the plugins.)
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeAll } from "vitest";
 
 interface Seam {
   /** Argument list of every `surface.call(name, …)`. */
@@ -92,7 +92,7 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
   };
 });
 
-const { qrMatrix, qrCapabilities } = await import("./qrEncoder");
+const { qrMatrix, qrCapabilities, qrReady } = await import("./qrEncoder");
 // The artifact itself, for the door-substitution probe.
 const realWrapper = await import("../../wasm/qr/hikari_wasm_qr.js");
 const { QR_CAPABILITIES } = await import("./declare-caps");
@@ -100,6 +100,13 @@ const { QR_CAPABILITIES } = await import("./declare-caps");
 const PAYLOAD = "https://example.com/";
 
 describe("QR engine goes through the host client", () => {
+  // The wrapper now loads asynchronously, so the surface exists only after the
+  // ready promise settles. Wait once; every case below then asserts against the
+  // same loaded door.
+  beforeAll(async () => {
+    await qrReady;
+  });
+
   it("hands the wrapper namespace to createSurface", () => {
     expect(seam.handed).toBeDefined();
     // The very artifact module — it carries the component's own export.

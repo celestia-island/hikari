@@ -14,7 +14,7 @@
 // and the real artifact still runs.
 //
 // (Run from `packages/vue` — that is where vite.config.ts registers the plugins.)
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeAll } from "vitest";
 
 interface Seam {
   /** Argument list of every `surface.call(name, …)`. */
@@ -62,10 +62,17 @@ vi.mock("@celestia-island/tairitsu-host-client", async (importOriginal) => {
   };
 });
 
-const { wasmMermaidEngine, mermaidCapabilities } = await import("./wasmEngine");
+const { wasmMermaidEngine, mermaidCapabilities, mermaidReady } = await import("./wasmEngine");
 const { MERMAID_CAPABILITIES } = await import("./declare-caps");
 
 describe("Mermaid engine goes through the host client", () => {
+  // The wrapper now loads asynchronously, so the surface exists only after the
+  // ready promise settles. Wait once; every case below then asserts against the
+  // same loaded door.
+  beforeAll(async () => {
+    await mermaidReady;
+  });
+
   it("hands the wrapper namespace to createSurface", () => {
     expect(seam.handed).toBeDefined();
     // The very artifact module — it carries the component's own export.

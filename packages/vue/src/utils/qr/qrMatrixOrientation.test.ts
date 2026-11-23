@@ -6,7 +6,7 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import { qrMatrix } from "./qrEncoder";
+import { qrMatrix, qrReady } from "./qrEncoder";
 
 const PAYLOAD = "https://example.com/";
 
@@ -16,7 +16,8 @@ function fingerprint(matrix: boolean[][]): string {
 }
 
 describe("qrMatrix orientation and data region", () => {
-  it("encodes a fixed payload to an exact, orientation-stable matrix", () => {
+  it("encodes a fixed payload to an exact, orientation-stable matrix", async () => {
+    await qrReady;
     const matrix = qrMatrix(PAYLOAD);
     expect(matrix.length).toBe(25); // version 2, ECC M
     // sha256 of the fingerprint — a transpose or a polarity flip changes it.

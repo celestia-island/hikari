@@ -2,10 +2,11 @@
 import { describe, expect, it } from "vitest";
 
 import type { MermaidClassDoc, MermaidGraphDoc, MermaidPieDoc, MermaidQuadrantDoc, MermaidSequenceDoc } from "./types";
-import { wasmMermaidEngine } from "./wasmEngine";
+import { wasmMermaidEngine, mermaidReady } from "./wasmEngine";
 
 describe("wasmMermaidEngine", () => {
-  it("parses a graph through the wasm component", () => {
+  it("parses a graph through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse("graph TD\n  A --> B\n  B --> C") as MermaidGraphDoc;
     expect(doc).not.toBeNull();
     expect(doc!.kind).toBe("graph");
@@ -14,7 +15,8 @@ describe("wasmMermaidEngine", () => {
     expect(doc!.edges).toHaveLength(2);
   });
 
-  it("serializes shapes to the TS contract literals", () => {
+  it("serializes shapes to the TS contract literals", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse("flowchart LR\n  S[Start] --> D{Check}") as MermaidGraphDoc;
     expect(doc).not.toBeNull();
     const shapes = doc!.nodes.map((n) => n.shape);
@@ -22,11 +24,13 @@ describe("wasmMermaidEngine", () => {
     expect(shapes).toContain("diamond");
   });
 
-  it("returns null on non-diagram input", () => {
+  it("returns null on non-diagram input", async () => {
+    await mermaidReady;
     expect(wasmMermaidEngine.parse("this is not a diagram")).toBeNull();
   });
 
-  it("parses a sequence diagram through the wasm component", () => {
+  it("parses a sequence diagram through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse(
       "sequenceDiagram\n  Alice->>Bob: Hello\n  Bob-->>Alice: Hi",
     ) as MermaidSequenceDoc;
@@ -39,7 +43,8 @@ describe("wasmMermaidEngine", () => {
     expect(doc!.messages[1]!.arrowKind).toBe("dotted-open");
   });
 
-  it("parses a pie chart through the wasm component", () => {
+  it("parses a pie chart through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse(
       'pie\n  title Sales\n  "Alpha" : 40\n  "Beta" : 60',
     ) as MermaidPieDoc;
@@ -52,7 +57,8 @@ describe("wasmMermaidEngine", () => {
     expect(doc!.slices[0]!.value).toBe(40);
   });
 
-  it("parses a class diagram through the wasm component", () => {
+  it("parses a class diagram through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse(
       "classDiagram\n  class Animal {\n    +name: String\n    +speak() void\n  }\n  Dog <|-- Animal",
     ) as MermaidClassDoc;
@@ -71,7 +77,8 @@ describe("wasmMermaidEngine", () => {
     expect(doc!.relationships[0]!.to).toBe("Animal");
   });
 
-  it("parses a quadrant chart through the wasm component", () => {
+  it("parses a quadrant chart through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse(
       "quadrantChart\n  x-axis Low --> High\n  y-axis Bottom --> Top\n  quadrant-1 Growth\n  Point A: [0.5, 0.7]",
     ) as MermaidQuadrantDoc;
@@ -85,7 +92,8 @@ describe("wasmMermaidEngine", () => {
     expect(doc!.points[0]!.x).toBeCloseTo(0.5, 5);
   });
 
-  it("parses a gantt chart through the wasm component", () => {
+  it("parses a gantt chart through the wasm component", async () => {
+    await mermaidReady;
     const doc = wasmMermaidEngine.parse(
       "gantt\n  title Project\n  section Design\n  Task1 :a1, 5d",
     );

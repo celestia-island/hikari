@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildBoardModel, heuristicTextWidth, layoutGraph } from "../../mermaid/layout";
-import { wasmMermaidEngine } from "../../mermaid/wasmEngine";
+import { wasmMermaidEngine, mermaidReady } from "../../mermaid/wasmEngine";
 
 /**
  * Layout invariants — the geometry module is pure and deterministic, so
@@ -24,13 +24,15 @@ describe("layoutGraph", () => {
     { id: "D", w: 90, h: 40, order: 3 },
   ];
 
-  it("ranks along edges (A→B→C puts each on its own rank, TD)", () => {
+  it("ranks along edges (A→B→C puts each on its own rank, TD)", async () => {
+    await mermaidReady;
     const { positions } = layoutGraph({ items, edges: [{ from: "A", to: "B" }, { from: "B", to: "C" }], direction: "TD" });
     expect(positions.get("B")!.y).toBeGreaterThan(positions.get("A")!.y);
     expect(positions.get("C")!.y).toBeGreaterThan(positions.get("B")!.y);
   });
 
-  it("siblings of one rank never overlap and share a row (TD)", () => {
+  it("siblings of one rank never overlap and share a row (TD)", async () => {
+    await mermaidReady;
     const { positions } = layoutGraph({ items, edges: [{ from: "A", to: "B" }, { from: "A", to: "C" }], direction: "TD" });
     const b = positions.get("B")!;
     const c = positions.get("C")!;
@@ -39,26 +41,30 @@ describe("layoutGraph", () => {
     expect(positions.get("A")!.y).toBeLessThan(b.y);
   });
 
-  it("LR grows horizontally with rank; RL mirrors it", () => {
+  it("LR grows horizontally with rank; RL mirrors it", async () => {
+    await mermaidReady;
     const lr = layoutGraph({ items, edges: [{ from: "A", to: "B" }], direction: "LR" });
     expect(lr.positions.get("B")!.x).toBeGreaterThan(lr.positions.get("A")!.x);
     const rl = layoutGraph({ items, edges: [{ from: "A", to: "B" }], direction: "RL" });
     expect(rl.positions.get("B")!.x).toBeLessThan(rl.positions.get("A")!.x);
   });
 
-  it("cycles do not hang and every node is placed", () => {
+  it("cycles do not hang and every node is placed", async () => {
+    await mermaidReady;
     const { positions } = layoutGraph({ items, edges: [{ from: "A", to: "B" }, { from: "B", to: "A" }, { from: "C", to: "D" }], direction: "TD" });
     for (const id of ["A", "B", "C", "D"]) expect(positions.has(id)).toBe(true);
   });
 
-  it("is deterministic — two runs produce identical output", () => {
+  it("is deterministic — two runs produce identical output", async () => {
+    await mermaidReady;
     const run = () => layoutGraph({ items, edges: [{ from: "A", to: "C" }, { from: "A", to: "B" }, { from: "B", to: "D" }], direction: "TD" });
     expect(run()).toEqual(run());
   });
 });
 
 describe("buildBoardModel", () => {
-  it("flowchart: nodes and labeled edges carry through, arrows set", () => {
+  it("flowchart: nodes and labeled edges carry through, arrows set", async () => {
+    await mermaidReady;
     const model = buildBoardModel(wasmMermaidEngine.parse("graph TD\nA[Start] -->|go| B{Q}") as never, measure);
     expect(model.nodes.map((n) => n.id)).toEqual(["n:A", "n:B"]);
     expect(model.edges).toEqual([
@@ -67,7 +73,8 @@ describe("buildBoardModel", () => {
     expect(model.suggestedHeight).toBeGreaterThanOrEqual(200);
   });
 
-  it("sequence: participant headers, lifelines, message junctions and self-loop vias", () => {
+  it("sequence: participant headers, lifelines, message junctions and self-loop vias", async () => {
+    await mermaidReady;
     const model = buildBoardModel(
       wasmMermaidEngine.parse("sequenceDiagram\nparticipant A\nA ->> B: hi\nB -->> A: yo\nA ->> A: note") as never,
       measure,
@@ -87,7 +94,8 @@ describe("buildBoardModel", () => {
     expect(overlap(pa, pb)).toBe(false);
   });
 
-  it("class: cards keep member-driven heights and inheritance edges arrow", () => {
+  it("class: cards keep member-driven heights and inheritance edges arrow", async () => {
+    await mermaidReady;
     const model = buildBoardModel(
       wasmMermaidEngine.parse("classDiagram\nclass A {\n+x: i32\n}\nclass B {\n}\nA <|-- B") as never,
       measure,
@@ -101,7 +109,8 @@ describe("buildBoardModel", () => {
     expect(model.edges[0]).toMatchObject({ from: "n:B", to: "n:A", arrow: "open", dashed: false });
   });
 
-  it("gantt: sequential tasks advance, deps push starts, axis exists", () => {
+  it("gantt: sequential tasks advance, deps push starts, axis exists", async () => {
+    await mermaidReady;
     const model = buildBoardModel(
       wasmMermaidEngine.parse("gantt\nsection S\none : t1, 2d\ntwo : t2, 3d\nthree : t3, after t1, 1d") as never,
       measure,
@@ -119,7 +128,8 @@ describe("buildBoardModel", () => {
     expect(model.edges.some((e) => e.from === "g:0" && e.to === "g:2" && e.dashed)).toBe(true);
   });
 
-  it("pie and quadrant render as a single painter card", () => {
+  it("pie and quadrant render as a single painter card", async () => {
+    await mermaidReady;
     const pie = buildBoardModel(wasmMermaidEngine.parse('pie\n"a": 1\n"b": 2') as never, measure);
     expect(pie.nodes).toHaveLength(1);
     expect(pie.nodes[0].kind).toBe("pie");
@@ -132,7 +142,8 @@ describe("buildBoardModel", () => {
 // ── Pins for the mutation survivors (R3 round, fb0c426c) ──────────────
 
 describe("layout pin tests (mutation survivors)", () => {
-  it("barycenter reorders a rank by neighbor position (B→X, A→Y flips X/Y)", () => {
+  it("barycenter reorders a rank by neighbor position (B→X, A→Y flips X/Y)", async () => {
+    await mermaidReady;
     const items = [
       { id: "A", w: 80, h: 40, order: 0 },
       { id: "B", w: 80, h: 40, order: 1 },
@@ -146,7 +157,8 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(positions.get("A")!.x).toBeLessThan(positions.get("B")!.x);
   });
 
-  it("sequence messages stack one row step apart", () => {
+  it("sequence messages stack one row step apart", async () => {
+    await mermaidReady;
     const model = buildBoardModel(
       wasmMermaidEngine.parse("sequenceDiagram\nA ->> B: one\nA ->> B: two\nA ->> B: three") as never,
       measure,
@@ -160,7 +172,8 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(rows[2] - rows[1]).toBe(44);
   });
 
-  it("a gantt dep ACROSS sections pushes the start past the section cursor", () => {
+  it("a gantt dep ACROSS sections pushes the start past the section cursor", async () => {
+    await mermaidReady;
     const model = buildBoardModel(
       wasmMermaidEngine.parse([
         "gantt",
@@ -184,7 +197,8 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(t2.x).toBeGreaterThanOrEqual(t1.x + t1.w);
   });
 
-  it("suggestHeight floors at 200px for tiny content", () => {
+  it("suggestHeight floors at 200px for tiny content", async () => {
+    await mermaidReady;
     const model = buildBoardModel(wasmMermaidEngine.parse("sequenceDiagram\nA ->> B: x") as never, measure);
     expect(model.suggestedHeight).toBeGreaterThanOrEqual(200);
     const bare = buildBoardModel(wasmMermaidEngine.parse("sequenceDiagram\nparticipant Only") as never, measure);

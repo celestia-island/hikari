@@ -25,6 +25,7 @@ import {
   type FleetBodySpec,
   type StarSystemBodyInput,
 } from "../scene3d/holographicFleetSpec";
+import { scene3dReady, Scene3dNotReadyError } from "../scene3d/wasmFleetSpec";
 import "./HkStarSystem.scss";
 
 export default defineComponent({
@@ -102,40 +103,59 @@ export default defineComponent({
       else sceneHandle?.frameFleet(600);
     });
 
+    function drawScene(engine: Board3DEngine | null | undefined) {
+      if (!engine) return;
+      if (!sceneHandle || handleEngine !== engine) {
+        dropScene();
+        sceneHandle = buildFleetScene(engine, {
+          makeLabel: (body) => props.makeLabel?.(body) ?? defaultLabel(body),
+          registryCoreLabel: () => props.makeCoreLabel?.() ?? defaultCoreLabel(),
+        });
+        handleEngine = engine;
+        // A fresh board restores only the cursor. Focusing here would
+        // hijack a scene → list → scene round trip with a new flight.
+        currentSelection = props.selectedId;
+      }
+
+      let spec;
+      try {
+        spec = buildHolographicFleetSpec(props.bodies);
+      } catch (error) {
+        if (error instanceof Scene3dNotReadyError) {
+          // The component loads asynchronously now, so the first bodies update
+          // can arrive before it is ready. Surface it and retry once the load
+          // lands, rather than letting it escape into a Vue watcher — same
+          // shape as HkQrCode's `qrReady` path.
+          void scene3dReady
+            .then(() => drawScene(engineRef.value))
+            .catch((readyError) => {
+              console.error("[hikari] scene3d component failed to load", readyError);
+            });
+          return;
+        }
+        throw error;
+      }
+      sceneHandle.update(
+        spec,
+        Object.fromEntries(props.bodies.map((body) => [body.id, !body.online])),
+      );
+
+      const selected = props.selectedId;
+      const stillExists = selected !== null && props.bodies.some((body) => body.id === selected);
+      if (selected && !stillExists) {
+        // update() has already re-anchored/stopped the old follow.
+        currentSelection = null;
+        sceneHandle.setSelected(null);
+        emit("update:selectedId", null);
+      } else {
+        currentSelection = selected;
+        sceneHandle.setSelected(selected);
+      }
+    }
+
     watch(
       [engineRef, () => props.bodies],
-      ([engine]) => {
-        if (!engine) return;
-        if (!sceneHandle || handleEngine !== engine) {
-          dropScene();
-          sceneHandle = buildFleetScene(engine, {
-            makeLabel: (body) => props.makeLabel?.(body) ?? defaultLabel(body),
-            registryCoreLabel: () => props.makeCoreLabel?.() ?? defaultCoreLabel(),
-          });
-          handleEngine = engine;
-          // A fresh board restores only the cursor. Focusing here would
-          // hijack a scene → list → scene round trip with a new flight.
-          currentSelection = props.selectedId;
-        }
-
-        const spec = buildHolographicFleetSpec(props.bodies);
-        sceneHandle.update(
-          spec,
-          Object.fromEntries(props.bodies.map((body) => [body.id, !body.online])),
-        );
-
-        const selected = props.selectedId;
-        const stillExists = selected !== null && props.bodies.some((body) => body.id === selected);
-        if (selected && !stillExists) {
-          // update() has already re-anchored/stopped the old follow.
-          currentSelection = null;
-          sceneHandle.setSelected(null);
-          emit("update:selectedId", null);
-        } else {
-          currentSelection = selected;
-          sceneHandle.setSelected(selected);
-        }
-      },
+      ([engine]) => drawScene(engine),
       { immediate: true, deep: true },
     );
 

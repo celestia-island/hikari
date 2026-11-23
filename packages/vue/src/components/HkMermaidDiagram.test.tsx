@@ -3,7 +3,7 @@ import { createApp, h, nextTick, ref } from "vue";
 
 import HkMermaidDiagram from "./HkMermaidDiagram";
 import { buildBoardModel, heuristicTextWidth } from "../mermaid/layout";
-import { wasmMermaidEngine } from "../mermaid/wasmEngine";
+import { wasmMermaidEngine, mermaidReady } from "../mermaid/wasmEngine";
 import { setMermaidEngineForTests } from "../mermaid/engine";
 import { mermaidParser } from "../mermaid";
 
@@ -57,6 +57,7 @@ describe("HkMermaidDiagram", () => {
 
   it("with the engine, a flowchart renders the board with shape painters", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: FLOWCHART });
     await settle();
     const wrap = c.querySelector(".hk-mermaid") as HTMLElement;
@@ -74,6 +75,7 @@ describe("HkMermaidDiagram", () => {
 
   it("unparseable source falls back to the code block, engine present", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "graph LR\nA -->" });
     await settle();
     expect(c.querySelector(".hk-mermaid-fallback")).not.toBeNull();
@@ -82,6 +84,7 @@ describe("HkMermaidDiagram", () => {
 
   it("minimap=false hides the corner map; grid defaults off", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: FLOWCHART, minimap: false });
     await settle();
     expect(c.querySelector(".hk-board-minimap")).toBeNull();
@@ -91,6 +94,7 @@ describe("HkMermaidDiagram", () => {
 
   it("minimap defaults on (the caller decides the chrome)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: FLOWCHART });
     await settle();
     expect(c.querySelector(".hk-board-minimap")).not.toBeNull();
@@ -98,6 +102,7 @@ describe("HkMermaidDiagram", () => {
 
   it("sequence renders participant lanes and message labels", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "sequenceDiagram\nClient ->> Server: request\nServer -->> Client: response" });
     await settle();
     expect([...c.querySelectorAll(".hk-mmd-participant")].map((el) => el.textContent)).toEqual(["Client", "Server"]);
@@ -108,6 +113,7 @@ describe("HkMermaidDiagram", () => {
 
   it("changing the source re-parses (computed pipeline, no stale board)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const container = document.createElement("div");
     document.body.appendChild(container);
     const source = ref(FLOWCHART);
@@ -130,6 +136,7 @@ describe("HkMermaidDiagram", () => {
 describe("mermaid fix pins (R2/R3)", () => {
   it("quadrant points plot on the 0..1 domain across the frame (S1 regression)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "quadrantChart\nx-axis Low --> High\np1: [0.3, 0.6]\np2: [0.78, 0.82]" });
     await settle();
     const circles = [...c.querySelectorAll(".hk-mmd-quadrant__point circle")] as SVGCircleElement[];
@@ -146,6 +153,7 @@ describe("mermaid fix pins (R2/R3)", () => {
 
   it("two mounted boards never mint colliding marker ids (S2 regression)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c1 = mount({ source: FLOWCHART });
     const c2 = mount({ source: "graph TD\nX[r] --> Y{q}" });
     await settle();
@@ -163,6 +171,7 @@ describe("mermaid fix pins (R2/R3)", () => {
 
   it("interactive=false leaves wheel events untouched; default intercepts them", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const locked = mount({ source: FLOWCHART, interactive: false });
     await settle();
     const boardEl = locked.querySelector(".hk-board") as HTMLElement;
@@ -180,6 +189,7 @@ describe("mermaid fix pins (R2/R3)", () => {
 
   it("gantt title renders as the spanning header row", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "gantt\ntitle Sprint\nsection S\none : t1, 2d" });
     await settle();
     const headers = [...c.querySelectorAll(".hk-mmd-section--header")].map((el) => el.textContent);
@@ -188,6 +198,7 @@ describe("mermaid fix pins (R2/R3)", () => {
 
   it("pie legend shows computed percentages", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: 'pie\n"a": 3\n"b": 7' });
     await settle();
     const values = [...c.querySelectorAll(".hk-mmd-pie__legend-value")].map((el) => el.textContent);
@@ -200,6 +211,7 @@ describe("mermaid fix pins (R2/R3)", () => {
 describe("round-2 fix pins", () => {
   it("diamond nodes paint a true rhombus polygon (S1 regression)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "graph TD\nA[Start] --> B{Is the data ok?}" });
     await settle();
     const poly = c.querySelector(".hk-mmd-node__diamond polygon") as SVGPolygonElement;
@@ -220,6 +232,7 @@ describe("round-2 fix pins", () => {
 
   it("class adornments land on the mermaid-correct end (S2 regression)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "classDiagram\nclass Parent {\n}\nclass Child {\n}\nParent <|-- Child" });
     await settle();
     // The inheritance triangle must sit on the PARENT lane: the rendered
@@ -237,6 +250,7 @@ describe("round-2 fix pins", () => {
 
   it("out-of-range quadrant points clamp onto the frame (R5 pin)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "quadrantChart\nlo: [-0.5, 0.2]\nhi: [1.5, 0.8]" });
     await settle();
     const circles = [...c.querySelectorAll(".hk-mmd-quadrant__point circle")] as SVGCircleElement[];
@@ -251,6 +265,7 @@ describe("round-2 fix pins", () => {
 
   it("gantt space-separated multi-deps parse as real deps and dedupe repeats (R8)", async () => {
     setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
     const c = mount({ source: "gantt\nsection S\none : t1, 2d\nother : t0, 1d\ntwo : t2, after t1 t0 t1, 1d" });
     await settle();
     // `after t1 t0 t1` ⇒ deps [t1, t0] (space-split + dedupe), and t2's

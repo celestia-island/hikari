@@ -12,12 +12,12 @@ In `[dependencies]`, dependencies are grouped by function/semantics with blank l
 4. **Logging and tracing**: Logging and distributed tracing, such as `tracing`, `tracing-subscriber`, etc.
 5. **Async / concurrency runtime**: Runtime and async utilities, such as `tokio` and related crates (`tokio-stream`, `tokio-tungstenite`, etc.).
 6. **File system and paths**: Paths, directory traversal, and temporary files, such as `dirs`, `walkdir`, `tempfile`, etc.
-7. **MCP / network and protocols**: MCP protocol stack and network-related libraries, such as `jsonrpc-core`, `axum`, `gloo-net`, `wasm-bindgen-futures`, `tairitsu-vdom`, etc.
+7. **MCP / network and protocols**: MCP protocol stack and network-related libraries, such as `jsonrpc-core`, `axum`, `gloo-net`, `tairitsu-vdom`, etc.
 
 When adding new dependencies, place the crate in the group closest to its primary use; if there are multiple uses, prioritize the "semantically more core" category in the project context. For example:
 
 - `axum` belongs to **MCP / network and protocols**;
-- `gloo-net`, `wasm-bindgen-futures` belong to **MCP / network and protocols**;
+- `gloo-net` belongs to **MCP / network and protocols**;
 - Dependencies used only in tests should be written in `[dev-dependencies]`, following the same grouping philosophy (strict segmentation is not required, but rough grouping by use is recommended).
 
 ## Version Number Writing Rules
@@ -99,11 +99,17 @@ tempfile = "^3.10"
 jsonrpc-core = "^18"
 axum = { version = "^0.8", features = ["ws", "macros"] }
 gloo-net = { version = "^0.6", features = ["websocket"] }
-wasm-bindgen-futures = "^0.4"
 tairitsu-vdom = { version = "^0.7", features = ["web"] }
 ```
 
 > Note: The focus of the above example is **grouping and version writing**; specific version numbers should be adjusted according to the latest stable version of actual dependencies, but should always comply with the above caret rules.
+
+### WASM dependencies
+
+Do not add `wasm-bindgen`, `wasm-bindgen-futures`, `web-sys` or `js-sys` to a crate's manifest. The
+browser path goes through the tairitsu host: the guest is a `wasm32-wasip2` component whose browser
+capabilities are declared as WIT interfaces and implemented by the JavaScript host. A crate that
+needs a browser API declares it on the WIT side instead of pulling a DOM binding library in.
 
 ## Scope of Application
 

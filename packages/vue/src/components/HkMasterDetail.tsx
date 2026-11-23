@@ -41,6 +41,31 @@ export type HkMasterDetailSlots = SlotsType<{
   actions?: () => VNode[];
 }>;
 
+/** Dev-warn bookkeeping for rejected roster widths (HkModal's width-guard
+ *  shape: one line per distinct bad value, never a console flood). */
+const warnedWidths = new Set<string>();
+
+/**
+ * The roster track takes a plain CSS WIDTH. The retired grammar was a grid
+ * track (`minmax(360px, 1fr)`), which is INVALID as a width: the browser
+ * drops the declaration, the column falls back to content width and the
+ * hairline stops lining up with the pane. A host still passing a track
+ * therefore gets the documented default plus one dev warning, instead of a
+ * silently collapsed column.
+ */
+export function resolveListWidth(width: string): string {
+  const value = String(width ?? "");
+  const trackLike = /minmax\(|\d\s*fr\b|repeat\(/.test(value);
+  if (!trackLike) return value;
+  if (import.meta.env?.DEV && !warnedWidths.has(value)) {
+    warnedWidths.add(value);
+    console.warn(
+      `[HkMasterDetail] listWidth "${value}" is a grid TRACK, not a width — the browser drops it and the roster column collapses. Pass a width instead (e.g. "20rem").`,
+    );
+  }
+  return "20rem";
+}
+
 /**
  * HkMasterDetail — the family's standard two-pane roster+detail console
  * (mail inbox, replay browser, mod roster, audit log: any host list that
@@ -57,15 +82,22 @@ export type HkMasterDetailSlots = SlotsType<{
  * gutter. Each column owns its own scroll; the page never scrolls.
  *
  * Narrow viewports (`splitAt`, default 768 — the family phone
- * breakpoint): the roster keeps the whole width and the detail rides
- * HkModal — the family window, which docks as the standard bottom sheet
- * on phones (scrim, grabber, Escape, back-gesture: all the modal's, not
- * re-implemented here). The modal mounts only while a detail is open
- * (nothing to show behind a closed one).
+ * breakpoint) have two forms, and which one applies is about DISMISSAL,
+ * not width:
+ * - a host that binds `close` can deselect, so the detail rides HkModal —
+ *   the family window (bottom sheet on phones). The modal stays MOUNTED
+ *   and is driven by `detailOpen`, so closing runs the window's own exit
+ *   motion and focus restore; unmounting it mid-close would strand
+ *   keyboard focus on `<body>` and skip the animation.
+ * - a host that binds no `close` cannot deselect, and a modal would trap
+ *   the user behind its scrim, focus trap and body-scroll lock. It gets
+ *   the detail as the whole column instead — host-owned navigation, no
+ *   overlay at all (the same refusal the wide layout applies to the
+ *   close affordance).
  *
  * The head band (`.hk-master-detail-detail-head`) carries the host's
- * `actions` slot and the close affordance; it renders only when it has
- * at least one of those (plus the overlay-scrollbar rail, which the
+ * `actions` slot and the close affordance; it renders only when it has at
+ * least one of those (plus the overlay-scrollbar rail, which the
  * component attaches to the pane over its own scroll region — native
  * MECHANICS, the library's chrome).
  *
@@ -89,10 +121,10 @@ export const HkMasterDetail = defineComponent({
   slots: Object as HkMasterDetailSlots,
   props: {
     /** Whether a detail is selected. Closed, the detail pane renders the
-     *  empty state (two-pane) or nothing at all (narrow modal form). */
+     *  empty state (two-pane) or nothing at all (narrow form). */
     detailOpen: { type: Boolean, default: false },
-    /** Accessible name of the detail region — and, in the narrow form,
-     *  the modal's visible title. */
+    /** Accessible name of the detail region — and, in the narrow window
+     *  form, the window's visible title. */
     detailTitle: { type: String, required: true },
     /** Empty-state heading. An empty value falls back to the localized
      *  "Nothing selected" message. */
@@ -101,13 +133,13 @@ export const HkMasterDetail = defineComponent({
     /** Empty-state icon (lucide-vue-next style), forwarded to
      *  HkEmptyState. */
     emptyIcon: { type: [Object, Function] as PropType<Component>, default: undefined },
-    /** Roster column width (any CSS width). The detail takes the rest. */
+    /** Roster column width (a CSS width). The detail takes the rest. */
     listWidth: { type: String, default: "20rem" },
-    /** Viewport width (px) below which the roster takes the whole width
-     *  and the detail rides the HkModal sheet. */
+    /** Viewport width (px) below which the narrow forms apply. */
     splitAt: { type: Number, default: 768 },
     /** Accessible label of the close affordance (defaults to the
-     *  localized "Close"). */
+     *  localized "Close"). Forwarded to the narrow window's own close
+     *  button as well, so a host's label reads the same in both forms. */
     closeLabel: { type: String, default: undefined },
   },
   emits: {
@@ -139,14 +171,25 @@ export const HkMasterDetail = defineComponent({
     const emptyTitle = computed(
       () => props.emptyTitle || t("hikari::masterDetail.emptyTitle", "Nothing selected"),
     );
+    const listWidth = computed(() => resolveListWidth(props.listWidth));
+
+    /** The narrow WINDOW form: an overlay only a dismissable host may get
+     *  (see the component doc's dismissal rule). */
+    const windowForm = computed(() => narrow.value && hasCloseListener.value);
+    /** The narrow IN-FLOW form: the detail is the entire column, no
+     *  overlay — for hosts whose navigation owns deselection. */
+    const inlineNarrow = computed(
+      () => narrow.value && !hasCloseListener.value && props.detailOpen,
+    );
 
     // ── the pane's overlay scrollbar ───────────────────────────────────
     // The pane is a scroll surface, so it wears the family chrome: native
     // SCROLLING mechanics, the library's overlay rail (nativeScrollbar
     // contract). The rail host is the PANE, never the scroll region — a
     // track inside a scrolling box would travel with the content. The
-    // narrow form has no in-flow pane (HkModal's body owns scrolling
-    // there), so the rail is attached only while the wide pane exists.
+    // narrow forms have no in-flow scroll pane of their own (HkModal's
+    // body, or the narrow column's single flow), so the rail is attached
+    // only while the wide pane exists.
     const paneRef = ref<HTMLElement>();
     const scrollRef = ref<HTMLElement>();
     let rail: OverlayScrollbarHandle | null = null;
@@ -165,6 +208,17 @@ export const HkMasterDetail = defineComponent({
       rail = null;
     });
 
+    /** The detail body as the sheet/column renders it: optional actions
+     *  row above the host's detail slot. */
+    const detailBody = () => (
+      <div class="hk-master-detail-sheet-body">
+        {slots.actions ? (
+          <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
+        ) : null}
+        {slots.detail?.()}
+      </div>
+    );
+
     return () => {
       const isNarrow = narrow.value;
       return (
@@ -172,41 +226,47 @@ export const HkMasterDetail = defineComponent({
           class="hk-master-detail"
           data-split={isNarrow ? "single" : "two"}
           data-open={props.detailOpen || undefined}
-          style={{ "--hk-master-detail-list-w": props.listWidth }}
+          style={{ "--hk-master-detail-list-w": listWidth.value }}
         >
-          <div class="hk-master-detail-list">{slots.list?.()}</div>
-          {isNarrow ? (
-            // Narrow form: the detail rides the family window. HkModal
-            // docks as the standard bottom sheet on phones and owns every
-            // dismissal path (close button, scrim, Escape, back gesture)
-            // — declining the close (closable=false) is not offered here
-            // because a host that cannot deselect never sees this form
-            // with detailOpen=true in the first place.
-            props.detailOpen ? (
-              <HkModal
-                modelValue={true}
-                title={props.detailTitle}
-                width="lg"
-                contentClass="hk-master-detail-sheet"
-                onUpdate:modelValue={(open: boolean) => {
-                  if (!open) emit("close");
-                }}
-              >
-                {{
-                  default: () => (
-                    <div class="hk-master-detail-sheet-body">
-                      {slots.actions ? (
-                        <div class="hk-master-detail-detail-actions">
-                          {slots.actions()}
-                        </div>
-                      ) : null}
-                      {slots.detail?.()}
-                    </div>
-                  ),
-                }}
-              </HkModal>
-            ) : null
+          {/* Narrow in-flow form: the detail IS the column (no roster
+           *  behind a non-dismissable host — the same refusal the wide
+           *  layout applies to the close affordance). */}
+          {inlineNarrow.value ? (
+            <section
+              ref={paneRef}
+              class="hk-master-detail-detail hk-master-detail-detail--column"
+              role="region"
+              aria-label={props.detailTitle}
+            >
+              <div ref={scrollRef} class="hk-master-detail-detail-scroll">
+                {slots.actions ? (
+                  <div class="hk-master-detail-detail-head">
+                    <div class="hk-master-detail-detail-actions">{slots.actions()}</div>
+                  </div>
+                ) : null}
+                <div class="hk-master-detail-detail-body">{detailBody()}</div>
+              </div>
+            </section>
           ) : (
+            <div class="hk-master-detail-list">{slots.list?.()}</div>
+          )}
+          {windowForm.value ? (
+            // Narrow window form: MOUNTED while this mode is active and
+            // DRIVEN by detailOpen — a mount-driven modal skips its own
+            // exit motion and posts keyboard focus back to <body>.
+            <HkModal
+              modelValue={props.detailOpen}
+              onUpdate:modelValue={(open: boolean) => {
+                if (!open) emit("close");
+              }}
+              title={props.detailTitle}
+              width="lg"
+              closeLabel={closeLabel.value}
+              contentClass="hk-master-detail-sheet"
+            >
+              {{ default: detailBody }}
+            </HkModal>
+          ) : isNarrow ? null : (
             // Two-pane: the detail region always exists (empty state when
             // closed) — a blank right half would read as a broken layout.
             <section

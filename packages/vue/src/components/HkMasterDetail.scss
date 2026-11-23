@@ -34,21 +34,14 @@
   min-width: 0;
   min-height: 0;
   border-inline-end: 1px solid rgb(var(--color-border) / 20%);
-  // Opaque base first, the ui-opacity blend behind the calc() fallback
-  // (the IACVT rule: a var() fallback with color-mix() resolves to unset
-  // on engines without it — the blend rides the same var on both sides
-  // of the feature query below).
+  // The tint IS the page surface; hosts that retune it (a translucent
+  // concierge, a wallpaper legibility wash) set the hook. No calc()/
+  // color-mix() in the fallback: a var() fallback holding one resolves to
+  // UNSET on engines without it (IACVT) and the column would paint
+  // transparent, and a percentage-valued retune of a calc-based blend is
+  // an invalid-at-computed-value-time type error with the same result.
   background: var(--hk-master-detail-list-bg, rgb(var(--color-surface)));
   overflow: hidden;
-}
-
-@supports (background: color-mix(in srgb, white 70%, transparent)) {
-  .hk-master-detail-list {
-    background: var(
-      --hk-master-detail-list-bg,
-      rgb(var(--color-surface) / min(100%, calc(50% + 50% * var(--ui-opacity, 1))))
-    );
-  }
 }
 
 // Narrow form: the roster is the whole page — no separator against
@@ -57,6 +50,12 @@
   width: auto;
   flex: 1;
   border-inline-end: none;
+}
+
+// …and the narrow IN-FLOW form (a host with no close channel renders the
+// detail as the column itself — no roster, no overlay).
+.hk-master-detail-detail--column {
+  flex: 1;
 }
 
 // The detail region: flush, chrome-less — NO border, NO radius, NO

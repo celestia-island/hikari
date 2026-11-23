@@ -5,9 +5,9 @@ import { fileURLToPath } from "node:url";
 import { compile } from "sass";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, h, nextTick } from "vue";
+import { createApp, defineComponent, h, nextTick, ref } from "vue";
 
-import { HkMasterDetail } from "./HkMasterDetail";
+import { HkMasterDetail, resolveListWidth } from "./HkMasterDetail";
 import * as barrel from "../index";
 import { asIndexable } from "../utils/typing";
 
@@ -173,6 +173,28 @@ describe("HkMasterDetail — two-pane layout", () => {
     expect(pane(custom).getAttribute("style")).toContain("--hk-master-detail-list-w: 24rem");
   });
 
+  it("rejects a grid-track listWidth and falls back to the documented width", () => {
+    // The retired grammar was a grid track; it is INVALID as a CSS width,
+    // so the browser drops it and the column collapses to content width.
+    expect(resolveListWidth("20rem")).toBe("20rem");
+    expect(resolveListWidth("minmax(360px, 1fr)")).toBe("20rem");
+    expect(resolveListWidth("minmax(0, 2fr)")).toBe("20rem");
+    expect(resolveListWidth("repeat(2, 1fr)")).toBe("20rem");
+    expect(resolveListWidth("18em")).toBe("18em");
+  });
+
+  it("writes the resolved width to the column hook", () => {
+    setWidth(1280);
+    const c = mount(
+      h(
+        HkMasterDetail,
+        { detailOpen: true, detailTitle: "Message", listWidth: "minmax(360px, 1fr)" },
+        { list: ROSTER, detail: DETAIL },
+      ),
+    );
+    expect(pane(c).getAttribute("style")).toContain("--hk-master-detail-list-w: 20rem");
+  });
+
   it("names the detail region with detailTitle and shows no bare head band", () => {
     setWidth(1280);
     const c = mount(
@@ -215,7 +237,7 @@ describe("HkMasterDetail — the split", () => {
   it("collapses to one column below splitAt with the detail in the family modal", async () => {
     setWidth(600);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
@@ -237,22 +259,96 @@ describe("HkMasterDetail — the split", () => {
     expect(list).toBeTruthy();
   });
 
-  it("renders no modal while the narrow detail is closed", async () => {
+  it("renders no window while the narrow detail is closed", async () => {
     setWidth(600);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: false, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
     );
     expect(pane(c).getAttribute("data-split")).toBe("single");
     // A window holding an empty state would be a dead layer over the
-    // roster — the narrow form simply shows the roster.
+    // roster — the narrow form simply shows the roster (HkModal is
+    // mounted but renders nothing until detailOpen).
     expect(detailPane(c)).toBeNull();
     await nextTick();
     expect(document.querySelector(".hk-modal-root")).toBeNull();
     expect(c.querySelector(".hk-empty-state")).toBeNull();
     expect(c.querySelector(".hk-master-detail-list .roster")).toBeTruthy();
+  });
+
+  it("renders the detail as the whole column when the host binds no close channel", async () => {
+    // A modal for a host that cannot deselect would trap the user behind
+    // its scrim, focus trap and body-scroll lock. The narrow form is then
+    // the detail AS the column — no overlay, no roster behind it.
+    setWidth(600);
+    const c = mount(
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+        list: ROSTER,
+        detail: DETAIL,
+      }),
+    );
+    await nextTick();
+    expect(document.querySelector(".hk-modal-root"), "no window is opened").toBeNull();
+    expect(document.body.style.overflow, "and no scroll lock is taken").not.toBe("hidden");
+    const column = c.querySelector(".hk-master-detail-detail--column");
+    expect(column, "the detail is the column").toBeTruthy();
+    expect(column!.querySelector(".detail-payload")).toBeTruthy();
+    expect(c.querySelector(".hk-master-detail-list"), "no roster behind it").toBeNull();
+  });
+
+  it("keeps the modal mounted so its own close path runs (focus restored)", async () => {
+    // Mount-driven modals never reach the leave finalizer: the exit motion
+    // is skipped and keyboard focus is dropped on <body>. The pane must
+    // keep HkModal mounted and drive modelValue instead.
+    setWidth(600);
+    const open = ref(true);
+    const trigger = document.createElement("button");
+    trigger.className = "roster-trigger";
+    document.body.appendChild(trigger);
+    trigger.focus();
+
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(
+            HkMasterDetail,
+            {
+              detailOpen: open.value,
+              detailTitle: "Message",
+              onClose: () => {
+                open.value = false;
+              },
+            },
+            { list: ROSTER, detail: DETAIL },
+          );
+      },
+    });
+    const c = mount(h(Wrapper));
+    await nextTick();
+    const inside = document.querySelector<HTMLElement>(".hk-master-detail-sheet-body");
+    expect(inside, "the window opened").toBeTruthy();
+
+    (document.querySelector(".hk-modal-close") as HTMLElement).click();
+    // The window runs its leave (its surface transition is 320ms) and the
+    // focus restore lands when the leave finalizes.
+    const deadline = Date.now() + 2000;
+    while (
+      document.querySelector(".hk-modal-root") !== null &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    await nextTick();
+    expect(document.querySelector(".hk-modal-root"), "the window left").toBeNull();
+    expect(open.value).toBe(false);
+    expect(
+      document.activeElement,
+      "focus returns to where it came from, not to <body>",
+    ).not.toBe(document.body);
+    expect(c.querySelector(".hk-master-detail-list")).toBeTruthy();
+    trigger.remove();
   });
 
   it("treats splitAt itself as the wide layout and splitAt-1 as the narrow one", () => {
@@ -293,20 +389,24 @@ describe("HkMasterDetail — the split", () => {
   it("follows a live resize in both directions", async () => {
     setWidth(1280);
     const c = mount(
-      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message" }, {
+      h(HkMasterDetail, { detailOpen: true, detailTitle: "Message", onClose: () => {} }, {
         list: ROSTER,
         detail: DETAIL,
       }),
     );
     expect(pane(c).getAttribute("data-split")).toBe("two");
+    expect(detailPane(c)).toBeTruthy();
 
     setWidth(600);
     await nextTick();
     expect(pane(c).getAttribute("data-split")).toBe("single");
+    // The in-flow pane is gone; the window form carries the detail.
     expect(detailPane(c)).toBeNull();
+    expect(document.querySelector(".hk-modal-root")).toBeTruthy();
 
     setWidth(1400);
     await nextTick();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(pane(c).getAttribute("data-split")).toBe("two");
     expect(detailPane(c)).toBeTruthy();
   });
@@ -339,9 +439,9 @@ describe("HkMasterDetail — dismissal", () => {
     expect(close.querySelectorAll(".hk-icon-button-icon svg").length).toBe(1);
   });
 
-  it("takes the close label from closeLabel", () => {
+  it("takes the close label from closeLabel in BOTH forms", async () => {
     setWidth(1280);
-    const c = mount(
+    const wide = mount(
       h(
         HkMasterDetail,
         {
@@ -354,7 +454,27 @@ describe("HkMasterDetail — dismissal", () => {
       ),
     );
     expect(
-      c.querySelector(".hk-master-detail-close")?.getAttribute("aria-label"),
+      wide.querySelector(".hk-master-detail-close")?.getAttribute("aria-label"),
+    ).toBe("Dismiss message");
+
+    // The narrow window's own X must read the host's wording too — it
+    // used to fall back to the generic modal label.
+    setWidth(600);
+    mount(
+      h(
+        HkMasterDetail,
+        {
+          detailOpen: true,
+          detailTitle: "Message",
+          closeLabel: "Dismiss message",
+          onClose: () => {},
+        },
+        { list: ROSTER, detail: DETAIL },
+      ),
+    );
+    await nextTick();
+    expect(
+      document.querySelector(".hk-modal-close")?.getAttribute("aria-label"),
     ).toBe("Dismiss message");
   });
 
@@ -371,7 +491,7 @@ describe("HkMasterDetail — dismissal", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("forwards the narrow modal's close as the pane's close emit", async () => {
+  it("forwards the narrow window's close as the pane's close emit", async () => {
     setWidth(600);
     const onClose = vi.fn();
     mount(
@@ -487,6 +607,25 @@ describe("HkMasterDetail — stylesheet contract", () => {
     );
   });
 
+  it("keeps the roster tint on a hook with no calc()/color-mix() fallback", () => {
+    // A var() fallback holding calc()/color-mix() resolves to UNSET on an
+    // engine without it (IACVT), and a percentage-valued retune of a
+    // calc-based alpha is an invalid-at-computed-value-time type error with
+    // the same outcome — the column would paint transparent. The sheet
+    // therefore carries neither, and the dead @supports block that used to
+    // re-declare the same hook is gone.
+    expect(css).not.toContain("--ui-opacity");
+    expect(css).not.toContain("color-mix");
+    expect(css).not.toContain("@supports");
+    expect(ruleBody(css, ".hk-master-detail-list")).toContain(
+      "background: var(--hk-master-detail-list-bg, rgb(var(--color-surface)))",
+    );
+  });
+
+  it("gives the narrow in-flow column the whole width", () => {
+    expect(ruleBody(css, ".hk-master-detail-detail--column")).toContain("flex: 1");
+  });
+
   it("keeps the head band pinned inside the pane's scroll", () => {
     const head = ruleBody(css, ".hk-master-detail-detail-head");
     expect(head).toContain("position: sticky");
@@ -512,7 +651,10 @@ describe("the bounded host — stage swap rule", () => {
     expect(rule, "the stage swap rule exists").toBeTruthy();
     expect(rule!).toContain("flex: 1 1 0%");
     expect(rule!).toContain("min-height: 0");
-    expect(rule!).toContain("display: flex");
+    // …but it must NOT declare `display`: the element IS HkCrossfade's
+    // one-cell grid host, and flex there lays the leaving and entering
+    // pages side by side for the length of every stage swap.
+    expect(rule!).not.toContain("display:");
   });
 });
 

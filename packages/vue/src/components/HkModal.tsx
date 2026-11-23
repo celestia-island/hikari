@@ -165,6 +165,11 @@ export default defineComponent({
      * later `title` changes no longer reach the layer/aria naming.
      */
     surfaceTitle: { type: String, default: undefined },
+    /** Accessible label of the header close affordance. Unset keeps the
+     *  localized default; a host whose own wording is more specific
+     *  ("Dismiss message") passes it so the window's X reads the same as
+     *  the rest of its surface. */
+    closeLabel: { type: String, default: undefined },
     footerActions: {
       type: Array as PropType<ModalAction[]>,
       default: undefined,
@@ -1181,7 +1186,9 @@ export default defineComponent({
                             class="hk-window-close hk-modal-close"
                             size={32}
                             variant="ghost"
-                            aria-label={t("hikari::modal.close", "Close")}
+                            aria-label={
+                              props.closeLabel || t("hikari::modal.close", "Close")
+                            }
                             onClick={close}
                           >
                             <HIcon name="close" size={16} />

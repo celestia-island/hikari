@@ -827,12 +827,19 @@
  * flex row is the first consumer). Without this rule the wrapper stays
  * content-height and every height:100% / flex:1 chain beneath it
  * collapses. Document mode is untouched — there the wrapper sits inside
- * the padded scroll box where auto height is correct. */
+ * the padded scroll box where auto height is correct.
+ *
+ * `display` is deliberately NOT written here: the wrapper is HkCrossfade's
+ * own host element, whose one-cell grid is what stacks the leaving and
+ * entering items in the SAME box during a swap. Declaring flex here would
+ * lay them out side by side instead (the leaving page visible above the
+ * entering one) for the length of every stage swap. The chain works
+ * through the grid: this rule gives the host a definite height, the single
+ * auto row stretches to it, and the item's default `stretch` alignment
+ * then hands each page the same definite height its height:100% needs. */
 .s-admin-shell-main[data-content-mode="stage"] .s-admin-shell-swap {
   flex: 1 1 0%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 /* ── Nav sidebar labels (HkNavSidebar) ─ */

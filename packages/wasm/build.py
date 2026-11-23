@@ -185,16 +185,23 @@ def build(comp: str) -> pathlib.Path:
     wasm = artifact_path(comp, cargo_target_dir())
     ensure_artifact_fresh(wasm)
     print(f"── building {comp}...", flush=True)
-    flags = component_reproducibility.rustflags()
-    if flags is None:
-        # `main` already refused this state; reaching it means a caller invoked
-        # `build` directly. It must not fall back to an un-remapped artifact,
-        # which is indistinguishable from a good one until akivili rejects it.
-        raise SystemExit(
-            f"error: {component_reproducibility.RUSTFLAGS_VAR} cannot be derived -- "
-            f"{' and '.join(component_reproducibility.REMAPPED_HOMES)} must both be set"
-        )
-    environment = {**os.environ, component_reproducibility.RUSTFLAGS_VAR: flags}
+    # A global RUSTFLAGS makes cargo DISCARD the per-target variable, so the
+    # injected value below would be inert and the artifact would carry host
+    # paths while this script reported success. Checked here (not only in
+    # `main`) because `build` is called directly by tests and by any future
+    # caller -- and it is a check about the subprocess env, which is what
+    # `build` builds.
+    blocking = [
+        problem
+        for problem in component_reproducibility.problems(require_flags=False)
+        if problem.variable == component_reproducibility.GLOBAL_RUSTFLAGS_VAR
+    ]
+    if blocking:
+        raise SystemExit(f"error: {blocking[0].detail}")
+    environment = {
+        **os.environ,
+        component_reproducibility.RUSTFLAGS_VAR: component_reproducibility.rustflags(),
+    }
     try:
         subprocess.run(
             ["cargo", "build", "--target", "wasm32-wasip2", "--release", "-p", crate_package(comp)],

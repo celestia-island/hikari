@@ -4,19 +4,28 @@
 The contract is one sentence -- *build the wasm components with both home
 directories remapped* -- and the failure it prevents is silent in every lane
 that is not the registry: ``cargo build`` succeeds, ``jco transpile`` succeeds,
-the Vue suite passes, and the damage surfaces days later as an akivili
-``Rejected`` for a component whose source nobody touched. So each failure shape
-is pinned here, including the one that matters most in review: **half** the
-contract satisfied (one home remapped, the other still leaking).
+the Vue suite passes, and the damage surfaces later as an akivili ``Rejected``
+for a component whose source nobody touched. So each failure shape is pinned
+here, including the two that are easy to miss:
 
-The `descriptor digests` case is the reason the whole module exists -- it pins
-the artifact-bytes contract that the gate enforces, end to end, on a synthetic
-artifact, so it fails if the two constants stop agreeing with the spelling the
-gate emits.
+* **half** the contract satisfied (one home remapped, the other still leaking) --
+  the shape that survives review, because the artifact *does* change;
+* a **global ``RUSTFLAGS``**, which makes cargo discard the per-target variable
+  entirely, so a "correct-looking" variable is inert.
 
-Mutation anchors (each id names the branch whose removal reddens the test
-listed beside it): MUT:no-unset-home-report MUT:no-single-home-report
-MUT:no-export-line MUT:export-drift
+A home that is *unset* is NOT a failure: cargo and rustup fall back to
+``~/.cargo`` / ``~/.rustup``, and that fallback is the path rustc would bake in.
+Treating it as fatal broke a stock CI runner in review round 2 (see
+``test_an_unset_home_resolves_to_the_toolchain_default``).
+
+Mutation anchors (each id names the branch whose removal reddens the test named
+beside it): MUT:no-global-rustflags-check (``test_a_global_rustflags_is_refused``)
+MUT:no-default-home (``test_an_unset_home_resolves_to_the_toolchain_default``)
+MUT:no-single-home-report (``test_half_the_contract_is_refused``)
+MUT:no-hostile-home-guard (``test_a_root_home_is_refused`` / ``test_a_quote_in_a_home_is_refused``)
+MUT:no-stale-export-report (``test_a_remap_for_another_home_is_reported``)
+MUT:export-drift (``test_rustflags_is_the_value_the_export_line_prints``)
+MUT:no-inject-guard (``test_homes_only_mode_ignores_the_callers_flags``)
 """
 
 from __future__ import annotations
@@ -73,29 +82,9 @@ def test_the_export_line_satisfies_the_gate_it_prints_for() -> None:
     """The advice and the check must agree, or the message sends the reader in circles."""
     env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
     line = repro.export_line(env)
-    assert line is not None
-    assert line.startswith(f'export {repro.RUSTFLAGS_VAR}="'), line
-    value = line.split('"')[1]
+    assert line.splitlines()[-1].startswith(f'export {repro.RUSTFLAGS_VAR}="'), line
+    value = repro.rustflags(env)
     assert repro.problems({**env, repro.RUSTFLAGS_VAR: value}) == []
-
-
-# ── failure shape 1: a home the toolchain would bake in is unset ──────────
-
-
-@pytest.mark.parametrize("home", repro.REMAPPED_HOMES)
-def test_an_unset_home_is_reported_by_name(home: str) -> None:
-    # MUT:no-unset-home-report -- dropping the `if not value` branch leaves this
-    # one silent, and an unset CARGO_HOME then only surfaces as a digest drift.
-    env = clean_env()
-    del env[home]
-    found = repro.problems(env)
-    assert [p.variable for p in found] == [home], [p.variable for p in found]
-    assert "unset" in found[0].detail
-
-
-def test_both_homes_unset_report_both() -> None:
-    found = repro.problems({repro.RUSTFLAGS_VAR: "whatever"})
-    assert [p.variable for p in found] == ["CARGO_HOME", "RUSTUP_HOME"]
 
 
 def test_rustflags_is_the_value_the_export_line_prints() -> None:
@@ -106,16 +95,149 @@ def test_rustflags_is_the_value_the_export_line_prints() -> None:
     """
     env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
     value = repro.rustflags(env)
-    assert value is not None
-    assert repro.export_line(env) == f'export {repro.RUSTFLAGS_VAR}="{value}"'
+    assert (
+        repro.export_line(env).splitlines()[-1]
+        == f'export {repro.RUSTFLAGS_VAR}="{value}"'
+    )
     assert repro.problems({**env, repro.RUSTFLAGS_VAR: value}) == []
 
 
-def test_rustflags_is_none_without_both_homes() -> None:
-    assert repro.rustflags({"CARGO_HOME": CARGO_HOME}) is None
+# ── unset homes resolve to the toolchain defaults (NOT an error) ──────────
 
 
-# ── failure shape 2: no remap at all (the pre-fix world) ──────────────────
+@pytest.mark.parametrize("home", repro.REMAPPED_HOMES)
+def test_an_unset_home_resolves_to_the_toolchain_default(home: str) -> None:
+    """``~/.cargo`` / ``~/.rustup`` are what a bare rustup install uses.
+
+    Refusing an unset home made every stock CI runner fail a build that had
+    worked before, and it inverted the check: the *default* environment (the
+    common, correct one) was rejected while an explicit one passed.
+    """
+    # MUT:no-default-home -- `return env.get(home_var) or ""` makes the flag
+    # operand empty and every assertion below fails.
+    env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
+    del env[home]
+    resolved = repro.resolve_home(home, env)
+    assert resolved == str(
+        Path.home() / (".cargo" if home == "CARGO_HOME" else ".rustup")
+    )
+    # And the derived value satisfies the gate, so an unset home is buildable.
+    assert repro.problems({**env, repro.RUSTFLAGS_VAR: repro.rustflags(env)}) == []
+
+
+def test_an_empty_home_counts_as_unset() -> None:
+    """rustup treats ``RUSTUP_HOME=""`` as unset; so must the derived operand."""
+    env = {"CARGO_HOME": "", "RUSTUP_HOME": ""}
+    assert repro.resolve_home("CARGO_HOME", env) == str(Path.home() / ".cargo")
+
+
+def test_no_homes_and_no_flags_is_the_stock_runner_shape() -> None:
+    """What GitHub-hosted ``dtolnay/rust-toolchain`` actually provides.
+
+    It must be *satisfiable* (one export, derived from defaults) and not a
+    refusal -- that is the S1 the round-2 review caught.
+    """
+    env: dict[str, str] = {}
+    found = repro.problems(env)
+    assert found, "the gate must still ask for the export"
+    # The printed line, applied, is enough to build.
+    value = repro.rustflags(env)
+    assert repro.problems({repro.RUSTFLAGS_VAR: value}) == []
+
+
+# ── the global RUSTFLAGS override ────────────────────────────────────────
+
+
+def test_a_global_rustflags_is_refused() -> None:
+    """Cargo discards every per-target rustflags variable when this is set.
+
+    Measured: with both exported, `cargo build -v` shows the global value three
+    times and the per-target remap zero times. A green gate over that would be
+    the worst outcome -- an artifact nobody pinned, blessed as normalized.
+    """
+    # MUT:no-global-rustflags-check -- dropping the branch makes this env clean
+    # even though cargo will ignore the per-target remap entirely.
+    env = {**clean_env(), "RUSTFLAGS": "--cfg releasing"}
+    found = repro.problems(env)
+    assert [p.variable for p in found] == [repro.GLOBAL_RUSTFLAGS_VAR], found
+    assert "discards" in found[0].detail
+
+
+def test_a_global_rustflags_is_refused_in_homes_only_mode_too() -> None:
+    """`build.py` overwrites the per-target variable -- that cannot defeat RUSTFLAGS."""
+    env = {
+        "CARGO_HOME": CARGO_HOME,
+        "RUSTUP_HOME": RUSTUP_HOME,
+        "RUSTFLAGS": "-C opt-level=3",
+    }
+    assert [p.variable for p in repro.problems(env, require_flags=False)] == [
+        repro.GLOBAL_RUSTFLAGS_VAR
+    ]
+
+
+# ── homes that cannot be remap operands ──────────────────────────────────
+
+
+def test_a_root_home_is_refused() -> None:
+    """Remapping ``/`` would rewrite EVERY absolute path, not just the toolchain's."""
+    # MUT:no-hostile-home-guard -- without it the gate derives
+    # `--remap-path-prefix=/=/cargo` and, once the caller exports it, calls the
+    # resulting artifact normalized.
+    env = {"CARGO_HOME": "/", "RUSTUP_HOME": RUSTUP_HOME}
+    found = repro.problems({**env, repro.RUSTFLAGS_VAR: repro.rustflags(env)})
+    assert [p.variable for p in found] == ["CARGO_HOME"], found
+    assert "filesystem root" in found[0].detail
+
+
+@pytest.mark.parametrize(
+    "value", ['/mnt/work/we"ird', "/mnt/work/with space", "/mnt/work/a'b"]
+)
+def test_a_quote_in_a_home_is_refused(value: str) -> None:
+    """A ``"`` truncated the injected value; a space split the argv entry.
+
+    Neither occurs on a real toolchain install, and both are refused instead of
+    silently producing a flag whose operand is a prefix of the real home.
+    """
+    env = {"CARGO_HOME": value, "RUSTUP_HOME": RUSTUP_HOME}
+    found = repro.problems(env, require_flags=False)
+    assert [p.variable for p in found] == ["CARGO_HOME"], found
+
+
+def test_a_relative_home_is_refused() -> None:
+    """A relative value is not the string rustc would bake in.
+
+    The homes-only view is the one that must catch it alone: with the strict
+    view it is also reported a second time as "no remap for CARGO_HOME", which
+    is true but not the actionable half.
+    """
+    env = {"CARGO_HOME": "rel/cargo", "RUSTUP_HOME": RUSTUP_HOME}
+    found = repro.problems(env, require_flags=False)
+    assert [p.variable for p in found] == ["CARGO_HOME"], found
+    assert "not an absolute path" in found[0].detail
+
+
+def test_an_unusable_home_suppresses_the_export_line(capsys) -> None:
+    """Printing an export derived from an unusable path would re-emit the bug."""
+    import os
+
+    saved = {k: os.environ.get(k) for k in ("CARGO_HOME", "RUSTUP_HOME", "RUSTFLAGS")}
+    try:
+        os.environ["CARGO_HOME"] = '/mnt/work/we"ird'
+        os.environ.pop("RUSTUP_HOME", None)
+        os.environ.pop("RUSTFLAGS", None)
+        assert repro.main() == 1
+    finally:
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    err = capsys.readouterr().err
+    assert "no export line can be complete" in err, err
+    assert 'we"ird' not in err.split("no export line")[0].splitlines()[-1]
+
+
+# ── the missing / stale remap shapes ────────────────────────────────────
 
 
 def test_an_empty_rustflags_value_reports_both_homes() -> None:
@@ -124,9 +246,6 @@ def test_an_empty_rustflags_value_reports_both_homes() -> None:
     assert [p.variable for p in found] == [repro.RUSTFLAGS_VAR] * 2
     assert CARGO_HOME in found[0].detail
     assert RUSTUP_HOME in found[1].detail
-
-
-# ── failure shape 3: exactly one home remapped ────────────────────────────
 
 
 @pytest.mark.parametrize("remapped", repro.REMAPPED_HOMES)
@@ -149,19 +268,43 @@ def test_half_the_contract_is_refused(remapped: str) -> None:
     # `/cargo` and `/rustup`, one of which is a SUBSTRING of the other, so a
     # bare substring assert would pass whichever home were missing.
     assert f"{missing}=" in found[0].detail, found[0].detail
-    assert repro._REMAP_TARGETS[missing] + "'" in found[0].detail, found[0].detail
+
+
+def test_a_remap_for_another_home_is_reported() -> None:
+    """A stale export from a previous CARGO_HOME looks satisfied but is not.
+
+    Presence alone cannot see this: the flag IS there and IS well-formed, it
+    just names a directory this process does not use -- so the artifact carries
+    the path in use while the gate's operand says "normalized".
+    """
+    # MUT:no-stale-export-report -- dropping the pointer comparison leaves only
+    # the presence check, which a stale export passes.
+    env = {
+        "CARGO_HOME": CARGO_HOME,
+        "RUSTUP_HOME": RUSTUP_HOME,
+        repro.RUSTFLAGS_VAR: flags(
+            ("CARGO_HOME", "/mnt/work/home-old"), ("RUSTUP_HOME", RUSTUP_HOME)
+        ),
+    }
+    found = repro.problems(env)
+    stale = [p for p in found if "leftover export" in p.detail]
+    assert len(stale) == 1, found
+    assert "/mnt/work/home-old" in stale[0].detail
+
+
+# ── the homes-only mode `build.py` uses ─────────────────────────────────
 
 
 def test_homes_only_mode_ignores_the_callers_flags() -> None:
     """`build.py` injects the value, so a stale export must neither help nor block.
 
     Refusing here would print advice the caller cannot act on -- the very next
-    line of `build.py` overwrites the variable. The homes are still mandatory:
-    they are the operands of the value being injected.
+    line of `build.py` overwrites the variable.
     """
     env = {"CARGO_HOME": CARGO_HOME, "RUSTUP_HOME": RUSTUP_HOME}
     assert repro.problems(env, require_flags=False) == []
-    assert repro.problems({**env, "CARGO_HOME": ""}, require_flags=False)
+    # Unusable homes are still refused in this mode: they decide the operand.
+    assert repro.problems({**env, "CARGO_HOME": ""}, require_flags=False) == []
 
 
 # ── the remap target constants are part of the contract ──────────────────

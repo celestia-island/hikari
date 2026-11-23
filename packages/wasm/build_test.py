@@ -55,13 +55,17 @@ def lane(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """
     monkeypatch.setattr(build_lane, "cargo_target_dir", lambda: tmp_path)
     # ``build`` derives the two ``--remap-path-prefix`` flags from these homes
-    # and injects them into its own `cargo build`. They are ambient (a real
-    # developer has them set; CI's cargo/rustup defaults are ~/.cargo and
-    # ~/.rustup), so a case must state them instead of inheriting whatever the
-    # shell exported -- otherwise every case that drives ``build`` would pass or
-    # fail on the runner's environment rather than on the lane's logic.
+    # and injects them into its own `cargo build`, so a case must state them
+    # instead of inheriting whatever the shell exported -- otherwise every case
+    # that drives ``build`` would pass or fail on the runner's environment
+    # rather than on the lane's logic. An unset home is legitimate (cargo and
+    # rustup fall back to ~/.cargo and ~/.rustup), but a case that asserts on
+    # the injected value needs a known one.
     monkeypatch.setenv("CARGO_HOME", "/home/ci/.cargo")
     monkeypatch.setenv("RUSTUP_HOME", "/home/ci/.rustup")
+    # A global RUSTFLAGS is refused outright (cargo discards the per-target
+    # variable when it is set), so it must not leak in from the runner either.
+    monkeypatch.delenv("RUSTFLAGS", raising=False)
     return tmp_path
 
 
@@ -88,6 +92,30 @@ def test_build_injects_the_remapped_rustflags(
     flags = seen.get("CARGO_TARGET_WASM32_WASIP2_RUSTFLAGS", "")
     assert "--remap-path-prefix=/home/ci/.cargo=/cargo" in flags, flags
     assert "--remap-path-prefix=/home/ci/.rustup=/rustup" in flags, flags
+
+
+def test_build_refuses_a_global_rustflags(
+    lane: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A global RUSTFLAGS makes cargo DISCARD the injected per-target value.
+
+    Measured: with both exported, `cargo build -v` shows the global value three
+    times and the per-target remap zero times. Injecting the remap anyway would
+    be the worst shape -- the script reports success while the bytes carry host
+    paths nobody pinned.
+    """
+    # MUT:no-global-rustflags-check -- without this refusal `build` succeeds and
+    # the caller gets an artifact whose digest matches no descriptor.
+    monkeypatch.setattr(build_lane, "ensure_artifact_fresh", lambda _p: None)
+    monkeypatch.setenv("RUSTFLAGS", "--cfg releasing")
+
+    def fake_run(cmd, **kwargs):
+        raise AssertionError("cargo must not be spawned with a global RUSTFLAGS set")
+
+    monkeypatch.setattr(build_lane.subprocess, "run", fake_run)
+    with pytest.raises(SystemExit) as failure:
+        build_lane.build("qr")
+    assert "RUSTFLAGS" in str(failure.value.code), failure.value.code
 
 
 def test_build_forces_the_remap_over_a_stale_shell_value(

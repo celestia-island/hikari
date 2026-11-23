@@ -63,4 +63,24 @@ describe("QR facade survives a broken wrapper", () => {
     // by the retry pins, not here.
     await expect(mod.qrReady).rejects.toBeInstanceOf(mod.QrNotReadyError);
   });
+
+  it("leaves no unhandled rejection when a retry is triggered", async () => {
+    // MUT:retry-rejection-owner — the entry point fires a load on its way to
+    // throwing, and `whenQrReady()` derives its own promise. Without an owner on
+    // those, this file exits 1 with an `Errors` count while every case passes;
+    // the hooks below observe the same rejections the runner would.
+    const seen: unknown[] = [];
+    const onRejection = (reason: unknown) => seen.push(reason);
+    process.on("unhandledRejection", onRejection);
+    try {
+      // Trigger retries: a plain call, and a fresh ready derivation.
+      expect(() => mod.qrMatrix("hello")).toThrow(mod.QrNotReadyError);
+      await mod.whenQrReady().catch(() => undefined);
+      // Let any unowned rejection surface.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    } finally {
+      process.off("unhandledRejection", onRejection);
+    }
+    expect(seen).toHaveLength(0);
+  });
 });

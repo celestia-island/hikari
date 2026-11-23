@@ -69,7 +69,7 @@ chrono = { workspace = true }
 # its pure-Rust core is browser-only, so a wasip2 consumer must not pull the edge.
 # `features = ["wasm"]` is load-bearing and must stay — Cargo resolves features
 # package-wide, never per target, so dropping it leaves the wasm32-unknown-unknown
-# build without `hikari_animation::{timer,style,global_manager}` (measured: 13
+# build without `hikari_animation::{timer,style,global_manager}` (measured: 14
 # errors) while wasip2 stays green and hides the breakage.
 hikari-animation = { version = "^0.5", path = "../animation", default-features = false, features = ["wasm"] }
 wasm-bindgen = "^0.2"

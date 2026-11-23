@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Tests for the npm-manifest guard (``packages/wasm/check_npm_pack.py``).
 
-Why the guard exists: the bindings it protects are no longer committed, so the
-tarball `npm pack` builds is the only thing that decides whether they travel
-(see the PR's mutation table for the probe that narrowed the path list).
+Why the guard exists: the bindings it protects are no longer committed, so
+whether they reach the package is decided by the path list this guard checks
+against the `npm pack` manifest — and nothing else on the publish path looks at
+it (see the PR's mutation table for the probe that narrowed that list).
 
 Two things are pinned here.
 

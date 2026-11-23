@@ -386,10 +386,20 @@ export default defineComponent({
      * Desktop only: the ≤767px branch is a BOTTOM sheet whose frame is
      * pinned to the lower edge, where growth already goes upward from a
      * fixed bottom — anchoring the top there would invert the motion.
-     * The offset resets on every open edge (see the machine watcher), like
-     * the drag shift, so a reopen never inherits a previous cycle's lift.
+     *
+     * The offset is CLEARED on every open edge (see the machine watcher)
+     * and on every breakpoint crossing (the watch below), so neither a
+     * reopen nor a resize that turns the dialog into a sheet can inherit a
+     * previous cycle's lift. Clearing is not "releasing the promise": the
+     * leave deliberately KEEPS the offset, because the frame is standing
+     * there with it — zeroing it at the close request would snap the
+     * window by the residual before its own exit animation starts.
      */
     const anchor = useAnchoredTop(contentRef, {
+      // The gate only stops the loop from correcting; the watch below is
+      // what clears the offset the loop already wrote. `enabled` alone
+      // freezes (a real defect in the first cut: crossing to the sheet
+      // kept the var, and coming back re-applied a stale lift).
       enabled: () => !sheetMobile.value,
       apply: (px) => {
         const el = contentRef.value;
@@ -398,6 +408,12 @@ export default defineComponent({
         else el.style.setProperty("--hk-modal-anchor-y", `${px}px`);
       },
     });
+
+    /** Breakpoint crossings re-anchor: entering the sheet branch drops the
+     *  desktop offset (the sheet's own translate: none would hide it, and
+     *  returning to desktop would re-apply it stale), and returning to
+     *  desktop re-bases against where the frame actually lands. */
+    watch(sheetMobile, () => anchor.reset());
 
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the
@@ -682,15 +698,17 @@ export default defineComponent({
           // under the base height transition (a growth that landed in the
           // last tick of the enter animates instead of snapping).
           morph.start();
-          // A reopen must not inherit the previous cycle's lift: the
-          // anchor re-bases to the frame's fresh resting top before the
-          // enter finishes settling, exactly like the drag shift.
+          // A reopen must not inherit the previous cycle's lift. The reset
+          // runs HERE, at the open edge — after the enter, on a frame the
+          // choreography has already landed. It zeroes the offset (removing
+          // the variable) and re-anchors against the fresh resting top; the
+          // remeasure on the next tick then measures the settled height.
+          // (Not the drag shift's shape: that one resets in the
+          // `modelValue` watcher because the drag lives on the frame
+          // permanently, while this offset has meaning only while open.)
           anchor.reset();
           void nextTick(() => {
-            if (machine.phase.value === "open") {
-              morph.remeasure();
-              anchor.reset();
-            }
+            if (machine.phase.value === "open") morph.remeasure();
           });
         } else if (to === "closingFrom") {
           // Close-request bookkeeping (was the watcher's close arm): the

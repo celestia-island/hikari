@@ -1065,7 +1065,11 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
     const app = createApp(Wrapper);
     mounts.push(app);
     app.mount(container);
-    return { container, frame: document.querySelector(".hk-modal-content") as HTMLElement };
+    return {
+      container,
+      open,
+      frame: document.querySelector(".hk-modal-content") as HTMLElement,
+    };
   }
 
   it("folds a centred height drift into the anchor variable", async () => {
@@ -1136,6 +1140,113 @@ describe("HkModal top-edge anchor (centred frame must not fly)", () => {
       await nextTick();
       // MUT:modal-anchor-on-sheet (dropping the enabled gate writes the
       // variable on the sheet branch and this goes red).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      (window as { innerWidth: number }).innerWidth = previousWidth;
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("drops the offset on the next open (reopen never inherits the lift)", async () => {
+    // The anchor holds after a morph settles (documented), so a dialog that
+    // grew once is standing offset. The open edge must clear it, or the
+    // SECOND open starts lifted.
+    // MUT:modal-anchor-no-reopen-reset (deleting `anchor.reset()` at the
+    // open edge leaves the variable set across close→open; this goes red).
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    try {
+      const { frame, open } = mountModal();
+      for (let i = 0; i < 8; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+
+      // CLOSE → OPEN as an INTERRUPT (one tick apart): the frame node
+      // survives the abortive leave, so a stale offset would ride into the
+      // next cycle. This is the only reachable path on which the open-edge
+      // reset can matter — a full close unmounts the node and the variable
+      // dies with it (verified: the same assertion without the reset and
+      // with a settled close passes either way).
+      open.value = false;
+      await nextTick();
+      open.value = true;
+      for (let i = 0; i < 40; i++) await nextTick();
+      const reopened = (document.querySelector(".hk-modal-content")
+        ?? frame) as HTMLElement;
+      expect(reopened.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("clears the offset when the dialog becomes the mobile sheet", async () => {
+    // The gate alone only FREEZES the loop: an offset written on desktop
+    // survived into the sheet branch and was re-applied stale on the way
+    // back (R2 finding). The breakpoint watch clears it.
+    // MUT:modal-anchor-sheet-roundtrip (dropping `watch(sheetMobile, …)`
+    // leaves the variable set and this goes red).
+    const previousWidth = window.innerWidth;
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    try {
+      (window as { innerWidth: number }).innerWidth = 1200;
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+
+      // Cross into the sheet branch: the desktop offset must go.
+      // useBreakpoint tracks the width through a `resize` listener, so the
+      // probe must dispatch one — assigning innerWidth alone is invisible.
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // …and coming back must not resurrect it.
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
     } finally {
       (window as { innerWidth: number }).innerWidth = previousWidth;

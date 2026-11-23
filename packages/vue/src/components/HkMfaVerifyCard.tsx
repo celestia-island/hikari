@@ -47,6 +47,74 @@ function fill(template: string, values: Record<string, string>): string {
   return template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
+/** The i18n lookup this module's copy helpers need (structurally what
+ *  `useI18n().t` returns, so a host shell can borrow it without owning
+ *  this component's setup). */
+export type HkMfaTranslate = (key: string, fallback?: string) => string;
+
+/** Locale label of one factor. Exported with the copy helpers so a host
+ *  shell that renders the verify HEADER itself (the bare mode below, used
+ *  by HkLoginFlow's in-card step swap) names the already-proven factor
+ *  with the exact same wording the card's own picker tooltip uses. */
+export function hkMfaFactorLabel(t: HkMfaTranslate, kind: HkMfaFactor): string {
+  if (kind === "passkey") return t("hikari::mfaVerify.factorPasskey", "Passkey");
+  if (kind === "totp") return t("hikari::mfaVerify.factorTotp", "TOTP authenticator app");
+  if (kind === "password") return t("hikari::mfaVerify.factorPassword", "Account password");
+  return t("hikari::mfaVerify.factorSms", "SMS code");
+}
+
+/**
+ * The verify step's HEADER copy, derived from exactly the inputs the
+ * component's own shell derives it from — exported so a host that owns
+ * the card frame (bare mode) renders the identical title/subtitle. Two
+ * copies of this derivation is how the header and the card body drift
+ * apart (the step-two wording changes with `proven`, and the generic
+ * subtitle changes with the account name).
+ *
+ * `title` / `subtitle` overrides win, mirroring the props of the same
+ * name; pass `undefined` to take the derived copy.
+ */
+export function hkMfaVerifyTitle(
+  t: HkMfaTranslate,
+  options: { title?: string; proven?: string | null } = {},
+): string {
+  if (options.title !== undefined) return options.title;
+  return options.proven
+    ? t("hikari::mfaVerify.step2Title", "One more verification")
+    : t("hikari::mfaVerify.title", "Verify account");
+}
+
+/** The verify step's subtitle (see hkMfaVerifyTitle). */
+export function hkMfaVerifySubtitle(
+  t: HkMfaTranslate,
+  options: { subtitle?: string; proven?: string | null; accountName?: string } = {},
+): string {
+  const name = options.accountName ?? "";
+  const proven = options.proven && hkIsMfaFactor(options.proven)
+    ? hkMfaFactorLabel(t, options.proven)
+    : null;
+  // A host override wins over the derived sentence, but the placeholders
+  // still interpolate: a host that passes its own wording is usually
+  // keeping the account name in it, and a literal `{name}` on screen is
+  // exactly the kind of silent difference this helper exists to remove.
+  if (options.subtitle !== undefined) {
+    return fill(options.subtitle, { name, proven: proven ?? "" });
+  }
+  if (proven) {
+    return name
+      ? fill(t("hikari::mfaVerify.step2Subtitle",
+        "{proven} passed — choose one more method to finish signing in to {name}"),
+        { proven, name })
+      : fill(t("hikari::mfaVerify.step2SubtitleGeneric",
+        "Verified via {proven} — choose one more method to finish signing in"),
+        { proven });
+  }
+  return name
+    ? fill(t("hikari::mfaVerify.verifySubtitle",
+      "Verifying {name} — complete a sign-in method to continue"), { name })
+    : t("hikari::mfaVerify.subtitle", "This account requires an extra verification step");
+}
+
 /**
  * HkMfaVerifyCard — the shared second-factor ("verify account", step-up)
  * card for every Celestia front end: the factor picker (slider icon
@@ -115,9 +183,29 @@ export const HkMfaVerifyCard = defineComponent({
      *  nudging toward the picker's other entries). Rendered only when
      *  set — the consumer owns the failure bookkeeping that decides it. */
     passkeyRetryHint: { type: String, default: undefined },
-    /** Focus the proof field when the card mounts (the verify step just
-     *  opened). Password re-focuses on every selection change too. */
+    /** Focus the factor ON STAGE when the card mounts (the verify step
+     *  just opened) and whenever the selected factor changes: the proof
+     *  field for `totp` / `sms` (HkOtpInput owns that one) / `password`,
+     *  or the passkey action for a factor with no field at all. A card
+     *  that only focused its text fields left the caret on `<body>` for a
+     *  passkey-only account — and a host swapping this card in for
+     *  another body (HkLoginFlow's step swap) then had nowhere to hand
+     *  focus to. */
     autofocus: { type: Boolean, default: false },
+    /** Render ONLY the step-up body — the factor picker, the proof field,
+     *  the submit and the back action, with NO HkAuthCard shell (no card
+     *  frame, no header): for a host that owns a stable card and swaps
+     *  this body inside it. HkLoginFlow is the consumer that needs it —
+     *  its account→verify move is a swap INSIDE one card (2026-11-24 user
+     *  direction: "where the content can change inside the card, do not
+     *  let the whole card fly"), so the header copy comes from the host
+     *  (`hkMfaVerifyTitle` / `hkMfaVerifySubtitle`, the exact derivation
+     *  this card's own shell uses) and the frame stays put. The body
+     *  renders as a bare fragment so the host's `.s-auth-form` block keeps
+     *  owning the column rhythm. Read once at setup (a static shape, like
+     *  HkSignInCard's bare / HkAuthCard's smoothHeight): toggle it by
+     *  remounting, not by flipping a ref. */
+    bare: { type: Boolean, default: false },
   },
   emits: {
     /** The user asks to prove `kind`; `proof` is the password text, the
@@ -153,7 +241,7 @@ export const HkMfaVerifyCard = defineComponent({
       selected.value = hkPreferredMfaFactor(list) ?? list[0] ?? "password";
       code.value = "";
       password.value = "";
-      if (props.autofocus && selected.value === "password") focusPassword();
+      focusStage();
     }
 
     watch(
@@ -164,12 +252,37 @@ export const HkMfaVerifyCard = defineComponent({
 
     // ── proof-field focus ────────────────────────────────────────────
     const passwordRef = ref<{ $el?: HTMLElement } | null>(null);
+    /** The passkey action — the only focusable proof entry for a factor
+     *  without a text field. */
+    const passkeyRef = ref<{ $el?: HTMLElement } | null>(null);
     function focusPassword() {
       void nextTick(() => {
         (passwordRef.value?.$el as HTMLElement | undefined)
           ?.querySelector("input")
           ?.focus();
       });
+    }
+
+    /** Focus the factor on stage. `autofocus` covers the whole card, not
+     *  just its text fields: a passkey-only account has no input, and
+     *  leaving focus on `<body>` after a step swap strands keyboard and
+     *  screen-reader users (A2 review finding — the entering generation
+     *  must claim the caret whenever the leaving one loses it). */
+    function focusStage() {
+      if (!props.autofocus) return;
+      if (selected.value === "password") {
+        focusPassword();
+        return;
+      }
+      if (selected.value === "passkey") {
+        void nextTick(() => {
+          (passkeyRef.value?.$el as HTMLElement | undefined)
+            ?.querySelector("button")
+            ?.focus();
+        });
+        return;
+      }
+      // totp / sms: HkOtpInput owns its own autofocus (first cell).
     }
 
     /** Switching factors starts a fresh proof (a half-typed code must
@@ -182,7 +295,7 @@ export const HkMfaVerifyCard = defineComponent({
       selected.value = value;
       code.value = "";
       password.value = "";
-      if (props.autofocus && value === "password") focusPassword();
+      focusStage();
     }
 
     async function attemptVerify(): Promise<void> {
@@ -219,39 +332,19 @@ export const HkMfaVerifyCard = defineComponent({
       selectedFactor: () => selected.value,
     });
 
-    // ── derived strings ──────────────────────────────────────────────
-    const factorLabel = (kind: HkMfaFactor): string => {
-      if (kind === "passkey") return t("hikari::mfaVerify.factorPasskey", "Passkey");
-      if (kind === "totp") return t("hikari::mfaVerify.factorTotp", "TOTP authenticator app");
-      if (kind === "password") return t("hikari::mfaVerify.factorPassword", "Account password");
-      return t("hikari::mfaVerify.factorSms", "SMS code");
-    };
+    // ── derived strings (single source: the exported copy helpers, so a
+    // host that renders this step's header cannot drift from the body) ──
+    const factorLabel = (kind: HkMfaFactor): string => hkMfaFactorLabel(t, kind);
 
-    const titleText = computed(() => {
-      if (props.title !== undefined) return props.title;
-      return provenKind.value
-        ? t("hikari::mfaVerify.step2Title", "One more verification")
-        : t("hikari::mfaVerify.title", "Verify account");
-    });
+    const titleText = computed(() =>
+      hkMfaVerifyTitle(t, { title: props.title, proven: provenKind.value }));
 
-    const subtitleText = computed(() => {
-      if (props.subtitle !== undefined) return props.subtitle;
-      const name = props.accountName;
-      if (provenKind.value) {
-        const proven = factorLabel(provenKind.value);
-        return name
-          ? fill(t("hikari::mfaVerify.step2Subtitle",
-            "{proven} passed — choose one more method to finish signing in to {name}"),
-            { proven, name })
-          : fill(t("hikari::mfaVerify.step2SubtitleGeneric",
-            "Verified via {proven} — choose one more method to finish signing in"),
-            { proven });
-      }
-      return name
-        ? fill(t("hikari::mfaVerify.verifySubtitle",
-          "Verifying {name} — complete a sign-in method to continue"), { name })
-        : t("hikari::mfaVerify.subtitle", "This account requires an extra verification step");
-    });
+    const subtitleText = computed(() =>
+      hkMfaVerifySubtitle(t, {
+        subtitle: props.subtitle,
+        proven: provenKind.value,
+        accountName: props.accountName,
+      }));
 
     /** Glyph per factor for the icon-only picker — the labels ride the
      *  tooltip. The password entry wears the asterisk, the dot-matrix
@@ -290,6 +383,133 @@ export const HkMfaVerifyCard = defineComponent({
     // in-flight labels on the next render, not stay frozen at setup.
     const busyLabel = () => t("hikari::mfaVerify.loading", "Verifying…");
 
+    /** The step-up body every mode shares: the factor picker over the
+     *  per-factor proof field, the submit and the secondary actions.
+     *  Standalone the card's own `.s-auth-form` owns the column rhythm;
+     *  in bare mode these render straight into the HOST's `.s-auth-form`,
+     *  which is the same block with the same gap — one body, two shells,
+     *  never two bodies. */
+    const bodyFragment = () => (
+      <>
+        {pickerOptions.value.length > 0 && (
+          <div class="s-mfa-factors">
+            <HkIconButtonGroup
+              mode="single"
+              variant="slider"
+              modelValue={selected.value}
+              onUpdate:modelValue={onSelect}
+              aria-label={titleText.value}
+              options={pickerOptions.value}
+            />
+          </div>
+        )}
+        {selected.value === "passkey" ? (
+          <>
+            {/* Exactly ONE primary action per factor — the passkey
+                ceremony IS the step-up, so pairing it with a generic
+                code submit drew two equal-weight buttons that ran
+                the same handler (user report 2026-09-18). */}
+            <HkAuthSubmitButton
+              ref={passkeyRef}
+              label={props.loading ? busyLabel()
+                : t("hikari::mfaVerify.usePasskey", "Verify with Passkey")}
+              block
+              loading={props.loading}
+              disabled={props.loading || props.disabled}
+              doSubmit={attemptVerify}
+            />
+            {props.passkeyRetryHint && (
+              <HkAlert
+                variant="warning"
+                size="sm"
+                message={props.passkeyRetryHint}
+              />
+            )}
+          </>
+        ) : selected.value === "password" ? (
+          <>
+            {/* The password factor re-wears the exact sign-in
+                input (dot-matrix surface, hold-to-reveal). */}
+            <HkInput
+              ref={passwordRef}
+              variant="password"
+              modelValue={password.value}
+              onUpdate:modelValue={(v: string) => (password.value = v)}
+              name="mfa-verify-password"
+              autocomplete="current-password"
+              placeholder={t("hikari::mfaVerify.passwordPlaceholder", "Enter your password")}
+              disabled={props.loading || props.disabled}
+              submitOnEnter={attemptVerify}
+            />
+            <HkAuthSubmitButton
+              label={props.loading ? busyLabel()
+                : t("hikari::mfaVerify.verify", "Verify and sign in")}
+              block
+              loading={props.loading}
+              disabled={props.loading || props.disabled || !password.value}
+              doSubmit={attemptVerify}
+            />
+          </>
+        ) : (
+          <>
+            <HkOtpInput
+              modelValue={code.value}
+              onUpdate:modelValue={(v: string) => (code.value = v)}
+              length={6}
+              // SMS codes are handed out in the "123 456" shape; the
+              // split mirrors what the user is reading off the phone.
+              separated={selected.value === "sms"}
+              autofocus={props.autofocus}
+              ariaLabel={t("hikari::mfaVerify.codeFields", "Verification code")}
+              cellAriaLabel={(index: number) =>
+                fill(t("hikari::mfaVerify.codeCell", "Digit {index}"), { index: String(index) })}
+              hint={selected.value === "totp"
+                ? t("hikari::mfaVerify.totpHint", "Enter the 6-digit TOTP code")
+                : t("hikari::mfaVerify.smsHint", "Enter the 6-digit SMS code")}
+              disabled={props.loading || props.disabled}
+              autoSubmit
+              submitOnEnter={attemptVerify}
+            />
+            <HkAuthSubmitButton
+              label={props.loading ? busyLabel()
+                : t("hikari::mfaVerify.verify", "Verify and sign in")}
+              block
+              loading={props.loading}
+              disabled={props.loading || props.disabled || code.value.trim().length < 6}
+              doSubmit={attemptVerify}
+            />
+          </>
+        )}
+        {selected.value === "sms" && (
+          <HkButton
+            variant="ghost"
+            size="md"
+            block
+            disabled={props.resending || props.loading || props.disabled}
+            onClick={() => emit("resend")}
+          >
+            {props.resending ? busyLabel()
+              : t("hikari::mfaVerify.resend", "Resend code")}
+          </HkButton>
+        )}
+        <HkButton
+          variant="ghost"
+          size="md"
+          block
+          disabled={props.loading}
+          onClick={() => emit("back")}
+        >
+          {t("hikari::mfaVerify.back", "Back to sign in")}
+        </HkButton>
+      </>
+    );
+
+    // Bare mode: the body alone — the host owns the card frame (and any
+    // transition choreography around it).
+    if (props.bare) {
+      return () => bodyFragment();
+    }
+
     return () => (
       <HkAuthCard title={titleText.value} subtitle={subtitleText.value}>
         {{
@@ -299,119 +519,7 @@ export const HkMfaVerifyCard = defineComponent({
               : props.logoSrc
                 ? <HkLogo size="lg" src={props.logoSrc} />
                 : null,
-          default: () => (
-            <>
-              {pickerOptions.value.length > 0 && (
-                <div class="s-mfa-factors">
-                  <HkIconButtonGroup
-                    mode="single"
-                    variant="slider"
-                    modelValue={selected.value}
-                    onUpdate:modelValue={onSelect}
-                    aria-label={titleText.value}
-                    options={pickerOptions.value}
-                  />
-                </div>
-              )}
-              {selected.value === "passkey" ? (
-                <>
-                  {/* Exactly ONE primary action per factor — the passkey
-                      ceremony IS the step-up, so pairing it with a generic
-                      code submit drew two equal-weight buttons that ran
-                      the same handler (user report 2026-09-18). */}
-                  <HkAuthSubmitButton
-                    label={props.loading ? busyLabel()
-                      : t("hikari::mfaVerify.usePasskey", "Verify with Passkey")}
-                    block
-                    loading={props.loading}
-                    disabled={props.loading || props.disabled}
-                    doSubmit={attemptVerify}
-                  />
-                  {props.passkeyRetryHint && (
-                    <HkAlert
-                      variant="warning"
-                      size="sm"
-                      message={props.passkeyRetryHint}
-                    />
-                  )}
-                </>
-              ) : selected.value === "password" ? (
-                <>
-                  {/* The password factor re-wears the exact sign-in
-                      input (dot-matrix surface, hold-to-reveal). */}
-                  <HkInput
-                    ref={passwordRef}
-                    variant="password"
-                    modelValue={password.value}
-                    onUpdate:modelValue={(v: string) => (password.value = v)}
-                    name="mfa-verify-password"
-                    autocomplete="current-password"
-                    placeholder={t("hikari::mfaVerify.passwordPlaceholder", "Enter your password")}
-                    disabled={props.loading || props.disabled}
-                    submitOnEnter={attemptVerify}
-                  />
-                  <HkAuthSubmitButton
-                    label={props.loading ? busyLabel()
-                      : t("hikari::mfaVerify.verify", "Verify and sign in")}
-                    block
-                    loading={props.loading}
-                    disabled={props.loading || props.disabled || !password.value}
-                    doSubmit={attemptVerify}
-                  />
-                </>
-              ) : (
-                <>
-                  <HkOtpInput
-                    modelValue={code.value}
-                    onUpdate:modelValue={(v: string) => (code.value = v)}
-                    length={6}
-                    // SMS codes are handed out in the "123 456" shape; the
-                    // split mirrors what the user is reading off the phone.
-                    separated={selected.value === "sms"}
-                    autofocus={props.autofocus}
-                    ariaLabel={t("hikari::mfaVerify.codeFields", "Verification code")}
-                    cellAriaLabel={(index: number) =>
-                      fill(t("hikari::mfaVerify.codeCell", "Digit {index}"), { index: String(index) })}
-                    hint={selected.value === "totp"
-                      ? t("hikari::mfaVerify.totpHint", "Enter the 6-digit TOTP code")
-                      : t("hikari::mfaVerify.smsHint", "Enter the 6-digit SMS code")}
-                    disabled={props.loading || props.disabled}
-                    autoSubmit
-                    submitOnEnter={attemptVerify}
-                  />
-                  <HkAuthSubmitButton
-                    label={props.loading ? busyLabel()
-                      : t("hikari::mfaVerify.verify", "Verify and sign in")}
-                    block
-                    loading={props.loading}
-                    disabled={props.loading || props.disabled || code.value.trim().length < 6}
-                    doSubmit={attemptVerify}
-                  />
-                </>
-              )}
-              {selected.value === "sms" && (
-                <HkButton
-                  variant="ghost"
-                  size="md"
-                  block
-                  disabled={props.resending || props.loading || props.disabled}
-                  onClick={() => emit("resend")}
-                >
-                  {props.resending ? busyLabel()
-                    : t("hikari::mfaVerify.resend", "Resend code")}
-                </HkButton>
-              )}
-              <HkButton
-                variant="ghost"
-                size="md"
-                block
-                disabled={props.loading}
-                onClick={() => emit("back")}
-              >
-                {t("hikari::mfaVerify.back", "Back to sign in")}
-              </HkButton>
-            </>
-          ),
+          default: () => bodyFragment(),
         }}
       </HkAuthCard>
     );

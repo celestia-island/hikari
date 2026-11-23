@@ -1,16 +1,54 @@
 // HkLoginFlow — the shared sign-in panel.
 //
 // The root caps itself to the family-wide auth-card width contract
-// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (cards, the
-// transition container's measuring wrappers) lay out as width:100%, so
-// the HOST's centering slot must cap here rather than justify-items the
-// crossfade items — the chest blueprint's hard-won rule. Hosts that
-// embed the panel in a wider stage can override the CSS var locally.
+// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (the anchored
+// frame, the transition container's measuring wrappers) lay out as
+// width:100%, so the HOST's centering slot must cap here rather than
+// justify-items the crossfade items — the chest blueprint's hard-won
+// rule. Hosts that embed the panel in a wider stage can override the
+// CSS var locally.
+//
+// Scope of that guarantee, stated honestly: the width contract is
+// enforced by `styles/authCardWidth.test.ts`, which reads the COMPOSED
+// sheet; a rule in a component sheet (like this one) can therefore carry
+// a `max-width` without the guard seeing it. Nothing here does — the
+// rules below only carry `width: 100%` — and a future cap added here
+// would have to extend that guard first.
 
 .hk-login-flow {
   width: 100%;
   max-width: var(--hk-auth-card-max-width, 28rem);
   margin-inline: auto;
+}
+
+// The anchored box around the card (useAnchoredTop). The hook writes ONLY
+// a paint-level `transform` here, which is what keeps the card's top edge
+// still while the card grows. The declarations this rule may carry are
+// therefore limited to the sizing the box needs to be a faithful copy of
+// its parent's content lane (the width) — a margin or padding here would
+// shift the card relative to the frame the rest of the panel geometry was
+// built against. It must also stay `position: static` as a forward rule:
+// hikari's overlay roots are body-level today, so nothing under this box
+// currently anchors to it — but the moment a descendant ever grew an
+// overlay that resolves against its nearest positioned ancestor, a
+// `relative`/`absolute` here would silently become that ancestor.
+//
+// `.hk-login-flow-card` next to `.s-auth-card` is the one card frame of
+// the WHOLE session (account, verify and every channel share it): the
+// step swap happens inside it, so the frame — and the entrance keyframes
+// .s-auth-card owns — play once per page instead of once per step. No
+// declaration is needed on it today; the class exists so a host can
+// target the login frame specifically without counting `.s-auth-card`
+// ancestors.
+.hk-login-flow-anchor {
+  width: 100%;
+}
+
+// Each generation of the step swap: header copy over the body blocks.
+// The class is a hook for hosts and probes, and it keeps the generation
+// a plain block so the card's own padding/border stay on the frame.
+.hk-login-flow-step {
+  width: 100%;
 }
 
 // The sso card's destination list block: full-width rows (the 2026-11

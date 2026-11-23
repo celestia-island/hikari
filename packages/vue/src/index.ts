@@ -566,6 +566,7 @@ export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";
 export type { SizeMorph } from "./composables/useSizeMorph";
+export { useAnchoredTop } from "./composables/useAnchoredTop";
 export { useImage } from "./composables/useImage";
 export type { ImageStatus, UseImageReturn } from "./composables/useImage";
 
@@ -676,6 +677,8 @@ export {
   HkMfaVerifyCard as HMfaVerifyCard,
   hkIsMfaFactor as isMfaFactor,
   hkPreferredMfaFactor as preferredMfaFactor,
+  hkMfaVerifyTitle as mfaVerifyTitle,
+  hkMfaVerifySubtitle as mfaVerifySubtitle,
   type HkMfaFactor as MfaFactor,
 } from "./components/HkMfaVerifyCard";
 export { usePageTitle, useRouteTitle } from "./composables/usePageTitle";
@@ -1092,6 +1095,15 @@ export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";
 export { HkThirdPartySignInCard as HkThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { HkMfaVerifyCard as HkMfaVerifyCard } from "./components/HkMfaVerifyCard";
 export { type HkMfaFactor as HkMfaFactor } from "./components/HkMfaVerifyCard";
+// The step-up header derivation, for hosts that own the card frame and
+// render the verify header themselves (HkMfaVerifyCard's `bare` mode):
+// one derivation, so a host header can never drift from the card body's.
+export {
+  hkMfaVerifyTitle as hkMfaVerifyTitle,
+  hkMfaVerifySubtitle as hkMfaVerifySubtitle,
+  hkMfaFactorLabel as hkMfaFactorLabel,
+  type HkMfaTranslate as HkMfaTranslate,
+} from "./components/HkMfaVerifyCard";
 export { HkAuthScreen as HkAuthScreen } from "./components/HkAuthScreen";
 export { type HkAuthScreenBeianEntry as HkAuthScreenBeianEntry } from "./components/HkAuthScreen";
 export { HkLoginFlow as HkLoginFlow } from "./components/HkLoginFlow";

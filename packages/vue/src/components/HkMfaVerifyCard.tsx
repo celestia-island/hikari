@@ -218,6 +218,12 @@ export const HkMfaVerifyCard = defineComponent({
      *  another body (HkLoginFlow's step swap) then had nowhere to hand
      *  focus to. */
     autofocus: { type: Boolean, default: false },
+    /** Render the factor picker above the proof field. Default true — a
+     *  ladder with more than one announced factor needs the switch. A host
+     *  whose deployment announces exactly ONE factor passes false: a
+     *  single-option "chooser" is decoration, and the body already says
+     *  which proof it is asking for. */
+    showFactorPicker: { type: Boolean, default: true },
     /** Render ONLY the step-up body — the factor picker, the proof field,
      *  the submit and the back action, with NO HkAuthCard shell (no card
      *  frame, no header): for a host that owns a stable card and swaps
@@ -432,7 +438,7 @@ export const HkMfaVerifyCard = defineComponent({
      *  never two bodies. */
     const bodyFragment = () => (
       <>
-        {pickerOptions.value.length > 0 && (
+        {props.showFactorPicker && pickerOptions.value.length > 0 && (
           <div class="s-mfa-factors">
             <HkIconButtonGroup
               mode="single"

@@ -8,6 +8,7 @@ import { createApp, defineComponent, h, nextTick, ref } from "vue";
 import HkAuthSsoButton from "./HkAuthSsoButton";
 import HkAuthScreen from "./HkAuthScreen";
 import HkLoginFlow, { type HkLoginChannel } from "./HkLoginFlow";
+import { hkMfaVerifySubtitle, hkMfaVerifyTitle } from "./HkMfaVerifyCard";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -368,18 +369,20 @@ describe("HkLoginFlow — verify step", () => {
 
     step.value = "account";
     for (let i = 0; i < 12; i++) await nextTick();
-    // The account shell comes back. Scope the assertion to the OUTER
-    // tier's DIRECT stage items (`.hk-login-flow > .hk-tc > …`) — the
-    // union of every crossfade item in the subtree is unfalsifiable
-    // (the inner items ride inside the settled account item, so a
-    // stuck-outer mutation can never turn this red; the forward leg's
-    // OTP-presence check carries the teeth for that mutation).
+    // The account generation comes back. Scope the assertion to the
+    // OUTER tier's DIRECT stage items (the step container inside the one
+    // card frame) — the union of every crossfade item in the subtree is
+    // unfalsifiable (the inner items ride inside the settled account
+    // item, so a stuck-outer mutation can never turn this red; the
+    // forward leg's OTP-presence check carries the teeth for that
+    // mutation).
     // MUT:r1487-outer-key-channel (R7 M1: keying the outer container on
     // the channel makes `dataset.crossfadeKey` read "account:cloud" here
     // and this assertion goes red).
     const outerSettled = Array.from(
       c.querySelectorAll(
-        ".hk-login-flow > .hk-tc > .hk-tc-stage > .hk-crossfade > .hk-crossfade-item"
+        ".hk-login-flow-anchor > .s-auth-card > .hk-tc > .hk-tc-stage > .hk-crossfade"
+          + " > .hk-crossfade-item"
           + ":not(.hk-crossfade-leave-active):not(.hk-crossfade-leave-to)",
       ),
     );
@@ -419,6 +422,9 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     const tabsBefore = container.querySelector(".hk-tabs");
     const titleBefore = container.querySelector(".s-auth-title");
     const logoSlotBefore = container.querySelector(".s-auth-header");
+    // The card frame itself is per-PANEL, not per-channel or per-step: it
+    // owns the entrance animation, so a remount would replay it.
+    const frameBefore = container.querySelector(".s-auth-card");
     expect(tabsBefore).not.toBeNull();
     expect(titleBefore?.textContent).toBe("Sign in");
     // Exactly ONE card — the shell. A silently-ignored `bare` mode
@@ -429,24 +435,20 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
     expect(container.querySelector(".s-auth-card .s-auth-card")).toBeNull();
     expect(container.querySelectorAll(".s-auth-form")).toHaveLength(1);
-    // The shell opts OUT of HkAuthCard's own smooth-height wrapper: the
-    // inner container owns the height choreography, and a second
-    // measuring wrapper would chain its 300ms transition after the
-    // container's (a telescoping double-morph). smoothHeight={false}
-    // leaves the wrapper unmeasured — no inline height, no observer
-    // (a measured wrapper pins an inline height and tracks the card).
-    // MUT:r1487-shell-double-morph (dropping the prop installs the
-    // observer and writes an inline height — this goes red).
-    const heightWrapper = container.querySelector(
-      ".s-auth-card-height",
-    ) as HTMLElement;
-    expect(heightWrapper).not.toBeNull();
-    expect(heightWrapper.style.height).toBe("");
+    // The flow owns the frame, so HkAuthCard's own smooth-height wrapper
+    // must NOT be in the tree at all: the transition container owns the
+    // height choreography, and a measuring wrapper would chain its 300ms
+    // transition after the container's (a telescoping double-morph).
+    // MUT:r1487-shell-double-morph (rendering HkAuthCard as the shell
+    // again — e.g. reverting to the per-step card — puts
+    // `.s-auth-card-height` back and turns this red).
+    expect(container.querySelector(".s-auth-card-height")).toBeNull();
 
     active.value = "org";
     for (let i = 0; i < 12; i++) await nextTick();
 
     // SAME DOM NODES — the shell never dissolved.
+    expect(container.querySelector(".s-auth-card")).toBe(frameBefore);
     expect(container.querySelector(".hk-tabs")).toBe(tabsBefore);
     expect(container.querySelector(".s-auth-title")).toBe(titleBefore);
     expect(container.querySelector(".s-auth-header")).toBe(logoSlotBefore);
@@ -590,6 +592,133 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     for (let i = 0; i < 12; i++) await nextTick();
     expect(container.querySelector(".s-auth-title")).toBe(titleEl);
     expect(titleEl.textContent).toContain("Organization access");
+  });
+});
+
+describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => {  // "Where the content can change inside the card, do not let the whole
+  // card fly." The account→verify move used to swap TWO whole cards: each
+  // generation was its own `HkAuthCard`, so the frame dissolved, its
+  // entrance keyframes replayed on the fresh node, and the height morph
+  // re-centred the panel in the host (the reported "the card flies up").
+  // The pins below are ELEMENT-IDENTITY assertions on the frame.
+
+  function mountStepHost(options: {
+    accountName?: string;
+    proven?: string;
+    factors?: string[];
+  } = {}) {
+    const step = ref<"account" | "verify">("account");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [cloudChannel],
+          modelValue: "cloud",
+          step: step.value,
+          verifyFactors: options.factors ?? ["password"],
+          verifyAccountName: options.accountName ?? "demiurge",
+          verifyProven: options.proven,
+        }),
+    });
+    return { container: mount(h(Host)), step };
+  }
+
+  it("keeps ONE card frame across account → verify → account", async () => {
+    const { container, step } = mountStepHost();
+    const frame = container.querySelector(".s-auth-card");
+    expect(frame).not.toBeNull();
+
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // A fresh `.s-auth-card` per step is the defect this pins: the frame
+    // node remounts (and replays .s-auth-card's entrance keyframes),
+    // which is what the user saw as the card flying out and back in.
+    // MUT:step-swap-two-cards (reverting the render to one HkAuthCard per
+    // generation puts a new node here — this goes red).
+    expect(container.querySelector(".s-auth-card")).toBe(frame);
+    expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
+
+    step.value = "account";
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(container.querySelector(".s-auth-card")).toBe(frame);
+  });
+
+  it("renames the header inside that frame and renders the bare step-up body", async () => {
+    const { container, step } = mountStepHost({ factors: ["totp"] });
+
+    const titleBefore = container.querySelector(".s-auth-title");
+    expect(titleBefore?.textContent).toBe("Sign in");
+    expect(container.querySelector(".s-mfa-factors")).toBeNull();
+
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+
+    // Scope to the ENTERING generation: jsdom fires no transitionend,
+    // so the leaving account generation is still in the DOM during the
+    // dissolve (the same convention the reactive `morphs …` test uses).
+    const verifyGen = container.querySelector(
+      '.hk-crossfade-item[data-crossfade-key="verify"]',
+    ) as HTMLElement | null;
+    expect(verifyGen).not.toBeNull();
+
+    // The header copy is INSIDE the swap (it must rename), while the
+    // header BLOCK still belongs to the one frame.
+    expect(verifyGen!.querySelector(".s-auth-title")?.textContent)
+      .toBe("Verify account");
+    expect(verifyGen!.querySelector(".s-auth-subtitle")?.textContent)
+      .toContain("demiurge");
+
+    // The step-up body is the MFA card's BARE fragment: the frame's own
+    // `.s-auth-form` block hosts it, so there is no second card, no
+    // second header block and no HkAuthCard measuring wrapper.
+    // MUT:step-swap-mfa-shell (dropping `bare` renders HkAuthCard inside
+    // the frame: a nested .s-auth-card / .s-auth-header and a
+    // .s-auth-card-height all appear inside this generation — the
+    // assertions below go red).
+    expect(verifyGen!.querySelectorAll(".s-auth-form")).toHaveLength(1);
+    expect(verifyGen!.querySelector(".s-auth-card")).toBeNull();
+    expect(verifyGen!.querySelectorAll(".s-auth-header")).toHaveLength(1);
+    expect(verifyGen!.querySelector(".s-auth-card-height")).toBeNull();
+    expect(verifyGen!.querySelector(".s-mfa-factors")).not.toBeNull();
+    // The announced factor (totp here) drives the body inside the frame —
+    // the bare fragment is live, not a header-only stub.
+    expect(verifyGen!.querySelectorAll(".hk-otp-cell")).toHaveLength(6);
+  });
+
+  it("keeps the step-up copy derivable by the host (the card's own vocabulary)", () => {
+    // One derivation, two renderers: the flow's header and the card body
+    // must name the step identically. A second copy of these strings is
+    // how the header and the body drift apart across locales.
+    // MUT:step2-copy-inline (inlining the step-two wording in the flow
+    // instead of calling the helper leaves this helper's output — and
+    // the header — stale).
+    expect(hkMfaVerifyTitle((key: string, fallback?: string) => fallback ?? key)).toBe("Verify account");
+    expect(
+      hkMfaVerifyTitle((key: string, fallback?: string) => fallback ?? key, { proven: "password" }),
+    ).toBe("One more verification");
+    expect(
+      hkMfaVerifySubtitle((key: string, fallback?: string) => fallback ?? key, {
+        accountName: "demiurge",
+      }),
+    ).toBe("Verifying demiurge — complete a sign-in method to continue");
+    expect(
+      hkMfaVerifySubtitle((key: string, fallback?: string) => fallback ?? key, {
+        accountName: "demiurge",
+        proven: "password",
+      }),
+    ).toBe("Account password passed — choose one more method to finish signing in to demiurge");
+  });
+
+  it("anchors the card's top edge on a growing frame (structural pin)", async () => {
+    const { container } = mountStepHost();
+    // The anchor wrapper is the element useAnchoredTop owns: a centered
+    // host re-centres the frame on every height change, and without the
+    // wrapper there is no element to paint back onto the resting top.
+    // MUT:step-swap-unguarded (dropping the wrapper / the hook puts the
+    // frame straight under .hk-login-flow — this goes red).
+    const anchor = container.querySelector(".hk-login-flow-anchor");
+    expect(anchor).not.toBeNull();
+    expect(anchor!.querySelector(":scope > .s-auth-card")).not.toBeNull();
+    expect(container.querySelector(".hk-login-flow > .s-auth-card")).toBeNull();
   });
 });
 

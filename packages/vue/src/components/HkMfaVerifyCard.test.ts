@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp, h, nextTick, reactive, ref } from "vue";
 
-import { HkMfaVerifyCard, hkIsMfaFactor, hkPreferredMfaFactor } from "./HkMfaVerifyCard";
+import {
+  HkMfaVerifyCard,
+  hkIsMfaFactor,
+  hkMfaFactorLabel,
+  hkMfaVerifySubtitle,
+  hkMfaVerifyTitle,
+  hkPreferredMfaFactor,
+} from "./HkMfaVerifyCard";
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
 
@@ -287,5 +294,79 @@ describe("HkMfaVerifyCard", () => {
     expect(primaryButton(container).disabled).toBe(true);
     const back = buttonText(container, "Back to sign in") as HTMLButtonElement;
     expect(back.disabled).toBe(true);
+  });
+});
+
+describe("HkMfaVerifyCard — bare mode (host-owned card shell)", () => {
+  const flat = (key: string, fallback?: string) => fallback ?? key;
+
+  it("renders the step-up body with NO card frame and NO header block", () => {
+    // HkLoginFlow's in-card step swap puts this body inside ITS frame:
+    // a shell here would nest a second card inside the first one.
+    // MUT:verify-bare-shell (dropping the `bare` branch's early return
+    // renders HkAuthCard again — `.s-auth-card` /.s-auth-header appear
+    // and both assertions go red).
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { bare: true, factors: ["totp"], accountName: "demiurge" }));
+    expect(container.querySelector(".s-auth-card")).toBeNull();
+    expect(container.querySelector(".s-auth-header")).toBeNull();
+    expect(container.querySelector(".s-auth-title")).toBeNull();
+    // The body itself is all there: the picker and the six code cells.
+    expect(container.querySelector(".s-mfa-factors")).not.toBeNull();
+    expect(container.querySelectorAll(".hk-otp-cell")).toHaveLength(6);
+    expect(container.querySelector(".hk-btn-primary")).not.toBeNull();
+    expect(container.querySelector(".hk-btn-ghost")).not.toBeNull();
+  });
+
+  it("keeps every handler live in bare mode", async () => {
+    const onVerify = vi.fn();
+    const onBack = vi.fn();
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, {
+        bare: true,
+        factors: ["totp"],
+        autofocus: true,
+        onVerify,
+        onBack,
+      }));
+    const cells = Array.from(container.querySelectorAll<HTMLInputElement>(".hk-otp-cell"));
+    cells.forEach((cell, i) => typeInto(cell, String(i)));
+    await nextTick();
+    container.querySelector<HTMLButtonElement>(".hk-btn-primary")!.click();
+    await nextTick();
+    expect(onVerify).toHaveBeenCalledWith("totp", "012345");
+    container.querySelector<HTMLButtonElement>(".hk-btn-ghost")!.click();
+    await nextTick();
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it("derives the header copy a host shell renders (one vocabulary, two renderers)", () => {
+    // The flow renders its own header around the bare body; these are
+    // the exact strings the shell-mode card would render for the same
+    // inputs (a second copy of the wording is how the header and the
+    // body drift apart).
+    expect(hkMfaVerifyTitle(flat)).toBe("Verify account");
+    expect(hkMfaVerifyTitle(flat, { proven: "passkey" })).toBe("One more verification");
+    expect(hkMfaVerifyTitle(flat, { title: "Step up" })).toBe("Step up");
+    expect(hkMfaVerifySubtitle(flat)).toBe(
+      "This account requires an extra verification step");
+    expect(hkMfaVerifySubtitle(flat, { accountName: "demiurge" })).toBe(
+      "Verifying demiurge — complete a sign-in method to continue");
+    expect(hkMfaVerifySubtitle(flat, { accountName: "demiurge", proven: "totp" })).toBe(
+      "TOTP authenticator app passed — choose one more method to finish signing in to demiurge");
+    expect(hkMfaVerifySubtitle(flat, { proven: "totp" })).toBe(
+      "Verified via TOTP authenticator app — choose one more method to finish signing in");
+    expect(hkMfaVerifySubtitle(flat, { subtitle: "Custom" })).toBe("Custom");
+    // Shell mode and bare mode name the factors identically.
+    expect(hkMfaFactorLabel(flat, "password")).toBe("Account password");
+  });
+
+  it("renders the same body in shell mode (the bare split is a frame split only)", () => {
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["totp"], accountName: "demiurge" }));
+    expect(container.querySelector(".s-auth-card")).not.toBeNull();
+    expect(container.querySelector(".s-auth-header")).not.toBeNull();
+    expect(container.querySelector(".s-auth-title")?.textContent).toBe("Verify account");
+    expect(container.querySelectorAll(".hk-otp-cell")).toHaveLength(6);
   });
 });

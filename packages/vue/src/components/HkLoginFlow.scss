@@ -1,16 +1,43 @@
 // HkLoginFlow — the shared sign-in panel.
 //
 // The root caps itself to the family-wide auth-card width contract
-// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (cards, the
-// transition container's measuring wrappers) lay out as width:100%, so
-// the HOST's centering slot must cap here rather than justify-items the
-// crossfade items — the chest blueprint's hard-won rule. Hosts that
-// embed the panel in a wider stage can override the CSS var locally.
+// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (the anchored
+// frame, the transition container's measuring wrappers) lay out as
+// width:100%, so the HOST's centering slot must cap here rather than
+// justify-items the crossfade items — the chest blueprint's hard-won
+// rule. Hosts that embed the panel in a wider stage can override the
+// CSS var locally.
 
 .hk-login-flow {
   width: 100%;
   max-width: var(--hk-auth-card-max-width, 28rem);
   margin-inline: auto;
+}
+
+// The anchored box around the card (useAnchoredTop). It carries ONLY the
+// paint-level `transform` that keeps the card's top edge still while the
+// card grows: the rule is deliberately empty of layout declarations — a
+// width, margin or padding here would shift the card relative to the
+// frame the rest of the panel geometry was built against, and a
+// `position` other than static would make it a containing block for the
+// card's own overlays.
+//
+// `.hk-login-flow-card` next to `.s-auth-card` is the one card frame of
+// the WHOLE session (account, verify and every channel share it): the
+// step swap happens inside it, so the frame — and the entrance keyframes
+// .s-auth-card owns — play once per page instead of once per step. No
+// declaration is needed on it today; the class exists so a host can
+// target the login frame specifically without counting `.s-auth-card`
+// ancestors.
+.hk-login-flow-anchor {
+  width: 100%;
+}
+
+// Each generation of the step swap: header copy over the body blocks.
+// The class is a hook for hosts and probes, and it keeps the generation
+// a plain block so the card's own padding/border stay on the frame.
+.hk-login-flow-step {
+  width: 100%;
 }
 
 // The sso card's destination list block: full-width rows (the 2026-11

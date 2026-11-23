@@ -99,6 +99,11 @@
   display: flex;
   flex: none;
   align-items: center;
+  // The band's contents park on the TRAILING edge: the actions slot and
+  // the close affordance are both "way out" controls, and a band holding
+  // only the ✕ must not leave it stranded at the reading text's first
+  // column (2026-11-23 field report).
+  justify-content: flex-end;
   gap: var(--space-8, 0.5rem);
   padding: var(--space-12, 0.75rem)
     var(--hk-master-detail-detail-pad, var(--space-16, 1rem));
@@ -114,9 +119,9 @@
   flex: none;
   align-items: center;
   gap: var(--space-8, 0.5rem);
-  // Without a title the actions still ride the band's trailing edge,
-  // beside the close affordance.
-  margin-inline-start: auto;
+  // No auto margin here: the band itself parks its contents on the
+  // trailing edge, so the actions and the close affordance stay adjacent
+  // whether one of them is present or both are.
 }
 
 .hk-master-detail-detail-body {

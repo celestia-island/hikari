@@ -218,7 +218,8 @@ pub use IconSize;
 
 - **WASI (wasm32-wasip2)**: WebAssembly System Interface
   - Native WASM Component Model runtime
-  - Type-safe WIT bindings instead of JS glue
+  - WIT contract + JS host implementation: the guest component declares its browser
+    capabilities as WIT interfaces and the JavaScript host implements them
 
 ### Styling
 

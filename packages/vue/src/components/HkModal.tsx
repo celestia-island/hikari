@@ -14,6 +14,7 @@ import { useSurfaceTransition } from "../composables/useSurfaceTransition";
 import { useSurfaceMachine } from "../composables/useSurfaceMachine";
 import { useSurfaceContentHold } from "../composables/useSurfaceContentHold";
 import { useSizeMorph, type RideEntry } from "../composables/useSizeMorph";
+import { useAnchoredTop } from "../composables/useAnchoredTop";
 
 import { STEPFLOW_SWAP_EVENT } from "./HkStepFlow";
 
@@ -137,6 +138,23 @@ export function modalFrameMaxWidth(resolved: string): string {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+
+/**
+ * Crossing re-anchor timing (the top-edge anchor, see useAnchoredTop):
+ *
+ * - `CROSSING_SETTLE_MS` — how long a breakpoint crossing waits before
+ *   re-anchoring the frame. The worst case is useSizeMorph's observer
+ *   debounce (150 ms) plus the height transition it then starts
+ *   (`--duration-fast`, 150 ms): inside those ~300 ms the frame's height is
+ *   still moving, and a re-base would adopt a transient geometry. 320 ms
+ *   covers both plus a small margin; the height-stability probe extends the
+ *   wait on its own if the morph ends later than that.
+ * - `CROSSING_SETTLE_MAX_MS` — hard wall-time cap (2 s) for a frame that
+ *   never settles for an unrelated reason; a stale anchor is the lesser
+ *   evil vs a silently disarmed one.
+ */
+const CROSSING_SETTLE_MS = 320;
+const CROSSING_SETTLE_MAX_MS = 2000;
 
 export default defineComponent({
   name: "HkModal",
@@ -368,6 +386,111 @@ export default defineComponent({
         );
       },
     });
+
+    /**
+     * Top-edge anchoring (2026-11-23 user direction: "where the content
+     * can change inside the card, do not let the whole card fly").
+     *
+     * The frame is centred by `top: 50%; translate: -50% -50%`, so a height
+     * morph of Δ moves the TOP edge up by Δ/2 and the whole body travels
+     * with it — the wizard step / async-detail growth the field keeps
+     * reporting. This closed loop folds that measured drift into
+     * `--hk-modal-anchor-y`, which composes into the SAME `translate`
+     * property the centring already uses (so the open/close ride, which
+     * animates `transform` only, stays untouched and the two never fight
+     * over one property — that is why this is NOT written as a transform).
+     *
+     * Desktop only: the ≤767px branch is a BOTTOM sheet whose frame is
+     * pinned to the lower edge, where growth already goes upward from a
+     * fixed bottom — anchoring the top there would invert the motion.
+     *
+     * The offset is CLEARED on every open edge (see the phase machine's open edge)
+     * and on every breakpoint crossing (the watch below), so neither a
+     * reopen nor a resize that turns the dialog into a sheet can inherit a
+     * previous cycle's lift. Clearing is not "releasing the promise": the
+     * leave deliberately KEEPS the offset, because the frame is standing
+     * there with it — zeroing it at the close request would snap the
+     * window by the residual before its own exit animation starts.
+     */
+    const anchor = useAnchoredTop(contentRef, {
+      // The gate only stops the loop from CORRECTING; the watch below is
+      // what CLEARS the offset the loop already wrote. The two are not
+      // redundant: gating alone would freeze the value, so a crossing into
+      // the sheet would keep it and the crossing back would resume from a
+      // lift that belongs to a layout the frame no longer has.
+      enabled: () => !sheetMobile.value,
+      apply: (px) => {
+        const el = contentRef.value;
+        if (!el) return;
+        if (px === 0) el.style.removeProperty("--hk-modal-anchor-y");
+        else el.style.setProperty("--hk-modal-anchor-y", `${px}px`);
+      },
+    });
+
+    /** Breakpoint crossings re-anchor.
+     *
+     *  INTO the sheet: drop the offset immediately. The sheet discards the
+     *  variable anyway (`translate: none`), so this is invisible whatever
+     *  the frame was doing — and it is what stops a stale lift from coming
+     *  back later.
+     *
+     *  BACK to desktop: the offset is already 0, so what is owed is only the
+     *  RE-BASE — and a re-base adopts whatever top the frame has at that
+     *  instant. Doing that mid-morph pins the anchor to a transient
+     *  geometry and the loop then bakes the transient into the resting
+     *  position (a visible snap-then-lift; R4's kill experiment). So this
+     *  leg waits for the frame to be at rest first.
+     *
+     *  "At rest" is measured HERE rather than read off `data-hk-morphing`:
+     *  that marker is set only inside `heightMorph` (the stepflow swap),
+     *  while the ordinary content-growth morph rides `remeasure` — the
+     *  primary path of this very feature. A self-contained stability probe
+     *  (the frame's height unchanged across two consecutive frames) covers
+     *  every morph path without depending on another module's bookkeeping. */
+    let crossingRaf: number | null = null;
+    let crossingStart = 0;
+    let lastHeight = -1;
+    let stableFrames = 0;
+    function cancelCrossingWait(): void {
+      if (crossingRaf !== null && typeof cancelAnimationFrame === "function") {
+        cancelAnimationFrame(crossingRaf);
+      }
+      crossingRaf = null;
+      stableFrames = 0;
+      lastHeight = -1;
+    }
+    function reanchorWhenAtRest(): void {
+      const el = contentRef.value;
+      if (!el) return void cancelCrossingWait();
+      const h = Math.round(el.getBoundingClientRect().height);
+      stableFrames = h === lastHeight ? stableFrames + 1 : 0;
+      lastHeight = h;
+      const elapsed = performance.now() - crossingStart;
+      // "At rest" needs BOTH: the settle window over (useSizeMorph debounces
+      // its observer by 150 ms before its post-change remeasure, so a height
+      // can look stable for a beat and then move again when that lands), AND
+      // the height actually stable across frames. Re-basing inside the
+      // window adopts a transient geometry — the R4 kill case.
+      const settled = elapsed >= CROSSING_SETTLE_MS && stableFrames >= 1;
+      // Hard bound in WALL TIME (2 s), not frames: happy-dom fires rAF as
+      // fast as ~0.5 ms/frame, so a frame count is not a duration. Past the
+      // bound a stuck frame is the lesser evil vs a silently disarmed
+      // anchor.
+      const expired = elapsed > CROSSING_SETTLE_MAX_MS;
+      if (settled || expired) {
+        cancelCrossingWait();
+        anchor.reset();
+        return;
+      }
+      crossingRaf = requestAnimationFrame(reanchorWhenAtRest);
+    }
+    watch(sheetMobile, (isSheet) => {
+      cancelCrossingWait();
+      crossingStart = performance.now();
+      if (isSheet) anchor.reset();
+      else reanchorWhenAtRest();
+    });
+    onBeforeUnmount(cancelCrossingWait);
 
     /** The window ride's own state, translated from the surface phases:
      *  the open/close endpoints are the compressed end (`--from`) and the
@@ -651,6 +774,12 @@ export default defineComponent({
           // later, the follow-up remeasure re-checks the natural height
           // under the base height transition (a growth that landed in the
           // last tick of the enter animates instead of snapping).
+          // A reopen must not inherit the previous cycle's lift. The reset
+          // runs BEFORE the morph arms: at this instant the enter has landed
+          // and nothing has pinned a height yet, so the top it adopts is the
+          // frame's true resting geometry — then the morph's own remeasure
+          // grows the frame from there with the anchor already live.
+          anchor.reset();
           morph.start();
           void nextTick(() => {
             if (machine.phase.value === "open") morph.remeasure();

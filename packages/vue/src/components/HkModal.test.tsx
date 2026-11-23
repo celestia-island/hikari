@@ -1044,3 +1044,357 @@ describe("HkModal blur plate", () => {
     }
   });
 });
+
+describe("HkModal top-edge anchor (centred frame must not fly)", () => {
+  // 2026-11-23 user direction: "where the content can change inside the
+  // card, do not let the whole card fly." The frame is centred by
+  // `translate: -50% -50%`, so a height morph of Δ lifts the whole window
+  // by Δ/2; the anchor folds the measured drift into --hk-modal-anchor-y.
+  function mountModal() {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: open.value, title: "Anchor" },
+            { default: () => h("div", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return {
+      container,
+      open,
+      frame: document.querySelector(".hk-modal-content") as HTMLElement,
+    };
+  }
+
+  it("folds a centred height drift into the anchor variable", async () => {
+    // A stubbed observer + a rect that composes the frame's own anchor
+    // variable (an engine reports the PAINTED box) makes the closed loop
+    // observable without a browser.
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return {
+          top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}),
+        } as DOMRect;
+      },
+    );
+    try {
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame).not.toBeNull();
+      // A centred growth lifted the top edge by 20px.
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // MUT:modal-no-anchor (dropping the useAnchoredTop wiring leaves the
+      // variable unset and this goes red).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("never writes the anchor on the mobile sheet branch", async () => {
+    // ≤767px the frame is a BOTTOM sheet: growth already goes upward from
+    // a fixed bottom edge, so anchoring the TOP would invert the motion.
+    const previousWidth = window.innerWidth;
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      () => ({ top: top.value, left: 0, bottom: top.value, right: 0,
+        width: 0, height: 0, x: 0, y: top.value, toJSON: () => ({}) }) as DOMRect,
+    );
+    try {
+      (window as { innerWidth: number }).innerWidth = 500;
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // MUT:modal-anchor-on-sheet (dropping the enabled gate writes the
+      // variable on the sheet branch and this goes red).
+
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      (window as { innerWidth: number }).innerWidth = previousWidth;
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("drops the offset on the next open (reopen never inherits the lift)", async () => {
+    // The anchor holds after a morph settles (documented), so a dialog that
+    // grew once is standing offset. The open edge must clear it, or the
+    // SECOND open starts lifted.
+    // MUT:modal-anchor-no-reopen-reset (deleting `anchor.reset()` at the
+    // open edge leaves the variable set across close→open; this goes red).
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    try {
+      const { frame, open } = mountModal();
+      for (let i = 0; i < 8; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+
+      // CLOSE → OPEN as an INTERRUPT (one tick apart): the frame node
+      // survives the abortive leave, so a stale offset would ride into the
+      // next cycle. This is the only reachable path on which the open-edge
+      // reset can matter — a full close unmounts the node and the variable
+      // dies with it (verified: the same assertion without the reset and
+      // with a settled close passes either way).
+      open.value = false;
+      await nextTick();
+      open.value = true;
+      for (let i = 0; i < 40; i++) await nextTick();
+      const reopened = (document.querySelector(".hk-modal-content")
+        ?? frame) as HTMLElement;
+      expect(reopened.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("re-anchors only after the settle window has passed (controlled clock)", async () => {
+    // The floor VALUE is what R7 flagged unpinnable: with real (sub-ms)
+    // happy-dom rAF, any floor in 0-320 ms collapses into the same sample.
+    // With the clock and the rAF queue under test control, the floor is
+    // directly observable: inside the window the armed correction survives;
+    // past it the re-anchor re-bases onto the landed top.
+    // MUT:modal-settle-floor (setting the settle floor to 160 makes the
+    // probe reset at the now=200 step and this goes red at the second
+    // assertion).
+    const callbacks: Array<() => void> = [];
+    const rafQueue: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    vi.stubGlobal("requestAnimationFrame", (cb: () => void) => {
+      rafQueue.push(cb);
+      return rafQueue.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => {});
+    const clock = { value: 0 };
+    vi.spyOn(performance, "now").mockImplementation(() => clock.value);
+    const top = { value: 200 };
+    const height = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const m = /(-?([\d.]+))px/.exec(own);
+        const shift = m ? Number(m[1]) : 0;
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: height.value, x: 0, y: rendered,
+          toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    const drive = (at: number) => {
+      clock.value = at;
+      const queued = rafQueue.splice(0);
+      const run = () => { for (const cb of queued) cb(); return nextTick(); };
+      return run();
+    };
+    try {
+      (window as { innerWidth: number }).innerWidth = 1200;
+      const { frame, open } = mountModal();
+      open.value = true;
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 4; i++) await nextTick();
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 4; i++) await nextTick();
+
+      // The height is deliberately left UNCHANGED here (the stability probe
+      // is satisfied from its second frame), so the ONLY variable left in
+      // the wait is elapsed vs the settle floor.
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // The armed correction folded in: +30 (anchor at the pre-crossing
+      // 200; the lift to 170 needs the frame painted 30px LOWER). Written
+      // IMMEDIATELY — the drift cb runs regardless of the pending probe.
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
+
+      // Inside the settle window (now=200 < 320): a probe frame runs but
+      // the re-anchor must not fire; the correction stays. MUT:modal-settle-
+      // floor (a 160 ms floor makes the probe re-anchor HERE, zeroing the
+      // correction to "" — this is the assertion that pins the floor value).
+      await drive(200);
+      await drive(200);
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
+
+      await drive(400);
+
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("clears the offset when the dialog becomes the mobile sheet", async () => {
+    // The gate alone only FREEZES the loop: an offset written on desktop
+    // survived into the sheet branch and was re-applied stale on the way
+    // back (R2 finding). The breakpoint watch clears it.
+    // MUT:modal-anchor-sheet-roundtrip (dropping `watch(sheetMobile, …)`
+    // leaves the variable set and this goes red).
+    const previousWidth = window.innerWidth;
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      private readonly cb: () => void;
+      constructor(cb: () => void) { this.cb = cb; callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    const top = { value: 200 };
+    /** The frame's live height — the stability probe's only clock. */
+    const morphHeight = { value: 200 };
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return { top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: morphHeight.value, x: 0, y: rendered,
+          toJSON: () => ({}) } as DOMRect;
+      },
+    );
+    try {
+      (window as { innerWidth: number }).innerWidth = 1200;
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("20px");
+
+      // Cross into the sheet branch: the desktop offset must go.
+      // useBreakpoint tracks the width through a `resize` listener, so the
+      // probe must dispatch one — assigning innerWidth alone is invisible.
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // …and coming back must not resurrect it.
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // R4's kill case: the frame is MID-MORPH when the crossing arrives.
+      // A re-base at that instant adopts a transient top, and the loop then
+      // bakes it into the resting position (a visible snap-then-lift).
+      // `data-hk-morphing` is useSizeMorph's own marker, so the way-out
+      // re-anchor defers until the frame settles.
+      // The morph is LIVE (the frame's own height is still changing) and has
+      // already moved the top edge — anything that re-bases NOW records a
+      // geometry the frame will not rest at.
+      morphHeight.value = 300;
+      (window as { innerWidth: number }).innerWidth = 500;
+      window.dispatchEvent(new Event("resize"));
+      for (let i = 0; i < 6; i++) await nextTick();
+      (window as { innerWidth: number }).innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+      // The drift fires MID-MORPH, just after the way-out crossing (the
+      // height is still stepping; the top is still at the sheet-leg 180).
+      // The fixed shape's deferred re-anchor has NOT fired yet (we are
+      // inside the 220 ms settle window), so the anchor is still armed at
+      // the pre-crossing 200 and a lift to 170 folds in as -30. The naive
+      // shape reset at the crossing (adopting the transient 180) — its own
+      // arms are already wrong.
+      await new Promise((r) => setTimeout(r, 60));
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // The crossing back lands MID-MORPH (the height is still stepping and
+      // the frame still sits at the sheet-leg top). Two things happen at a
+      // real crossing: the hook's own resize re-base adopts the geometry the
+      // frame has at that instant (a viewport change legitimately moves the
+      // block), and the deferred anchor reset re-bases again once the frame
+      // has settled. The settle window is what keeps that second re-base
+      // honest: a naive immediate reset re-bases on the TRANSIENT top and
+      // the landed geometry then disagrees with it by 10px.
+      top.value = 200;
+      morphHeight.value = 400;
+      await new Promise((r) => setTimeout(r, 320));
+      for (let i = 0; i < 6; i++) await nextTick();
+      // Settled: the anchor re-based onto the landed top, so no correction.
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+
+      // A fresh drift after the crossing corrects from the LANDED anchor:
+      // 200 → 170 is a 30px lift the loop folds back in. MUT:modal-crossing-
+      // rebase-midmorph (a naive immediate reset at the crossing re-based on
+      // the transient 180 and leaves only 10px here).
+      top.value = 170;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      // MUT:modal-crossing-rebase-midmorph (a naive immediate reset at the
+      // crossing re-bases on the transient 180 and lands 10px here instead
+      // of 30px).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("30px");
+    } finally {
+      (window as { innerWidth: number }).innerWidth = previousWidth;
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+});

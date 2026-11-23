@@ -627,13 +627,24 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
     const frame = container.querySelector(".s-auth-card");
     expect(frame).not.toBeNull();
 
+    // The frame is the ANCESTOR of the step tier — a per-generation card
+    // would sit INSIDE the tier instead (the shape before this change).
+    // MUT:step-swap-two-cards (rendering HkAuthCard per generation moves
+    // the card below this container and this goes red).
+    const stepTier = frame!.querySelector(":scope > .hk-tc");
+    expect(stepTier).not.toBeNull();
+
     step.value = "verify";
+    // ONE tick in, i.e. MID-dissolve: both generations are mounted, so a
+    // per-generation frame would already read two cards here. The frame
+    // node itself must survive (it owns the entrance keyframes, which is
+    // what the user saw replay as the card flying out and back in).
+    // MUT:step-swap-two-cards (a second `.s-auth-card` appears at this
+    // instant and both assertions go red).
+    await nextTick();
+    expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
+    expect(container.querySelector(".s-auth-card")).toBe(frame);
     for (let i = 0; i < 12; i++) await nextTick();
-    // A fresh `.s-auth-card` per step is the defect this pins: the frame
-    // node remounts (and replays .s-auth-card's entrance keyframes),
-    // which is what the user saw as the card flying out and back in.
-    // MUT:step-swap-two-cards (reverting the render to one HkAuthCard per
-    // generation puts a new node here — this goes red).
     expect(container.querySelector(".s-auth-card")).toBe(frame);
     expect(container.querySelectorAll(".s-auth-card")).toHaveLength(1);
 

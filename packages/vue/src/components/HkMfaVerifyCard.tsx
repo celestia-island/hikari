@@ -177,8 +177,14 @@ export const HkMfaVerifyCard = defineComponent({
      *  nudging toward the picker's other entries). Rendered only when
      *  set — the consumer owns the failure bookkeeping that decides it. */
     passkeyRetryHint: { type: String, default: undefined },
-    /** Focus the proof field when the card mounts (the verify step just
-     *  opened). Password re-focuses on every selection change too. */
+    /** Focus the factor ON STAGE when the card mounts (the verify step
+     *  just opened) and whenever the selected factor changes: the proof
+     *  field for `totp` / `sms` (HkOtpInput owns that one) / `password`,
+     *  or the passkey action for a factor with no field at all. A card
+     *  that only focused its text fields left the caret on `<body>` for a
+     *  passkey-only account — and a host swapping this card in for
+     *  another body (HkLoginFlow's step swap) then had nowhere to hand
+     *  focus to. */
     autofocus: { type: Boolean, default: false },
     /** Render ONLY the step-up body — the factor picker, the proof field,
      *  the submit and the back action, with NO HkAuthCard shell (no card

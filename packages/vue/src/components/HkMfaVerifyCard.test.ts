@@ -297,6 +297,47 @@ describe("HkMfaVerifyCard", () => {
   });
 });
 
+describe("HkMfaVerifyCard — autofocus arms the factor on stage", () => {
+  // The card's `autofocus` is a HOST contract (the verify step just
+  // opened), so it must land somewhere keyboard-reachable for EVERY
+  // factor — not only the ones with a text field.
+  // MUT:passkey-focus-drop (reverting focusStage to the password-only
+  // branch leaves activeElement on <body> and this goes red).
+  const settle = async () => {
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 20));
+  };
+
+  it("focuses the passkey action when the account has no field to focus", async () => {
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["passkey"], autofocus: true }));
+    await settle();
+    const action = container.querySelector<HTMLButtonElement>(".hk-btn-primary")!;
+    expect(action).not.toBeNull();
+    expect(document.activeElement).toBe(action);
+  });
+
+  it("focuses the password field when the password factor leads", async () => {
+    const { container } = mount(() =>
+      h(HkMfaVerifyCard, { factors: ["password"], autofocus: true }));
+    await settle();
+    const input = container.querySelector<HTMLInputElement>(
+      'input[name="mfa-verify-password"]',
+    )!;
+    expect(document.activeElement).toBe(input);
+  });
+
+  it("keeps the caret where the host put it when autofocus is off", async () => {
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    outside.focus();
+    mount(() => h(HkMfaVerifyCard, { factors: ["passkey"] }));
+    await settle();
+    expect(document.activeElement).toBe(outside);
+    outside.remove();
+  });
+});
+
 describe("HkMfaVerifyCard — bare mode (host-owned card shell)", () => {
   const flat = (key: string, fallback?: string) => fallback ?? key;
 

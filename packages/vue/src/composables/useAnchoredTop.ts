@@ -44,9 +44,10 @@ export function needsAnchorCorrection(
  * the card flying; nothing in CSS can express "grow downward only" for a
  * box whose position is owned by its parent's centering.
  *
- * How it works: a ResizeObserver on `target` fires on every size change
- * (before paint, so the correction lands in the same frame the growth
- * did), the element's current viewport top is compared against the top
+ * How it works: a ResizeObserver on `target` fires on size changes (the
+ * observer delivers once per frame at most, so a smooth growth arrives as
+ * a stream of frames, each corrected before it paints), the element's
+ * current viewport top is compared against the top
  * recorded at rest, and the difference is folded into a `translateY` on
  * the SAME element — painting it back onto its resting top. Consequences
  * worth knowing:
@@ -59,8 +60,13 @@ export function needsAnchorCorrection(
  *   loop cannot oscillate and the correction is exact after one step.
  * - The shift is kept (not released) when the morph settles: releasing it
  *   would slide the block back to its layout position, i.e. replay the
- *   very motion this removes. It oscillates around 0 across symmetric
- *   swaps (account → verify → account returns it to 0 by construction).
+ *   very motion this removes. It therefore ACCUMULATES across swaps, and a
+ *   symmetric pair returns it to where it started only when both legs are
+ *   measured the same way — the shipped symmetric swaps (account → verify
+ *   → account, channel A → B → A) do, verified on the browser rig, but
+ *   that is an observation about those swaps, not a theorem: an asymmetric
+ *   series can leave a residual offset of at most half the largest height
+ *   delta seen so far.
  * - At rest the anchor re-bases to wherever the block actually sits, so a
  *   legitimate re-position (viewport resize, a line above the block
  *   appearing, a late webfont reflow) is adopted instead of being fought.

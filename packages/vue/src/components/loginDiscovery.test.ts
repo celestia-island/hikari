@@ -142,9 +142,11 @@ describe("hkIsSameOriginPath", () => {
     expect(hkIsSameOriginPath("https://evil.example")).toBe(false);
     expect(hkIsSameOriginPath("console")).toBe(false);
     expect(hkIsSameOriginPath("")).toBe(false);
-    // MUT:no-backslash (browsers turn `/\host` into `//host`), and no
-    // control or display-reshaping format characters: the value ends up in
-    // a `Location` header. The same rule as kirino's navigation-target check.
+    // MUT:no-backslash — a path with a backslash (browsers turn `/\host`
+    // into `//host`), a control character (C0, DEL and the C1 range), a
+    // line separator or a display-reshaping format character never passes,
+    // because the value ends up in a `Location` header; an internationalised
+    // path always does. The same rule as kirino's navigation-target check.
     for (const bad of [
       "/\\evil.example/x",
       "/\nevil",

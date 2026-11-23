@@ -2,9 +2,9 @@
 // That first parse returns the fallback; the component must re-parse once
 // `mermaidReady` settles, or the board stays a code block for its whole life.
 //
-// Every other HkMermaidDiagram case awaits `mermaidReady` *before* mounting, so
-// none of them enter this window — measured by deleting the `engineEpoch` retry:
-// with it the board appears, without it the fallback stays.
+// MUT:engine-epoch — every other HkMermaidDiagram case awaits `mermaidReady`
+// *before* mounting, so none of them enter this window; deleting the
+// `engineEpoch` retry keeps the fallback where the board should appear.
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick } from "vue";
 

@@ -1,17 +1,16 @@
 // Fault-injection pins for the Mermaid facade: a broken wrapper must degrade the
 // component, not abort the module graph that hosts it (#1498).
 //
-// Why this file exists: `wasmEngine` used to `import * as mermaidWrapper` statically,
-// so a wrapper that threw while being evaluated took the whole page down before
-// any `try` in this file could run — measured with the stub below: the facade
-// module itself could not be imported, which in a real app is a blank `#app`
-// and one uncaught error.
+// MUT:static-import — before the fix, ``wasmEngine`` used `import * as mermaidWrapper`
+// statically, so a wrapper that threw while being evaluated took the whole page
+// down before any `try` in this file could run: the facade module itself could
+// not be imported, which in a real app is a blank `#app` and one uncaught error.
 //
-// The `vi.mock` specifier must resolve to the SAME module the facade's dynamic
-// `import()` loads. Sitting beside the facade is the easy way to get that (the
-// two relative paths coincide); it is convention, not a requirement — measured,
-// a pin one directory away with a corrected specifier is still applied and
-// still bites. What matters is the resolved module id, not the depth.
+// MUT:pin-relocated — the `vi.mock` specifier must resolve to the SAME module
+// the facade's dynamic `import()` loads. Sitting beside the facade is the easy
+// way to get that (the two relative paths coincide); it is convention, not a
+// requirement: a pin one directory away with a corrected specifier is still
+// applied and still bites. What matters is the module id, not the depth.
 //
 // MUT:* anchors each behavioural claim to the mutation that shows it; do not
 // restate a claim here without re-running its probe.

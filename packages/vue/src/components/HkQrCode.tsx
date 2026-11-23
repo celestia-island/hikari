@@ -56,6 +56,12 @@ export const HkQrCode = defineComponent({
     const { t } = useI18n();
     const canvasRef = ref<HTMLCanvasElement | null>(null);
 
+    // At most ONE ready-retry per component. Cleared only by a successful draw,
+    // so a `qrReady` that has already settled plus a `qrMatrix` that keeps
+    // refusing cannot schedule itself again — measured without this bound: the
+    // redraw chain never ends and the page dies of OOM before a test can report.
+    let retriedAfterReady = false;
+
     const dark = computed(() => (props.inverse ? props.colorLight : props.colorDark));
     const light = computed(() => (props.inverse ? props.colorDark : props.colorLight));
     const hasValue = computed(() => props.value.trim().length > 0);
@@ -72,7 +78,12 @@ export const HkQrCode = defineComponent({
       } catch (error) {
         if (error instanceof QrNotReadyError) {
           // Surfaced, not swallowed: a component that fails to load must not
-          // leave a silently blank canvas.
+          // leave a silently blank canvas — but it may only ask once.
+          if (retriedAfterReady) {
+            console.error("[hikari] QR component still not usable after it reported ready");
+            return;
+          }
+          retriedAfterReady = true;
           void qrReady
             .then(() => draw())
             .catch((readyError) => {
@@ -82,6 +93,7 @@ export const HkQrCode = defineComponent({
         }
         throw error;
       }
+      retriedAfterReady = false; // a real matrix means the surface works again
       const count = matrix.length;
       const totalModules = count + props.margin * 2;
       const dpr = (typeof window !== "undefined" && window.devicePixelRatio) || 1;

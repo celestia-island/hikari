@@ -71,6 +71,10 @@ function ensureLoadedOnce(): Promise<void> {
         // a waiting host the component is usable when it is not (measured — the
         // facade stayed silent and every later call returned nothing).
         loadFailure = new QrNotReadyError(error);
+        // Clear the cached attempt so the next call retries, matching
+        // `useHighlight`: a transient failure (a 404, a dropped connection)
+        // otherwise degrades this component for the rest of the session.
+        loadPromise = undefined;
         throw loadFailure;
       });
   }
@@ -82,10 +86,19 @@ function ensureLoadedOnce(): Promise<void> {
  *
  * Safe to ignore for the common path — `qrMatrix` works without waiting — but
  * a host that can wait (`HkQrCode` re-draws on it) should.
+ *
+ * Derived lazily rather than captured once: a failed attempt clears the cached
+ * promise so a later host can retry, and this getter then reflects that attempt
+ * instead of replaying the first rejection for the rest of the session.
  */
-export const qrReady: Promise<void> = ensureLoadedOnce().then(() => {
-  if (!surface) throw loadFailure ?? new QrNotReadyError();
-});
+export function whenQrReady(): Promise<void> {
+  return ensureLoadedOnce().then(() => {
+    if (!surface) throw loadFailure ?? new QrNotReadyError();
+  });
+}
+
+/** Snapshot of the first attempt, kept for callers that only want a value. */
+export const qrReady: Promise<void> = whenQrReady();
 
 /** Keeps the declaration module live for bundlers that honour `sideEffects`. */
 export const qrCapabilities = QR_CAPABILITIES;
@@ -105,7 +118,11 @@ qrReady.catch(() => {
  * generator it replaced), and `QrNotReadyError` if the component is unusable.
  */
 export function qrMatrix(text: string, opts: QrMatrixOptions = {}): boolean[][] {
-  if (!surface) throw loadFailure ?? new QrNotReadyError();
+  if (!surface) {
+    // Start (or retry) a load; this call still refuses.
+    void ensureLoadedOnce();
+    throw loadFailure ?? new QrNotReadyError();
+  }
   const level = (opts.errorCorrectionLevel ?? "M").toLowerCase() as
     | "l"
     | "m"

@@ -58,8 +58,9 @@
 //   * the host `class` is appended to the root span (Vue spreads attrs, so a
 //     caller class also lands on the root).
 
-use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike};
 use hikari_i18n::Language;
+use jiff::civil::Date;
+use jiff::civil::DateTime as CivilDateTime;
 
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -199,7 +200,7 @@ pub fn date_tag_pad2(value: u32) -> String {
 /// The part stream for one date in the given locale — Vue's
 /// `formatToParts` equivalent. Empty literals are skipped (Vue's
 /// `part.value ? <span> : null` guard).
-pub fn date_tag_parts(date: NaiveDate, language: Language) -> Vec<DateTagPart> {
+pub fn date_tag_parts(date: Date, language: Language) -> Vec<DateTagPart> {
     let layout = date_tag_layout(language);
     let mut parts = Vec::with_capacity(5);
     for (index, field) in layout.order.iter().enumerate() {
@@ -212,16 +213,22 @@ pub fn date_tag_parts(date: NaiveDate, language: Language) -> Vec<DateTagPart> {
         parts.push(match field {
             // Vue: `year: "numeric"` — no padding, no grouping.
             DateTagField::Year => DateTagPart::Year(format!("{}", date.year())),
-            DateTagField::Month => DateTagPart::Month(date_tag_pad2(date.month())),
-            DateTagField::Day => DateTagPart::Day(date_tag_pad2(date.day())),
+            DateTagField::Month => DateTagPart::Month(date_tag_pad2(date_tag_field(date.month()))),
+            DateTagField::Day => DateTagPart::Day(date_tag_pad2(date_tag_field(date.day()))),
         });
     }
     parts
 }
 
+/// `civil::Date::month()` / `::day()` are `i8`; the CLDR part builder pads
+/// with `u32`. One widening point for the whole module.
+fn date_tag_field(value: i8) -> u32 {
+    u32::from(value.unsigned_abs())
+}
+
 /// The muted time segment (`hour + minute`, 2-digit) — `None` when the pill
 /// did not opt in (`time` is off), matching Vue's `timeText` computed.
-pub fn date_tag_time_text(date: NaiveDateTime, time: bool) -> Option<String> {
+pub fn date_tag_time_text(date: CivilDateTime, time: bool) -> Option<String> {
     if !time {
         return None;
     }
@@ -230,7 +237,7 @@ pub fn date_tag_time_text(date: NaiveDateTime, time: bool) -> Option<String> {
 
 /// `YYYY-M-D` → a calendar date, rejecting rollovers (`2026-02-31` is not a
 /// real day, so it never normalizes into March).
-fn date_tag_parse_ymd(text: &str) -> Option<NaiveDate> {
+fn date_tag_parse_ymd(text: &str) -> Option<Date> {
     let mut pieces = text.split('-');
     let year = pieces.next()?.parse::<i32>().ok()?;
     let month = pieces.next()?.parse::<u32>().ok()?;
@@ -239,7 +246,21 @@ fn date_tag_parse_ymd(text: &str) -> Option<NaiveDate> {
     if pieces.next().is_some() {
         return None;
     }
-    NaiveDate::from_ymd_opt(year, month, day)
+    date_tag_date(year, month, day)
+}
+
+/// `(year, month, day)` in the OUT-OF-RANGE form chrono rejected, so the
+/// accepted set stays what it was: `civil::Date` spans `-9999..=9999`, while
+/// chrono accepted `1..=9999`, and the component's documented contract is the
+/// rejected rollovers (`2026-02-31`, `2026-13-01`) plus a 4-digit year.
+fn date_tag_date(year: i32, month: u32, day: u32) -> Option<Date> {
+    if !(1..=9999).contains(&year) {
+        return None;
+    }
+    let year = i16::try_from(year).ok()?;
+    let month = i8::try_from(month).ok()?;
+    let day = i8::try_from(day).ok()?;
+    Date::new(year, month, day).ok()
 }
 
 /// Parse the Rust-side value surface into a date-time.
@@ -248,7 +269,7 @@ fn date_tag_parse_ymd(text: &str) -> Option<NaiveDate> {
 /// `YYYY-M-D HH:MM[:SS]`, and a decimal epoch-MILLISECONDS string. Anything
 /// else is `None`, the same "invalid input renders the empty pill" branch as
 /// Vue's `Number.isNaN(d.getTime())` guard.
-pub fn date_tag_parse_value(raw: &str) -> Option<NaiveDateTime> {
+pub fn date_tag_parse_value(raw: &str) -> Option<CivilDateTime> {
     let text = raw.trim();
     if text.is_empty() {
         return None;
@@ -257,8 +278,12 @@ pub fn date_tag_parse_value(raw: &str) -> Option<NaiveDateTime> {
     // `new Date(number)` contract). A zone or clock suffix is not a number.
     if text.len() >= 12 && text.chars().all(|c| c.is_ascii_digit()) {
         let millis = text.parse::<i64>().ok()?;
-        return chrono::DateTime::<chrono::Utc>::from_timestamp_millis(millis)
-            .map(|stamp| stamp.naive_utc());
+        // Explicitly UTC, exactly as chrono's `naive_utc()` read it — the
+        // offset is named here so a future reader cannot mistake this for a
+        // wall-clock interpretation.
+        return jiff::Timestamp::from_millisecond(millis)
+            .ok()
+            .map(|stamp| stamp.to_zoned_datetime(jiff::tz::TimeZone::UTC).datetime());
     }
     let (date_text, time_text) = match text.find(['T', ' ']) {
         Some(index) => (&text[..index], Some(&text[index + 1..])),
@@ -266,7 +291,7 @@ pub fn date_tag_parse_value(raw: &str) -> Option<NaiveDateTime> {
     };
     let date = date_tag_parse_ymd(date_text)?;
     let Some(time_text) = time_text else {
-        return date.and_hms_opt(0, 0, 0);
+        return Some(date.to_datetime(jiff::civil::Time::midnight()));
     };
     let mut pieces = time_text.split(':');
     let hour = pieces.next()?.parse::<u32>().ok()?;
@@ -278,7 +303,16 @@ pub fn date_tag_parse_value(raw: &str) -> Option<NaiveDateTime> {
     if pieces.next().is_some() {
         return None;
     }
-    date.and_hms_opt(hour, minute, second)
+    date_tag_clock(hour, minute, second).map(|clock| date.to_datetime(clock))
+}
+
+/// A wall-clock `hour:minute:second` — same rejection shape chrono's
+/// `and_hms_opt` had (an out-of-range field yields `None`, never a rollover).
+fn date_tag_clock(hour: u32, minute: u32, second: u32) -> Option<jiff::civil::Time> {
+    let hour = i8::try_from(hour).ok()?;
+    let minute = i8::try_from(minute).ok()?;
+    let second = i8::try_from(second).ok()?;
+    jiff::civil::Time::new(hour, minute, second, 0).ok()
 }
 
 #[define_props]
@@ -357,8 +391,8 @@ impl StyledComponent for DateTagComponent {
 mod tests {
     use super::*;
 
-    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(year, month, day).expect("valid test date")
+    fn date(year: i32, month: u32, day: u32) -> Date {
+        Date::new(year as i16, month as i8, day as i8).expect("valid test date")
     }
 
     #[test]
@@ -478,6 +512,36 @@ mod tests {
         assert_eq!(date_tag_time_text(parsed, true), Some("00:00".to_string()));
         // A short digit string is not an epoch value.
         assert_eq!(date_tag_parse_value("20241006"), None);
+    }
+
+    /// The epoch arm reads UTC, and the year range is chrono's `1..=9999`.
+    ///
+    /// Pins what the `chrono` -> `jiff` swap could have moved here.
+    ///
+    /// Two real ones: `civil::Date` spans `-9999..=9999`, so year `0` and
+    /// negative years would parse without the explicit guard where chrono
+    /// rejected them; and the epoch arm must stay UTC-anchored. (An earlier
+    /// version of this comment also claimed `civil::DateTime`'s `Display`
+    /// carries an offset — it does not: it renders `2024-10-06T00:00:00`.
+    /// The assertion below pins the offset-free shape by value, which is the
+    /// useful part.)
+    #[test]
+    fn date_tag_epoch_arm_is_utc_and_the_year_range_is_chronos() {
+        // A positive epoch instants pin that the reading is UTC and not the
+        // host zone: 1728172800000 == 2024-10-06T00:00:00Z.
+        let parsed = date_tag_parse_value("1728172800000").expect("epoch millis");
+        assert_eq!(parsed.date(), date(2024, 10, 6));
+        // The value surface stays offset-free, so it round-trips into the
+        // accepted `YYYY-M-DTHH:MM` shape.
+        assert_eq!(parsed.to_string(), "2024-10-06T00:00:00");
+        // Year 0 and negative years are OUT of the accepted set (jiff would
+        // take them; chrono would not).
+        assert_eq!(date_tag_parse_value("0000-01-01"), None);
+        assert_eq!(date_tag_parse_value("0000-01-01T00:00"), None);
+        // The boundaries chrono accepted still parse.
+        assert!(date_tag_parse_value("0001-01-01").is_some());
+        assert!(date_tag_parse_value("9999-12-31").is_some());
+        assert_eq!(date_tag_parse_value("10000-01-01"), None);
     }
 
     #[test]

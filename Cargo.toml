@@ -61,7 +61,30 @@ include_dir = "^0.7"
 # ------
 # Data and serialization
 # ------
-chrono = { version = "^0.4", features = ["serde", "unstable-locales"] }
+# Date/time. Replaces `chrono` (RUSTSEC-2026-0543, unmaintained).
+#
+# `serde` is kept even though no hikari type serializes a date today: the
+# components are published, so a consumer that puts a `Timestamp` on its own
+# wire keeps the standard RFC 3339 shape without asking us for a feature.
+#
+# `js` is load-bearing and must stay. Without it jiff PANICS on
+# `wasm32-unknown-unknown` — the target the browser build of these components
+# actually compiles for — because `std` has no clock there:
+# jiff-1.0.2 `src/now.rs` panics outright rather than letting `std` do it.
+# With it, the browser build reads the real clock through `js-sys`, which is
+# what `chrono`'s `wasmbind` clock did before this migration (`js-sys` is
+# already in the browser closure for other reasons, so this edge is free).
+# Dropping the feature still compiles and still passes every native test (the
+# panic is a wasm-only runtime path), so nothing except this comment protects
+# it.
+# It is inert off-wasm: jiff gates the whole path on
+# `target_arch = "wasm32"` + `target_os = "unknown"`, so the wasip2 closure
+# does not grow `wasm-bindgen`.
+#
+# There is no `unstable-locales` counterpart on purpose — jiff ships no locale
+# catalogue, and the calendar vocabulary has come from `hikari_i18n::dates`
+# (CLDR) since #1454, so chrono's `LC_TIME` mirror was already dead.
+jiff = { version = "^1", features = ["serde", "js"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = { version = "^1" }
 ron = "^0.8"

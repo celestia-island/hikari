@@ -55,7 +55,7 @@
 // / `shift_year` / `pick_month` / `pick_year` / `reset` / `reanchored`), so
 // the host stays a one-line reducer and the state machine is unit-testable.
 // `open` is controlled too ([`DatePickerProps::on_open_change`]); `today` is
-// an optional prop that falls back to `Local::now()`.
+// an optional prop that falls back to the system time zone's today.
 //
 // Behaviour deltas vs Vue (documented):
 //   * no `<Teleport>` and no popup-manager: the calendar renders in place
@@ -106,10 +106,10 @@
 // API exposed that Vue does not have is gone; hosts that need a formatter keep
 // it on their side.
 
-use chrono::{Datelike, NaiveDate};
 use hikari_i18n::dates::{DateVocabulary, date_vocabulary};
 use hikari_i18n::{Language, t};
 use hikari_icons::{Icon, MdiIcon};
+use jiff::civil::Date;
 
 use crate::basic::button::{Button, ButtonSize};
 use crate::basic::date_tag::active_language;
@@ -190,7 +190,7 @@ pub struct DatePickerViewState {
     /// Vue: `viewYear`.
     pub year: i32,
     /// Vue: `viewMonth` (0-based inside Vue, 1-based here — the month number
-    /// `chrono` and the ISO wire format both use).
+    /// the ISO wire format uses).
     pub month: u32,
     /// Vue: `view`.
     pub view: DatePickerView,
@@ -203,10 +203,10 @@ pub struct DatePickerViewState {
 impl DatePickerViewState {
     /// Vue's initial state: the anchor date's month, the day view, an empty
     /// drill stack, forward drift.
-    pub fn anchored(anchor: NaiveDate) -> Self {
+    pub fn anchored(anchor: Date) -> Self {
         DatePickerViewState {
-            year: anchor.year(),
-            month: anchor.month(),
+            year: date_picker_year(anchor),
+            month: date_picker_month(anchor),
             view: DatePickerView::Days,
             stack: Vec::new(),
             drift: DatePickerDrift::Fwd,
@@ -215,10 +215,10 @@ impl DatePickerViewState {
 
     /// `resetView()` on a new anchor, KEEPING the drift direction — Vue's
     /// `toggle()` re-anchor (it only resets the drill, not `drift`).
-    pub fn reset(self, anchor: NaiveDate) -> Self {
+    pub fn reset(self, anchor: Date) -> Self {
         DatePickerViewState {
-            year: anchor.year(),
-            month: anchor.month(),
+            year: date_picker_year(anchor),
+            month: date_picker_month(anchor),
             view: DatePickerView::Days,
             stack: Vec::new(),
             drift: self.drift,
@@ -228,7 +228,7 @@ impl DatePickerViewState {
     /// Vue's `watch(() => props.modelValue)`: re-anchor, drift BACK, and
     /// reset the drill-down (an external model change is a reset, not a
     /// drill).
-    pub fn reanchored(self, anchor: NaiveDate) -> Self {
+    pub fn reanchored(self, anchor: Date) -> Self {
         DatePickerViewState {
             drift: DatePickerDrift::Back,
             ..self.reset(anchor)
@@ -311,7 +311,7 @@ impl DatePickerViewState {
 /// `^\d{4}-\d{2}-\d{2}$` (unpadded input is rejected, like the regex) and a
 /// rollover such as `2026-02-31` is rejected too (Vue's parser validates the
 /// normalized date instead of letting `new Date` roll it into March).
-pub fn parse_iso_date(value: &str) -> Option<NaiveDate> {
+pub fn parse_iso_date(value: &str) -> Option<Date> {
     let bytes = value.as_bytes();
     if bytes.len() != 10 || bytes[4] != b'-' || bytes[7] != b'-' {
         return None;
@@ -326,11 +326,43 @@ pub fn parse_iso_date(value: &str) -> Option<NaiveDate> {
     let year = digits(0..4)? as i32;
     let month = digits(5..7)?;
     let day = digits(8..10)?;
-    NaiveDate::from_ymd_opt(year, month, day)
+    date_picker_date(year, month, day)
 }
 
-/// `NaiveDate` → the `YYYY-MM-DD` wire format (Vue: `toISODate`).
-pub fn to_iso_date(date: NaiveDate) -> String {
+/// `(year, month, day)` in the OUT-OF-RANGE form chrono rejected, so the
+/// accepted set is unchanged: chrono took `1..=9999` while `civil::Date`
+/// spans `-9999..=9999`, and the wire format here is a 4-digit `YYYY`.
+fn date_picker_date(year: i32, month: u32, day: u32) -> Option<Date> {
+    if !(1..=9999).contains(&year) {
+        return None;
+    }
+    let year = i16::try_from(year).ok()?;
+    let month = i8::try_from(month).ok()?;
+    let day = i8::try_from(day).ok()?;
+    Date::new(year, month, day).ok()
+}
+
+/// `civil::Date::year()` is `i16`; the picker's view state and props carry
+/// `i32`. One widening point, so the two never drift into an `as` at a call
+/// site.
+pub(crate) fn date_picker_year(date: Date) -> i32 {
+    i32::from(date.year())
+}
+
+/// `civil::Weekday`'s Sunday-zero offset is `i8`; the CLDR vocabulary indexes
+/// with `u32` (`Sun = 0`).
+fn date_picker_sunday_offset(date: Date) -> u32 {
+    u32::from(date.weekday().to_sunday_zero_offset().unsigned_abs())
+}
+
+/// `civil::Date::month()` is `i8` (always `1..=12`); the view state and the
+/// CLDR vocabulary carry `u32`.
+pub(crate) fn date_picker_month(date: Date) -> u32 {
+    u32::from(date.month().unsigned_abs())
+}
+
+/// `Date` → the `YYYY-MM-DD` wire format (Vue: `toISODate`).
+pub fn to_iso_date(date: Date) -> String {
     format!("{}-{:02}-{:02}", date.year(), date.month(), date.day())
 }
 
@@ -380,37 +412,57 @@ pub fn shift_month(year: i32, month: u32, delta: i32) -> (i32, u32) {
     (year + year_delta, month as u32)
 }
 
-/// The 42 day cells of a month grid (6 rows × 7 columns), starting on the
-/// locale's first weekday — Vue's `cells` computed, one to one.
-pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<NaiveDate> {
-    let Some(first) = NaiveDate::from_ymd_opt(year, clamp_month(month), 1) else {
+/// The number of cells a month grid always renders (6 rows × 7 columns).
+pub const MONTH_GRID_CELLS: usize = 42;
+
+/// The REAL calendar days of a month grid (6 rows × 7 columns), starting on
+/// the locale's first weekday — Vue's `cells` computed, one to one.
+///
+/// This yields at most [`MONTH_GRID_CELLS`] days and can yield FEWER: the
+/// accepted input range is `1..=9999`, but December 9999's trailing row runs
+/// into 10000, which `civil::Date` cannot represent. The missing tail is
+/// padded by the RENDER as inert out-of-range cells
+/// ([`date_picker_pad_cells`]) — never by repeating a real date, which would
+/// draw a duplicate day button.
+///
+/// Walking the date and stopping at the range edge (the shape this function
+/// started with after the `chrono` -> `jiff` swap) is what shortened that
+/// month to 34 cells: chrono allowed year 10000, jiff does not.
+pub fn month_grid(year: i32, month: u32, first_weekday: u32) -> Vec<Date> {
+    let Some(first) = date_picker_date(year, clamp_month(month), 1) else {
         return Vec::new();
     };
     // Vue: `(first.getDay() - firstDay + 7) % 7` days of leading slack.
-    let lead = (first.weekday().num_days_from_sunday() + 7 - first_weekday % 7) % 7;
-    let mut cursor = first;
-    for _ in 0..lead {
-        cursor = match cursor.pred_opt() {
-            Some(previous) => previous,
-            None => return Vec::new(),
-        };
-    }
-    let mut cells = Vec::with_capacity(42);
-    for _ in 0..42 {
-        cells.push(cursor);
-        cursor = match cursor.succ_opt() {
-            Some(next) => next,
+    let lead =
+        (i32::from(first.weekday().to_sunday_zero_offset()) + 7 - (first_weekday % 7) as i32) % 7;
+    let mut cells = Vec::with_capacity(MONTH_GRID_CELLS);
+    // One linear walk over the grid's columns: cell `i` is `first` shifted by
+    // `i - lead`, so the first `lead` cells are the previous month's tail.
+    for index in 0..MONTH_GRID_CELLS as i32 {
+        let offset = index - lead;
+        match first
+            .checked_add(jiff::Span::new().days(i64::from(offset)))
+            .ok()
+        {
+            Some(date) => cells.push(date),
+            // Off the end of `civil::Date` (only past December 9999): stop
+            // and let the render pad the remainder with inert cells.
             None => break,
-        };
+        }
     }
     cells
+}
+
+/// How many inert cells the render must append to fill a 42-cell grid.
+pub fn date_picker_pad_cells(real_cells: usize) -> usize {
+    MONTH_GRID_CELLS.saturating_sub(real_cells)
 }
 
 /// The 42 day cells of a locale's month grid (Vue: the `cells` computed, one
 /// to one). A thin adapter on purpose: the render asks the LOCALE for its
 /// first weekday instead of passing a constant, and a test can pin that
 /// choice without mounting the component.
-pub fn locale_month_grid(locale: &DateLocale, year: i32, month: u32) -> Vec<NaiveDate> {
+pub fn locale_month_grid(locale: &DateLocale, year: i32, month: u32) -> Vec<Date> {
     month_grid(year, month, locale.first_weekday())
 }
 
@@ -461,7 +513,7 @@ pub fn native_change_emission(
 /// day keys (already normalized by the parser), and — exactly like Vue — the
 /// comparison is a lexicographic string comparison, which is chronological
 /// for zero-padded ISO dates.
-pub fn is_disabled_day(day: NaiveDate, min_key: Option<&str>, max_key: Option<&str>) -> bool {
+pub fn is_disabled_day(day: Date, min_key: Option<&str>, max_key: Option<&str>) -> bool {
     let key = to_iso_date(day);
     if let Some(min_key) = min_key
         && key.as_str() < min_key
@@ -590,9 +642,9 @@ impl DateLocale {
     }
 
     /// The full weekday name of one date (Vue: `dateStyle: "full"`).
-    pub fn weekday_long(&self, date: NaiveDate) -> String {
+    pub fn weekday_long(&self, date: Date) -> String {
         self.vocabulary
-            .weekday_long(date.weekday().num_days_from_sunday())
+            .weekday_long(date_picker_sunday_offset(date))
             .to_string()
     }
 
@@ -609,8 +661,8 @@ impl DateLocale {
     }
 
     /// The trigger's display text (Vue: `dateStyle: "medium"`).
-    pub fn display_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short_format(date.month());
+    pub fn display_text(&self, date: Date) -> String {
+        let month = self.month_short_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}年{}月{}日", date.year(), date.month(), date.day())
@@ -632,8 +684,8 @@ impl DateLocale {
 
     /// The MONTH + DAY medium text WITHOUT a year (Vue's `triggerDateTime`
     /// formatter: `{month: "short", day: "numeric"}`).
-    pub fn short_text(&self, date: NaiveDate) -> String {
-        let month = self.month_short_format(date.month());
+    pub fn short_text(&self, date: Date) -> String {
+        let month = self.month_short_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!("{}月{}日", date.month(), date.day())
@@ -649,23 +701,23 @@ impl DateLocale {
     }
 
     /// The day cell's `aria-label` (Vue: `dateStyle: "full"`).
-    pub fn full_text(&self, date: NaiveDate) -> String {
+    pub fn full_text(&self, date: Date) -> String {
         let weekday = self.weekday_long(date);
-        let month = self.month_long_format(date.month());
+        let month = self.month_long_format(date_picker_month(date));
         match self.language {
             Language::ChineseSimplified | Language::ChineseTraditional | Language::Japanese => {
                 format!(
                     "{}年{}月{}日{}",
-                    date.year(),
-                    date.month(),
+                    date_picker_year(date),
+                    date_picker_month(date),
                     date.day(),
                     weekday
                 )
             }
             Language::Korean => format!(
                 "{}년 {}월 {}일 {}",
-                date.year(),
-                date.month(),
+                date_picker_year(date),
+                date_picker_month(date),
                 date.day(),
                 weekday
             ),
@@ -716,9 +768,15 @@ pub fn date_locale(language: Language) -> DateLocale {
     }
 }
 
-/// Today's local calendar date (Vue: `new Date()`, refreshed on every open).
-pub fn today_date() -> NaiveDate {
-    chrono::Local::now().date_naive()
+/// Today's calendar date in the SYSTEM time zone (Vue: `new Date()`,
+/// refreshed on every open).
+///
+/// `ZonedDateTime::now()` resolves the host zone explicitly; the value matches
+/// the old `Local::now()` on every target where a clock exists. On
+/// `wasm32-unknown-unknown` it needs jiff's `js` feature — without it jiff
+/// panics outright (see the workspace `jiff` declaration).
+pub fn today_date() -> Date {
+    jiff::ZonedDateTime::now().date()
 }
 
 // ── inline SVG (the two glyphs the Rust icon set does not carry) ─────────
@@ -865,8 +923,8 @@ struct DatePickerWiring {
     disabled: bool,
     open: bool,
     state: DatePickerViewState,
-    anchor_date: NaiveDate,
-    today: NaiveDate,
+    anchor_date: Date,
+    today: Date,
     min_key: Option<String>,
     max_key: Option<String>,
     clearable: bool,
@@ -911,7 +969,7 @@ impl DatePickerWiring {
     }
 
     /// Vue's `selectDay(d)`: reject a bounded day, emit the ISO key, close.
-    fn commit_day(&self, day: NaiveDate) {
+    fn commit_day(&self, day: Date) {
         if is_disabled_day(day, self.min_key.as_deref(), self.max_key.as_deref()) {
             return;
         }
@@ -1314,17 +1372,19 @@ fn build_content(
     locale: &DateLocale,
     view_year: i32,
     view_month: u32,
-    selected: Option<NaiveDate>,
-    today: NaiveDate,
+    selected: Option<Date>,
+    today: Date,
     _is_touch: bool,
 ) -> VNode {
     match wiring.state.view {
         DatePickerView::Months => {
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for month in 1..=12u32 {
-                let is_selected =
-                    selected.is_some_and(|day| day.year() == view_year && day.month() == month);
-                let is_today = today.year() == view_year && today.month() == month;
+                let is_selected = selected.is_some_and(|day| {
+                    date_picker_year(day) == view_year && date_picker_month(day) == month
+                });
+                let is_today =
+                    date_picker_year(today) == view_year && date_picker_month(today) == month;
                 let mut class = String::from("hk-dp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1357,8 +1417,8 @@ fn build_content(
             let mut cells: Vec<VNode> = Vec::with_capacity(12);
             for offset in 0..12 {
                 let year = start + offset;
-                let is_selected = selected.is_some_and(|day| day.year() == year);
-                let is_today = today.year() == year;
+                let is_selected = selected.is_some_and(|day| date_picker_year(day) == year);
+                let is_today = date_picker_year(today) == year;
                 let mut class = String::from("hk-dp-cell");
                 if is_selected {
                     class.push_str(" is-selected");
@@ -1397,9 +1457,11 @@ fn build_content(
                 .collect();
 
             let cells = locale_month_grid(locale, view_year, view_month);
-            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len());
+            let pad_cells = date_picker_pad_cells(cells.len());
+            let mut day_buttons: Vec<VNode> = Vec::with_capacity(cells.len() + pad_cells);
             for day in cells {
-                let out_of_month = day.month() != view_month || day.year() != view_year;
+                let out_of_month =
+                    date_picker_month(day) != view_month || date_picker_year(day) != view_year;
                 let day_disabled =
                     is_disabled_day(day, wiring.min_key.as_deref(), wiring.max_key.as_deref());
                 let is_selected = selected == Some(day);
@@ -1426,8 +1488,16 @@ fn build_content(
                         disabled: day_disabled,
                         "aria-label": aria_label,
                         onclick: move |_event: MouseEvent| cell_wiring.commit_day(day),
-                        {day.day()}
+                        {u32::from(day.day().unsigned_abs())}
                     }
+                });
+            }
+            // Past December 9999 the calendar has no representable day, so the
+            // grid's final row is filled with inert out-of-month cells rather
+            // than left ragged (or, worse, repeated real dates).
+            for _ in 0..pad_cells {
+                day_buttons.push(rsx! {
+                    div { class: "hk-dp-cell is-out" }
                 });
             }
 
@@ -1460,8 +1530,8 @@ impl StyledComponent for DatePickerComponent {
 mod tests {
     use super::*;
 
-    fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-        NaiveDate::from_ymd_opt(year, month, day).expect("valid test date")
+    fn date(year: i32, month: u32, day: u32) -> Date {
+        Date::new(year as i16, month as i8, day as i8).expect("valid test date")
     }
 
     // LEDGER L127 RESOLVED: an empty committed value is a REAL clear —
@@ -1622,6 +1692,85 @@ mod tests {
         for month in 1..=12u32 {
             assert_eq!(month_grid(2024, month, 0).len(), 42, "month {month}");
         }
+    }
+
+    /// The grid is 42 cells at the range edges, and never repeats a real day.
+    ///
+    /// Two separate regressions meet here. First: December 9999's trailing row
+    /// runs into 10000, which `civil::Date` cannot represent, so `month_grid`
+    /// yields FEWER real days there — chrono allowed year 10000 and produced a
+    /// full 6x7 (measured: 42 cells), jiff cannot, so the render pads the row
+    /// with inert cells. Second, and the reason this test checks uniqueness:
+    /// a padding scheme that substitutes the anchor date for unrepresentable
+    /// cells still returns 42 cells but repeats a real one — measured 42 cells
+    /// with **34 unique** cells on Sunday-first (8 duplicates) and **33 unique**
+    /// on Monday-first (9 duplicates), because the two locales leave a
+    /// different number of REAL cells inside the grid. ("34 cells" is the
+    /// whole row: 3 of them are the previous month's tail, 31 are December's.)
+    /// The grid must never duplicate, whatever the count.
+    #[test]
+    fn date_picker_grid_pads_at_the_range_edges_without_repeating_days() {
+        for (year, month) in [(9999, 12u32), (9999, 1), (1, 1), (1, 12), (9999, 2)] {
+            // Both locale orders: the leading slack differs, and so does the
+            // number of representable cells the grid can hold.
+            for first_weekday in [0u32, 1] {
+                let cells = month_grid(year, month, first_weekday);
+                let label = format!("grid({year}-{month:02}, fw={first_weekday})");
+                let unique: std::collections::BTreeSet<_> = cells.iter().copied().collect();
+                assert_eq!(
+                    unique.len(),
+                    cells.len(),
+                    "{label} repeats a real day: {cells:?}"
+                );
+                assert!(
+                    cells.len() <= MONTH_GRID_CELLS,
+                    "{label} must never exceed the grid size"
+                );
+                // The month's own first day is in the grid and the leading
+                // slack is under one week.
+                let first = date(year, month, 1);
+                let start = cells.iter().position(|cell| *cell == first);
+                assert!(start.is_some(), "{label} must contain its 1st");
+                assert!(
+                    start.unwrap() < 7,
+                    "{label} leading slack must be under one week"
+                );
+            }
+        }
+        // The edge really does under-fill, and the render is what pads it.
+        let december_9999 = month_grid(9999, 12, 0);
+        assert_eq!(december_9999.len(), 34);
+        assert_eq!(date_picker_pad_cells(december_9999.len()), 8);
+        assert_eq!(
+            december_9999.len() + date_picker_pad_cells(december_9999.len()),
+            MONTH_GRID_CELLS
+        );
+        // The last representable day is still in it; nothing past it is.
+        assert_eq!(december_9999.last().copied(), Some(date(9999, 12, 31)));
+        // An ordinary month fills the grid itself, so the padding stays zero
+        // and the edge path cannot have replaced the normal one. 2024-03-01
+        // is a Friday: a Sunday-first grid opens on 2024-02-25 and its 42nd
+        // cell is 2024-04-06.
+        let march = month_grid(2024, 3, 0);
+        assert_eq!(march.len(), MONTH_GRID_CELLS);
+        assert_eq!(date_picker_pad_cells(march.len()), 0);
+        assert_eq!(march[0], date(2024, 2, 25));
+        assert_eq!(march[41], date(2024, 4, 6));
+    }
+
+    /// `parse_iso_date` keeps the `1..=9999` range the picker's other paths
+    /// enforce, so year `0` (which `civil::Date` can represent) cannot enter
+    /// through the ISO wire.
+    #[test]
+    fn date_picker_parse_iso_date_rejects_the_year_zero_the_range_excludes() {
+        assert_eq!(parse_iso_date("2024-10-06"), Some(date(2024, 10, 6)));
+        assert_eq!(parse_iso_date("0001-01-01"), Some(date(1, 1, 1)));
+        assert_eq!(parse_iso_date("9999-12-31"), Some(date(9999, 12, 31)));
+        // `civil::Date` itself would take both of these.
+        assert_eq!(parse_iso_date("0000-01-01"), None);
+        // Width and separators are unchanged.
+        assert_eq!(parse_iso_date("2024-1-6"), None);
+        assert_eq!(parse_iso_date("2024-02-31"), None);
     }
 
     #[test]
@@ -1948,6 +2097,62 @@ mod tests {
         // separated title.
         assert!(years.contains("2016–2027"), "{years}");
         assert_eq!(years.matches("data-variant=\"pick\"").count(), 13);
+    }
+
+    /// The RENDER pads the short grid — deleting the pad loop must be visible.
+    ///
+    /// `month_grid` honestly returns 34 real days for December 9999, and the
+    /// grid is only 42 cells wide because the render appends inert cells.
+    /// Tested at the helper level only (the pad-count assertion), deleting the
+    /// render loop left the whole suite green — the user-visible 34-versus-42
+    /// difference had no observer. This asserts on the rendered HTML.
+    #[test]
+    fn date_picker_render_pads_the_range_edge_grid_to_six_rows() {
+        let edge = DatePicker(DatePickerProps {
+            model_value: Some("9999-12-31".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(9999, 12, 1))),
+            ..Default::default()
+        })
+        .render_to_html();
+        // 42 cells wide. Of those, 34 are REAL cells: the 3 previous-month
+        // cells a Sunday-first start needs, plus December's 31 days. The
+        // 8-cell shortfall is padded inert.
+        assert_eq!(
+            edge.matches("hk-dp-cell").count(),
+            42,
+            "the range-edge grid must render 42 cells"
+        );
+        // A real day is a `<button>`; the padded shortfall is a `<div>` with
+        // no day and no handler. Counting buttons is what separates "padded"
+        // from "repeated": the duplicate-day version rendered 42 BUTTONS.
+        assert_eq!(
+            edge.matches("hk-dp-cell").count()
+                - edge.matches("<div class=\"hk-dp-cell is-out\"").count(),
+            34,
+            "34 real day buttons + 8 inert cells"
+        );
+        assert!(
+            edge.contains("<div class=\"hk-dp-cell is-out\""),
+            "the shortfall must be inert out-of-range cells, not buttons"
+        );
+        // An ordinary month pads nothing, so the pad cannot be unconditional.
+        let ordinary = DatePicker(DatePickerProps {
+            model_value: Some("2024-10-06".to_string()),
+            open: true,
+            view_state: Some(DatePickerViewState::anchored(date(2024, 10, 6))),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert_eq!(
+            ordinary.matches("hk-dp-cell").count(),
+            42,
+            "an ordinary month is 42 cells from real days alone"
+        );
+        assert!(
+            !ordinary.contains("<div class=\"hk-dp-cell is-out\""),
+            "an ordinary month must not render inert cells"
+        );
     }
 
     #[test]

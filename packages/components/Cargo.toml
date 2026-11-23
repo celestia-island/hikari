@@ -61,7 +61,7 @@ once_cell = "^1.19"
 # QR code generation
 
 # Date/time handling
-chrono = { workspace = true }
+jiff = { workspace = true }
 
 # Browser WASM-specific dependencies (not for WASI)
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]

@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Tests for the npm-manifest guard (``packages/wasm/check_npm_pack.py``).
 
-The guard exists because the bindings it protects are no longer committed: a
-publish from a checkout that never built them would carry no runtime module
-for the four WASM-backed components, and ``npm publish`` would not object.
-comment-gate-ok: statement of intent for the guard; the pinned behaviours are the two items below and their tests
+Why the guard exists: the bindings it protects are no longer committed, so the
+tarball `npm pack` builds is the only thing that decides whether they travel
+(see the PR's mutation table for the probe that narrowed the path list).
 
 Two things are pinned here.
 

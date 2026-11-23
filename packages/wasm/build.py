@@ -24,14 +24,18 @@ Environment:
   builds elsewhere still works). ``ensure_artifact_fresh`` below removes the
   previous artifact first, so a stale one can never be mistaken for this
   build's output.
-* ``CARGO_HOME`` / ``RUSTUP_HOME`` are required: ``main`` derives the two
-  ``--remap-path-prefix`` flags from them (``component_reproducibility``) and
-  hands them to **this script's own** ``cargo build``, so the artifact does not
-  depend on what the caller's shell exported. Without them rustc bakes this
-  machine's absolute paths into the artifact, the bytes stop matching the
-  ``sha256`` this repository's descriptors pin, and akivili rejects the plugin
-  at scan, feed and pack. ``main`` refuses to build when a home is unset and
-  prints the ``export`` line that fixes it -- *why* the flag is derived from an
+* ``CARGO_HOME`` / ``RUSTUP_HOME`` decide the two ``--remap-path-prefix`` flags
+  ``component_reproducibility`` derives for **this script's own**
+  ``cargo build``, so the artifact does not depend on what the caller's shell
+  exported. **An unset home is fine**: cargo and rustup fall back to
+  ``~/.cargo`` / ``~/.rustup``, and the derived flag names that fallback --
+  which is exactly what a stock CI runner provides. What ``main`` refuses is an
+  environment that cannot produce pinned bytes: a global ``RUSTFLAGS`` (cargo
+  discards the per-target variable when it is set), or a home that cannot be a
+  remap operand (a quote/space, ``/``, a relative path). Without the remap
+  rustc bakes this machine's absolute paths into the artifact, the bytes stop
+  matching the ``sha256`` this repository's descriptors pin, and akivili rejects
+  the plugin at scan, feed and pack. *Why* the flag is derived from an
   environment variable rather than written into ``.cargo/config.toml`` is
   documented in that module.
 """

@@ -164,7 +164,15 @@ def test_a_global_rustflags_is_refused() -> None:
 
 
 def test_a_global_rustflags_is_refused_in_homes_only_mode_too() -> None:
-    """`build.py` overwrites the per-target variable -- that cannot defeat RUSTFLAGS."""
+    """Homes-only mode still refuses a global ``RUSTFLAGS``.
+
+    ``build.py`` rewrites its own ``CARGO_TARGET_WASM32_WASIP2_RUSTFLAGS`` before
+    spawning cargo (``test_build_forces_the_remap_over_a_stale_shell_value``), and
+    ``require_flags=False`` is the mode that lets it ignore a caller's stale
+    value. Rewriting the per-target variable cannot defeat a global
+    ``RUSTFLAGS`` though -- cargo discards it -- so the global check has to stay
+    on even in this relaxed mode.
+    """
     env = {
         "CARGO_HOME": CARGO_HOME,
         "RUSTUP_HOME": RUSTUP_HOME,

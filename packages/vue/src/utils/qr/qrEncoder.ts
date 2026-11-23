@@ -92,9 +92,15 @@ function ensureLoadedOnce(): Promise<void> {
  * instead of replaying the first rejection for the rest of the session.
  */
 export function whenQrReady(): Promise<void> {
-  return ensureLoadedOnce().then(() => {
+  const attempt = ensureLoadedOnce().then(() => {
     if (!surface) throw loadFailure ?? new QrNotReadyError();
   });
+  // Mark it handled. A caller that awaits sees the rejection; a caller that
+  // only *triggers* a retry (the entry point firing `ensureLoadedOnce` on the
+  // way to its own throw) must not leave a rejection nobody owns — measured: two
+  // retries from a failing load surfaced as two unhandled rejections.
+  attempt.catch(() => {});
+  return attempt;
 }
 
 /** Snapshot of the first attempt, kept for callers that only want a value. */
@@ -119,8 +125,11 @@ qrReady.catch(() => {
  */
 export function qrMatrix(text: string, opts: QrMatrixOptions = {}): boolean[][] {
   if (!surface) {
-    // Start (or retry) a load; this call still refuses.
-    void ensureLoadedOnce();
+    // Start (or retry) a load; this call still refuses. The rejection is
+    // already recorded in `loadFailure` and surfaced by the throw below, so it
+    // must be marked handled here — an unowned rejection from a retry is a test
+    // failure with no failing assertion (measured: two of them).
+    ensureLoadedOnce().catch(() => {});
     throw loadFailure ?? new QrNotReadyError();
   }
   const level = (opts.errorCorrectionLevel ?? "M").toLowerCase() as

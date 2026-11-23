@@ -82,9 +82,15 @@ function ensureLoadedOnce(): Promise<void> {
 
 /** Resolves once the component is usable; rejects if it could not be built. */
 export function whenMermaidReady(): Promise<void> {
-  return ensureLoadedOnce().then(() => {
+  const attempt = ensureLoadedOnce().then(() => {
     if (!surface) throw loadFailure ?? new MermaidNotReadyError();
   });
+  // Mark it handled. A caller that awaits sees the rejection; a caller that
+  // only *triggers* a retry (the entry point firing `ensureLoadedOnce` on the
+  // way to its own throw) must not leave a rejection nobody owns — measured: two
+  // retries from a failing load surfaced as two unhandled rejections.
+  attempt.catch(() => {});
+  return attempt;
 }
 
 /** Snapshot of the first attempt, kept for callers that only want a value. */

@@ -13,4 +13,4 @@ kind = "wasm.component"
 
 [resources.payload.File]
 path = "target/wasm32-wasip2/release/hikari_wasm_mermaid.wasm"
-sha256 = "4641dc6d7bc070a46eb16eda51579d17ef8dd54d9e7a8cabbcd9207b2d420729"
+sha256 = "76212bf103bc3132314feb38b916d959b42c2987327aa3080db5d78b0c8eeb26"

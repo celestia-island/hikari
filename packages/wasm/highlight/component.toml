@@ -13,4 +13,4 @@ kind = "wasm.component"
 
 [resources.payload.File]
 path = "target/wasm32-wasip2/release/hikari_wasm_highlight.wasm"
-sha256 = "d04058f242b3126fc46a8357d0d99ccafa494a63e8776087b63c617cf404aadc"
+sha256 = "aa150e3b03760bd93f966e2258b4545c3b27407f2a5746548d4f9ce1a5a56fbf"

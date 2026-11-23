@@ -42,14 +42,20 @@ describe("scene3d facade survives a broken wrapper", () => {
   });
 
   it("keeps throwing on later calls rather than going quiet", () => {
-    // MUT:ready-resolves-on-failure — when the failure path resolved instead of
-    // rejecting, the host saw a settled ready promise, stopped retrying, and
-    // later calls returned nothing (measured). A failed load must stay failed.
+    // The load attempt is cached and never reset on failure, so a failed load
+    // stays failed for the session (measured: one import attempt, no retry).
+    // MUT:entry-guard — deleting the `if (!surface) throw` at the top of this
+    // entry point lets a raw `TypeError: Cannot read properties of undefined`
+    // escape instead, which no caller recognises by type.
     expect(() => mod.buildFleetSceneSpecWasm([])).toThrow(mod.Scene3dNotReadyError);
   });
 
   it("rejects the ready promise so a waiting host can surface the failure", async () => {
     // The interface `HkStarSystem` relies on: `scene3dReady.then(drawScene).catch(console.error)`.
+    //
+    // Scope, precisely (measured): rejection has TWO layers — the `throw` in the
+    // load's catch, and the `if (!surface) throw` inside this promise. Removing
+    // either one alone leaves this case green; removing BOTH reds it.
     // MUT:ready-resolves-on-failure — a resolving promise here makes the host's
     // `.catch` unreachable and the failure unlogged.
     await expect(mod.scene3dReady).rejects.toBeInstanceOf(mod.Scene3dNotReadyError);

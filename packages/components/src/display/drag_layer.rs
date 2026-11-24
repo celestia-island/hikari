@@ -102,7 +102,7 @@ impl StyledComponent for DragLayerComponent {
     min-height: 60px;
     border: 2px dashed var(--hi-color-primary);
     border-radius: var(--radius-md, 8px);
-    background-color: rgba(var(--hi-color-primary-rgb), 0.05);
+    background-color: rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.05);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -112,7 +112,7 @@ impl StyledComponent for DragLayerComponent {
 }
 
 .hk-drag-layer-drop-zone:hover {
-    background-color: rgba(var(--hi-color-primary-rgb), 0.15);
+    background-color: rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.15);
     border-style: solid;
 }
 

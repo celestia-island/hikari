@@ -61,6 +61,16 @@ function mount(node: ReturnType<typeof h>) {
   return container;
 }
 
+/** Mount and let the post-mount viewport pass run: the shell's mobile
+ * (drawer) / desktop (inline sidebar) split is decided one tick AFTER mount
+ * so the first client pass can match the server's viewport-less one
+ * (2026-11-24 — see HkFaceShell's mounted gate). */
+async function mountSettled(node: ReturnType<typeof h>) {
+  const el = mount(node);
+  await nextTick();
+  return el;
+}
+
 afterEach(() => {
   for (const { app, container } of mounts.splice(0)) {
     app.unmount();
@@ -230,6 +240,11 @@ describe("HkAdminShell", () => {
       { navTitle: "Navigation" },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    // The viewport decides ONE TICK AFTER MOUNT (2026-11-24): the shell's
+    // first pass must agree with the server's (which has no viewport), so
+    // the phone/drawer split settles post-mount. See HkFaceShell's
+    // mounted gate.
+    await nextTick();
     expect(narrow.querySelector("aside .nav-mock")).toBeNull();
 
     // Custom 768: the same 900px reads as desktop (inline sidebar).
@@ -237,6 +252,7 @@ describe("HkAdminShell", () => {
       { navTitle: "Navigation", mobileBreakpoint: 768 },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    await nextTick();
     expect(wide.querySelector("aside .nav-mock")).toBeTruthy();
   });
 
@@ -330,10 +346,13 @@ describe("HkAdminShell", () => {
     // scene) loses the side gutters on phones; vertical clearance
     // survives. Asserted via longhands — see the note above.
     setWidth(390);
-    const mobileShell = mount(shellNode(
+    const mobileShell = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    // Viewport-derived layout settles one tick after mount (the shell's
+    // mounted gate exists to agree with the server's viewport-less pass).
+    await nextTick();
     const inner = paddingInner(mobileShell);
     expect(inner?.style.paddingTop).toBe("2rem");
     expect(inner?.style.paddingBottom).toBe("2rem");
@@ -342,10 +361,11 @@ describe("HkAdminShell", () => {
 
     // Multi-value shorthand keeps per-side meaning: vertical survives,
     // horizontal is zeroed (never the inverted "1rem 2rem 0").
-    const multi = mount(shellNode(
+    const multi = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "1rem 2rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    await nextTick();
     const multiInner = paddingInner(multi);
     expect(multiInner?.style.paddingTop).toBe("1rem");
     expect(multiInner?.style.paddingBottom).toBe("1rem");
@@ -358,10 +378,11 @@ describe("HkAdminShell", () => {
     // values the bottom track defaults to the top one, which makes the
     // correct and the transposed string identical (round-1 verification
     // mutation (e) survived on exactly that hole).
-    const triple = mount(shellNode(
+    const triple = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "1rem 2rem 3rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    await nextTick();
     const tripleInner = paddingInner(triple);
     expect(tripleInner?.style.paddingTop).toBe("1rem");
     expect(tripleInner?.style.paddingBottom).toBe("3rem");
@@ -374,10 +395,11 @@ describe("HkAdminShell", () => {
     // slot is invisible to the shorter cases (round-2 verification
     // mutated "1rem 2rem 3rem 4rem" into "1rem 0 3rem 2rem" and the suite
     // stayed green).
-    const quad = mount(shellNode(
+    const quad = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "1rem 2rem 3rem 4rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
+    await nextTick();
     const quadInner = paddingInner(quad);
     expect(quadInner?.style.paddingTop).toBe("1rem");
     expect(quadInner?.style.paddingBottom).toBe("3rem");
@@ -392,7 +414,7 @@ describe("HkAdminShell", () => {
     // the shell as it shipped). happy-dom stores calc() values, so the
     // longhands are readable here; it cannot round-trip var()/min(), which
     // is why calc() is the probe.
-    const fn = mount(shellNode(
+    const fn = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "calc(1rem + 2px) 1rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -406,7 +428,7 @@ describe("HkAdminShell", () => {
     // single-level check): a bare `clamp()` cannot be the probe because
     // happy-dom rejects it outright, so the function rides in the second
     // track of a plain length.
-    const nested = mount(shellNode(
+    const nested = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "5rem clamp(1rem, min(2vw, 3px), 4rem)", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -417,7 +439,7 @@ describe("HkAdminShell", () => {
     expect(nestedInner?.style.paddingRight).toBe("0px");
 
     // …and so is a space directly after the opening parenthesis.
-    const spacedFn = mount(shellNode(
+    const spacedFn = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "calc( 1rem + 2px ) 1rem", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -433,7 +455,7 @@ describe("HkAdminShell", () => {
     // behaves the same way; it is pinned in HkAdminShell.padding.test.ts
     // because happy-dom refuses to store a comment-bearing value at all.)
     for (const keyword of ["inherit", "unset"]) {
-      const wide = mount(shellNode(
+      const wide = await mountSettled(shellNode(
         { navTitle: "Navigation", contentPadding: keyword, contentBleedOnMobile: true },
         { header: () => null, sidebar: NAV, content: CONTENT },
       ));
@@ -444,7 +466,7 @@ describe("HkAdminShell", () => {
     // around a shorthand is not a track of its own ("\t1rem 2rem" must
     // read exactly like "1rem 2rem", never like a three-track value).
     for (const padded of ["1rem\t2rem", "1rem\n2rem", " 1rem 2rem ", "\t1rem 2rem"]) {
-      const ws = mount(shellNode(
+      const ws = await mountSettled(shellNode(
         { navTitle: "Navigation", contentPadding: padded, contentBleedOnMobile: true },
         { header: () => null, sidebar: NAV, content: CONTENT },
       ));
@@ -457,7 +479,7 @@ describe("HkAdminShell", () => {
 
     // Nothing to strip: an empty value passes through untouched, it does
     // NOT become a zero padding of its own.
-    const blank = mount(shellNode(
+    const blank = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -478,7 +500,7 @@ describe("HkAdminShell", () => {
     // The shell's own default padding (1.5rem) is what a consumer that
     // passes nothing actually gets — pinned here because this file
     // otherwise only ever exercises explicit values.
-    const defaulted = mount(shellNode(
+    const defaulted = await mountSettled(shellNode(
       { navTitle: "Navigation", contentBleedOnMobile: true },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -502,7 +524,7 @@ describe("HkAdminShell", () => {
     // …and a custom breakpoint moves it: the padding gate must read the
     // same `isDesktop` the layout does, not the 1024 default (round 3
     // mutated it to a hardcoded 1024 and the suite stayed green).
-    const narrow = mount(shellNode(
+    const narrow = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true, mobileBreakpoint: 768 },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -520,7 +542,7 @@ describe("HkAdminShell", () => {
     // move the padding gate too. Round 3 mutated the gate to saturate at
     // 1024 and only a downward custom breakpoint was covered, so the
     // mirror image survived.
-    const tablet = mount(shellNode(
+    const tablet = await mountSettled(shellNode(
       { navTitle: "Navigation", contentPadding: "2rem", contentBleedOnMobile: true, mobileBreakpoint: 1440 },
       { header: () => null, sidebar: NAV, content: CONTENT },
     ));
@@ -543,7 +565,8 @@ describe("HkAdminShell", () => {
     expect(tripleInner?.style.paddingBottom).toBe("3rem");
     expect(tripleInner?.style.paddingLeft).toBe("2rem");
     expect(tripleInner?.style.paddingRight).toBe("2rem");
-  });
+    await nextTick();
+});
 
   it("reserves the footer band only when a status bar is actually injected", () => {
     // 2026-10-24 regression: the body carried

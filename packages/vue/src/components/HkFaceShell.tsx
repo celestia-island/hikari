@@ -1,4 +1,4 @@
-import { computed, defineComponent, provide, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
+import { computed, defineComponent, onMounted, provide, ref, watch, type PropType, type SlotsType, type VNode } from "vue";
 import { HkCrossfade, HDrawer, HScrollContainer, useBreakpoint } from "@celestia-island/hikari";
 import { useI18n } from "../i18n/context";
 import { useActionBarCenter } from "../composables/useActionBar";
@@ -379,7 +379,27 @@ export const HkFaceShell = defineComponent({
   setup(props, { slots, emit }) {
     const { t } = useI18n();
     const { width: viewportWidth } = useBreakpoint();
-    const isDesktop = computed(() => viewportWidth.value >= props.mobileBreakpoint);
+    // SSR-BLIND BREAKPOINT (2026-11-24 user report, phone screenshot): the
+    // server has no viewport, so it rendered the DESKTOP layout while a
+    // phone's first client pass wanted the drawer. The structures differ
+    // (inline aside vs HDrawer), Vue reports a hydration mismatch and keeps
+    // the SERVER DOM — so the phone kept a 248px inline sidebar squeezing
+    // the content to one word per line, and the drawer never appeared. This
+    // is the same root as hikari#1531.
+    //
+    // The gate makes both first passes identical (desktop, what SSR emits)
+    // and lets the viewport answer AFTER mount — the family's established
+    // pattern for viewport-derived values (`useChromeActionSize`, the docs
+    // search's shape). Pre-mount the squeezed inline sidebar is kept off a
+    // phone's screen by CSS (see the media rule in HkSidebarRail.scss), so
+    // the flash the gate would otherwise cost never reaches the user.
+    const mounted = ref(false);
+    onMounted(() => {
+      mounted.value = true;
+    });
+    const isDesktop = computed(
+      () => !mounted.value || viewportWidth.value >= props.mobileBreakpoint,
+    );
     const sidebarOpen = ref(false);
     // ── the header's CENTRE channel, read from the bar above ─────────
     // This shell provides NO bar of its own (whoever provides, provides
@@ -578,6 +598,7 @@ export const HkFaceShell = defineComponent({
               <aside
                 ref={railHostRef}
                 class="hk-sidebar-rail-host"
+                data-shell-sidebar
                 // STATE marker only (hosts/tests read "the rail layout is
                 // active"): the rail DENSITY dress itself rides the swap's
                 // generation inside the clip, so it can freeze on the
@@ -649,6 +670,7 @@ export const HkFaceShell = defineComponent({
               </aside>
             ) : (
               <aside
+                data-shell-sidebar
                 style={{
                   width: props.sidebarWidth,
                   flexShrink: 0,

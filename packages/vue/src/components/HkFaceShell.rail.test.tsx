@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, ref, type VNode } from "vue";
+import { renderToString } from "@vue/server-renderer";
 
 // Same stub shape as HkFaceShell.test.tsx: HDrawer teleports and
 // animates; the desktop rail contract is testable without the overlay
@@ -949,6 +950,45 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
     await vi.advanceTimersByTimeAsync(150);
     const backGen = await settle(c.container, "rail");
     expect(groupToggle(backGen).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("renders the DESKTOP layout on the server even when the viewport is a phone", async () => {
+    // 2026-11-24 user report: a phone showed a 248px inline sidebar and a
+    // 94px content column. Root cause was this shape — the server has no
+    // viewport, so it emitted the desktop layout, the client's first pass
+    // wanted the drawer, the structures differ, Vue kept the SERVER DOM and
+    // the drawer never appeared. The mounted gate keeps both first passes
+    // on the desktop layout; SSR therefore stays viewport-agnostic (a
+    // server render at phone width must NOT produce a drawer).
+    window.innerWidth = 390;
+    const app = createApp({
+      render: () =>
+        h(
+          HkFaceShell,
+          { sidebarCollapsible: true } as Record<string, unknown>,
+          { sidebar: () => h("div", { class: "nav-stub" }, "nav") },
+        ),
+    });
+    const html = await renderToString(app);
+    expect(html, "SSR emits the desktop aside").toContain("data-shell-sidebar");
+    expect(html, "SSR never emits the drawer").not.toContain("drawer-stub");
+  });
+
+  it("switches a phone to the drawer after mount, and drops the inline sidebar", async () => {
+    // The other half of the same contract: once mounted, the real viewport
+    // decides — a phone gets the drawer as its ONLY nav surface and the
+    // squeezed inline sidebar is gone from the body.
+    window.innerWidth = 390;
+    const c = mountShell({ sidebarCollapsible: true });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside(), "no inline sidebar on a phone after mount").toBeFalsy();
+    c.openDrawer();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      c.container.querySelector(".drawer-stub-body"),
+      "the drawer is the phone's nav surface",
+    ).toBeTruthy();
+    window.innerWidth = 1280;
   });
 
   it("shares the fold with the mobile drawer's menu (the provide sits above BOTH slots)", async () => {

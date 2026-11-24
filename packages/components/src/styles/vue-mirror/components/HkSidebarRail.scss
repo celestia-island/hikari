@@ -356,3 +356,24 @@
     transition: none;
   }
 }
+
+
+/* PRE-HYDRATION PHONE GUARD (2026-11-24).
+ *
+ * The shell decides desktop-vs-drawer from the viewport, and the server has
+ * none — so the emitted HTML carries the DESKTOP layout (an inline 224/248px
+ * sidebar) while a phone's first client pass wants the drawer. The mounted
+ * gate in HkFaceShell keeps the two first passes identical and flips after
+ * mount; this rule covers the window BEFORE that flip so a phone never paints
+ * a squeezed content column (measured: 94px of text at 390px viewport, one
+ * word per line).
+ *
+ * CSS cannot read `mobileBreakpoint` (a JS prop), so the guard uses the
+ * family's stylesheet breakpoint. A host whose prop is WIDER than 767px
+ * (the default is 1024) still gets one desktop frame on a tablet before the
+ * drawer takes over; phones — the case that motivated this — are fixed. */
+@media (width <= 767px) {
+  .s-admin-shell-body > [data-shell-sidebar] {
+    display: none;
+  }
+}

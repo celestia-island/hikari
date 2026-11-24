@@ -455,6 +455,8 @@ describe("HkMenu sidebar icon rail", () => {
   // opts a row in through `iconNoScale`; the cell the flight pairs must
   // then carry the no-scale attribute in BOTH densities, or the dot quietly
   // rejoins the size tween.
+  // MUT:mut-attr-unstamped — unstamping the cells turns this test RED (this
+  // is the very gap the attribute exists to close).
   it("carries iconNoScale onto the rail cell as data-flip-noscale", () => {
     // Ordinary icon: keeps the size tween (no attribute).
     const plain = mountMenu([{ key: "home", label: "Home", icon: Home }], {

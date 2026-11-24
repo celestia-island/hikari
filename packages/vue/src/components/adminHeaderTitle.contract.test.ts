@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest";
  *   the viewport and the END wing's `overflow: hidden` clipped the theme
  *   button — the cheap side to pay is the title ellipsing a word earlier).
  *
- * Source-scanned with a direct regex (not a generic rule parser) — it does not catch nested media queries, which is acceptable here: the
+ * Source-scanned with a direct regex (not a generic rule parser) — it does not catch nested media queries (MUT:mut-480-block REDS when the block is dropped), which is acceptable here: the
  * sheet carries long block comments whose text defeats a naive
  * selector-slicer, and the two pins are simple enough for exact patterns.
  */

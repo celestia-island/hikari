@@ -1217,6 +1217,12 @@
   .s-auth-card-height {
     transition: none;
   }
+  // The frame's one-shot entrance is motion (16px translate + 0.92 scale),
+  // not just opacity: reduced motion drops it outright. The sibling
+  // height transition above is a resize follow, which stays.
+  .s-auth-card {
+    animation: none;
+  }
 }
 
 .s-auth-card input:not(.hk-otp-cell) {

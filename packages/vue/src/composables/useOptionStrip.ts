@@ -82,8 +82,9 @@ export function useOptionStrip() {
   let mutationObserver: MutationObserver | null = null;
 
   /** Re-read the overflow sides and mirror them onto the element. Fires
-   *  on scroll, on element resizes and on content mutations (options
-   *  re-rendering can change the track's scroll width). */
+   *  on scroll, on element resizes and on content mutations — options
+   *  added/removed, labels rewritten in place, pills toggled hidden all
+   *  change the track's scroll width without a scroll or a strip resize. */
   function sense() {
     const el = stripEl.value;
     if (!el) return;
@@ -185,7 +186,23 @@ export function useOptionStrip() {
       }
       if (typeof MutationObserver !== "undefined") {
         mutationObserver = new MutationObserver(sense);
-        mutationObserver.observe(el, { childList: true, subtree: true });
+        // The closed set of mutations that can move the strip's scroll
+        // extent: childList covers options added/removed (the set
+        // shrinking must retire a fade the wide layout earned — no
+        // scroll event runs, and the strip element's own box usually
+        // doesn't resize either), characterData covers labels rewritten
+        // in place (a pill that grows/shrinks by text alone never
+        // mutates the child list), and class/hidden cover visibility
+        // flips. `style` is deliberately not observed: a per-frame
+        // inline-style writer would re-sense every frame for no extent
+        // change a style write causes on its own.
+        mutationObserver.observe(el, {
+          childList: true,
+          subtree: true,
+          characterData: true,
+          attributes: true,
+          attributeFilter: ["class", "hidden"],
+        });
       }
       sense();
     }

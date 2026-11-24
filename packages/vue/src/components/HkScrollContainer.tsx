@@ -876,7 +876,8 @@ export default defineComponent({
      *  the per-edge fade strengths (hidden-content depth saturating over
      *  fadeDistance); while `overflowGlow` is on, derive the glow's
      *  physical edges from the same verdicts. Runs on every scheduled
-     *  update (scroll, resize, content resize via the aligner).
+     *  update (scroll, resize, content resize via the aligner, content
+     *  mutations via the viewport MutationObserver).
      *
      *  Anchor parking runs FIRST (when opted in): it writes the scroll
      *  offset, and every geometry read below must see the post-park state —
@@ -1101,6 +1102,59 @@ export default defineComponent({
       }
     }
 
+    // ── Content mutation sensing (always on) ───────────────────────────
+    // A content-only change — an option list replaced, a tab strip
+    // collapsing from several buttons to one, a label rewritten, a row
+    // toggled hidden — moves scrollWidth/scrollHeight WITHOUT resizing
+    // the viewport box (the viewport ResizeObserver never fires) and
+    // usually WITHOUT moving the scroll offset (no scroll event runs).
+    // None of the sensors above see it, so the overflow mirror and the
+    // fade strengths sat stale until the user happened to scroll or
+    // resize — the reported defect: a strip that shrank to a single
+    // button kept the end-edge fade the wide layout had earned, because
+    // the last gradient computation ran against the OLD content width
+    // and nothing ever re-sensed. The align="center" aligner RO covered
+    // only the aligner's own box (horizontal center mode); align="start"
+    // strips and vertical containers had NO trigger at all. A viewport
+    // MutationObserver funnels the DOM mutations that can move the
+    // scroll extent into the same rAF-coalesced, write-only-on-change
+    // pass — one batched geometry read per frame during mutation
+    // storms, exactly the cost a scroll event already pays. The
+    // attribute filter is the display-relevant closed set: class and
+    // hidden flip visibility/size; `style` is deliberately NOT observed
+    // (a per-frame inline-style writer inside the content would sense
+    // every frame for no geometry change a style write can cause on its
+    // own) — which makes a style-driven resize this filter's one blind
+    // spot, and the reason the exposed refresh() keeps existing.
+    // Unconditional, because every extent-derived mirror of this
+    // container (data-h/v-overflow, fade strengths, dock gates, the
+    // anchor's extent re-park) went stale the same way; backTop is
+    // offset-derived and cannot go stale from a content change, but it
+    // re-reads harmlessly on the same pass.
+    let contentMO: MutationObserver | null = null;
+
+    /** Attach the content mutation sensor (see the block comment). */
+    function startContentSensing() {
+      const vp = viewportRef.value;
+      if (!vp || contentMO) return;
+      contentMO = new MutationObserver(scheduleUpdate);
+      contentMO.observe(vp, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["class", "hidden"],
+      });
+    }
+
+    /** Drop the content sensor: teardown only — the sensed state is
+     *  live geometry, cleared nowhere (the DOM subtree dies with the
+     *  root, and a re-mount re-senses from scratch on mount). */
+    function stopContentSensing() {
+      contentMO?.disconnect();
+      contentMO = null;
+    }
+
     // Runtime prop swaps: attach/detach the mutation sensor, and
     // re-sense immediately either way (turning the hint on with a
     // selection already beyond the band must not wait for a scroll;
@@ -1268,6 +1322,8 @@ export default defineComponent({
       ro = new ResizeObserver(scheduleUpdate);
       ro.observe(vp);
 
+      startContentSensing();
+
       syncAlignObserver();
 
       if (props.autoFollow && autoFollowContent.value) {
@@ -1297,6 +1353,7 @@ export default defineComponent({
       stopApproach();
       selectionMO?.disconnect();
       selectionMO = null;
+      stopContentSensing();
       scheduled?.disconnect();
       settleHandle?.disconnect();
       settleHandle = null;
@@ -1394,9 +1451,11 @@ export default defineComponent({
     }
 
     /** Re-run the scrollbar + overflow sensing pass. Public escape
-     *  hatch for content mutations the observers cannot see (e.g. the
-     *  slot's own children resizing without the aligner box changing,
-     *  or non-align consumers swapping content). */
+     *  hatch for extent changes no observer reports: a font swap or an
+     *  image load resizing content without any DOM mutation, and the
+     *  mutation filter's deliberate blind spot — a style-driven resize
+     *  (`style` is not observed, so a host that drives layout through
+     *  inline style calls this after the write). */
     function refresh(): void {
       overlay?.update();
       update();

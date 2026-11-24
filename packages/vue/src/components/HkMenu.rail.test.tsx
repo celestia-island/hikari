@@ -7,7 +7,10 @@ import { createApp, h, nextTick, ref, type Ref } from "vue";
 import { Home, Settings } from "lucide-vue-next";
 
 import HkMenu, { type HkMenuItem } from "./HkMenu";
-import { RAIL_FLIP_ICON_ATTR } from "../composables/useRailIconFlight";
+import {
+  RAIL_FLIP_ICON_ATTR,
+  RAIL_FLIP_NOSCALE_ATTR,
+} from "../composables/useRailIconFlight";
 
 /**
  * HkMenu sidebar-variant ICON-RAIL mode (collapsed prop, 2026-10-30):
@@ -445,6 +448,42 @@ describe("HkMenu sidebar icon rail", () => {
     const glyph = rowNamed(c, "Docs")!.querySelector(".hk-menu-item-icon")!;
     expect(glyph.hasAttribute("data-fallback")).toBe(true);
     expect(glyph.textContent).toBe("D");
+  });
+
+  // 2026-11-24 user direction: a MARK (dot/bullet/pip) must not tween its
+  // size across the density flip — it travels, it never grows. The host
+  // opts a row in through `iconNoScale`; the cell the flight pairs must
+  // then carry the no-scale attribute in BOTH densities, or the dot quietly
+  // rejoins the size tween.
+  // MUT:mut-attr-unstamped — unstamping the cells turns this test RED (this
+  // is the very gap the attribute exists to close).
+  it("carries iconNoScale onto the rail cell as data-flip-noscale", () => {
+    // Ordinary icon: keeps the size tween (no attribute).
+    const plain = mountMenu([{ key: "home", label: "Home", icon: Home }], {
+      collapsed: true,
+    });
+    const plainCell = plain.querySelector<HTMLElement>(
+      `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}="home"]`,
+    );
+    expect(plainCell, "the rail row stamps its icon cell").toBeTruthy();
+    expect(
+      plainCell!.hasAttribute(RAIL_FLIP_NOSCALE_ATTR),
+      "an ordinary icon keeps the size tween",
+    ).toBe(false);
+
+    // Mark: opts out of the tween.
+    const mark = mountMenu(
+      [{ key: "dot", label: "Dot", icon: Home, iconNoScale: true }],
+      { collapsed: true },
+    );
+    const markCell = mark.querySelector<HTMLElement>(
+      `.hk-menu-item-icon[${RAIL_FLIP_ICON_ATTR}="dot"]`,
+    );
+    expect(markCell, "the mark's cell is stamped too").toBeTruthy();
+    expect(
+      markCell!.hasAttribute(RAIL_FLIP_NOSCALE_ATTR),
+      "iconNoScale must reach the cell the flight pairs",
+    ).toBe(true);
   });
 
   it("stamps every icon cell with data-flip-icon = the row key, in BOTH densities", () => {

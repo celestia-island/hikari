@@ -713,6 +713,19 @@
   white-space: nowrap;
 }
 
+/* 320px END-WING GUARD (2026-11-24, hikari#1531 item 3): the balanced
+ * header's wings carry a `min-content` floor, and the title's 8rem cap is
+ * part of the START wing's floor — at 320px the two wings' floors plus the
+ * gaps exceed the viewport, and the END wing (overflow: hidden) pays by
+ * clipping the theme button. Dropping the title cap to 5rem below 480px
+ * lowers the start floor enough that the end wing fits whole; the title
+ * just ellipses a word earlier, which is the cheap side to pay on. */
+@media (width <= 480px) {
+  .s-admin-header-title {
+    max-width: 5rem;
+  }
+}
+
 .s-admin-header-actions {
   display: flex;
   align-items: center;

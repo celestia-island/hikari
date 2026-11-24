@@ -1,6 +1,5 @@
 import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
-import { useAnchoredTop } from "../composables/useAnchoredTop";
 import { useI18n } from "../i18n/context";
 import { asPropType } from "../utils/typing";
 import { HkAuthChannelList, type HkAuthChannelListEntry } from "./HkAuthChannelList";
@@ -142,11 +141,23 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  *   group — a channel switch crossfades only the body and leaves the
  *   tabs and the header copy mounted (the 2026-11-24 stable-shell
  *   direction, unchanged);
- * - the card's TOP edge is pinned while it grows (`useAnchoredTop`):
- *   a height morph inside a vertically centered host re-centers the box,
- *   which moves the top edge AND the content anchored to it — the
- *   literal "the card flies up" in the report. The hook is closed-loop,
- *   so a top-anchored host measures zero drift and nothing is written.
+ * - the card is NOT top-edge pinned (2026-11-24 ruling, later the same
+ *   day, reversing the pin #1501 put here): a height morph inside a
+ *   vertically centered host re-centers the box, so the top edge travels
+ *   half the height delta in step with the 300 ms morph and the card
+ *   ENDS the swap centered for its new height. `useAnchoredTop` used to
+ *   hold the pre-morph top edge instead and keep holding it at rest,
+ *   which left a taller step half the growth below the center for good
+ *   (engine-measured in a 752 px stage: 219.6 px above vs 163.4 px below
+ *   on the verify step) — the user read that as "the card sits too low".
+ *   The pin also measured in viewport coordinates while scrolling fires
+ *   no ResizeObserver, so a swap on a scrolled page folded the scroll
+ *   offset into its translateY (a 60 px downward jump, painted outside
+ *   the scroll range). What "do not let the card fly" still buys is
+ *   everything else on this list: the frame node is the single static
+ *   one, the swap is an in-card crossfade, and the box arrives BEFORE
+ *   the entering generation fades in — content that has appeared never
+ *   moves again.
  *
  * Copy rules locked by the chest blueprint (LoginView.test.ts, kept
  * verbatim here): segment labels are ALWAYS the panel's own locale keys,
@@ -274,13 +285,6 @@ export const HkLoginFlow = defineComponent({
       selectedFactor: () => unknown;
     };
     const mfaRef = ref<MfaCardHandle | null>(null);
-
-    /** The card frame's anchored box (see useAnchoredTop): the step and
-     *  channel swaps grow/shrink the card, and in a centered host that
-     *  reflows the frame — pinning the top edge is what keeps the panel
-     *  still while it grows downward. */
-    const anchorRef = ref<HTMLElement | null>(null);
-    useAnchoredTop(anchorRef);
 
     const currentChannel = computed(
       () =>
@@ -464,13 +468,14 @@ export const HkLoginFlow = defineComponent({
       return (
         <div class="hk-login-flow">
           {slots.top?.()}
-          {/* The anchored box: the card grows DOWNWARD from here, and the
-           * hook paints it back onto this top whenever a centered host
-           * re-centers the taller frame (see useAnchoredTop). Wrapping
-           * the FRAME (rather than the panel root) keeps a notice
-           * appearing above the card from dragging the card with it:
-           * the notice takes its own row above this box. */}
-          <div class="hk-login-flow-anchor" ref={anchorRef}>
+          {/* The frame box. It carries no transform: a centered host
+           * re-centers the taller card, by design (header note).
+           * Wrapping the FRAME (rather than the panel root) keeps a
+           * notice appearing above the card from dragging the card with
+           * it: the notice takes its own row above this box. The class
+           * name stays — hosts and probes address the frame through it —
+           * and no longer implies an anchor. */}
+          <div class="hk-login-flow-anchor">
             {/* ONE card frame for the whole session: the step swap below
              * is a swap of this frame's CONTENTS. .s-auth-card also
              * carries the panel's mount entrance, which therefore plays

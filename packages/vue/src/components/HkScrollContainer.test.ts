@@ -194,6 +194,14 @@ describe("HkScrollContainer overflow sensing", () => {
 // mutation only has to TRIGGER the re-sense, which is the contract under
 // test; no refresh() call and no scroll event may be involved. ──
 describe("HkScrollContainer content mutation re-sensing", () => {
+  // Mutation matrix (PR #1534 independent review rounds; ids match that run
+  // ledger): MUT:detach-sensor — removing startContentSensing() from
+  // onMounted reds all four tests in this group ("expected 'end' to be
+  // 'none'" and twins); MUT:neuter-callback — an attached observer with a
+  // no-op callback reds the same four, so the funnel and not merely the
+  // attachment is load-bearing; MUT:widening-style — adding "style" to the
+  // attributeFilter keeps them green, the documented performance trade
+  // (deliberately not test-pinned).
   /** Drain the mutation microtask, then two frames: the MO callback
    *  schedules the sensing pass, the bus delivers it on the next frame. */
   async function flushSensing(): Promise<void> {

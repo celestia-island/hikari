@@ -398,9 +398,17 @@ describe("HkPillToggleGroup track geometry contract", () => {
 // so the stubbed strip geometry IS the new layout — the DOM mutation
 // only has to TRIGGER the re-sense, which is the contract under test.
 describe("HkPillToggleGroup fade re-sensing", () => {
-  /** Drain the mutation microtask, then two frames: the MO callback is
-   *  `sense` directly — no rAF hop on this path, but the frames keep the
-   *  flush shape identical to the scroller's rAF-coalesced pass. */
+  // Mutation matrix (PR #1534 independent review rounds; ids match that run
+  // ledger): MUT:strip-childlist-only — reverting the strip observer to
+  // childList-only reds the characterData test below while the collapse test
+  // keeps its green (that path is childList, which the mutation isolates
+  // rather than breaks); MUT:strip-callback-neutered — a no-op observer
+  // callback reds both tests, so sensing runs through the observer and never
+  // through an accident of the stubbed geometry.
+  /** Drain the mutation microtask: the strip callback is `sense` directly
+   *  (no rAF hop), so the macrotask tick alone delivers it — the trailing
+   *  frames only keep the flush shape uniform with the scroller's
+   *  rAF-coalesced pass. */
   async function flushSensing(): Promise<void> {
     await new Promise<void>((r) => setTimeout(r, 0));
     await new Promise<void>((r) => requestAnimationFrame(() => r()));

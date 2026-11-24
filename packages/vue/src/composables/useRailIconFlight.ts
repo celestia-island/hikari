@@ -75,6 +75,16 @@ import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
  * 4. Non-participating icons (identity blocks, group carets, badge
  *    dots), the pills, and the labels crossfade exactly as before.
  *
+ * 4a. NO-SCALE GLYPHS (2026-11-24 user direction): a MARK — a dot, a
+ *    bullet, a status pip — is not an illustration that happens to be
+ *    small; its size IS its meaning, and tweening it reads as a glitch
+ *    ("the dot balloons, then shrinks back"). Such cells carry
+ *    `data-flip-noscale`, and the flight then travels the clone at the
+ *    DESTINATION's size from the first frame — position continues, size
+ *    never moves. Measured per pair (either end may opt in), because the
+ *    two generations are different DOM and a row can gain or lose the
+ *    mark between densities.
+ *
  * TIMING IS TOKEN-DERIVED, NOT HARDCODED (2026-11-02 user direction):
  * the flight window reads the theme's `--duration-normal` off the swap
  * host's computed style — the very variable HkCrossfade's dissolve
@@ -108,6 +118,11 @@ import { releaseMediaQuery, useMediaQuery } from "../runtime/useMediaQuery";
 
 /** Row-key attribute on an icon cell that flies across a rail flip. */
 export const RAIL_FLIP_ICON_ATTR = "data-flip-icon";
+
+/** Marks a flying icon cell whose GLYPH must not tween: it still travels
+ *  to the destination (the motion is the point) but keeps its own size the
+ *  whole way. See the "no-scale glyphs" note in the mechanism doc. */
+export const RAIL_FLIP_NOSCALE_ATTR = "data-flip-noscale";
 /** Host attribute marking a flight in progress (drives the hide rule). */
 export const RAIL_FLIP_ACTIVE_ATTR = "data-flipping";
 /** Per-cell mark stamped on exactly the LEAVING icons that were paired
@@ -153,6 +168,8 @@ interface FlightPair {
   to: DOMRect;
   color: string;
   template: HTMLElement;
+  /** A MARK (dot/bullet/pip): travels, never changes size (see 4a). */
+  noScale: boolean;
 }
 
 /** What one flight needs from the swap: the paired icons. */
@@ -278,6 +295,12 @@ export function useRailIconFlight(
         to: toRect,
         color: getComputedStyle(fromEl).color,
         template: toEl,
+        // A MARK keeps its size (see 4a): either end opting in pins the
+        // clone to the destination size — a dot's size IS its meaning, and
+        // a tween reads as the dot ballooning and snapping back.
+        noScale:
+          fromEl.hasAttribute(RAIL_FLIP_NOSCALE_ATTR) ||
+          toEl.hasAttribute(RAIL_FLIP_NOSCALE_ATTR),
       });
     }
     return { pairs };
@@ -377,18 +400,41 @@ export function useRailIconFlight(
       const toCenterY = pair.to.top + pair.to.height / 2;
       const dx = (toCenterX - fromCenterX) / scale.x;
       const dy = (toCenterY - fromCenterY) / scale.y;
-      const sx = pair.from.width ? pair.to.width / pair.from.width : 1;
-      const sy = pair.from.height ? pair.to.height / pair.from.height : 1;
+      // A no-scale mark is painted at the DESTINATION size from frame 0, so
+      // the transform never contains a scale at all (a `scale(1)` would
+      // still be a no-op today but leaves the door open for the size tween
+      // to creep back in through a later edit).
+      const paintedW = pair.noScale ? pair.to.width : pair.from.width;
+      const paintedH = pair.noScale ? pair.to.height : pair.from.height;
+      const sx = pair.noScale
+        ? 1
+        : pair.from.width
+          ? pair.to.width / pair.from.width
+          : 1;
+      const sy = pair.noScale
+        ? 1
+        : pair.from.height
+          ? pair.to.height / pair.from.height
+          : 1;
       const clone = pair.template.cloneNode(true) as HTMLElement;
       // Neutralize identity: the clone must never match a future pairing
       // query nor the hide rule — it is the flight layer's own citizen.
       clone.removeAttribute(RAIL_FLIP_ICON_ATTR);
       clone.removeAttribute(RAIL_FLIP_FLYING_ATTR);
       clone.className = "hk-sidebar-rail-flight-clone";
-      clone.style.insetInlineStart = `${inlineOffset / scale.x}px`;
-      clone.style.insetBlockStart = `${(pair.from.top - origin.top) / scale.y}px`;
-      clone.style.width = `${pair.from.width / scale.x}px`;
-      clone.style.height = `${pair.from.height / scale.y}px`;
+      // Center-aligned travel for both kinds: the painted box is centered on
+      // the LEAVING center and travels to the DESTINATION center, so a
+      // constant-size mark and a tweening glyph share one code path — only
+      // the scale differs (a mark's is identity).
+      const paintLeft = pair.from.left + pair.from.width / 2 - paintedW / 2;
+      const paintTop = pair.from.top + pair.from.height / 2 - paintedH / 2;
+      const paintInlineOffset = rtl
+        ? origin.right - (paintLeft + paintedW)
+        : paintLeft - origin.left;
+      clone.style.insetInlineStart = `${paintInlineOffset / scale.x}px`;
+      clone.style.insetBlockStart = `${(paintTop - origin.top) / scale.y}px`;
+      clone.style.width = `${paintedW / scale.x}px`;
+      clone.style.height = `${paintedH / scale.y}px`;
       clone.style.color = pair.color;
       // Pure travel: full opacity the whole way, `fill: forwards` so a
       // frame that slips past finish still shows the clone AT the

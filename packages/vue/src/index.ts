@@ -587,6 +587,15 @@ export {
   SIDEBAR_RAIL_TOGGLE_BUTTON_SELECTOR,
 } from "./composables/useSidebarRail";
 export type { SidebarRailOptions, SidebarRailHandle } from "./composables/useSidebarRail";
+// The rail flip's icon continuations vocabulary: a host that renders its own
+// rail glyph cells (bespoke sidebar markup) stamps these attributes directly.
+// `iconNoScale` on HkMenuItem is the component-level spelling of the same
+// contract for hosts that go through HkMenu.
+export {
+  RAIL_FLIP_ICON_ATTR,
+  RAIL_FLIP_FLYING_ATTR,
+  RAIL_FLIP_NOSCALE_ATTR,
+} from "./composables/useRailIconFlight";
 // The sidebar GROUP FOLD store (known-live-issues #43). HkFaceShell and
 // HkSidebar provide one above their rail swap, so slot content THEY own
 // shares the fold across density generations. A host that defines the

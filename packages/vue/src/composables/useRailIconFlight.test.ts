@@ -6,6 +6,7 @@ import {
   RAIL_FLIGHT_MS,
   RAIL_FLIGHT_SWEEP_MARGIN_MS,
   RAIL_FLIP_ACTIVE_ATTR,
+  RAIL_FLIP_NOSCALE_ATTR,
   RAIL_FLIP_FLYING_ATTR,
   RAIL_FLIP_ICON_ATTR,
   RAIL_FLIP_ITEM_ATTR,
@@ -667,6 +668,42 @@ describe("useRailIconFlight", () => {
     // so the glyph never snaps between densities.
     expect(anim.keyframes.at(-1)!.transform).toBe(
       "translate(5px, 1px) scale(0.625, 0.625)",
+    );
+  });
+
+  // 2026-11-24 user direction: a MARK (dot/bullet/pip) keeps its size across
+  // the flip — its size IS its meaning, and a tween reads as the dot
+  // ballooning then snapping back. Same geometry as the test above, so the
+  // ONLY difference is the opt-in attribute.
+  it("keeps a no-scale mark's size constant while it travels", async () => {
+    const h = mountSwap();
+    await h.set(true);
+    const { leaving, entering } = dissolvePair(h, true);
+    stubRect(h.swap(), rect(0, 0, 240, 400));
+    stubIcons(leaving, (key) => rect(32, key === "home" ? 100 : 140, 16, 16));
+    stubIcons(entering, (key) =>
+      key === "home" ? rect(40, 104, 10, 10) : rect(20, 140, 10, 10),
+    );
+    // Mark the HOME pair's DESTINATION as a mark; the other pair keeps the
+    // tween, so one flip proves both branches at once.
+    entering
+      .querySelector<HTMLElement>('[data-flip-icon="home"]')!
+      .setAttribute(RAIL_FLIP_NOSCALE_ATTR, "");
+
+    await vi.advanceTimersByTimeAsync(0);
+
+    const clones = [...flightLayer(h)!.querySelectorAll<HTMLElement>(".hk-sidebar-rail-flight-clone")];
+    expect(clones, "both pairs fly").toHaveLength(2);
+    const markClone = clones.find((c) => c.textContent === "H")!;
+    // Painted at its OWN size from frame 0 (10px, not the 16px it leaves
+    // at), centered on the leaving center: 40 − 10/2 = 35.
+    expect(markClone.style.width, "the mark is painted at its own size").toBe("10px");
+    expect(markClone.style.height).toBe("10px");
+    expect(markClone.style.insetInlineStart).toBe("35px");
+    const markAnim = animations.find((a) => a.el.textContent === "H")!;
+    expect(markAnim.keyframes.at(-1)!.transform).toBe(
+      "translate(5px, 1px) scale(1, 1)",
+      // The transform still carries the travel; its scale stays identity.
     );
   });
 

@@ -54,6 +54,11 @@ export interface HkMenuItem {
   key: string;
   label: string;
   icon?: Component;
+  /** Marks the icon as a MARK (dot, bullet, status pip) rather than an
+   *  illustration: the rail flip still TRAVELS it to its new position but
+   *  never tweens its size — a dot's size is its meaning, and growing it
+   *  across the flip reads as a glitch (2026-11-24 user direction). */
+  iconNoScale?: boolean;
   flag?: string;
   checked?: boolean;
   disabled?: boolean;
@@ -956,7 +961,11 @@ export default defineComponent({
             // data-flip-icon: the row key opts this cell into the rail
             // flip's icon flight (useRailIconFlight) — the flight pairs
             // the leaving and entering copies of ONE destination by it.
-            <span class="hk-menu-item-icon" data-flip-icon={item.key}>
+            <span
+              class="hk-menu-item-icon"
+              data-flip-icon={item.key}
+              data-flip-noscale={item.iconNoScale ? true : undefined}
+            >
               {h(item.icon, { size: 16 })}
             </span>
           )}
@@ -1067,6 +1076,9 @@ export default defineComponent({
             <span
               class="hk-menu-item-icon"
               data-flip-icon={item.key}
+              // A LETTER fallback is a mark, not an illustration: its size is
+              // its identity, so the flight must not tween it (2026-11-24).
+              data-flip-noscale={item.iconNoScale || !item.icon ? true : undefined}
               data-fallback={item.icon ? undefined : true}
             >
               {item.icon ? h(item.icon, { size: 16 }) : item.label.trim().charAt(0).toUpperCase()}
@@ -1130,7 +1142,11 @@ export default defineComponent({
                 {railCaret(expanded, 16)}
               </span>
               {item.icon && (
-                <span class="hk-menu-rail-glyph-corner" data-flip-icon={item.key}>
+                <span
+                  class="hk-menu-rail-glyph-corner"
+                  data-flip-icon={item.key}
+                  data-flip-noscale={item.iconNoScale ? true : undefined}
+                >
                   {h(item.icon, { size: 10 })}
                 </span>
               )}

@@ -178,7 +178,11 @@ describe("HkFaceShell headerExtra", () => {
     // (the leaving item stays in the DOM for its exit transition, which is
     // why the lookup is by key rather than first-match)…
     expect(c.querySelector('[data-crossfade-key="page-b"] .content-mock')!.textContent).toBe("page-b");
-    // …and the band is the SAME DOM node, not a re-mount.
+    // …and the band is the SAME DOM node, not a re-mount. (This identity
+    // line catches a re-MOUNT; "band inside the crossfade" is caught by
+    // the structural `closest(".hk-crossfade")` guard above — Vue re-
+    // PARENTS a slot vnode into the entering item without re-mounting it,
+    // so identity alone would not notice. Review R3.)
     expect(c.querySelector(".band-mock")).toBe(bandBefore);
   });
 });

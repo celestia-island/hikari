@@ -183,6 +183,83 @@ describe("HkScrollContainer overflow sensing", () => {
   });
 });
 
+// ── Content mutation re-sensing (the 2026-11-24 fade-staleness report):
+// a content-only change — the option set collapsing from several buttons
+// to one, a label rewritten, a row toggled hidden — moves scroll extent
+// without resizing the viewport box (no ResizeObserver callback) and
+// usually without moving the offset (no scroll event). The overflow
+// mirror and the fade strengths must re-sense anyway: the viewport
+// MutationObserver funnels those mutations into the same pass. happy-dom
+// performs no layout, so the stubbed geometry IS the new layout — the
+// mutation only has to TRIGGER the re-sense, which is the contract under
+// test; no refresh() call and no scroll event may be involved. ──
+describe("HkScrollContainer content mutation re-sensing", () => {
+  /** Drain the mutation microtask, then two frames: the MO callback
+   *  schedules the sensing pass, the bus delivers it on the next frame. */
+  async function flushSensing(): Promise<void> {
+    await new Promise<void>((r) => setTimeout(r, 0));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
+
+  it("retires a lit end fade when the content shrinks without scroll or resize", async () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("end");
+
+    // The strip collapses to a fitting layout (the stub IS the new
+    // layout), and the DOM actually changes — the mutation is the only
+    // trigger the new state can arrive through.
+    stubGeometry(m.viewport, { scrollWidth: 50, clientWidth: 100, scrollLeft: 0 });
+    m.viewport.querySelector(".slot-marker")!.remove();
+    await flushSensing();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("none");
+  });
+
+  it("re-derives the fade strengths on the same mutation (the reported defect)", async () => {
+    const m = mountScroller({ axis: "horizontal", fade: true });
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 48 });
+    m.instance?.refresh();
+    // Mid-pull: the start edge sits at half depth (48/96)...
+    expect(m.root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("0.5");
+
+    // ...then everything fits again — the strength must re-derive from
+    // the new geometry or the mask keeps dissolving a button that is
+    // fully visible.
+    stubGeometry(m.viewport, { scrollWidth: 50, clientWidth: 100, scrollLeft: 0 });
+    m.viewport.querySelector(".slot-marker")!.remove();
+    await flushSensing();
+    expect(m.root.style.getPropertyValue("--hk-scroll-fade-strength-left")).toBe("1");
+  });
+
+  it("re-senses when only a text node changes (relabeled option)", async () => {
+    const m = mountScroller({ axis: "horizontal" });
+    stubGeometry(m.viewport, { scrollWidth: 50, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("none");
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    // A characterData mutation — a label rewritten in place adds no
+    // child and removes none.
+    (m.viewport.querySelector(".slot-marker")!.firstChild as Text).data = "much longer label";
+    await flushSensing();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("end");
+  });
+
+  it("re-senses when only a class attribute flips (visibility change)", async () => {
+    const m = mountScroller({ axis: "horizontal" });
+    stubGeometry(m.viewport, { scrollWidth: 50, clientWidth: 100, scrollLeft: 0 });
+    m.instance?.refresh();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("none");
+
+    stubGeometry(m.viewport, { scrollWidth: 300, clientWidth: 100, scrollLeft: 0 });
+    m.viewport.querySelector(".slot-marker")!.classList.add("wide-mode");
+    await flushSensing();
+    expect(m.root.getAttribute("data-h-overflow")).toBe("end");
+  });
+});
+
 // ── Progressive fade strengths (fadeDistance, 2026-11-06): while `fade`
 // is on the container mirrors the hidden-content depth past each edge as
 // a 0..1 band scale on the root's inline style — pull the strip and the

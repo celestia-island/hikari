@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h } from "vue";
+import { createApp, h, nextTick, reactive } from "vue";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -387,5 +387,74 @@ describe("HkPillToggleGroup track geometry contract", () => {
     expect(phoneDecls.has("display"), "no display in the phone block").toBe(false);
     expect(phoneDecls.has("width"), "no width in the phone block").toBe(false);
     expect(phoneDecls.has("max-width"), "no max-width in the phone block").toBe(false);
+  });
+});
+
+// ── Fade re-sensing on content mutations (the 2026-11-24 report): the
+// option set collapsing from several pills to one must retire the edge
+// fade the wide layout earned, without a scroll and without the strip's
+// own box resizing. The strip's MutationObserver funnels the mutations
+// that can move scrollWidth into sense(). happy-dom performs no layout,
+// so the stubbed strip geometry IS the new layout — the DOM mutation
+// only has to TRIGGER the re-sense, which is the contract under test.
+describe("HkPillToggleGroup fade re-sensing", () => {
+  /** Drain the mutation microtask, then two frames: the MO callback is
+   *  `sense` directly — no rAF hop on this path, but the frames keep the
+   *  flush shape identical to the scroller's rAF-coalesced pass. */
+  async function flushSensing(): Promise<void> {
+    await new Promise<void>((r) => setTimeout(r, 0));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
+  }
+
+  function stubStripGeometry(strip: HTMLElement, scrollWidth: number, clientWidth: number): void {
+    Object.defineProperty(strip, "scrollWidth", { configurable: true, get: () => scrollWidth });
+    Object.defineProperty(strip, "clientWidth", { configurable: true, get: () => clientWidth });
+    Object.defineProperty(strip, "scrollLeft", { configurable: true, get: () => 0 });
+  }
+
+  it("retires the end fade when the option set collapses to one pill", async () => {
+    const options = reactive([
+      { value: "chat", label: "Chat" },
+      { value: "draw", label: "Draw" },
+    ]);
+    const c = mount(h(HkPillToggleGroup, { label: "P", options, selected: new Set<string>() }));
+    // The composable wires scroll/wheel/MO sensors in a watch on the
+    // strip ref — flush the mount queue so the wiring has run before any
+    // stubbed geometry or dispatched event.
+    await nextTick();
+    const strip = c.querySelector<HTMLElement>(".hk-pill-group")!;
+    stubStripGeometry(strip, 400, 120);
+    strip.dispatchEvent(new Event("scroll"));
+    expect(strip.getAttribute("data-h-overflow")).toBe("end");
+
+    // The surviving layout fits (the stub IS that layout); the childList
+    // mutation from the patch is the only trigger the new state arrives
+    // through.
+    stubStripGeometry(strip, 80, 120);
+    options.splice(1);
+    await nextTick();
+    await flushSensing();
+    expect(strip.hasAttribute("data-h-overflow")).toBe(false);
+  });
+
+  it("lights the fade when a label is rewritten in place (characterData only)", async () => {
+    const options = reactive([{ value: "chat", label: "Chat" }]);
+    const c = mount(h(HkPillToggleGroup, { label: "P", options, selected: new Set<string>() }));
+    // Same wiring flush as above: the sensors must already be attached
+    // when the mutation lands, or the test exercises nothing.
+    await nextTick();
+    const strip = c.querySelector<HTMLElement>(".hk-pill-group")!;
+    stubStripGeometry(strip, 80, 120);
+    strip.dispatchEvent(new Event("scroll"));
+    expect(strip.hasAttribute("data-h-overflow")).toBe(false);
+
+    stubStripGeometry(strip, 400, 120);
+    // A relabeled pill adds no child and removes none — the text node
+    // mutation alone must re-sense.
+    const pill = strip.querySelectorAll<HTMLButtonElement>(".hk-pill-group-pill")[0]!;
+    (pill.firstChild as Text).data = "Conversation with a much longer title";
+    await flushSensing();
+    expect(strip.getAttribute("data-h-overflow")).toBe("end");
   });
 });

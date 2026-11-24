@@ -179,6 +179,11 @@ export const HkAdminShell = defineComponent({
                 // shell that stops relaying the field goes red there.
               })
           : undefined,
+        // The header sub-row rides through verbatim: this face has no
+        // opinion on the band (it is the host's scope label, not chrome
+        // the wrapper can synthesize), and dropping it here would make
+        // the admin face silently narrower than the shell it composes.
+        headerExtra: slots.headerExtra,
         sidebar: slots.sidebar,
         userPanel: slots.userPanel,
         content: slots.content,

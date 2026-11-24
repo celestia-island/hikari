@@ -143,7 +143,7 @@ impl StyledComponent for RichTextEditorComponent {
 
 .hk-rich-text-editor-editor:empty::before {
     content: attr(data-placeholder);
-    color: var(--hi-color-text-tertiary);
+    color: var(--hi-color-text-tertiary, #8b949e);
 }
 
 .hk-rich-text-editor-editor p {

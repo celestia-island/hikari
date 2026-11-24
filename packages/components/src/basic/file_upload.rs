@@ -210,7 +210,7 @@ impl StyledComponent for FileUploadComponent {
 
 .hk-file-upload-dragging {
     border-color: var(--hi-color-primary);
-    background-color: rgba(var(--hi-color-primary-rgb), 0.05);
+    background-color: rgba(var(--hi-color-primary-rgb, 139, 92, 246), 0.05);
     transform: scale(1.02);
 }
 

@@ -197,8 +197,56 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
     // Known-positive guard: both directions must find something, otherwise a
     // broken pattern would silently pass this test (zero-output reads as
     // "no problem").
-    // Definitions can live in a base sheet OR locally in any mirrored
-    // partial (a rule that sets the custom property and later reads it).
+    let definitions = bundled_token_definitions();
+    let mut referenced_without_fallback = 0usize;
+    let dir = mirror_root().join("components");
+    let mut sheets: Vec<std::path::PathBuf> = std::fs::read_dir(&dir)
+        .expect("read vue-mirror/components")
+        .flatten()
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "scss"))
+        .collect();
+    sheets.sort();
+
+    for path in sheets {
+        let text = std::fs::read_to_string(&path)
+            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+        let clean = strip_scss_comments(&text);
+        let mut rest = clean.as_str();
+        while let Some(start) = rest.find("var(--") {
+            rest = &rest[start + 4..];
+            let name_end = rest.find([')', ',']).unwrap_or(rest.len());
+            let name = &rest[..name_end];
+            let has_fallback = rest[name_end..].starts_with(',');
+            if !has_fallback {
+                referenced_without_fallback += 1;
+                assert!(
+                    definitions.contains(name)
+                        || INTENTIONALLY_UNRESOLVED.iter().any(|(v, _)| *v == name),
+                    "{} references {name} without a fallback, but no bundled token layer defines it and it is not on the intentionally-unresolved list",
+                    path.file_name().unwrap().to_string_lossy()
+                );
+            }
+        }
+    }
+    assert!(
+        referenced_without_fallback > 0,
+        "expected fallback-less token references in the mirrored sheets (pattern check)"
+    );
+}
+
+/// The custom-property names the bundled token layers define: the mirrored
+/// base sheets (`tokens.scss` / `scale.scss`), the crate's own stylesheet
+/// tree under `src/styles` (the compiled `index.scss` entry ships the legacy
+/// `--hi-*` families; the mirrored component partials may declare the
+/// per-site token their consumer reads), and the theme crate's `styles/`
+/// (when the repo checkout is present — a sdist ships the crate but not the
+/// theme; the crate-local definitions keep the guard meaningful there). The
+/// raw-text walk is the same deliberate over-approximation the guards below
+/// have always used: "does the shipped tree define it anywhere", not
+/// "@use reachability". MUT:mut-defwalk-rawstyles — removing the raw
+/// `src/styles` leg fails on partial-local definitions (HkBadge's border).
+fn bundled_token_definitions() -> std::collections::HashSet<String> {
     let mut definitions = std::collections::HashSet::new();
     let mut base_definitions = 0usize;
     for base in ["tokens.scss", "scale.scss"] {
@@ -218,11 +266,34 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
         base_definitions > 50,
         "token base sheets must define the runtime vocabulary (found {base_definitions})"
     );
+    // The crate's own stylesheet tree (the `index.scss` entry point the
+    // builder compiles the bundle from, plus every partial under it).
+    let styles_root = crate_root().join("src").join("styles");
+    let mut stack = vec![styles_root];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir)
+            .unwrap_or_else(|e| panic!("read {}: {e}", dir.display()))
+            .flatten()
+        {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if path.extension().is_some_and(|ext| ext == "scss")
+                && let Ok(text) = std::fs::read_to_string(&path)
+            {
+                for line in text.lines() {
+                    let trimmed = line.trim_start();
+                    if let Some(rest) = trimmed.strip_prefix("--")
+                        && let Some(name) = rest.split(':').next()
+                    {
+                        definitions.insert(format!("--{}", name.trim()));
+                    }
+                }
+            }
+        }
+    }
     // The `--hi-*` family is owned by the THEME layer (hikari-theme's
-    // `styles/*.scss`, emitted by the theme provider in both forms). Pull its
-    // definitions in when the repo checkout is present (a sdist ships the
-    // mirror but not the theme crate; the mirror-local definitions above keep
-    // the guard meaningful there).
+    // `styles/*.scss`, emitted by the theme provider in both forms).
     let theme_styles = crate_root().join("..").join("theme").join("styles");
     if theme_styles.is_dir()
         && let Ok(entries) = std::fs::read_dir(&theme_styles)
@@ -243,66 +314,151 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
             }
         }
     }
+    definitions
+}
 
-    let mut referenced_without_fallback = 0usize;
-    let dir = mirror_root().join("components");
-    let mut sheets: Vec<std::path::PathBuf> = std::fs::read_dir(&dir)
-        .expect("read vue-mirror/components")
-        .flatten()
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().is_some_and(|ext| ext == "scss"))
-        .collect();
-    sheets.sort();
-
-    // Local definitions count too (a `*-vars` partial legitimately declares the
-    // per-site tokens its consumer reads). Collect them from every mirrored
-    // sheet up front — the approximation is deliberate: the guard answers
-    // "does the mirrored tree define it anywhere", not "@use reachability".
-    for path in &sheets {
-        let text = std::fs::read_to_string(path)
-            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        for line in text.lines() {
-            let trimmed = line.trim_start();
-            if let Some(rest) = trimmed.strip_prefix("--")
-                && let Some(name) = rest.split(':').next()
-            {
-                definitions.insert(format!("--{}", name.trim()));
+/// Line indexes (0-based, matching `text.lines().enumerate()`) inside
+/// `#[cfg(test)]`-gated items. Test fixtures never execute in production and
+/// deliberately reference undefined names (pass-through probes like
+/// `var(--x)`), so scanning them would demand definitions no runtime ever
+/// needs. A region ends at the closing brace of the attributed item,
+/// recognized by its indentation — rustfmt keeps a block's brace aligned
+/// with its item, so the close of the gated item is a bare `}` at the same
+/// indent as the attribute. MUT:mut-testskip-fixtures — gating is
+/// load-bearing: with the skip off, the scan fails on the fixture probes
+/// (`--x`, `--rail-w`, `--_hk-dock-gap-{edge}`).
+fn test_only_lines(text: &str) -> std::collections::HashSet<usize> {
+    let mut gated = std::collections::HashSet::new();
+    let mut in_region = false;
+    let mut region_indent = 0usize;
+    for (idx, line) in text.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if !in_region && trimmed.starts_with("#[cfg(test)]") {
+            in_region = true;
+            region_indent = line.len() - line.trim_start().len();
+            gated.insert(idx);
+            continue;
+        }
+        if in_region {
+            if trimmed == "}" && line.len() - trimmed.len() == region_indent {
+                in_region = false;
+                gated.insert(idx);
+            } else {
+                gated.insert(idx);
             }
         }
     }
-    for path in sheets {
-        let text = std::fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
-        // Local definitions inside the partial itself count as resolved.
-        let clean = strip_scss_comments(&text);
-        for line in clean.lines() {
-            let trimmed = line.trim_start();
-            if let Some(rest) = trimmed.strip_prefix("--")
-                && let Some(name) = rest.split(':').next()
-            {
-                definitions.insert(format!("--{}", name.trim()));
-            }
-        }
-        let mut rest = clean.as_str();
-        while let Some(start) = rest.find("var(--") {
-            rest = &rest[start + 4..];
-            let name_end = rest.find([')', ',']).unwrap_or(rest.len());
-            let name = &rest[..name_end];
-            let has_fallback = rest[name_end..].starts_with(',');
-            if !has_fallback {
-                referenced_without_fallback += 1;
-                assert!(
-                    definitions.contains(name)
-                        || INTENTIONALLY_UNRESOLVED.iter().any(|(v, _)| *v == name),
-                    "{} references {name} without a fallback, but neither tokens.scss nor scale.scss defines it and it is not on the intentionally-unresolved list",
-                    path.file_name().unwrap().to_string_lossy()
-                );
+    gated
+}
+
+/// The crate's own `.rs` component bodies consume `var(--hi-...)` directly,
+/// with or without a fallback. Those bodies are NOT `.scss`, so the
+/// mirrored-sheet walks above never see them: fallback-less legacy
+/// references in production `.rs` were invisible to every gate until this
+/// scan existed. Every referenced name must resolve against the bundled
+/// layers, against the file's own emitted CSS (a body that declares the
+/// very names it reads is a self-contained pair), or onto the
+/// intentionally-unresolved escape hatch — otherwise the reference is
+/// invalid at computed-value time on every theme. MUT:mut-rs-scan-detect —
+/// a bogus production name fails naming its file (M1), dropping the
+/// same-file definition collection fails on terminal's `--hk-terminal-fg`
+/// and code_highlight's `--code-syntax-*` (M3).
+#[test]
+fn crate_rs_token_references_resolve_against_the_bundled_token_sheets() {
+    let definitions = bundled_token_definitions();
+    let mut files: Vec<std::path::PathBuf> = Vec::new();
+    let mut stack = vec![crate_root().join("src")];
+    while let Some(dir) = stack.pop() {
+        for entry in std::fs::read_dir(&dir)
+            .unwrap_or_else(|e| panic!("read {}: {e}", dir.display()))
+            .flatten()
+        {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if path.extension().is_some_and(|ext| ext == "rs") {
+                files.push(path);
             }
         }
     }
     assert!(
-        referenced_without_fallback > 0,
-        "expected fallback-less token references in the mirrored sheets (pattern check)"
+        files.len() > 100,
+        "the crate source walk must find the real tree (found {} files)",
+        files.len()
+    );
+
+    let mut references = 0usize;
+    let mut offenders: Vec<String> = Vec::new();
+    for path in &files {
+        let text = std::fs::read_to_string(path)
+            .unwrap_or_else(|e| panic!("read {}: {e}", path.display()));
+        let test_lines = test_only_lines(&text);
+        // Component-local definitions: emitted CSS inside the same `.rs`
+        // body (inline `style` chains, a themed sheet constant) may declare
+        // the names that body reads.
+        let mut local_definitions: std::collections::HashSet<String> =
+            std::collections::HashSet::new();
+        for (idx, line) in text.lines().enumerate() {
+            if test_lines.contains(&idx) {
+                continue;
+            }
+            // Comment-blind collection would let a documented or
+            // commented-out `--name:` example mask a real broken
+            // reference elsewhere in the file.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
+            let mut rest = line;
+            while let Some(pos) = rest.find("--") {
+                rest = &rest[pos + 2..];
+                let name_len = rest
+                    .find(|c: char| !(c.is_ascii_alphanumeric() || c == '-' || c == '_'))
+                    .unwrap_or(rest.len());
+                let (name, tail) = rest.split_at(name_len);
+                if name_len > 0 && tail.starts_with(':') {
+                    local_definitions.insert(format!("--{name}"));
+                }
+            }
+        }
+        for (idx, line) in text.lines().enumerate() {
+            if test_lines.contains(&idx) {
+                continue;
+            }
+            let trimmed = line.trim_start();
+            if trimmed.starts_with("//") {
+                continue;
+            }
+            let mut rest = trimmed;
+            while let Some(pos) = rest.find("var(--") {
+                rest = &rest[pos + 4..];
+                let name_end = rest.find([')', ',']).unwrap_or(rest.len());
+                let name = &rest[..name_end];
+                let has_fallback = rest[name_end..].starts_with(',');
+                if !has_fallback
+                    && !definitions.contains(name)
+                    && !local_definitions.contains(name)
+                    && !INTENTIONALLY_UNRESOLVED.iter().any(|(v, _)| *v == name)
+                {
+                    offenders.push(format!(
+                        "{} references {name} without a fallback and without a definition",
+                        path.display()
+                    ));
+                }
+                references += 1;
+            }
+        }
+    }
+    assert!(
+        references > 20,
+        "the scan must find the crate's real token references (found {references})"
+    );
+    assert!(
+        definitions.contains("--hi-color-bg-container"),
+        "the #1496 surface alias must stay defined by the bundled token sheets"
+    );
+    assert!(
+        offenders.is_empty(),
+        "crate .rs bodies reference token names that no bundled layer defines: {offenders:?}"
     );
 }
 

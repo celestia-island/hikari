@@ -230,6 +230,22 @@ export interface HkFaceShellUserPanelSlot {
  */
 export type HkFaceShellSlots = SlotsType<{
   header?: (params: HkFaceShellHeaderSlot) => VNode[];
+  /**
+   * The header sub-row: a host-owned band rendered directly under the
+   * header and ABOVE the document scroll viewport. It is the "which scope
+   * am I in" line — the console's active-platform strip is its first
+   * consumer — and it is deliberately NOT inside the header slot: the
+   * header's three-zone grid (avatar | centre group | actions) has no free
+   * row, and a host-owned title there would compete with the page-owned
+   * centre group for the same track.
+   *
+   * Geometry: no wrapper box of the shell's own — the slot's VNodes are
+   * the band's boxes, so a slot that renders nothing reserves nothing.
+   * The band does not scroll (it sits above the viewport), so it stays put
+   * while the page scrolls, and it never takes part in the content padding
+   * contract: the page body below keeps its gutters exactly as before.
+   */
+  headerExtra?: () => VNode[];
   sidebar?: (params: HkFaceShellSidebarSlot) => VNode[];
   userPanel?: (params: HkFaceShellUserPanelSlot) => VNode[];
   content?: () => VNode[];
@@ -548,6 +564,13 @@ export const HkFaceShell = defineComponent({
             })}
           </div>
         )}
+
+        {/* The header sub-row: directly under the header, above the
+            body — so it inherits the header's full width and sits clear
+            of the content viewport's scrolling. Slot VNodes are NOT
+            wrapped: the consumer's element IS the band (see the slot
+            doc), and an empty slot renders no box at all. */}
+        {slots.headerExtra?.()}
 
         <div class="s-admin-shell-body" style={{ paddingBottom: footerPad() }}>
           {isDesktop.value && !props.sidebarCollapsed && slots.sidebar && (

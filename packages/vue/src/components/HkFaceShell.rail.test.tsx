@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, defineComponent, h, ref, type VNode } from "vue";
+import { renderToString } from "@vue/server-renderer";
 
 // Same stub shape as HkFaceShell.test.tsx: HDrawer teleports and
 // animates; the desktop rail contract is testable without the overlay
@@ -949,6 +950,72 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
     await vi.advanceTimersByTimeAsync(150);
     const backGen = await settle(c.container, "rail");
     expect(groupToggle(backGen).getAttribute("aria-expanded")).toBe("true");
+  });
+
+  it("renders the DESKTOP layout on the server even when the viewport is a phone", async () => {
+    // 2026-11-24 user report: a phone showed a 248px inline sidebar and a
+    // 94px content column. Root cause was this shape — the server has no
+    // viewport, so it emitted the desktop layout, the client's first pass
+    // wanted the drawer, the structures differ, Vue kept the SERVER DOM and
+    // the drawer never appeared. The mounted gate keeps both first passes
+    // on the desktop layout; SSR therefore stays viewport-agnostic (a
+    // server render at phone width must NOT produce a drawer).
+    // MUT:mut-drop-gate (removing the mounted gate turns this RED).
+    window.innerWidth = 390;
+    const app = createApp({
+      render: () =>
+        h(
+          HkFaceShell,
+          { sidebarCollapsible: true } as Record<string, unknown>,
+          { sidebar: () => h("div", { class: "nav-stub" }, "nav") },
+        ),
+    });
+    const html = await renderToString(app);
+    expect(html, "SSR emits the desktop aside").toContain("data-shell-sidebar");
+    expect(html, "SSR never emits the drawer").not.toContain("drawer-stub");
+    // The pre-hydration CSS guard keys on this marker; if it stopped being
+    // emitted the guard would silently stop working on every phone while
+    // every assertion above stayed green (review round 2).
+    expect(html, "SSR stamps the booting marker the guard keys on").toContain(
+      "data-shell-booting",
+    );
+  });
+
+  it("never keeps a narrow-breakpoint host's sidebar hidden after mount", async () => {
+    // The pre-hydration CSS guard is scoped to `[data-shell-booting]`, which
+    // the shell REMOVES on mount. Without that bound, a host whose
+    // `mobileBreakpoint` prop is narrower than the stylesheet's 768px would
+    // have CSS hide the sidebar forever while its JS called the same
+    // viewport desktop — no sidebar and no drawer (review round 1 of #1535).
+    window.innerWidth = 700;
+    const c = mountShell({ sidebarCollapsible: true, mobileBreakpoint: 640 } as Record<string, unknown>);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      c.container.querySelector(".s-admin-shell")?.hasAttribute("data-shell-booting"),
+      "the booting marker must not outlive mount",
+    ).toBe(false);
+    expect(c.aside(), "the prop is authoritative once mounted").toBeTruthy();
+    window.innerWidth = 1280;
+  });
+
+  it("switches a phone to the drawer after mount, and drops the inline sidebar", async () => {
+    // The POST-MOUNT STATE of the same contract: once mounted, the real
+    // viewport decides — a phone gets the drawer as its ONLY nav surface and
+    // the squeezed inline sidebar is gone from the body. This is a state
+    // assertion, not the regression oracle: pre-fix a client-only mount at
+    // 390px already produced the drawer (the bug lived in the SSR/client
+    // disagreement, which the SSR test above pins and mutations.)
+    window.innerWidth = 390;
+    const c = mountShell({ sidebarCollapsible: true });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(c.aside(), "no inline sidebar on a phone after mount").toBeFalsy();
+    c.openDrawer();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      c.container.querySelector(".drawer-stub-body"),
+      "the drawer is the phone's nav surface",
+    ).toBeTruthy();
+    window.innerWidth = 1280;
   });
 
   it("shares the fold with the mobile drawer's menu (the provide sits above BOTH slots)", async () => {

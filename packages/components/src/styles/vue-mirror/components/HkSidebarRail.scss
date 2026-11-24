@@ -356,3 +356,26 @@
     transition: none;
   }
 }
+
+
+/* PRE-HYDRATION PHONE GUARD (2026-11-24).
+ *
+ * The shell decides desktop-vs-drawer from the viewport, and the server has
+ * none — so the emitted HTML carries the DESKTOP layout (an inline 224/248px
+ * sidebar) while a phone's first client pass wants the drawer. The mounted
+ * gate in HkFaceShell keeps the two first passes identical and flips after
+ * mount; this rule covers the window BEFORE that flip so a phone never paints
+ * a squeezed content column (measured: 94px of text at 390px viewport, one
+ * word per line).
+ *
+ * `[data-shell-booting]` is what bounds it: the shell stamps that marker on
+ * every pre-mount pass (SSR included) and REMOVES it on mount, so the rule
+ * stops applying the instant the JS layout becomes authoritative. Without
+ * that bound a host whose `mobileBreakpoint` prop is NARROWER than this
+ * stylesheet's breakpoint would have its sidebar hidden by CSS forever while
+ * its JS called the same viewport desktop — no sidebar AND no drawer. */
+@media (width <= 767px) {
+  .s-admin-shell[data-shell-booting] > .s-admin-shell-body > [data-shell-sidebar] {
+    display: none;
+  }
+}

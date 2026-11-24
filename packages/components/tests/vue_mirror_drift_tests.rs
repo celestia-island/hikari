@@ -244,7 +244,8 @@ fn mirror_var_references_resolve_against_the_bundled_token_sheets() {
 /// theme; the crate-local definitions keep the guard meaningful there). The
 /// raw-text walk is the same deliberate over-approximation the guards below
 /// have always used: "does the shipped tree define it anywhere", not
-/// "@use reachability".
+/// "@use reachability". MUT:mut-defwalk-rawstyles — removing the raw
+/// `src/styles` leg fails on partial-local definitions (HkBadge's border).
 fn bundled_token_definitions() -> std::collections::HashSet<String> {
     let mut definitions = std::collections::HashSet::new();
     let mut base_definitions = 0usize;
@@ -323,7 +324,9 @@ fn bundled_token_definitions() -> std::collections::HashSet<String> {
 /// needs. A region ends at the closing brace of the attributed item,
 /// recognized by its indentation — rustfmt keeps a block's brace aligned
 /// with its item, so the close of the gated item is a bare `}` at the same
-/// indent as the attribute.
+/// indent as the attribute. MUT:mut-testskip-fixtures — gating is
+/// load-bearing: with the skip off, the scan fails on the fixture probes
+/// (`--x`, `--rail-w`, `--_hk-dock-gap-{edge}`).
 fn test_only_lines(text: &str) -> std::collections::HashSet<usize> {
     let mut gated = std::collections::HashSet::new();
     let mut in_region = false;
@@ -356,7 +359,10 @@ fn test_only_lines(text: &str) -> std::collections::HashSet<usize> {
 /// layers, against the file's own emitted CSS (a body that declares the
 /// very names it reads is a self-contained pair), or onto the
 /// intentionally-unresolved escape hatch — otherwise the reference is
-/// invalid at computed-value time on every theme.
+/// invalid at computed-value time on every theme. MUT:mut-rs-scan-detect —
+/// a bogus production name fails naming its file (M1), dropping the
+/// same-file definition collection fails on terminal's `--hk-terminal-fg`
+/// and code_highlight's `--code-syntax-*` (M3).
 #[test]
 fn crate_rs_token_references_resolve_against_the_bundled_token_sheets() {
     let definitions = bundled_token_definitions();

@@ -972,6 +972,12 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
     const html = await renderToString(app);
     expect(html, "SSR emits the desktop aside").toContain("data-shell-sidebar");
     expect(html, "SSR never emits the drawer").not.toContain("drawer-stub");
+    // The pre-hydration CSS guard keys on this marker; if it stopped being
+    // emitted the guard would silently stop working on every phone while
+    // every assertion above stayed green (review round 2).
+    expect(html, "SSR stamps the booting marker the guard keys on").toContain(
+      "data-shell-booting",
+    );
   });
 
   it("never keeps a narrow-breakpoint host's sidebar hidden after mount", async () => {

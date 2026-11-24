@@ -960,7 +960,7 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
     // the drawer never appeared. The mounted gate keeps both first passes
     // on the desktop layout; SSR therefore stays viewport-agnostic (a
     // server render at phone width must NOT produce a drawer).
-    // MUT:mut-drop-gate (removing the mounted gate turns this RED).
+    // MUT:mut-drop-gate — removing the mounted gate REDS this test (verified).
     window.innerWidth = 390;
     const app = createApp({
       render: () =>

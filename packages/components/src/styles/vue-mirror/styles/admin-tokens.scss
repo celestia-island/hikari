@@ -730,8 +730,8 @@
  * clipping the theme button. Dropping the title cap to 5rem below 480px
  * lowers the start floor enough that the end wing fits whole; the title
  * just ellipses a word earlier, which is the cheap side to pay on.
- * MUT:mut-480-block (dropping this media block turns the contract test
- * `adminHeaderTitle.contract.test.ts` RED). */
+ * MUT:mut-480-block — dropping this media block REDS the contract test
+ * `adminHeaderTitle.contract.test.ts` (the only guard over this cap). */
 @media (width <= 480px) {
   .s-admin-header-title {
     max-width: 5rem;

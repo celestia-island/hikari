@@ -396,6 +396,12 @@ fn crate_rs_token_references_resolve_against_the_bundled_token_sheets() {
             if test_lines.contains(&idx) {
                 continue;
             }
+            // Comment-blind collection would let a documented or
+            // commented-out `--name:` example mask a real broken
+            // reference elsewhere in the file.
+            if line.trim_start().starts_with("//") {
+                continue;
+            }
             let mut rest = line;
             while let Some(pos) = rest.find("--") {
                 rest = &rest[pos + 2..];

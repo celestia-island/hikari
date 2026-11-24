@@ -974,10 +974,30 @@ describe("rail group fold survives the crossfade generations (#43)", () => {
     expect(html, "SSR never emits the drawer").not.toContain("drawer-stub");
   });
 
+  it("never keeps a narrow-breakpoint host's sidebar hidden after mount", async () => {
+    // The pre-hydration CSS guard is scoped to `[data-shell-booting]`, which
+    // the shell REMOVES on mount. Without that bound, a host whose
+    // `mobileBreakpoint` prop is narrower than the stylesheet's 768px would
+    // have CSS hide the sidebar forever while its JS called the same
+    // viewport desktop — no sidebar and no drawer (review round 1 of #1535).
+    window.innerWidth = 700;
+    const c = mountShell({ sidebarCollapsible: true, mobileBreakpoint: 640 } as Record<string, unknown>);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      c.container.querySelector(".s-admin-shell")?.hasAttribute("data-shell-booting"),
+      "the booting marker must not outlive mount",
+    ).toBe(false);
+    expect(c.aside(), "the prop is authoritative once mounted").toBeTruthy();
+    window.innerWidth = 1280;
+  });
+
   it("switches a phone to the drawer after mount, and drops the inline sidebar", async () => {
-    // The other half of the same contract: once mounted, the real viewport
-    // decides — a phone gets the drawer as its ONLY nav surface and the
-    // squeezed inline sidebar is gone from the body.
+    // The POST-MOUNT STATE of the same contract: once mounted, the real
+    // viewport decides — a phone gets the drawer as its ONLY nav surface and
+    // the squeezed inline sidebar is gone from the body. This is a state
+    // assertion, not the regression oracle: pre-fix a client-only mount at
+    // 390px already produced the drawer (the bug lived in the SSR/client
+    // disagreement, which the SSR test above pins and mutations.)
     window.innerWidth = 390;
     const c = mountShell({ sidebarCollapsible: true });
     await vi.advanceTimersByTimeAsync(0);

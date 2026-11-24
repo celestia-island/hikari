@@ -368,12 +368,14 @@
  * a squeezed content column (measured: 94px of text at 390px viewport, one
  * word per line).
  *
- * CSS cannot read `mobileBreakpoint` (a JS prop), so the guard uses the
- * family's stylesheet breakpoint. A host whose prop is WIDER than 767px
- * (the default is 1024) still gets one desktop frame on a tablet before the
- * drawer takes over; phones — the case that motivated this — are fixed. */
+ * `[data-shell-booting]` is what bounds it: the shell stamps that marker on
+ * every pre-mount pass (SSR included) and REMOVES it on mount, so the rule
+ * stops applying the instant the JS layout becomes authoritative. Without
+ * that bound a host whose `mobileBreakpoint` prop is NARROWER than this
+ * stylesheet's breakpoint would have its sidebar hidden by CSS forever while
+ * its JS called the same viewport desktop — no sidebar AND no drawer. */
 @media (width <= 767px) {
-  .s-admin-shell-body > [data-shell-sidebar] {
+  .s-admin-shell[data-shell-booting] > .s-admin-shell-body > [data-shell-sidebar] {
     display: none;
   }
 }

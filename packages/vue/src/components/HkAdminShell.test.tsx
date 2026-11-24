@@ -565,8 +565,7 @@ describe("HkAdminShell", () => {
     expect(tripleInner?.style.paddingBottom).toBe("3rem");
     expect(tripleInner?.style.paddingLeft).toBe("2rem");
     expect(tripleInner?.style.paddingRight).toBe("2rem");
-    await nextTick();
-});
+  });
 
   it("reserves the footer band only when a status bar is actually injected", () => {
     // 2026-10-24 regression: the body carried

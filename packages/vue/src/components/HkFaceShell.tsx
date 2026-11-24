@@ -389,10 +389,14 @@ export const HkFaceShell = defineComponent({
     //
     // The gate makes both first passes identical (desktop, what SSR emits)
     // and lets the viewport answer AFTER mount — the family's established
-    // pattern for viewport-derived values (`useChromeActionSize`, the docs
-    // search's shape). Pre-mount the squeezed inline sidebar is kept off a
-    // phone's screen by CSS (see the media rule in HkSidebarRail.scss), so
-    // the flash the gate would otherwise cost never reaches the user.
+    // pattern for viewport-derived values (`useChromeActionSize` in
+    // HkFilterTrigger, the family's own `mounted`-guarded chrome size).
+    // Pre-mount the squeezed inline sidebar is kept off a phone's screen by
+    // CSS (see the media rule in HkSidebarRail.scss), so the flash the gate
+    // would otherwise cost never reaches the user. That CSS keys on
+    // `[data-shell-booting]` — the marker below — so it can NEVER outlive
+    // the pre-mount window and fight a host whose `mobileBreakpoint` is
+    // narrower than the stylesheet's breakpoint.
     const mounted = ref(false);
     onMounted(() => {
       mounted.value = true;
@@ -565,7 +569,7 @@ export const HkFaceShell = defineComponent({
     }
 
     return () => (
-      <div class="s-admin-shell">
+      <div class="s-admin-shell" data-shell-booting={mounted.value ? undefined : true}>
         {slots.header && (
           <div style={{ flexShrink: 0 }}>
             {slots.header({

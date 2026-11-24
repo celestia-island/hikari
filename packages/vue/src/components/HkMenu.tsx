@@ -1001,7 +1001,9 @@ export default defineComponent({
                 Still conditional: an icon-less group renders no cell
                 here, exactly as before. */}
             {item.icon && (
-              <span class="hk-menu-item-icon" data-flip-icon={item.key}>
+              <span class="hk-menu-item-icon" data-flip-icon={item.key}
+              data-flip-noscale={item.iconNoScale ? true : undefined}
+              >
                 {h(item.icon, { size: 16 })}
               </span>
             )}

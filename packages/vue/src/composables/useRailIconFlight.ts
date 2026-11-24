@@ -384,9 +384,6 @@ export function useRailIconFlight(
       // is origin.right − from.right; the sign the other way round
       // pushed every clone outside the docked edge and the clip ate the
       // whole flight — 2026-11-02 review).
-      const inlineOffset = rtl
-        ? origin.right - pair.from.right
-        : pair.from.left - origin.left;
       // CENTER-ALIGNED travel + SIZE TWEEN (2026-11-20 user direction):
       // a glyph whose density size differs (the rail group's demoted
       // corner badge) must grow/shrink CONTINUOUSLY. The clone is painted

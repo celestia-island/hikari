@@ -1124,10 +1124,13 @@ export default defineComponent({
     // hidden flip visibility/size; `style` is deliberately NOT observed
     // (a per-frame inline-style writer inside the content would sense
     // every frame for no geometry change a style write can cause on its
-    // own). Unconditional, because every mirrored surface of this
-    // container (data-h/v-overflow, fade strengths, dock gates, backTop,
-    // the anchor's extent re-park) is extent-derived and went stale the
-    // same way.
+    // own) — which makes a style-driven resize this filter's one blind
+    // spot, and the reason the exposed refresh() keeps existing.
+    // Unconditional, because every extent-derived mirror of this
+    // container (data-h/v-overflow, fade strengths, dock gates, the
+    // anchor's extent re-park) went stale the same way; backTop is
+    // offset-derived and cannot go stale from a content change, but it
+    // re-reads harmlessly on the same pass.
     let contentMO: MutationObserver | null = null;
 
     /** Attach the content mutation sensor (see the block comment). */
@@ -1448,9 +1451,11 @@ export default defineComponent({
     }
 
     /** Re-run the scrollbar + overflow sensing pass. Public escape
-     *  hatch for extent changes no observer reports (a font swap or an
-     *  image load resizing content without any DOM mutation, a
-     *  style-driven resize outside the mutation filter). */
+     *  hatch for extent changes no observer reports: a font swap or an
+     *  image load resizing content without any DOM mutation, and the
+     *  mutation filter's deliberate blind spot — a style-driven resize
+     *  (`style` is not observed, so a host that drives layout through
+     *  inline style calls this after the write). */
     function refresh(): void {
       overlay?.update();
       update();

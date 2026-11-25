@@ -9,13 +9,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
  * bare page, before any framework exists.
  *
  * WHY THIS SUITE EXISTS. `themeLoaderContract.test.ts` reads the emitted file
- * as TEXT and compares its palette table against `presets.ts`. That catches
- * value drift, but it never runs the script — so it cannot catch a change that
- * parses and reads correctly while the logic has moved: a wrong storage key
- * order, a resolver that returns the opposite scheme, a `setProperty` that
- * writes the dark triplet during the day. Those are exactly the failures a
- * transpile-driven conversion can introduce, and they all land on first paint
- * where no error boundary can report them.
+ * as TEXT and compares its palette table against `presets.ts`. That pins
+ * value drift only: it runs no script, so a change that parses and reads
+ * correctly while the logic has moved — a wrong storage key order, a
+ * resolver returning the opposite scheme, a `setProperty` writing the dark
+ * triplet during the day — passes it. MUT:hk-1565-theme-light-shortcircuit
+ * is the recorded probe for that gap: with the `light` short-circuit removed
+ * the drift lock stays green while the light-mode cases here go red.
  *
  * So this file evaluates the emitted bytes in happy-dom, with `localStorage`
  * and the clock controlled, and asserts the `--loader-*` custom properties the
@@ -185,7 +185,7 @@ describe("res/theme-loader.js paints the pre-paint palette", () => {
       },
     });
     // The chain is `prefixed || engine || "system"` and `||` short-circuits, so
-    // a present prefixed key means the engine key is never even read. Asserted
+    // a present prefixed key means the engine key is not read at all. Asserted
     // through the READS (not the painted value) because that is the only place
     // the order is observable.
     const themeModeReads = storage.reads.filter((key) => key.endsWith("theme-mode"));

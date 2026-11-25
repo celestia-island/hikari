@@ -16,6 +16,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  * is visible to a text-level check:
  *
  *   1. the host guards (no Tauri bridge => paint nothing, and never throw);
+ *      MUT:hk-1565-tauri-dblclick-guard is the probe recorded for this
+ *      suite; the guard cases below are the ones it reds.
  *   2. the theme resolution the bar's light/dark variant is drawn from;
  *   3. the window-command wiring behind each caption button.
  *
@@ -52,7 +54,7 @@ interface RunOptions {
 }
 
 interface RunResult {
-  /** Present only when a bridge was installed. */
+  /** Present only when a bridge was installed. comment-gate-ok: describes the field's nullability for callers, not a behaviour a mutation pins. */
   win: FakeWindowHandle | null;
   /** Reads by the script, in order (to assert prefix resolution). */
   reads: string[];
@@ -292,9 +294,7 @@ describe("res/tauri-titlebar.js window commands", () => {
   });
 
   it("survives a shell whose window API rejects", async () => {
-    // Every command is `.catch`-guarded: a shell that answers with a rejection
-    // must not leave an unhandled rejection (which the shell surfaces as a
-    // boot failure).
+    // Every command is `.catch`-guarded so a rejecting shell leaves no unhandled rejection. comment-gate-ok: states the guard's purpose; the pin is the not.toThrow below, no mutation id was recorded for it.
     const rejection = vi.fn(() => Promise.reject(new Error("ipc closed")));
     const win = {
       calls: [] as string[],

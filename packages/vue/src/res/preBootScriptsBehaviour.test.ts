@@ -16,6 +16,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
  *
  *   - `browser-check` decides whether the host blocks the app at all, and it
  *     silently does nothing without a `__appBlock` handler;
+ *     MUT:hk-1565-safari-floor — lowering the Safari floor to 15.0 in the
+ *     source makes the 15.3 case pass and the floor assertion goes red.
  *   - `os-prefs` decides whether the Tauri shell's OS locale/theme seed wins
  *     over what the user already stored;
  *   - `loader-dismiss` decides whether the loading screen ever goes away.

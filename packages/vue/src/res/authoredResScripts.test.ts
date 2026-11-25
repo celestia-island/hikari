@@ -8,6 +8,9 @@ import { describe, expect, it } from "vitest";
 // The emitter lives beside the other packages/vue script drivers and is the
 // ONE definition of how `res/<name>.ts` becomes `res/<name>.js` — the build and
 // this guard must never disagree, so both import it rather than re-deriving.
+// MUT:hk-1565-res-drift-lock — re-deriving the bytes here instead of
+// importing them leaves the guard and the emitter free to drift, which is
+// exactly what the sync assertion below exists to catch.
 import { AUTHORED_RES_SCRIPTS, transpile } from "../../scripts/emit-res-scripts.mjs";
 
 /**
@@ -29,7 +32,9 @@ import { AUTHORED_RES_SCRIPTS, transpile } from "../../scripts/emit-res-scripts.
  *    reproducible from the `.ts`, and a patch applied only to it cannot survive.
  *
  * Resolve either by editing the `.ts` and running `pnpm run gen:res-scripts`
- * (from `packages/vue`). Never by editing the `.js`.
+ * (from `packages/vue`). Never by editing the `.js` — MUT:hk-1565-res-hand-edit
+ * is that direction: patching the emitted file alone makes the sync assertion
+ * below go red.
  *
  * WHY THE EMITTED FILES ARE COMMITTED AT ALL (the design decision this file
  * enforces): `bootScriptsPlugin` copies `res/*.js` from the SOURCE TREE into the
@@ -38,9 +43,10 @@ import { AUTHORED_RES_SCRIPTS, transpile } from "../../scripts/emit-res-scripts.
  * never ran node ships a page with no pre-paint theme loader — the exact
  * "unpainted first frame" failure the module exists to prevent — and
  * `bootScriptsPlugin` skips a missing source silently, so the breakage would be
- * invisible until someone looked at a first paint. Committing the artifact plus
- * this lock gets both: the tree is always shippable, and it can never drift from
- * its source.
+ * invisible until someone looked at a first paint. MUT:hk-1565-res-drift-lock is
+ * what keeps the committed pair equal. The missing-file half is NOT pinned by
+ * this suite: it is why the artifact is committed rather than ignored, and
+ * nothing here would go red if a future change made the emit skip a file.
  */
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -146,7 +152,7 @@ describe("authored res scripts: source/output pairing", () => {
     // silent hash change.
     expect(Array.from(output).some((character) => character.charCodeAt(0) > 0x7f)).toBe(false);
     // A host loads this with a bare <script src>; an `export`/`import` would
-    // make the browser reject the file as a module it was never tagged as.
+    // make the browser reject the file as a module it was never tagged as. comment-gate-ok: explains what the regex below represents about classic-script loading, not that a mutation was run against it.
     expect(output).not.toMatch(/^\s*(export|import)\s/m);
     // Provenance must travel with the artifact: a reader of the .js has to be
     // able to find its source.
@@ -160,8 +166,9 @@ describe("authored res scripts: build directives survive the transpile", () => {
     // tells a downstream bundler the annotated call may be dropped when its
     // result is unused. `removeComments` erases it, so the emitter re-attaches
     // it by AST position — and this assertion is what keeps that re-attachment
-    // honest. Measured: without it the emitted tauri-titlebar lost the only
-    // such directive in the family, silently costing a tree-shaking guarantee.
+    // honest. MUT:hk-1565-pure is that probe: disabling the re-attachment in
+    // the emitter drops the family's only directive from the emitted
+    // tauri-titlebar, and this assertion (plus its named companion) goes red.
     for (const script of scripts) {
       const sourceText = readFileSync(script.sourcePath, "utf8");
       const declared = sourceText.match(/\/\*\s*@__PURE__\s*\*\//g) ?? [];

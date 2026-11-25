@@ -37,6 +37,17 @@ import stockVarsJson from "./stock-vars.json";
  * `var(--hk-picker-*)`), so the pre-hydration window degrades to identical
  * geometry, and the runtime emission covers them anyway.
  */
+/** The typed view of the Rust artifact: the serde BTreeMap arrives as two
+ *  string-keyed maps. Declared explicitly because the JSON import's literal
+ *  type defeats `stockVarsJson[mode]` under the strict build (vue-tsc
+ *  TS7053 — the release lane caught it, the esbuild test transform did not). */
+export interface StockVarsArtifact {
+  dark: Record<string, string>;
+  light: Record<string, string>;
+}
+
+const stockVars: StockVarsArtifact = stockVarsJson as StockVarsArtifact;
+
 const MODES = ["dark", "light"] as const;
 
 export function buildThemeVarsCss(): string {
@@ -48,7 +59,7 @@ export function buildThemeVarsCss(): string {
     " * -p hikari-palette --test stock_snapshot. */",
   ];
   for (const mode of MODES) {
-    const vars = stockVarsJson[mode];
+    const vars = stockVars[mode];
     chunks.push(`html[data-mode="${mode}"] {`);
     for (const name of Object.keys(vars)) {
       chunks.push(`  ${name}: ${vars[name]};`);
@@ -58,11 +69,4 @@ export function buildThemeVarsCss(): string {
   return chunks.join("\n") + "\n";
 }
 
-export interface StockVarsArtifact {
-  dark: Record<string, string>;
-  light: Record<string, string>;
-}
-
-/** The Rust-derived vars, per mode — consumed by the drift contract (and
- *  the source this module composes the sheet from). */
-export const stockVars: StockVarsArtifact = stockVarsJson;
+export { stockVars };

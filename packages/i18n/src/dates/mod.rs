@@ -11,7 +11,7 @@
 //! split — so the same locale rendered differently depending on which half of
 //! the design system drew the calendar.
 //!
-//! The table is generated from CLDR by `scripts/gen-date-names.mjs` and frozen
+//! The table is generated from CLDR by `scripts/gen-date-names.ts` and frozen
 //! in `names.golden.toml`; `tests/date_vocabulary_tests.rs` fails when the compiled
 //! table and the golden snapshot drift apart, so a CLDR change has to be
 //! reviewed as the user-visible text change it is.

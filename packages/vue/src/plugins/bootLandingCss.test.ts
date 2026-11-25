@@ -20,7 +20,7 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
  * as hikari's in-app error landing. So instead of hand-copying token values
  * (the pre-0.55.3xx `.hk-boot-recovery` card did), the panel ships the LIVE
  * component sheets: `boot-landing.scss` @uses theme/channels, theme/scale,
- * HkErrorLanding and HkButton, and `scripts/gen-boot-landing-css.js`
+ * HkErrorLanding and HkButton, and `scripts/gen-boot-landing-css.ts`
  * compiles that entry into `bootLandingCss.js`, which the plugin inlines.
  *
  * This suite recompiles the entry with the same sass a consumer uses and

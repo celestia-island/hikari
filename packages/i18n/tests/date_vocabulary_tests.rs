@@ -1,6 +1,6 @@
 //! Guards for the generated date vocabulary.
 //!
-//! `src/dates/names.rs` is a build product of `scripts/gen-date-names.mjs`;
+//! `src/dates/names.rs` is a build product of `scripts/gen-date-names.ts`;
 //! `src/dates/names.golden.toml` is the frozen CLDR snapshot it came from. Two
 //! failure modes matter, and they are the two directions of that pair:
 //!
@@ -177,7 +177,7 @@ fn vocabulary_matches_the_frozen_cldr_snapshot() {
     assert!(
         mismatches.is_empty(),
         "the compiled date vocabulary drifted from the frozen CLDR snapshot \
-         (regenerate with `node scripts/gen-date-names.mjs` and review the diff):\n{}",
+         (regenerate with `node scripts/gen-date-names.ts` and review the diff):\n{}",
         mismatches.join("\n")
     );
 }

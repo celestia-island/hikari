@@ -39,7 +39,7 @@
  * `__desc` + `__actions` with an `.hk-btn-primary` action), and its
  * stylesheet is compiled from the LIVE component sheets — theme/channels,
  * theme/scale, `HkErrorLanding.scss` and `HkButton.scss` — into
- * `./bootLandingCss.js` by `scripts/gen-boot-landing-css.js`.
+ * `./bootLandingCss.js` by `scripts/gen-boot-landing-css.ts`.
  * `bootLandingCss.test.ts` recompiles that entry and fails whenever the
  * checked-in sheet drifts, so the boot surface cannot fork away from the app's
  * error landing (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`
@@ -1327,7 +1327,7 @@ function htmlFileMatches(filename, htmlFiles) {
  * classes, and the stylesheet is compiled from the LIVE component sources
  * (`boot-landing.scss`: theme/channels + theme/scale + HkErrorLanding +
  * HkButton) into `./bootLandingCss.js` by
- * `scripts/gen-boot-landing-css.js`. `bootLandingCss.test.ts` recompiles
+ * `scripts/gen-boot-landing-css.ts`. `bootLandingCss.test.ts` recompiles
  * the entry and fails whenever the checked-in sheet drifts from the
  * components, so the boot surface cannot fork away from the app's error
  * landing again (the pre-0.55.3xx panel hand-rolled `.hk-boot-recovery`

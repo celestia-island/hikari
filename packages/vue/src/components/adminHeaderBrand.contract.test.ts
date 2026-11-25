@@ -23,7 +23,9 @@ import { fileURLToPath } from "node:url";
  *      --trigger variant (brand-as-trigger, 2026-11-25 user direction:
  *      the standalone hamburger was redundant chrome and mounted only
  *      after JS, leaving pre-hydration phones with no nav affordance —
- *      the brand renders in SSR, so IT carries the trigger);
+ *      the brand renders in SSR, so IT always carries the trigger).
+ *      MUT:mut-brand-trigger — forcing the trigger branch off REDS the
+ *      HkAdminHeader suite's mobile test (verified this PR).
  *   3. the DESKTOP mark is NON-INTERACTIVE: div-variant HkLogo (no
  *      href ever passed), no button semantics; the MOBILE trigger is a
  *      real <button> with the --trigger variant stripping the
@@ -69,7 +71,7 @@ describe("admin header brand slot contract", () => {
     expect(adminHeader).toMatch(
       /identityMounted\.value && !brandedMenuFace\.value && \(\s*<HkAvatarButton/,
     );
-    expect(adminHeader, "the standalone hamburger is suppressed when the brand carries the trigger").toMatch(
+    expect(adminHeader, "the standalone hamburger is suppressed whenever the brand carries the trigger").toMatch(
       /props\.showHamburger && !brandedMenuFace\.value && \(\s*<HButton/,
     );
   });

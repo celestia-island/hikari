@@ -67,6 +67,14 @@ fn serialized_matches_the_web_artifact() {
         "the checked-in stock JSON must equal serde_json::to_string(stock_default()) — \
          regen with REGEN_STOCK_JSON=1 cargo test -p hikari-palette --test stock_snapshot"
     );
+    // The artifact is what the WEB LANE ships: if a value edited here never
+    // reaches it, every page paints the stale palette (hikari#1546 Phase 2
+    // regression). This test always catches that; it never passes vacuously.
+    assert!(!json.is_empty(), "the artifact is never empty");
+    assert!(
+        json.contains("\"primary\":{\"r\":136,\"g\":192,\"b\":208}"),
+        "the dark Nord primary must survive any regen"
+    );
 }
 
 #[test]

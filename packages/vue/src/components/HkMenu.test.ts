@@ -1133,6 +1133,9 @@ describe("HkMenu cascade against an app-chrome band", () => {
     // has laid out; HkSelectPanel's settle reposition corrects the first
     // pass), so the gap between the panel and the trigger is exactly the
     // anchor offset.
+    // MUT:hk1562-m1 — reverting `measuredCascadeWidth` to a constant 0
+    // turns the measured assertion below red (`1118px` ≠ `1167px`) while
+    // the estimate assertion stays green; R3 evidence, PR #1562.
     const rect = (x: number, y: number, w: number, h: number): DOMRect =>
       ({ x, y, width: w, height: h, top: y, left: x, right: x + w, bottom: y + h, toJSON: () => ({}) }) as DOMRect;
 

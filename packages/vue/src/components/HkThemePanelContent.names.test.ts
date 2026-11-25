@@ -81,6 +81,10 @@ describe("HkThemePanelContent theme-name i18n", () => {
   it("localizes the stock default row on a non-English face", async () => {
     // The stock preset's name IS the catalog key (2026-11-25): under
     // zh-Hans the factory row reads 默认, never the bare English word.
+    // MUT:hk1562-m3 — reverting stock-preset.json's name field to the
+    // literal "Default" turns this case red (`expected [ 'Default' ] to
+    // include '默认'`; R3 evidence, PR #1562 — the Rust side of the same
+    // lock is pinned by stock_snapshot's byte equality).
     await setLocale("zh-Hans");
     mountPanel();
     await settle();

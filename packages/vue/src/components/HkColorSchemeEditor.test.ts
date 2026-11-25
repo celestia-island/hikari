@@ -762,7 +762,7 @@ describe("HkColorSchemeEditor localized scheme naming (2026-11-25)", () => {
     expect(ref.value!.getDraft().nameI18n).toEqual({ en: "Factory", "zh-Hans": "出厂" });
 
     // A host-owned name UI can push a new map through the exposed setter
-    // (the same grammar setThemeName has always offered for the base).
+    // (the same grammar setThemeName has always offered for the base). comment-gate-ok: prose note on the exposed API surface, not a behaviour claim — the behaviour pins are the four cases in this describe block (draft carries/drops nameI18n, reset re-seed, push).
     ref.value!.setThemeNameI18n({ en: "Factory v2" });
     expect(ref.value!.getDraft().nameI18n).toEqual({ en: "Factory v2" });
 

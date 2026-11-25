@@ -69,3 +69,29 @@ describe("HkBadge pulse stylesheet contract", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*\.hk-badge\[data-pulse\] \[data-el=dot\]\s*\{[^}]*animation:\s*none/);
   });
 });
+
+// The pill's gap is the single source of truth for icon spacing. A utility
+// margin on an embedded svg (the OAuth provider pill shipped `mr-1` under
+// the shield) double-spaces the label; the sheet neutralizes child svg/img
+// margins so a stale utility stays harmless. Mutation contract — 变异表 in
+// the PR body: MUT:badge-child-margin drops the sheet block and "zeroes
+// margins on embedded svg and img children" reds; widen the selector to a
+// descendant form and "never widens the rule past direct children" catches
+// it too. A regression here re-opens the double gap everywhere at once.
+describe("HkBadge icon-spacing stylesheet contract", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const css = compile(resolve(here, "HkBadge.scss"), { style: "expanded" }).css;
+
+  it("zeroes margins on embedded svg and img children", () => {
+    // Sass hoists the nested rule out of the base block when compiled.
+    expect(css).toMatch(/\.hk-badge > svg[^{]*\{[^}]*margin:\s*0/);
+    expect(css).toMatch(/\.hk-badge > img[^{]*\{[^}]*margin:\s*0/);
+  });
+
+  it("never widens the rule past direct children", () => {
+    // A descendant selector would fight deliberately-spaced nested markup
+    // inside badge slots; only direct icon children are normalized.
+    expect(css).not.toMatch(/\.hk-badge\s+svg/);
+    expect(css).not.toMatch(/\.hk-badge\s+img/);
+  });
+});

@@ -42,6 +42,18 @@
      start a text selection (the workspace tag contract makes HkCopyBadge
      the copy path instead). */
   @include user-select(none);
+
+  /* Icon spacing is the pill's own gap — never the child's margin. An
+     `mr-*` utility on an embedded svg/img double-spaces the label (the
+     OAuth provider pill shipped shield + mr-1 on top of this gap, reading
+     as stray spaces inside the tag), and per-child margins would make
+     every icon call site renegotiate the pill's geometry. This rule
+     outranks the utility classes (0,1,1 beats `.mr-*` at 0,1,0), so a
+     stale `mr-*` stays harmless after this ships. */
+  > svg,
+  > img {
+    margin: 0;
+  }
 }
 
 /* ---------- size ---------- */

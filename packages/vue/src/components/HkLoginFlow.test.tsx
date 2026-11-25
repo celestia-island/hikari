@@ -1002,7 +1002,12 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
    *  translateY stands on the box and subtracts the page scroll — which is
    *  exactly what a real engine reports. The numbers are the ones the
    *  browser rig measured on the pinned tree (a 752 px stage; a 240 px
-   *  viewport over a 3 rem footer for the scrolled case). */
+   *  viewport over a 3 rem footer for the scrolled case).
+   *
+   *  comment-gate-ok: this block documents the fake engine's geometry, not a
+   *  behavioural claim of the component; the claims the pins make ("no
+   *  transform remains", "the scrolled page does not jump") are anchored
+   *  at the two cases below (`MUT:flow-repins-top-edge`). */
   async function mountCenteredStage(stageMin = 752) {
     let cardHeight = 310.5;
     let scrollY = 0;

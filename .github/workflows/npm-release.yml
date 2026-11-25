@@ -40,6 +40,60 @@ jobs:
           fi
           echo "tag $GITHUB_REF_NAME ($GITHUB_SHA) is on master"
 
+      # Resolved up front, before the heavy steps: the dispatch tree check
+      # below needs it, and a bad dispatch must die in seconds rather than
+      # after two Vitest shards. (Moved up from below the suite; content
+      # unchanged.)
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            v="${{ github.event.inputs.version }}"
+          else
+            v="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Publishing @celestia-island/hikari@$v"
+
+      # Dispatch pin (org rule 4, version slots move only in release PRs):
+      # dispatch checkouts default to master HEAD — no tag selects the tree —
+      # so pin the requested version coordinate to a tree that already
+      # declares it before anything expensive runs. Without this, the "Bump
+      # version" step below would silently rewrite packages/vue/package.json
+      # and publish a version that never existed in git (36 patch numbers were
+      # burned by dispatch typos). The tag lane skips this: its checkout IS
+      # the tagged tree by construction.
+      - name: Verify the tree carries the version
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          declared="$(python3 -c 'import json; print(json.load(open("packages/vue/package.json"))["version"])')"
+          if [ "$declared" != "${{ steps.ver.outputs.version }}" ]; then
+            echo "::error::dispatch version ${{ steps.ver.outputs.version }} does not match the checked-out tree: packages/vue/package.json declares $declared — dispatch publishes run on master HEAD, so the version must land in a release PR first (org rule 4)"
+            exit 1
+          fi
+          echo "tree declares $declared, matching the requested version"
+
+      # Dispatch publishes run only from a provenance tag (org rule 4): the
+      # tag-push lane is the primary publisher and this lane is its retry. An
+      # earlier draft minted the tag AFTER publish - rejected: pushing a v* tag
+      # from this workflow re-triggers this file's own tag-push lane against an
+      # already-published version, which burns a full shard run and dies on the
+      # S1-2 guard. Requiring the tag first keeps the lane append-only with no
+      # red re-entry, and no contents: write grant is needed here at all.
+      - name: Require the provenance tag on this commit
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "refs/tags/v${{ steps.ver.outputs.version }}"
+          tag_commit="$(git rev-parse "FETCH_HEAD^{commit}")"
+          if [ "$tag_commit" != "$GITHUB_SHA" ]; then
+            echo "::error::dispatch retries the TAG lane, whose tag must point at the checked-out commit: v${{ steps.ver.outputs.version }} tags $tag_commit, but this run is on $GITHUB_SHA. Re-run the tag lane's workflow run, or push a fresh release tag."
+            exit 1
+          fi
+          echo "provenance tag v${{ steps.ver.outputs.version }} points at this commit"
+
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
@@ -100,18 +154,6 @@ jobs:
           cd packages/vue
           pnpm exec vitest run --shard=2/2
 
-      - name: Resolve version
-        id: ver
-        shell: bash
-        run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            v="${{ github.event.inputs.version }}"
-          else
-            v="${GITHUB_REF_NAME#v}"
-          fi
-          echo "version=$v" >> "$GITHUB_OUTPUT"
-          echo "Publishing @celestia-island/hikari@$v"
-
       # S1-2 guard (2026-09-27): the v* tag namespace historically triggered
       # BOTH release lines, and npm had no floor check — a crates-style
       # v0.3.x tag would have published 0.3.x to npm and dragged `latest`
@@ -136,3 +178,4 @@ jobs:
         run: |
           cd packages/vue
           npm publish --access public --provenance
+

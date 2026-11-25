@@ -24,9 +24,11 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command", "[C
 set unstable
 set lists
 
-# Repo definitions override the shared template's (imported above).
+# Repo definitions override the shared template's (imported above). Only the
+# recipes directive lives here: common.just has carried the variables
+# directive itself since devtools #304, and restating it would collide once
+# `just fetch` stages .just/ (just >= 1.53 rejects the duplicate directive).
 set allow-duplicate-recipes
-set allow-duplicate-variables
 
 # Shared celestia-devtools recipes — NOT in git. `import?` silently skips when
 # absent, so this justfile parses pre-fetch. Bootstrap once: celestia-devtools

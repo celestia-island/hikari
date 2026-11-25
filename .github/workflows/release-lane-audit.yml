@@ -1,0 +1,53 @@
+name: Release Lane Audit
+
+# The release-hygiene gate adopted from celestia-devtools #327. Rule 4 of
+# docs/agent-workflow-convention.md (celestia-devtools, "Release lanes own the
+# version slot") exists because of this repo's observed drift: 450 npm
+# publishes in 70 days, 73 of them never tagged (dispatch publishes minted no
+# provenance tag), 36 patch numbers burned by dispatch typos, and seven
+# public-surface removals shipped inside patch releases. Nothing compared the
+# registries against the tags, so from either side every number looked
+# intentional; this lane makes that disagreement fail a job on every master
+# push.
+#
+# The ignore-below floors are lane-start anchors, not exemptions: hikari's
+# v0.1-v0.4 tags predate its npm line (publishing went live at 0.30.0) and the
+# crate tags start at cargo-v0.4.0. Drift below the floors is the documented
+# pre-history this comment records — scoped out through the audit's explicit
+# --ignore-below mechanism, never silently green.
+#
+# Both lanes pin the SAME devtools commit for the workflow-file ref and the
+# devtools-ref input (org caller rule / H14 determinism: the rules that judge
+# the tree must be the pinned ones, so a newer devtools master cannot quietly
+# change what this lane considers drift).
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  npm-lane:
+    name: npm lane (@celestia-island/hikari)
+    uses: celestia-island/celestia-devtools/.github/workflows/release-audit.yml@7c24cd5c8be7b34ad642e098bb5db8de416da723
+    with:
+      devtools-ref: 7c24cd5c8be7b34ad642e098bb5db8de416da723
+      npm-package: "@celestia-island/hikari"
+      # Pre-publish history below the line's real start: the v0.1-v0.4 tags
+      # predate the npm line, which went live at 0.30.0.
+      ignore-below: "0.30.0"
+
+  crates-lane:
+    name: crates lane (hikari-components)
+    uses: celestia-island/celestia-devtools/.github/workflows/release-audit.yml@7c24cd5c8be7b34ad642e098bb5db8de416da723
+    with:
+      devtools-ref: 7c24cd5c8be7b34ad642e098bb5db8de416da723
+      crates: hikari-components
+      # Crate tags start at cargo-v0.4.0; below that is pre-history.
+      ignore-below: "0.4.0"

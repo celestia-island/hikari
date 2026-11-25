@@ -708,7 +708,8 @@
  * user-agent chrome (background, border, font) would distort the mark, so
  * the trigger variant strips it and restores the pointer cursor the
  * identity contract pins off. */
-.s-admin-header-brand--trigger {
+.s-admin-header-brand--trigger,
+.s-admin-header-brand--trigger .hk-logo {
   background: none;
   border: 0;
   padding: 0;

@@ -64,7 +64,7 @@ describe("admin header brand slot contract", () => {
       /brandedMenuFace = computed\(\s*\(\) => brandMounted\.value && props\.avatarAction === "menu",?\s*\)/,
     );
     expect(adminHeader).toMatch(
-      /brandedMenuFace\.value && \(\s*props\.showHamburger \? \([\s\S]*?<button\s+class="s-admin-header-brand s-admin-header-brand--trigger"/,
+      /brandedMenuFace\.value && \(\s*props\.showHamburger \? \([\s\S]*?<button\s+type="button"\s+class="s-admin-header-brand s-admin-header-brand--trigger"/,
     );
     expect(adminHeader).toMatch(
       /identityMounted\.value && !brandedMenuFace\.value && \(\s*<HkAvatarButton/,

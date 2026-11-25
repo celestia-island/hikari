@@ -421,8 +421,9 @@ export const HkAdminHeader = defineComponent({
                * so the affordance is honest; the static-brand styling stays
                * via the shared class, the trigger chrome is pinned off. */
               <button
+                type="button"
                 class="s-admin-header-brand s-admin-header-brand--trigger"
-                aria-label={props.title ?? t("hikari::adminHeader.openNav", "Open navigation")}
+                aria-label={t("hikari::adminHeader.openNav", "Open navigation")}
                 onClick={() => emit("hamburger")}
               >
                 {slots.brand ? slots.brand() : (

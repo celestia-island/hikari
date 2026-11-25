@@ -154,6 +154,50 @@ describe("authored res scripts: source/output pairing", () => {
   });
 });
 
+describe("authored res scripts: build directives survive the transpile", () => {
+  it("keeps every @__PURE__ the source declares, at the same call", () => {
+    // A `/* @__PURE__ */` comment is a BUILD directive, not documentation: it
+    // tells a downstream bundler the annotated call may be dropped when its
+    // result is unused. `removeComments` erases it, so the emitter re-attaches
+    // it by AST position — and this assertion is what keeps that re-attachment
+    // honest. Measured: without it the emitted tauri-titlebar lost the only
+    // such directive in the family, silently costing a tree-shaking guarantee.
+    for (const script of scripts) {
+      const sourceText = readFileSync(script.sourcePath, "utf8");
+      const declared = sourceText.match(/\/\*\s*@__PURE__\s*\*\//g) ?? [];
+      if (declared.length === 0) continue;
+
+      const emitted = readFileSync(script.outputPath, "utf8");
+      const carried = emitted.match(/\/\*\s*@__PURE__\s*\*\//g) ?? [];
+      expect(
+        carried.length,
+        `res/${script.stem}.js must carry every @__PURE__ its source declares`,
+      ).toBe(declared.length);
+
+      // Not just present — still annotating the same construct. The directive
+      // sits inline before the call it protects, so the annotated expression
+      // must follow it on the emitted line too.
+      for (const line of emitted.split("\n").filter((text) => text.includes("@__PURE__"))) {
+        expect(line, "@__PURE__ still prefixes a call expression").toMatch(
+          /@__PURE__\s*\*\/\s*(new\s+)?[A-Za-z_$][\w$.]*\s*\(/,
+        );
+      }
+    }
+  });
+
+  it("declares the one build-directive asset tauri-titlebar carries", () => {
+    // Pinned by name so deleting the directive from the source is a deliberate,
+    // reviewed change rather than a silent one: this file is where the family's
+    // tree-shaking hint lives.
+    const emitted = readFileSync(resolve(REPO_ROOT, "res/tauri-titlebar.js"), "utf8");
+    expect(
+      emitted.match(/@__PURE__/g)?.length,
+      "tauri-titlebar's @__PURE__ on the Date construction survives the emit",
+    ).toBe(1);
+    expect(emitted).toContain("/* @__PURE__ */ new Date()");
+  });
+});
+
 describe("authored res scripts: source tree wiring", () => {
   it("keeps the authored sources inside the repository", () => {
     for (const script of scripts) {

@@ -45,7 +45,7 @@
             const geo = JSON.parse(geoRaw);
             if (typeof geo.lat !== "number" || typeof geo.lng !== "number")
                 return null;
-            return solarAltitude(geo.lat, geo.lng, new Date()) > 6;
+            return solarAltitude(geo.lat, geo.lng, /* @__PURE__ */ new Date()) > 6;
         }
         catch {
             return null;

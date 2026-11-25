@@ -9,6 +9,12 @@ import { themePresets } from "./presets";
 /**
  * Pre-paint loader contract.
  *
+ * NOTE ON WHICH FILE THIS READS: the shipped `res/theme-loader.js` is the
+ * BUILD OUTPUT of `res/theme-loader.ts` (`pnpm run gen:res-scripts`). This
+ * suite deliberately inspects the emitted `.js`, because that is the artefact
+ * a host executes and vendors — it is the same choice `authoredResScripts.
+ * test.ts` makes, which pins the two together byte-for-byte.
+ *
  * `res/theme-loader.js` carries a SECOND, hand-written copy of the stock
  * palette: it runs as a bare <script> before any module loads (the backend
  * CSP blocks inline script, so it cannot be generated on the fly), which
@@ -127,4 +133,44 @@ describe("pre-paint theme loader mirrors the stock preset table", () => {
       }
     },
   );
+});
+
+/**
+ * The TABLE SHAPE, not just the values.
+ *
+ * The generated indentation of this table is load-bearing: `declaredIds()` and
+ * `triplet()` above slice it with line-anchored, indentation-sensitive regexes,
+ * and `theme-loader.ts` documents that shape next to the table so a future edit
+ * knows the formatting is contract. Until this suite existed, though, nothing
+ * asserted it — the id scan only needs one file-wide `var THEMES = {`, so a
+ * whitespace-only reflow of the emitted file passed while quietly arming the
+ * next reader to reformat a table whose shape other tooling depends on.
+ *
+ * So the exact line layout is pinned here. A change that only moves whitespace
+ * inside the table is a contract change (update the generator AND this
+ * expectation together); a change to a number is caught by the value suite
+ * above.
+ */
+describe("pre-paint theme loader table shape", () => {
+  /** The table block with its trailing blank line trimmed, one entry per element. */
+  function tableLines(): string[] {
+    return themesBlock()
+      .replace(/\n\s*$/, "")
+      .split("\n");
+  }
+
+  it("declares the table with the documented line layout", () => {
+    // `var THEMES = {` at the block's own indentation, each theme id at +2,
+    // each scheme on ONE line at +4, the closing brace at +2, `};` at base.
+    // The slice starts AT `var`, so line 0 carries no leading indent; every
+    // line after it does, and that indentation is the contract.
+    expect(tableLines()).toEqual([
+      "var THEMES = {",
+      "    default: {",
+      "      dark: { primary: [136, 192, 208], bg: [22, 27, 38], surface: [34, 40, 54] },",
+      "      light: { primary: [214, 51, 132], bg: [245, 245, 240], surface: [255, 255, 255] }",
+      "    }",
+      "  };",
+    ]);
+  });
 });

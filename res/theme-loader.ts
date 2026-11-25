@@ -65,9 +65,13 @@
   // into `default`, whose dark scheme is the black-blue pair and whose light
   // scheme is the pink/paper pair.
   //
-  // The literal shape below (`  default: {` / `    dark:  { primary: [r, g, b]`)
-  // is read by themeLoaderContract.test.ts, which slices this table out of the
-  // emitted `.js` with a line-anchored regex. Reformatting it is a test change.
+  // THE LINE LAYOUT BELOW IS CONTRACT. `themeLoaderContract.test.ts` reads this
+  // table out of the EMITTED `.js` (not this file) and asserts its exact line
+  // layout, not just its values: the emitter's output for this block is pinned
+  // line-for-line, so a whitespace-only reflow goes red even though the program
+  // is unchanged. The generator's 2-space re-indent is what produces that
+  // layout (`scripts/emit-res-scripts.mjs`), and the table is deliberately
+  // written in the style the emitted file is expected to keep.
   var THEMES: Record<string, LoaderTheme> = {
     default: {
       dark:  { primary: [136, 192, 208], bg: [22, 27, 38],   surface: [34, 40, 54] },

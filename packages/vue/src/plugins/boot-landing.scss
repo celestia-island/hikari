@@ -18,7 +18,7 @@
 //                          button carries it, and a host-invented button style
 //                          would drift from the app's).
 //
-// scripts/gen-boot-landing-css.js compiles this file (compressed, ASCII) into
+// scripts/gen-boot-landing-css.ts compiles this file (compressed, ASCII) into
 // src/plugins/bootLandingCss.js, which the generated boot script inlines so
 // the panel needs no second network round-trip. bootLandingCss.test.ts
 // recompiles this entry and fails on drift, so editing the component sheets

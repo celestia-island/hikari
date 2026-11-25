@@ -113,6 +113,133 @@ const COMPILER_OPTIONS = {
 };
 
 /**
+ * Build-directive comments that must survive the transpile.
+ *
+ * They are not documentation — a bundler reads them. `/* @__PURE__ *\/` on a
+ * call tells a downstream minifier (and tree-shaker) that the call has no side
+ * effects and may be dropped if its result is unused; losing it silently turns
+ * a dead computation into a kept one, or vice versa. `removedComments: true`
+ * erases every comment, so these are re-attached below by AST position.
+ *
+ * Anything esbuild/rollup treat as a directive lives here. `@__NO_SIDE_EFFECTS__`
+ * annotates a DECLARATION rather than a call; it is carried the same way.
+ */
+const BUILD_DIRECTIVE = /@__PURE__|@__NO_SIDE_EFFECTS__/;
+
+/**
+ * Every build-directive comment in `text`, with its offset and the offset of
+ * the next real token after it.
+ *
+ * Uses the TS scanner rather than `getLeadingCommentRanges`, because a
+ * directive can sit anywhere — `f(a, /* @__PURE__ *\/ new Date())` puts it in
+ * the middle of an argument list, where the node-trivia API does not report it
+ * at all (measured: `getLeadingCommentRanges` returns `undefined` for exactly
+ * this position). The scanner reports every comment regardless of grammar.
+ */
+function scanBuildDirectives(text) {
+  const scanner = ts.createScanner(
+    ts.ScriptTarget.ES2020,
+    false,
+    ts.LanguageVariant.Standard,
+    text,
+  );
+  const found = [];
+  let token = scanner.scan();
+  while (token !== ts.SyntaxKind.EndOfFileToken) {
+    if (
+      token === ts.SyntaxKind.SingleLineCommentTrivia ||
+      token === ts.SyntaxKind.MultiLineCommentTrivia
+    ) {
+      const comment = scanner.getTokenText();
+      if (BUILD_DIRECTIVE.test(comment)) {
+        found.push({ offset: scanner.getTokenStart(), comment });
+      }
+    }
+    token = scanner.scan();
+  }
+  return found;
+}
+
+/**
+ * The comments in `outputText` survive neither the transpile nor the re-indent,
+ * so directives are re-attached by ORDINAL: the Nth directive of the source
+ * anchors the Nth candidate call expression of the output.
+ *
+ * WHY ORDINAL AND NOT AN OFFSET MAP. The transpile rewrites whitespace, adds
+ * semicolons and strips types, so no source offset maps to an output offset.
+ * But syntax-only transpilation preserves the ORDER (and count) of
+ * `new`-expressions and call expressions, and a `@__PURE__` directive is only
+ * ever attached to one of those. Anchoring by ordinal keeps the alignment
+ * checkable: if the counts disagree the emit fails loudly instead of silently
+ * attaching a directive to the wrong call — a dropped `@__PURE__` costs a
+ * tree-shaking opportunity, a MISPLACED one can make a bundler delete real work.
+ */
+function reattachBuildDirectives(sourceText, outputText) {
+  const directives = scanBuildDirectives(sourceText);
+  if (directives.length === 0) return outputText;
+
+  /** Offsets of the expressions a `@__PURE__` may annotate, in document order. */
+  const annotatable = (file) => {
+    const offsets = [];
+    const visit = (node) => {
+      if (ts.isNewExpression(node) || ts.isCallExpression(node)) {
+        offsets.push(node.getStart(file));
+      }
+      node.forEachChild(visit);
+    };
+    visit(file);
+    return offsets;
+  };
+
+  const sourceFile = ts.createSourceFile(
+    "source.ts",
+    sourceText,
+    ts.ScriptTarget.ES2020,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const outputFile = ts.createSourceFile(
+    "output.js",
+    outputText,
+    ts.ScriptTarget.ES2020,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const sourceCalls = annotatable(sourceFile);
+  const outputCalls = annotatable(outputFile);
+
+  // The ordinal of each directive among the source's annotatable expressions:
+  // the first one starting after the comment.
+  const edits = directives.map((directive) => {
+    const ordinal = sourceCalls.findIndex((offset) => offset > directive.offset);
+    if (ordinal < 0) {
+      throw new Error(
+        `res script emit: build directive ${JSON.stringify(directive.comment)} ` +
+          "has no call expression after it to annotate",
+      );
+    }
+    if (ordinal >= outputCalls.length) {
+      throw new Error(
+        `res script emit: build directive #${ordinal} has no counterpart in ` +
+          "the output — the transpile changed the program shape, so the " +
+          "directive cannot be anchored safely",
+      );
+    }
+    return { ordinal, offset: outputCalls[ordinal], comment: directive.comment };
+  });
+
+  // Applied back-to-front so earlier offsets stay valid.
+  let patched = outputText;
+  for (const edit of [...edits].sort((left, right) => right.offset - left.offset)) {
+    patched =
+      patched.slice(0, edit.offset) +
+      `${edit.comment} ` +
+      patched.slice(edit.offset);
+  }
+  return patched;
+}
+
+/**
  * Transpile one authored source to its classic-script JavaScript.
  *
  * Pure: no filesystem access, so the drift test and the build share exactly
@@ -148,6 +275,11 @@ export function transpile(sourceText, fileName = "res-script.ts") {
     body = body.replace(/^"use strict";\n/, "");
   }
 
+  // Build-directive comments are erased by `removeComments`, but a downstream
+  // bundler reads them. Put them back before the formatting pass below, so the
+  // re-indent sees them in their final place.
+  body = reattachBuildDirectives(sourceText, body);
+
   // tsc emits 4-space indentation. These are classic scripts that siblings
   // vendor and read, so the family's 2-space style is normalised back in; the
   // indentation is what keeps a documented literal shape (theme-loader's
@@ -155,7 +287,7 @@ export function transpile(sourceText, fileName = "res-script.ts") {
   //
   // NEVER on a file with a multi-line template literal: a re-indent would edit
   // the literal's DATA (tauri-titlebar's stylesheet is a template string, one
-  // literal `\n` apart from the CSS the shell actually paints). Those files
+  // literal newline apart from the CSS the shell actually paints). Those files
   // keep tsc's 4-space output, which is why the normaliser is a per-file
   // decision rather than a global formatting step.
   if (!hasMultilineTemplateLiteral(result.outputText)) {

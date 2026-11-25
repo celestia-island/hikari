@@ -35,6 +35,8 @@ describe("pre-rendered theme vars CSS (hikari#1546)", () => {
     // explicit env (a stray REGEN_THEME_VARS in a normal run must not touch
     // the worktree silently), then re-read for a real assertion — the write
     // happens AFTER the drift is established, never before the compare.
+    // MUT:mut-regen-write-order — reverting to write-before-compare silences
+    // this test entirely (the round-1 review footgun).
     if (process.env.REGEN_THEME_VARS === "1") {
       writeFileSync(cssPath, css);
       expect(readFileSync(cssPath, "utf8"), "regen wrote the composition").toBe(css);

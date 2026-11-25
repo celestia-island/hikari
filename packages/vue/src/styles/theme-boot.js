@@ -3,7 +3,15 @@
  * own definitions via toString(), so this asset cannot drift from the
  * runtime's solar chain by construction; the wrapper (storage reads +
  * attribute writes) is pinned by themeBoot.contract.test.ts. Inline in
- * <head> BEFORE the theme-vars sheet's first paint. */
+ * <head> BEFORE the theme-vars sheet's first paint.
+ *
+ * SYNTAX FLOOR: ES2020 (const/let, arrow functions, optional chaining).
+ * The asset is inlined RAW — no consumer build step transpiles it — so it
+ * targets the same floor the family's bundles do (vite target es2020).
+ * A browser older than that cannot run the app it belongs to either; it
+ * simply keeps its unthemed first paint. Keep this file free of syntax
+ * NEWER than ES2020: a parse error would void the whole inline script and
+ * the surrounding try/catch cannot recover from a parse failure. */
 (function () {
 var DEG = 0.017453292519943295;
 var RAD = 57.29577951308232;
@@ -91,7 +99,7 @@ try {
   if (!(m === "light" || m === "dark")) {
     m = alt > 6 ? "light" : "dark";
   }
-  d.setAttribute("data-theme", t || "default");
+  d.setAttribute("data-theme", t || (typeof window !== "undefined" && window.__celestiaDefaultTheme) || "default");
   d.setAttribute("data-mode", m);
 } catch (e) {}
 })();

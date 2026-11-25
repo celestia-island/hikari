@@ -103,23 +103,42 @@ describe("shipped theme boot asset (hikari#1546 Phase 1.5)", () => {
     expect(explicitDark.mode).toBe("dark");
   });
 
-  it("uses a stored manual location (hemisphere flip) when the strategy selects it", () => {
-    // Southern-hemisphere manual config flips the latitude: July (northern
-    // summer) is southern WINTER — the emitted chain must follow the manual
-    // coords, not the estimate.
-    const at = new Date(Date.UTC(2026, 6, 1, 12, 0, 0)); // July 1 noon UTC
-    const storage = {
+  it("routes a stored manual config through the zone meridian, machine-independently", () => {
+    // Round-2 review (S1): the first version compared the wrapper (fake
+    // storage, manual config) against the MODULE (real localStorage, empty
+    // -> "timezone" estimate), which only agreed on the author's host. Both
+    // sides now read the SAME storage object, and the anti-vacuity pins two
+    // manual configs whose answers are fixed by their own timeZone — no
+    // dependence on this machine's zone.
+    const at = new Date(Date.UTC(2026, 6, 1, 12, 0, 0)); // July 1, 12:00Z
+    const manual = (timeZone: string) =>
+      JSON.stringify({ timeZone, hemisphere: "north" });
+    const storeFor = (timeZone: string) => ({
       "hikari-solar-strategy": "manual",
-      "hikari-solar-manual": JSON.stringify({
-        timeZone: "Australia/Sydney",
-        hemisphere: "south",
-      }),
-    };
-    const emitted = runBoot(js, { now: at, storage });
-    expect(emitted.mode).toBe(resolveSystemModeAt(at));
-    // And it must DIFFER from the northern estimate at the same instant
-    // often enough that this test is not vacuous — July: Sydney is in
-    // winter (night at this instant per Sydney local time ~22:00), the
-    // estimate zone (UTC+8-ish for this machine) differs.
+      "hikari-solar-manual": manual(timeZone),
+    });
+    const asBootStorage = (m: Record<string, string>) => ({
+      getItem: (k: string) => (k in m ? m[k]! : null),
+    });
+
+    // Greenwich meridian at July noon: the sun is high -> light.
+    const utcStore = storeFor("UTC");
+    const utc = runBoot(js, { now: at, storage: utcStore });
+    expect(utc.mode, "UTC (lng 0) at July noon is DAY").toBe("light");
+    expect(utc.mode, "module and asset agree on the manual path").toBe(
+      resolveSystemModeAt(at, asBootStorage(utcStore)),
+    );
+
+    // Auckland's standard meridian is 180 degrees away: the same instant is
+    // local midnight there -> night. Machine-independent by construction
+    // (both configs pin lat AND lng), so this cannot pass vacuously.
+    const aklStore = storeFor("Pacific/Auckland");
+    const akl = runBoot(js, { now: at, storage: aklStore });
+    expect(akl.mode, "Auckland (lng 180) at the same instant is NIGHT").toBe("dark");
+    expect(akl.mode, "module and asset agree on the far meridian").toBe(
+      resolveSystemModeAt(at, asBootStorage(aklStore)),
+    );
+    expect(utc.mode, "the two configs really do differ").not.toBe(akl.mode);
   });
 });
+

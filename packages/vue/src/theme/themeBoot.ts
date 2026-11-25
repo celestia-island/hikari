@@ -195,7 +195,14 @@ export function buildThemeBootJs(): string {
    * (which is appended later and therefore wins once the bundle lands)
    * and outranks the static html[data-mode] sheet by document order. */
   try {
-    if (true) {
+    /* A crafted/edited memo could otherwise smuggle a brace or semicolon into a key
+     * and escape the html:root block into arbitrary selectors. localStorage
+     * is same-origin (writing it already needs live JS), so this is
+     * hardening rather than a trust boundary — but the boot runs before ANY
+     * app code, which is the one place we cannot afford to trust it. */
+    var SAFE_KEY = /^--[A-Za-z0-9_-]+$/;
+    var SAFE_VALUE = /^[A-Za-z0-9 .,%()\/#-]*$/;
+    {
       var memo = JSON.parse(read("${THEME_VARS_MEMO_KEY}") || "null");
       var memoV = ${THEME_VARS_MEMO_VERSION};
       if (memo && memo.v === memoV) {
@@ -207,9 +214,11 @@ export function buildThemeBootJs(): string {
         if (vars && typeof vars === "object") {
           var css = "";
           for (var k in vars) {
-            if (Object.prototype.hasOwnProperty.call(vars, k)) {
-              css += k + ":" + vars[k] + ";";
-            }
+            if (!Object.prototype.hasOwnProperty.call(vars, k)) continue;
+            if (!SAFE_KEY.test(k)) continue;
+            var value = "" + vars[k];
+            if (!SAFE_VALUE.test(value)) continue;
+            css += k + ":" + value + ";";
           }
           if (css) {
             var styleEl = document.createElement("style");

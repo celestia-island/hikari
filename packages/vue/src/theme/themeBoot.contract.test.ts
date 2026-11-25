@@ -182,6 +182,30 @@ describe("shipped theme boot asset (hikari#1546 Phase 1.5)", () => {
     const stale = runBoot(js, { now: at, storage: storage(THEME_VARS_MEMO_VERSION - 1) });
     expect(stale.styles, "a stale memo is not replayed").toHaveLength(0);
 
+    // A hostile/garbled memo must not escape the html:root block: keys and
+    // values that are not plain cssvar shapes are dropped, the rest survive.
+    const hostile = runBoot(js, {
+      now: at,
+      storage: {
+        "hikari-theme": "my-theme",
+        "hikari-theme-mode": "light",
+        "hikari-theme-vars": JSON.stringify({
+          v: THEME_VARS_MEMO_VERSION,
+          "my-theme": {
+            light: {
+              "--color-primary": "1 2 3",
+              "} body { display: none } .x{": "red",
+              "--color-text": "4 5 6 } .y{z:1",
+            },
+          },
+        }),
+      },
+    });
+    expect(hostile.styles, "the block still injects the safe key").toHaveLength(1);
+    expect(hostile.styles[0]!.text, "safe pairs survive").toContain("--color-primary:1 2 3;");
+    expect(hostile.styles[0]!.text, "a selector-shaped key is refused").not.toContain("display");
+    expect(hostile.styles[0]!.text, "a value carrying a brace is refused").not.toContain(".y{");
+
     // A stock theme never has a memo and must not inject anything.
     const stock = runBoot(js, {
       now: at,

@@ -3,6 +3,7 @@
     "hikari::adminHeader.adminGroup": "Administrateurs",
     "hikari::adminHeader.avatar": "Avatar",
     "hikari::adminHeader.avatarTrigger": "Menu du compte",
+    "hikari::adminHeader.openNav": "Ouvrir la navigation",
     "hikari::adminHeader.forceSignOut": "Se déconnecter",
     "hikari::adminHeader.language": "Langue",
     "hikari::adminHeader.login": "Se connecter",

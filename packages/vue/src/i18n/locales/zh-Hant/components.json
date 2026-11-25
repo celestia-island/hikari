@@ -3,6 +3,7 @@
     "hikari::adminHeader.adminGroup": "管理員",
     "hikari::adminHeader.avatar": "頭像",
     "hikari::adminHeader.avatarTrigger": "帳戶選單",
+    "hikari::adminHeader.openNav": "開啟導覽",
     "hikari::adminHeader.forceSignOut": "登出",
     "hikari::adminHeader.language": "語言",
     "hikari::adminHeader.login": "登入",

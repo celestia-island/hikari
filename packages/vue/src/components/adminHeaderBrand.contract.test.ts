@@ -16,16 +16,21 @@ import { fileURLToPath } from "node:url";
  * entry of HkAdminHeaderSlots):
  *   1. the slot is declared in the SlotsType aggregate (zero-param —
  *      a static mark has no state to hand down);
- *   2. the desktop face renders the mark through ONE class,
- *      .s-admin-header-brand, and only while avatarAction is "menu"
- *      (the drawer face keeps its avatar trigger — that trigger IS the
- *      drawer path, so the mobile wing is invariant under the props);
- *   3. the mark is NON-INTERACTIVE: rendered through the div variant
- *      of HkLogo (no href ever passed), no button semantics;
- *   4. the face pins the pointer cursor OFF on the mark (HkLogo's
- *      standalone div carries cursor: pointer for its own hosts — a
- *      header identity must not promise a click) and drops the
- *      container rounding (site marks ship their own shape);
+ *   2. the face renders the mark through the ONE base class,
+ *      .s-admin-header-brand, only while avatarAction is "menu";
+ *      DESKTOP keeps it a non-control span; MOBILE (showHamburger)
+ *      promotes the same mark to the drawer trigger through the
+ *      --trigger variant (brand-as-trigger, 2026-11-25 user direction:
+ *      the standalone hamburger was redundant chrome and mounted only
+ *      after JS, leaving pre-hydration phones with no nav affordance —
+ *      the brand renders in SSR, so IT carries the trigger);
+ *   3. the DESKTOP mark is NON-INTERACTIVE: div-variant HkLogo (no
+ *      href ever passed), no button semantics; the MOBILE trigger is a
+ *      real <button> with the --trigger variant stripping the
+ *      user-agent chrome;
+ *   4. the face pins the pointer cursor OFF on the desktop mark and
+ *      drops the container rounding (site marks ship their own shape);
+ *      the mobile trigger restores the pointer (it promises a click);
  *   5. the mark rides the "sm" HkLogo step — the closest visual weight
  *      to the 28px identity trigger it replaces inside the 48px band.
  */
@@ -42,9 +47,12 @@ describe("admin header brand slot contract", () => {
     );
   });
 
-  it("renders the mark on the desktop face only, through the one brand class", () => {
-    expect(adminHeader, "the render site must carry the brand class").toContain(
+  it("renders the mark through the one base class, desktop span + mobile trigger", () => {
+    expect(adminHeader, "the render site must carry the brand base class").toContain(
       'class="s-admin-header-brand"',
+    );
+    expect(adminHeader, "the mobile trigger variant exists").toContain(
+      '"s-admin-header-brand s-admin-header-brand--trigger"',
     );
     // Drawer-face invariance: the face condition lives in ONE computed
     // (brand mounted AND avatarAction "menu") that BOTH the mark render
@@ -56,10 +64,13 @@ describe("admin header brand slot contract", () => {
       /brandedMenuFace = computed\(\s*\(\) => brandMounted\.value && props\.avatarAction === "menu",?\s*\)/,
     );
     expect(adminHeader).toMatch(
-      /brandedMenuFace\.value && \(\s*<span class="s-admin-header-brand">/,
+      /brandedMenuFace\.value && \(\s*props\.showHamburger \? \([\s\S]*?<button\s+class="s-admin-header-brand s-admin-header-brand--trigger"/,
     );
     expect(adminHeader).toMatch(
       /identityMounted\.value && !brandedMenuFace\.value && \(\s*<HkAvatarButton/,
+    );
+    expect(adminHeader, "the standalone hamburger is suppressed when the brand carries the trigger").toMatch(
+      /props\.showHamburger && !brandedMenuFace\.value && \(\s*<HButton/,
     );
   });
 

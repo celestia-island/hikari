@@ -3,6 +3,7 @@
     "hikari::adminHeader.adminGroup": "管理员",
     "hikari::adminHeader.avatar": "头像",
     "hikari::adminHeader.avatarTrigger": "账户菜单",
+    "hikari::adminHeader.openNav": "打开导航",
     "hikari::adminHeader.forceSignOut": "退出登录",
     "hikari::adminHeader.language": "语言",
     "hikari::adminHeader.login": "登录",

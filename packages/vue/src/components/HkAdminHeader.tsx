@@ -374,8 +374,18 @@ export const HkAdminHeader = defineComponent({
            * above owns the header's columns, and a fourth in-flow child
            * would fall into the left wing's track and skew every column
            * after it. Inside the wing it keeps its place (leftmost, ahead
-           * of the avatar) at the wing's own 16px rhythm. */}
-          {props.showHamburger && (
+           * of the avatar) at the wing's own 16px rhythm.
+           *
+           * BRAND-AS-TRIGGER (2026-11-25 user direction): when the face
+           * carries a brand mark, the mark ITSELF is the drawer trigger —
+           * the standalone hamburger is redundant chrome (多此一举) and,
+           * worse, it only mounts after JS (the shell's mounted gate),
+           * leaving a pre-hydration phone with NO visible nav affordance.
+           * The brand renders in SSR, so making it the trigger gives the
+           * phone a visible menu affordance from first paint. The standalone
+           * hamburger stays only for faces WITHOUT a brand (there is
+           * nothing else to tap). */}
+          {props.showHamburger && !brandedMenuFace.value && (
             <HButton
               variant="ghost"
               size="sm"
@@ -405,11 +415,27 @@ export const HkAdminHeader = defineComponent({
            * dropdown and its carrier slots) does not mount at all —
            * the ZERO ACCOUNT SURFACE clause of the brand contract. */}
           {brandedMenuFace.value && (
-            <span class="s-admin-header-brand">
-              {slots.brand ? slots.brand() : (
-                <HkLogo src={props.brandSrc} alt={props.brandAlt} size="sm" />
-              )}
-            </span>
+            props.showHamburger ? (
+              /* Mobile drawer face: the brand IS the menu trigger (see the
+               * brand-as-trigger note at the hamburger above). A real button
+               * so the affordance is honest; the static-brand styling stays
+               * via the shared class, the trigger chrome is pinned off. */
+              <button
+                class="s-admin-header-brand s-admin-header-brand--trigger"
+                aria-label={props.title ?? t("hikari::adminHeader.openNav", "Open navigation")}
+                onClick={() => emit("hamburger")}
+              >
+                {slots.brand ? slots.brand() : (
+                  <HkLogo src={props.brandSrc} alt={props.brandAlt} size="sm" />
+                )}
+              </button>
+            ) : (
+              <span class="s-admin-header-brand">
+                {slots.brand ? slots.brand() : (
+                  <HkLogo src={props.brandSrc} alt={props.brandAlt} size="sm" />
+                )}
+              </span>
+            )
           )}
           {/* The reserved workspace-switcher slot (drawer face only).
               The chat header's left wing is avatar + ws-trigger button,

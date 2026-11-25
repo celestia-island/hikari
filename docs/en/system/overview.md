@@ -280,7 +280,7 @@ block-beta
 graph TD
   UA["User Action"] --> EH["Event Handler"]
   EH --> SU["State Update"]
-  SU ->> UR["UI Re-render"]
+  SU --> UR["UI Re-render"]
 ```
 
 ### 4. Type Safety

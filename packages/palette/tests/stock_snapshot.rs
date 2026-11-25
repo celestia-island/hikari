@@ -69,7 +69,9 @@ fn serialized_matches_the_web_artifact() {
     );
     // The artifact is what the WEB LANE ships: if a value edited here never
     // reaches it, every page paints the stale palette (hikari#1546 Phase 2
-    // regression). This test always catches that; it never passes vacuously.
+    // regression). This test VERIFIED that transfer byte-for-byte — it never
+    // passes vacuously; the primary pin above is verified against stock.rs
+    // by construction (toString-free serde path).
     assert!(!json.is_empty(), "the artifact is never empty");
     assert!(
         json.contains("\"primary\":{\"r\":136,\"g\":192,\"b\":208}"),

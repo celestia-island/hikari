@@ -49,13 +49,16 @@ function actionButtons(card: HTMLElement): HTMLButtonElement[] {
 }
 
 /** Answer the gate by semantics, not by position: the row order is pinned
- *  separately, so these helpers keep the behaviour cases readable. */
+ *  separately, so these helpers keep the behaviour cases readable. The
+ *  cancel stopped being a text button (no hk-btn-secondary to grep for) —
+ *  it is the standard icon button carrying the hk-blocking-toast-cancel
+ *  seat class, which is the stable handle. */
 function confirmButton(card: HTMLElement): HTMLButtonElement {
   return actionButtons(card).find((b) => !b.classList.contains("hk-btn-secondary"))!;
 }
 
 function cancelButton(card: HTMLElement): HTMLButtonElement {
-  return actionButtons(card).find((b) => b.classList.contains("hk-btn-secondary"))!;
+  return card.querySelector<HTMLButtonElement>("button.hk-blocking-toast-cancel")!;
 }
 
 function toastRegistryTitles(): Array<{ kind: string; title?: string }> {
@@ -82,13 +85,42 @@ describe("HkBlockingToast", () => {
     const card = cards()[0];
     expect(card.querySelector(".hk-blocking-toast-title")!.textContent).toContain("Join group?");
     expect(card.querySelector(".hk-blocking-toast-message")!.textContent).toContain("Admins can view your usage.");
-    const labels = actionButtons(card).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["Confirm", "Cancel"]);
+    // Only the confirm still contributes textContent — the cancel is the
+    // icon button now, so its label is the accessible name (aria-label +
+    // title), never visible text.
+    expect(confirmButton(card).textContent?.trim()).toBe("Confirm");
+    expect(cancelButton(card).getAttribute("aria-label")).toBe("Cancel");
+    expect(cancelButton(card).getAttribute("title")).toBe("Cancel");
 
     confirmButton(card).click();
     await expect(gate).resolves.toBe(true);
     await settle();
     expect(cards().length).toBe(0);
+  });
+
+  it("renders the cancel as the standard icon button (no visible label text)", async () => {
+    mountHost();
+    showBlockingToast("Icon cancel");
+    await settle();
+
+    const cancel = cancelButton(cards()[0]);
+    // The rendered icon-button chrome is the contract the sheet pins ink
+    // on (the per-band --hi-icon-button-* rules) and the Rust mirror
+    // emits; the seat class is what the card's own stylesheet targets.
+    expect(cancel.classList.contains("hk-icon-button")).toBe(true);
+    expect(cancel.classList.contains("hk-icon-button-24")).toBe(true);
+    expect(cancel.classList.contains("hk-icon-button-ghost")).toBe(true);
+    expect(cancel.classList.contains("hk-blocking-toast-cancel")).toBe(true);
+    expect(cancel.getAttribute("type")).toBe("button");
+    // Glyph, not a label: the ✕ renders as svg, the resolved cancel label
+    // rides aria-label/title only (pinned in the label cases above).
+    expect(cancel.querySelector("svg")).not.toBeNull();
+    expect(cancel.textContent?.trim()).toBe("");
+
+    // DOM order: confirm first, the cancel ✕ second (right end).
+    const buttons = actionButtons(cards()[0]);
+    expect(buttons[0]).toBe(confirmButton(cards()[0]));
+    expect(buttons[buttons.length - 1]).toBe(cancel);
   });
 
   it("resolves false on cancel and removes the card", async () => {
@@ -183,8 +215,10 @@ describe("HkBlockingToast", () => {
 
     const card = cards()[0];
     expect(card.classList.contains("hk-blocking-toast-danger")).toBe(true);
-    const labels = actionButtons(card).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["Join", "Back out"]);
+    expect(confirmButton(card).textContent?.trim()).toBe("Join");
+    // A custom cancelLabel feeds the icon button's accessible name now.
+    expect(cancelButton(card).getAttribute("aria-label")).toBe("Back out");
+    expect(cancelButton(card).getAttribute("title")).toBe("Back out");
 
     confirmButton(card).click();
     await expect(gate).resolves.toBe(true);
@@ -196,8 +230,9 @@ describe("HkBlockingToast", () => {
     const gate = showBlockingToast("本地化");
     await settle();
 
-    const labels = actionButtons(cards()[0]).map((b) => b.textContent?.trim());
-    expect(labels).toEqual(["确认", "取消"]);
+    expect(confirmButton(cards()[0]).textContent?.trim()).toBe("确认");
+    expect(cancelButton(cards()[0]).getAttribute("aria-label")).toBe("取消");
+    expect(cancelButton(cards()[0]).getAttribute("title")).toBe("取消");
 
     confirmButton(cards()[0]).click();
     await expect(gate).resolves.toBe(true);

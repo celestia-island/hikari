@@ -4,7 +4,8 @@
  *
  * Toast-shaped but flow-blocking consent prompts: a compact floating
  * card in the toast stack area (not a centered modal, no scroll lock)
- * with explicit Confirm/Cancel buttons — e.g. "joining this group lets
+ * with an explicit Confirm button and a Cancel ✕ affordance — e.g.
+ * "joining this group lets
  * its admins view your personal workspace usage — confirm?". Unlike a
  * normal toast it never auto-dismisses; the caller's promise settles
  * only when the user answers (or an optional timeoutMs expires).
@@ -22,7 +23,7 @@
  * stacking (newer cards paint above older ones), and the explicit card
  * z keeps cards clickable under the pointer-transparent toast column.
  */
-import { AlertTriangle, CircleX as XCircle, Info } from "lucide-vue-next";
+import { AlertTriangle, CircleX as XCircle, Info, X } from "lucide-vue-next";
 import {
   defineComponent,
   onBeforeUnmount,
@@ -45,6 +46,7 @@ import {
 } from "../runtime/useBlockingToast";
 import "./HkBlockingToast.scss";
 import HButton from "./HkButton";
+import HIconButton from "./HkIconButton";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
 
 const ICON_SIZE = 18;
@@ -69,6 +71,10 @@ const HkBlockingToastCard = defineComponent({
 
     return () => {
       const item = props.item;
+      // The same resolved string the old text button rendered — the label
+      // only changed seats (visible text → the icon button's accessible
+      // name), never its resolution.
+      const cancelText = item.cancelLabel ?? t("hikari::blockingToast.cancel", "Cancel");
       return (
         <div
           class={["hk-blocking-toast-card", `hk-blocking-toast-${item.variant}`]}
@@ -92,13 +98,27 @@ const HkBlockingToastCard = defineComponent({
               >
                 {item.confirmLabel ?? t("hikari::blockingToast.confirm", "Confirm")}
               </HButton>
-              <HButton
-                variant="secondary"
-                size="sm"
-                onClick={() => emit("cancel")}
+              {/* The cancel is the house icon button, not a text button
+                  (2026-11-25 product call: every right-side cancel on a
+                  toast surface is the ✕ — the blocking card included, even
+                  though it has no progress row for the button to sit
+                  beside). The resolved label survives as the accessible
+                  name — aria-label + title — instead of visible text;
+                  ghost variant + icon slot exactly like HkToast's close,
+                  whose per-band ink re-pinning this sheet mirrors. */}
+              <HIconButton
+                class="hk-blocking-toast-cancel"
+                size={24}
+                variant="ghost"
+                aria-label={cancelText}
+                {...{ title: cancelText }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  emit("cancel");
+                }}
               >
-                {item.cancelLabel ?? t("hikari::blockingToast.cancel", "Cancel")}
-              </HButton>
+                {{ icon: () => <X aria-hidden="true" /> }}
+              </HIconButton>
             </div>
           </div>
         </div>

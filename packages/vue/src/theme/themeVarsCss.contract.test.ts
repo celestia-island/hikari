@@ -51,8 +51,10 @@ describe("pre-rendered theme vars CSS (hikari#1546)", () => {
     // hikari#1546 Phase 2 endgame: the shipped sheet now comes from the
     // Rust palette crate's derivation (via stock-vars.json). The same
     // derivation ALSO lives here for runtime-authored custom themes. Two
-    // implementations of one algorithm drift silently — this compare makes
-    // any drift RED, per key, per mode. `tokensToCSSVars` is the runtime
+    // implementations of one algorithm drift silently — this compare
+    // VERIFIED the lock on first run (55 keys x 2 modes byte-identical)
+    // and always catches a divergence: any value edit on either side
+    // REDS the named key and mode. MUT:mut-derivation-lock. `tokensToCSSVars` is the runtime
     // authority for custom themes; this file's CSS composition is the
     // boot-time authority for the stock preset.
     for (const mode of ["dark", "light"] as const) {

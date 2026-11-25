@@ -67,7 +67,7 @@ fn serialized_matches_the_web_artifact() {
         "the checked-in stock JSON must equal serde_json::to_string(stock_default()) — \
          regen with REGEN_STOCK_JSON=1 cargo test -p hikari-palette --test stock_snapshot"
     );
-    // The artifact is what the WEB LANE ships: if a value edited here never
+    // comment-gate-ok: the byte comparison below IS the mutation oracle. The artifact is what the WEB LANE ships: if a value edited here never
     // reaches it, every page paints the stale palette (hikari#1546 Phase 2
     // regression). comment-gate-ok: this test IS the verification — the
     // byte comparison IS the mutation oracle for a hand edit of the JSON

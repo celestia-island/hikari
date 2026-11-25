@@ -589,4 +589,40 @@ describe("HkAdminHeader host slots (L39 ruling-a revival)", () => {
     expect(c.querySelector(".locale-popup")).toBeNull();
     expect(c.textContent).not.toContain("Account center");
   });
+
+  it("makes the brand the drawer trigger on mobile and drops the standalone hamburger", async () => {
+    // Brand-as-trigger (2026-11-25 user direction): with a brand on the
+    // menu face, the hamburger is redundant chrome and — worse — mounts
+    // only after JS, leaving pre-hydration phones with no nav affordance.
+    // The brand renders in SSR, so IT carries the trigger.
+    let fired = 0;
+    const c = mount(headerNode({
+      showHamburger: true,
+      brandSrc: "/logo.webp",
+      avatarAction: "menu",
+      title: "Docs",
+      onHamburger: () => { fired += 1; },
+    }));
+    expect(c.querySelector(".s-admin-header-hamburger-icon"), "standalone hamburger is gone").toBeNull();
+    const trigger = c.querySelector("button.s-admin-header-brand--trigger");
+    expect(trigger, "the brand is a real button").toBeTruthy();
+    expect(trigger?.querySelector("img"), "carrying the mark").toBeTruthy();
+    await click(trigger);
+    expect(fired, "clicking the brand opens the drawer").toBe(1);
+  });
+
+  it("keeps the standalone hamburger on faces without a brand", () => {
+    // The fallback: no brand → nothing else to tap → the hamburger stays.
+    const c = mount(headerNode({ showHamburger: true, avatarAction: "menu", title: "Docs" }));
+    expect(c.querySelector(".s-admin-header-hamburger-icon")).toBeTruthy();
+    expect(c.querySelector(".s-admin-header-brand--trigger")).toBeNull();
+  });
+
+  it("keeps the desktop brand a non-control span", () => {
+    // Desktop (showHamburger=false): the brand stays identity-not-control.
+    const c = mount(headerNode({ brandSrc: "/logo.webp", avatarAction: "menu", title: "Docs" }));
+    expect(c.querySelector("span.s-admin-header-brand")).toBeTruthy();
+    expect(c.querySelector("button.s-admin-header-brand--trigger")).toBeNull();
+    expect(c.querySelector(".s-admin-header-hamburger-icon")).toBeNull();
+  });
 });

@@ -703,6 +703,21 @@
   border-radius: 0;
 }
 
+/* The mobile drawer face renders the brand AS the menu trigger (a real
+ * <button> — see the brand-as-trigger note in HkAdminHeader). A button's
+ * user-agent chrome (background, border, font) would distort the mark, so
+ * the trigger variant strips it and restores the pointer cursor the
+ * identity contract pins off. */
+.s-admin-header-brand--trigger,
+.s-admin-header-brand--trigger .hk-logo {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
 /* The old hover camera veil ("change avatar" affordance) is gone: the
  * avatar trigger opens the account MENU — the avatar edit is the Camera
  * item inside it — so the veil promised an action the click never

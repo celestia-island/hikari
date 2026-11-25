@@ -3,6 +3,7 @@
     "hikari::adminHeader.adminGroup": "المسؤولون",
     "hikari::adminHeader.avatar": "الصورة الرمزية",
     "hikari::adminHeader.avatarTrigger": "قائمة الحساب",
+    "hikari::adminHeader.openNav": "افتح التنقل",
     "hikari::adminHeader.forceSignOut": "تسجيل الخروج",
     "hikari::adminHeader.language": "اللغة",
     "hikari::adminHeader.login": "تسجيل الدخول",

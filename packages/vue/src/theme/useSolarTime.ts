@@ -19,7 +19,7 @@ export function greenwichSiderealTime(jd: number): number {
   return theta;
 }
 
-interface SunEquatorial {
+export interface SunEquatorial {
   decl: number;
   ra: number;
 }

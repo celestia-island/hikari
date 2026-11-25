@@ -85,6 +85,14 @@ export interface ThemePreset {
    * literal preset names render unchanged while keyed built-ins localize.
    */
   name: string;
+  /**
+   * Per-locale name translations (2026-11-25 user direction: theme names
+   * are i18n citizens everywhere). Authored through the scheme editor's
+   * localized-name input; rows resolve the map FIRST (family fallbacks:
+   * zh-Hans ⇄ zh-Hant → en → first non-empty) and fall back to `t(name)`.
+   * Optional: presets without a map resolve through the name alone.
+   */
+  nameI18n?: Record<string, string>;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
   groups?: ThemeTokenGroupModes;
@@ -96,6 +104,10 @@ export type ThemeMode = "system" | "light" | "dark";
 export interface CustomThemePreset {
   id: string;
   name: string;
+  /** Per-locale name translations (see ThemePreset.nameI18n). Persisted
+   *  with the theme in local storage; additive, so customs saved before
+   *  the field existed keep loading. */
+  nameI18n?: Record<string, string>;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
   groups?: ThemeTokenGroupModes;

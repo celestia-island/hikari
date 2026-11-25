@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "Светлая",
     "hikari::theme.save": "Сохранить",
     "hikari::theme.themeName": "Название темы",
+    "hikari::theme.nameTranslations": "Переводы названия",
     "hikari::theme.themes": "Темы",
     "hikari::timePicker.am": "ДП",
     "hikari::timePicker.clear": "Очистить время",

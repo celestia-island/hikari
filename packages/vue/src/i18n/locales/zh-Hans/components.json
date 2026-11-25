@@ -249,6 +249,7 @@
     "hikari::theme.modeLight": "浅色",
     "hikari::theme.save": "保存",
     "hikari::theme.themeName": "主题名称",
+    "hikari::theme.nameTranslations": "名称翻译",
     "hikari::theme.themes": "主题",
     "hikari::timePicker.am": "上午",
     "hikari::timePicker.clear": "清除时间",

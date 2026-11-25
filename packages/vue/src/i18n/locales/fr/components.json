@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "Clair",
     "hikari::theme.save": "Enregistrer",
     "hikari::theme.themeName": "Nom du thème",
+    "hikari::theme.nameTranslations": "Traductions du nom",
     "hikari::theme.themes": "Thèmes",
     "hikari::timePicker.am": "AM",
     "hikari::timePicker.clear": "Effacer l'heure",

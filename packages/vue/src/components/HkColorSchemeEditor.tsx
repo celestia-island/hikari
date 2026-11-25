@@ -24,6 +24,9 @@ import {
   type TokenGroupSlot,
 } from "@celestia-island/hikari";
 
+import HkLocalizedInput, { type HkLocaleOption } from "./HkLocalizedInput";
+import { HK_LOCALE_CATALOG } from "../i18n/localeCatalog";
+
 // Relative on purpose. The package root re-exports this component, so reading
 // the preset table through "@celestia-island/hikari" would close a loop whose
 // module-init order decides whether the table exists yet. Theme-internal
@@ -140,6 +143,9 @@ interface HkTabItem {
 export interface HCustomTheme {
   id: string;
   name: string;
+  /** Per-locale name translations (2026-11-25 user direction: theme
+   *  names are i18n citizens) — present when the author filled any. */
+  nameI18n?: Record<string, string>;
   dark: ThemeSchemeTokens;
   light: ThemeSchemeTokens;
   /** Extension token group values (both modes), present when groups are registered. */
@@ -181,6 +187,25 @@ export const HkColorSchemeEditor = defineComponent({
     /** Prefill the scheme name input (edit/fork flows); empty by default. */
     initialName: { type: String, default: "" },
     /**
+     * Prefill the per-locale name translations (edit flows — the map a
+     * saved custom theme carries). Empty by default: a blank canvas has
+     * no translations yet.
+     */
+    initialNameI18n: {
+      type: Object as PropType<Record<string, string>>,
+      default: undefined,
+    },
+    /**
+     * The language catalog the localized-name editor offers. Defaults to
+     * hikari's own catalog (HK_LOCALE_CATALOG — every language hikari
+     * ships); hosts with an app-level i18n config pass the SAME list
+     * their global language switcher uses.
+     */
+    localeOptions: {
+      type: Array as PropType<HkLocaleOption[]>,
+      default: () => HK_LOCALE_CATALOG.map((e) => ({ code: e.code, label: e.label })),
+    },
+    /**
      * Render the built-in name input. Hosts that own the name field
      * elsewhere (e.g. a "basic" tab above the editor) hide it and feed the
      * value through `setThemeName()` — getDraft() still carries it.
@@ -195,6 +220,20 @@ export const HkColorSchemeEditor = defineComponent({
     const activeLocale = computed(() => useI18n().locale);
     const modeTab = ref<string>("dark");
     const themeName = ref(props.initialName ?? "");
+    // Per-locale name translations (2026-11-25 user direction: theme names
+    // are i18n citizens). `themeNameI18n` is the map the draft carries;
+    // `nameI18nText` is HkLocalizedInput's field mirror — the component
+    // owns committing the edited language's text into the map (every
+    // keystroke also emits update:translations), the mirror only keeps
+    // the field's value live across language switches. The base name
+    // above stays the required language-agnostic fallback; this map only
+    // adds translations.
+    const themeNameI18n = ref<Record<string, string>>({ ...(props.initialNameI18n ?? {}) });
+    // HkLocalizedInput contract: modelValue is ALWAYS the text of the
+    // language being edited — never prefill it with a cross-locale
+    // fallback (a language switch would commit the borrowed text into
+    // the current locale's key).
+    const nameI18nText = ref<string>((props.initialNameI18n ?? {})[activeLocale.value] ?? "");
 
     const dark = reactive<ThemeSchemeTokens>({ ...seedScheme("dark") });
     const light = reactive<ThemeSchemeTokens>({ ...seedScheme("light") });
@@ -263,6 +302,8 @@ export const HkColorSchemeEditor = defineComponent({
     function reset(): void {
       modeTab.value = useTheme().effectiveMode.value;
       themeName.value = props.initialName ?? t("hikari::theme.customThemeName");
+      themeNameI18n.value = { ...(props.initialNameI18n ?? {}) };
+      nameI18nText.value = (props.initialNameI18n ?? {})[activeLocale.value] ?? "";
       Object.assign(dark, props.initialDark ?? seedScheme("dark"));
       Object.assign(light, props.initialLight ?? seedScheme("light"));
       // Optional slots: a legacy prefill omitting them must reset to white
@@ -294,7 +335,14 @@ export const HkColorSchemeEditor = defineComponent({
       themeName.value = name;
     }
 
-    expose({ reset, getDraft, setThemeName });
+    /** Hosts that own the name UI (chest's basic tab) push their
+     *  per-locale map through here; the built-in editor writes the same
+     *  map directly from the localized input. */
+    function setThemeNameI18n(map: Record<string, string>): void {
+      themeNameI18n.value = { ...map };
+    }
+
+    expose({ reset, getDraft, setThemeName, setThemeNameI18n });
 
     watch(
       () => [
@@ -341,9 +389,17 @@ export const HkColorSchemeEditor = defineComponent({
     }
 
     function getDraft(): HCustomTheme {
+      // Empty-string entries never enter the map (HkLocalizedInput prunes
+      // them), but a defensive sweep keeps a hand-pushed map from shipping
+      // blank keys; an all-empty map drafts without the field at all.
+      const nameI18n: Record<string, string> = {};
+      for (const [code, value] of Object.entries(themeNameI18n.value)) {
+        if (value.trim()) nameI18n[code] = value;
+      }
       return {
         id: `custom-theme-${Date.now()}`,
         name: themeName.value || t("hikari::theme.customThemeName"),
+        ...(Object.keys(nameI18n).length > 0 ? { nameI18n } : {}),
         dark: { ...dark },
         light: { ...light },
         ...(registeredGroups.value.length > 0
@@ -527,12 +583,30 @@ export const HkColorSchemeEditor = defineComponent({
     return () => (
       <div class="s-scheme-dialog">
         {props.showName && (
-          <HInput
-            modelValue={themeName.value}
-            onUpdate:modelValue={(v: string) => { themeName.value = v; }}
-            label={t("hikari::theme.themeName")}
-            placeholder={t("hikari::theme.customThemeName")}
-          />
+          <>
+            <HInput
+              modelValue={themeName.value}
+              onUpdate:modelValue={(v: string) => { themeName.value = v; }}
+              label={t("hikari::theme.themeName")}
+              placeholder={t("hikari::theme.customThemeName")}
+            />
+            {/* Per-locale name translations riding the standard localized
+                input (2026-11-25 user direction): one field, a per-language
+                chip menu — the same grammar the hosts' name editors use.
+                The base name above stays the language-agnostic fallback;
+                this map only adds translations. */}
+            <HkLocalizedInput
+              class="s-scheme-name-i18n"
+              label={t("hikari::theme.nameTranslations")}
+              localeOptions={props.localeOptions}
+              modelValue={nameI18nText.value}
+              onUpdate:modelValue={(v: string) => { nameI18nText.value = v; }}
+              translations={themeNameI18n.value}
+              onUpdate:translations={(v: Record<string, string>) => { themeNameI18n.value = v; }}
+              sourceLang={activeLocale.value}
+              placeholder={themeName.value || t("hikari::theme.customThemeName")}
+            />
+          </>
         )}
         <HTabs
           variant="segmented"

@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "라이트",
     "hikari::theme.save": "저장",
     "hikari::theme.themeName": "테마 이름",
+    "hikari::theme.nameTranslations": "이름 번역",
     "hikari::theme.themes": "테마",
     "hikari::timePicker.am": "오전",
     "hikari::timePicker.clear": "시간 지우기",

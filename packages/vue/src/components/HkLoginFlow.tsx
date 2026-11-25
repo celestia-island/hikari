@@ -141,8 +141,8 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  *   group — a channel switch crossfades only the body and leaves the
  *   tabs and the header copy mounted (the 2026-11-24 stable-shell
  *   direction, unchanged);
- * - the card is NOT top-edge pinned (2026-11-24 ruling, later the same
- *   day, reversing the pin #1501 put here): a height morph inside a
+ * - the card is NOT top-edge pinned (2026-11-24 ruling, reversing the
+ *   pin #1501 introduced on 11-23): a height morph inside a
  *   vertically centered host re-centers the box, so the top edge travels
  *   half the height delta in step with the 300 ms morph and the card
  *   ENDS the swap centered for its new height. `useAnchoredTop` used to

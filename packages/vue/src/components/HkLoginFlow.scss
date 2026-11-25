@@ -22,7 +22,7 @@
 }
 
 // The box around the card. It was useAnchoredTop's target while the
-// card's top edge was pinned (#1501, until the ruling later that day);
+// card's top edge was pinned (#1501 on 11-23; un-pinned by the 11-24 ruling);
 // it is a plain frame box now and carries no transform — a centered
 // host re-centers the taller card, which is the ruling (see the
 // component header). The class name stays because hosts and probes

@@ -8,11 +8,11 @@ export type TimePeriod = "day" | "dusk" | "night";
 const DEG = Math.PI / 180;
 const RAD = 180 / Math.PI;
 
-function toJulianDate(date: Date): number {
+export function toJulianDate(date: Date): number {
   return date.getTime() / 86400000 + 2440587.5;
 }
 
-function greenwichSiderealTime(jd: number): number {
+export function greenwichSiderealTime(jd: number): number {
   const T = (jd - 2451545.0) / 36525;
   let theta = (280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T - T * T * T / 38710000) % 360;
   if (theta < 0) theta += 360;
@@ -24,7 +24,7 @@ interface SunEquatorial {
   ra: number;
 }
 
-function sunEquatorialCoordinates(jd: number): SunEquatorial {
+export function sunEquatorialCoordinates(jd: number): SunEquatorial {
   const T = (jd - 2451545.0) / 36525;
   const L0 = (280.46646 + 36000.76983 * T) % 360;
   const M = ((357.52911 + 35999.05029 * T) % 360) * DEG;
@@ -146,7 +146,7 @@ function isSolarHemisphere(v: unknown): v is SolarHemisphere {
 /** Intl constructs a formatter only for ids it knows — the constructor
  *  throws RangeError otherwise, which is the whole validation story for
  *  manually chosen zones. */
-function isKnownTimeZone(timeZone: string): boolean {
+export function isKnownTimeZone(timeZone: string): boolean {
   if (!timeZone) return false;
   try {
     new Intl.DateTimeFormat("en-US", { timeZone });
@@ -253,7 +253,7 @@ export function setSolarManualLocation(cfg: SolarManualLocation | null): void {
 
 /** The zone's UTC offset in minutes at the given instant, parsed from the
  *  `longOffset` name ("GMT+08:00", "GMT-03:30"; plain "GMT" for UTC). */
-function zoneOffsetMinutes(timeZone: string, date: Date): number {
+export function zoneOffsetMinutes(timeZone: string, date: Date): number {
   const name = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "longOffset" })
     .formatToParts(date)
     .find((p) => p.type === "timeZoneName")?.value;

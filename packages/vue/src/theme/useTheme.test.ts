@@ -39,7 +39,9 @@ describe("custom-theme first-paint memo (hikari#1546 point 2)", () => {
     expect(entry.light!["--color-primary"]).toContain("1 2 3");
     expect(entry.dark!["--color-primary"]).toContain("4 5 6");
 
-    // The stock preset never memoizes: it already ships as the static sheet.
+    // The stock preset never memoizes: it already ships as the static sheet
+    // MUT:mut-memo-stock-skip — dropping the stock guard adds a "default"
+    // entry and REDS the assertion below (verified).
     api.setTheme("default");
     await nextTick();
     const after = JSON.parse(localStorage.getItem(THEME_VARS_MEMO_KEY)!) as Record<string, unknown>;

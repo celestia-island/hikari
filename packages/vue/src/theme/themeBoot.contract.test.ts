@@ -207,6 +207,8 @@ describe("shipped theme boot asset (hikari#1546 Phase 1.5)", () => {
     expect(hostile.styles[0]!.text, "a value carrying a brace is refused").not.toContain(".y{");
 
     // A stock theme never has a memo and must not inject anything.
+    // MUT:mut-memo-replay — disabling the replay branch REDS the live case
+    // above (verified); this one pins the stock exemption.
     const stock = runBoot(js, {
       now: at,
       storage: { "hikari-theme": "default", "hikari-theme-mode": "light", "hikari-theme-vars": memo(THEME_VARS_MEMO_VERSION) },

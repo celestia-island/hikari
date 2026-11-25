@@ -31,12 +31,14 @@ jobs:
       - name: Install lagrange
         run: |
           set -euo pipefail
-          if [ -x /mnt/work/runner-shared/lagrange/bin/lagrange ]; then
-            /mnt/work/runner-shared/lagrange/bin/lagrange --version
+          shared=/mnt/work/runner-shared/lagrange/bin/lagrange
+          # The shared binary is only reused when it is the released line the
+          # sites build with; a stale copy would silently pin every deploy.
+          if [ -x "$shared" ] && "$shared" --version | grep -qE '^lagrange 0\.3\.'; then
+            "$shared" --version
             echo "/mnt/work/runner-shared/lagrange/bin" >> "$GITHUB_PATH"
           else
-            cargo install lagrange-library --locked \
-              || cargo install --git https://github.com/celestia-island/lagrange --branch master lagrange-library
+            cargo install lagrange-library --locked --version '^0.3'
           fi
       - name: Build docs
         run: lagrange build --src docs --out _site

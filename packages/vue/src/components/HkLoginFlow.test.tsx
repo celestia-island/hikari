@@ -730,10 +730,11 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
 
 describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => {  // "Where the content can change inside the card, do not let the whole
   // card fly." The account→verify move used to swap TWO whole cards: each
-  // generation was its own `HkAuthCard`, so the frame dissolved, its
-  // entrance keyframes replayed on the fresh node, and the height morph
-  // re-centred the panel in the host (the reported "the card flies up").
-  // The pins below are ELEMENT-IDENTITY assertions on the frame.
+  // generation was its own `HkAuthCard`, so the frame dissolved and its
+  // entrance keyframes replayed on the fresh node — the reported "the card
+  // flies up". The pins below are ELEMENT-IDENTITY assertions on the frame,
+  // plus two geometry pins on how the host may move it (2026-11-24 ruling,
+  // the card must END a swap centered, so the frame box carries no pin).
 
   function mountStepHost(options: {
     accountName?: string;
@@ -993,67 +994,146 @@ describe("HkLoginFlow — in-card step swap (2026-11-24 user direction)", () => 
       .toBe("Acme keeps your account safe");
   });
 
-  it("wires the anchor hook to the card's top edge (behaviour, not just the wrapper)", async () => {
-    // The structural pin below only sees the wrapper. THIS one proves the
-    // flow actually hands that wrapper to useAnchoredTop: a stubbed
-    // observer + a stubbed rect let the probe drive the real hook.
-    // MUT:flow-drops-anchor-hook (deleting `useAnchoredTop(anchorRef)`
-    // leaves the wrapper in place but no transform ever appears).
-    const renders: Array<() => void> = [];
+  /** A layout MODEL of the host for the two geometry pins below. happy-dom
+   *  has no layout engine (every rect reads zero), so the centering rule is
+   *  spelled out here: the frame box's LAYOUT top is
+   *  `(stage − cardHeight) / 2` for a stage never shorter than `stageMin`
+   *  nor than the card, and its PAINTED top adds whatever inline
+   *  translateY stands on the box and subtracts the page scroll — which is
+   *  exactly what a real engine reports. The numbers are the ones the
+   *  browser rig measured on the pinned tree (a 752 px stage; a 240 px
+   *  viewport over a 3 rem footer for the scrolled case).
+   *
+   *  comment-gate-ok: this block documents the fake engine's geometry, not a
+   *  behavioural claim of the component; the claims the pins make ("no
+   *  transform remains", "the scrolled page does not jump") are anchored
+   *  at the two cases below (`MUT:flow-repins-top-edge`). */
+  async function mountCenteredStage(stageMin = 752) {
+    let cardHeight = 310.5;
+    let scrollY = 0;
+    const frames: Array<(entries: unknown[]) => void> = [];
     vi.stubGlobal(
       "ResizeObserver",
       class {
-        private readonly cb: () => void;
-        constructor(cb: () => void) {
-          this.cb = cb;
-          renders.push(cb);
+        constructor(cb: (entries: unknown[]) => void) {
+          frames.push(cb);
         }
         observe() {}
         disconnect() {}
         unobserve() {}
       },
     );
-    const top = ref(100);
     vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
       function (this: Element) {
-        const own = (this as HTMLElement).style?.transform ?? "";
+        const isFrame =
+          (this as HTMLElement).classList?.contains("hk-login-flow-anchor") ?? false;
+        const own = isFrame ? (this as HTMLElement).style.transform : "";
         const shift = Number(/translateY\((-?[\d.]+)px\)/.exec(own)?.[1] ?? 0);
-        const rendered = top.value + shift;
+        const height = isFrame ? cardHeight : 0;
+        const layoutTop = (Math.max(stageMin, cardHeight) - cardHeight) / 2;
+        const rendered = layoutTop + shift - scrollY;
         return {
-          top: rendered, left: 0, bottom: rendered, right: 0,
-          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}),
+          top: rendered, left: 0, bottom: rendered + height, right: 0,
+          width: 0, height, x: 0, y: rendered, toJSON: () => ({}),
         } as DOMRect;
       },
     );
+    const host = mountStepHost();
+    // Let the mount settle before the caller acts, as it does on a page:
+    // a template ref's first assignment queues jobs that read geometry.
+    for (let i = 0; i < 4; i++) await nextTick();
+    const frame = () =>
+      host.container.querySelector(".hk-login-flow-anchor") as HTMLElement;
+    return {
+      step: host.step,
+      frame,
+      paintedTop: () => frame().getBoundingClientRect().top,
+      /** One engine frame's notifications, to every live observer. The
+       *  entries are empty: happy-dom measures no box, so a size-driven
+       *  observer (HkTransitionContainer's) reads "nothing to pin" from
+       *  this frame, exactly as it does from a zero rect. */
+      deliverFrames: () => {
+        for (const cb of frames.slice()) cb([]);
+      },
+      growCard: (height: number) => {
+        cardHeight = height;
+      },
+      scrollTo: (y: number) => {
+        scrollY = y;
+      },
+    };
+  }
 
-    const c = mount(
-      h(HkLoginFlow, {
-        channels: [cloudChannel],
-        modelValue: "cloud",
-        step: "account",
-      }),
-    );
-    const anchor = c.querySelector(".hk-login-flow-anchor") as HTMLElement;
-    expect(anchor.style.transform).toBe("");
-    // A centered host lifts the top edge by 12px while the card grows.
-    top.value = 88;
-    for (const cb of renders) cb();
-    expect(anchor.style.transform).toBe("translateY(12px)");
-
+  afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  it("anchors the card's top edge on a growing frame (structural pin)", async () => {
+  it("ends a step swap centered for the card's new height: the top edge is not pinned", async () => {
+    // The reported defect (2026-11-24): the verify step is taller, and the
+    // top-edge pin kept the card's PRE-swap top, so the card only grew
+    // downward and sat visibly low for good (219.6 px above vs 163.4 px
+    // below in a 752 px stage, engine-measured). A centered host re-centers
+    // the taller box; the flow must let it.
+    // MUT:flow-repins-top-edge (re-adding `useAnchoredTop(anchorRef)` to
+    // the flow leaves `translateY(29.25px)` on the frame box once the
+    // observers report the growth — both assertions at the end go red).
+    const rig = await mountCenteredStage();
+    rig.deliverFrames();
+    expect(rig.frame().style.transform).toBe("");
+    // At rest before the swap: centered for 310.5 px.
+    expect(Math.abs(rig.paintedTop() - (752 - 310.5) / 2)).toBeLessThanOrEqual(1);
+
+    // Engine order: the DOM is patched first, then laid out, then the
+    // resize notifications of that frame are delivered.
+    rig.step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    rig.growCard(369); // account → verify: the password step is taller
+    rig.deliverFrames();
+
+    // Centered for the NEW height (±1 px), with nothing painted over the
+    // layout.
+    expect(rig.frame().style.transform).toBe("");
+    expect(Math.abs(rig.paintedTop() - (752 - 369) / 2)).toBeLessThanOrEqual(1);
+  });
+
+  it("does not turn a page scroll into a jump when the swap lands on a scrolled page", async () => {
+    // The pin's second defect, engine-measured: it measured in VIEWPORT
+    // coordinates and re-based on a window resize only — scrolling fires
+    // no ResizeObserver — so a swap on a scrolled page read the scroll
+    // offset as drift and painted it back as a translateY (60 px downward,
+    // and a transform does not extend the scroll range). The stage here is
+    // shorter than the card (a 240 px viewport over a 3 rem footer), so
+    // the layout top is 0 and any transform is a pure jump.
+    // MUT:flow-repins-top-edge (re-adding the hook leaves
+    // `translateY(60px)` on the frame box — both assertions at the end go
+    // red).
+    const rig = await mountCenteredStage(192);
+    rig.deliverFrames();
+    expect(rig.paintedTop()).toBe(0);
+
+    // The visitor scrolls to reach the submit, then the swap lands.
+    rig.scrollTo(60);
+    rig.step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    rig.growCard(369);
+    rig.deliverFrames();
+
+    expect(rig.frame().style.transform).toBe("");
+    // Still where the scroll left it: the same document position.
+    expect(rig.paintedTop()).toBe(-60);
+  });
+
+  it("keeps the frame box between the panel root and the card (structural pin)", async () => {
     const { container } = mountStepHost();
-    // The anchor wrapper is the element useAnchoredTop owns: a centered
-    // host re-centres the frame on every height change, and without the
-    // wrapper there is no element to paint back onto the resting top.
-    // MUT:step-swap-unguarded (dropping the wrapper / the hook puts the
-    // frame straight under .hk-login-flow — this goes red).
-    const anchor = container.querySelector(".hk-login-flow-anchor");
-    expect(anchor).not.toBeNull();
-    expect(anchor!.querySelector(":scope > .s-auth-card")).not.toBeNull();
+    // Hosts and probes address the frame through `.hk-login-flow-anchor`,
+    // and the geometry pins above measure it. It is a plain box — no
+    // transform is ever written to it.
+    // MUT:step-swap-unguarded (dropping the wrapper puts the frame
+    // straight under .hk-login-flow — this goes red).
+    const frameBox = container.querySelector(".hk-login-flow-anchor");
+    expect(frameBox).not.toBeNull();
+    expect(frameBox!.querySelector(":scope > .s-auth-card")).not.toBeNull();
     expect(container.querySelector(".hk-login-flow > .s-auth-card")).toBeNull();
   });
 });

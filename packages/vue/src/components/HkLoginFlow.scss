@@ -1,8 +1,8 @@
 // HkLoginFlow — the shared sign-in panel.
 //
 // The root caps itself to the family-wide auth-card width contract
-// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (the anchored
-// frame, the transition container's measuring wrappers) lay out as
+// (HK_AUTH_CARD_MAX_WIDTH, 28rem): the panel's children (the frame box,
+// the transition container's measuring wrappers) lay out as
 // width:100%, so the HOST's centering slot must cap here rather than
 // justify-items the crossfade items — the chest blueprint's hard-won
 // rule. Hosts that embed the panel in a wider stage can override the
@@ -21,13 +21,17 @@
   margin-inline: auto;
 }
 
-// The anchored box around the card (useAnchoredTop). The hook writes ONLY
-// a paint-level `transform` here, which is what keeps the card's top edge
-// still while the card grows. The declarations this rule may carry are
-// therefore limited to the sizing the box needs to be a faithful copy of
-// its parent's content lane (the width) — a margin or padding here would
-// shift the card relative to the frame the rest of the panel geometry was
-// built against. It must also stay `position: static` as a forward rule:
+// The box around the card. It was useAnchoredTop's target while the
+// card's top edge was pinned (#1501 on 11-23; un-pinned by the 11-24 ruling);
+// it is a plain frame box now and carries no transform — a centered
+// host re-centers the taller card, which is the ruling (see the
+// component header). The class name stays because hosts and probes
+// address the frame through it; it no longer implies an anchor. The
+// declarations this rule may carry remain limited to the sizing the box
+// needs to be a faithful copy of its parent's content lane (the width)
+// — a margin or padding here would shift the card relative to the frame
+// the rest of the panel geometry was built against. It must also stay
+// `position: static` as a forward rule:
 // hikari's overlay roots are body-level today, so nothing under this box
 // currently anchors to it — but the moment a descendant ever grew an
 // overlay that resolves against its nearest positioned ancestor, a

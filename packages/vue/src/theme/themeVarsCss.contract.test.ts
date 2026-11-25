@@ -47,6 +47,11 @@ describe("pre-rendered theme vars CSS (hikari#1546)", () => {
   });
 
   it("covers both modes with the core color tokens", () => {
+    // Load-bearing for hikari#1546 Phase 2: the values now originate in the
+    // Rust palette crate (stock.rs) and reach this composition through the
+    // JSON artifact presets.ts imports. A migration typo would change one
+    // of these channel triples — the comparison against the checked-in CSS
+    // is what proves the migration changed no color.
     expect(css).toContain('html[data-mode="dark"]');
     expect(css).toContain('html[data-mode="light"]');
     // The slots with no per-component CSS fallback — a missing one leaves

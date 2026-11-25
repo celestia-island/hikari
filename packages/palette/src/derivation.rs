@@ -22,8 +22,6 @@
 
 use std::collections::BTreeMap;
 
-use serde::Serialize;
-
 use crate::stock::{stock_default, StockRgb, StockTokenScheme};
 
 /// The mode a scheme is derived for.
@@ -61,7 +59,7 @@ fn channel_to_linear(v: u8) -> f64 {
 
 fn linear_to_channel(v: f64) -> u8 {
     let s = if v <= 0.003_130_8 { v * 12.92 } else { 1.055 * v.powf(1.0 / 2.4) - 0.055 };
-    let clamped = s.min(1.0).max(0.0);
+    let clamped = s.clamp(0.0, 1.0);
     // JS Math.round: half away from zero — identical to f64::round for the
     // non-negative values this produces (s is clamped to [0, 1]).
     (clamped * 255.0).round() as u8
@@ -106,6 +104,26 @@ fn in_gamut(lin: &[f64; 3]) -> bool {
     lin.iter().all(|v| (GAMUT_EPSILON..=1.0 + GAMUT_EPSILON).contains(v))
 }
 
+/// A tiny adapter so the guards read like the TS original's operators
+/// (clamp01 of NaN -> 0; finite-or-zero; degree wrapping) without pulling a
+/// numeric crate into the palette.
+struct NumberF;
+
+impl NumberF {
+    fn finite_or_zero(v: f64) -> f64 {
+        if v.is_finite() { v } else { 0.0 }
+    }
+
+    fn clamp01(v: f64) -> f64 {
+        v.clamp(0.0, 1.0)
+    }
+
+    fn wrap_degrees(v: f64) -> f64 {
+        let wrapped = v % 360.0;
+        if wrapped < 0.0 { wrapped + 360.0 } else { wrapped }
+    }
+}
+
 /// Gamut mapping by CHROMA REDUCTION at constant L and H: a per-channel
 /// clamp drags the hue (a warning clamped toward its error neighbour is
 /// exactly how two semantic tones collapse), while reducing chroma keeps
@@ -115,13 +133,14 @@ fn in_gamut(lin: &[f64; 3]) -> bool {
 /// order as the TS original.
 #[must_use]
 fn oklch_to_rgb(l: f64, c: f64, raw_h: f64) -> StockRgb {
-    let l = if raw_h.is_finite() || l.is_finite() { l.clamp(0.0, 1.0) } else { 0.0 };
-    let c = if c.is_finite() { c.max(0.0) } else { 0.0 };
-    let raw_h = if raw_h.is_finite() { raw_h } else { 0.0 };
-    let h = {
-        let wrapped = raw_h % 360.0;
-        if wrapped < 0.0 { wrapped + 360.0 } else { wrapped }
-    };
+    // Guard shape mirrors the TS original exactly: l sanitises against its
+    // OWN finiteness (clamp01 of NaN -> 0), c against its own, h against its
+    // own. (A combined condition would return NaN -> 255 through
+    // linear_to_channel's clamp — a dead-code landmine if this ever gets
+    // exposed beyond the authored u8 table.)
+    let l = NumberF::clamp01(NumberF::finite_or_zero(l));
+    let c = NumberF::finite_or_zero(c).max(0.0);
+    let h = NumberF::wrap_degrees(NumberF::finite_or_zero(raw_h));
 
     let cap = c.min(CHROMA_CAP);
     let mut lo = 0.0;

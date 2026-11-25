@@ -57,7 +57,11 @@ export interface BootStorage {
 
 /** One strategy branch only: manual config or the offline estimate. The
  *  "ip" cascade is async and networked — never a pre-paint concern. */
-function bootGeoLocation(strategy: SolarLocationStrategy, storage: BootStorage): {
+function bootGeoLocation(
+  strategy: SolarLocationStrategy,
+  storage: BootStorage,
+  at: Date,
+): {
   lat: number;
   lng: number;
 } {
@@ -85,8 +89,12 @@ function bootGeoLocation(strategy: SolarLocationStrategy, storage: BootStorage):
   }
   // "timezone" (the default), manual-with-invalid-config, and "ip"-offline
   // all land here: lat = the stock default, lng = the zone's center meridian
-  // derived from the CURRENT UTC offset (identical to timezoneFallback()).
-  const offsetMin = -new Date().getTimezoneOffset();
+  // derived from the UTC offset **at the resolved instant** — NOT at the wall
+  // clock. Same value when resolving "now" (the only real caller), and it
+  // removes the last host-and-season dependence from the parity test (a
+  // grid instant in another DST season would otherwise shift the meridian by
+  // up to 15° against the asset's NOW-based offset).
+  const offsetMin = -at.getTimezoneOffset();
   return { lat: DEFAULT_GEO_LOCATION.lat, lng: offsetMin / 4 };
 }
 
@@ -101,7 +109,7 @@ export function resolveSystemModeAt(
   if (stored === "timezone" || stored === "ip" || stored === "manual") {
     strategy = stored;
   }
-  const geo = bootGeoLocation(strategy, storage);
+  const geo = bootGeoLocation(strategy, storage, date);
   const alt = solarAltitude(geo.lat, geo.lng, date);
   return alt > 6 ? "light" : "dark";
 }

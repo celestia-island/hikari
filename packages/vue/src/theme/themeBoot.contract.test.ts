@@ -14,6 +14,9 @@ import { buildThemeBootJs, resolveSystemModeAt } from "./themeBoot";
  * `toString()`, so math drift is impossible by construction; what this
  * grid pins is the WRAPPER (storage reads, manual-config validation,
  * attribute writes) staying in lockstep with the module's branch structure.
+ * MUT:mut-boot-grid — breaking the emitted chain's altitude call REDS the
+ * grid; the manual-config case additionally pins two meridians whose
+ * answers cannot depend on this host.
  *
  * Regeneration (same toolchain discipline as theme-vars.css):
  *

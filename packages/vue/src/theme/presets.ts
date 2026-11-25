@@ -1,3 +1,8 @@
+// The stock `default` theme's VALUES live in the Rust palette crate
+// (packages/palette/src/stock.rs — hikari#1546 Phase 2); this JSON is the
+// serde artifact a snapshot test keeps byte-locked to that crate. This file
+// no longer hand-writes the slot table.
+import stockThemeJson from "./stock-preset.json";
 import { readStorageItem, writeStorageItem } from "./safeStorage";
 import { rgbToOklch, oklchToRgb, contrastRatio } from "../theme/semanticPalette";
 
@@ -149,79 +154,21 @@ export function removeCustomTheme(id: string) {
   saveCustomThemes(list);
 }
 
-const rgb = (r: number, g: number, b: number): ThemeTokenRGB => ({ r, g, b });
-
 /**
- * The stock preset table holds exactly ONE theme.
+ * The stock preset table holds exactly ONE theme, and its VALUES are no
+ * longer written here: they live in the Rust palette crate
+ * (`packages/palette/src/stock.rs`, hikari#1546 Phase 2) and arrive as the
+ * checked-in JSON artifact above. Editing a color means editing Rust and
+ * regenerating (`REGEN_STOCK_JSON=1 cargo test -p hikari-palette --test
+ * stock_snapshot`) — the artifact snapshot test in that crate keeps the
+ * two sides locked.
  *
- * `default` carries the pair the library has always fallen back to: its
- * light scheme is the historical pink/paper palette and its dark scheme the
- * black-blue one. The four editor-derived looks (Synthwave '84, Nord,
- * Gruvbox, Tokyo Night) were collapsed into this single pair on user
- * direction — the library stops shipping competing aesthetics. A consumer
- * that wants a distinct brand registers its own preset (chest's `sc` is the
- * reference), and a user who wants another look edits this one through the
- * theme dialog and keeps it as a custom scheme.
- *
- * Values are carried over VERBATIM from the entries this collapse retired —
- * `synthwave84.light` into the light scheme, `nord.dark` into the dark one.
- * Nothing was restyled: the dark scheme therefore keeps Nord's pale Polar
- * Water primary (#88C0D0) and, with it, the near-black on-solid ink slots
- * that pale primary requires (white on it is ~1.9:1). A stored id from the
- * retired set is no longer a known theme, so `storedThemeId()` drops it and
- * the engine resolves this default instead.
+ * A consumer that wants a distinct brand still registers its own preset
+ * (chest's `sc` is the reference), and a user who wants another look edits
+ * the default through the theme dialog and keeps it as a custom scheme.
  */
 export const themePresets: Record<ThemeId, ThemePreset> = {
-  default: {
-    id: "default",
-    name: "Default",
-    dark: {
-      primary: rgb(136, 192, 208),
-      secondary: rgb(143, 188, 187),
-      accent: rgb(94, 129, 172),
-      text: rgb(247, 249, 252),
-      muted: rgb(180, 180, 180),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(136, 192, 208),
-      background: rgb(22, 27, 38),
-      surface: rgb(34, 40, 54),
-      selectedBackground: rgb(70, 70, 85),
-      selectedText: rgb(248, 248, 250),
-      statusBarBackground: rgb(34, 40, 54),
-      // Same canonical family as light — solid fills ignore the mode.
-      success: rgb(31, 101, 48),
-      error: rgb(166, 41, 55),
-      warning: rgb(137, 72, 0),
-      info: rgb(0, 98, 116),
-      // The pale primary puts dark ink on solid fills (white is ~1.9:1).
-      onSolidText: rgb(46, 52, 64),
-      onSolidIcon: rgb(46, 52, 64),
-    },
-    light: {
-      primary: rgb(214, 51, 132),
-      secondary: rgb(156, 106, 222),
-      accent: rgb(230, 167, 0),
-      text: rgb(30, 30, 30),
-      muted: rgb(80, 80, 80),
-      border: rgb(128, 128, 128),
-      focusedBorder: rgb(214, 51, 132),
-      background: rgb(245, 245, 240),
-      surface: rgb(255, 255, 255),
-      selectedBackground: rgb(200, 200, 205),
-      selectedText: rgb(40, 40, 45),
-      statusBarBackground: rgb(230, 230, 225),
-      // Semantic quartet — the SHARED canonical family (solid fills ignore
-      // the light/dark config, user direction), lightness derived so the
-      // house white ink clears 7:1. See hikari-palette themes.rs for the
-      // same trio on the components side.
-      success: rgb(31, 101, 48),
-      error: rgb(166, 41, 55),
-      warning: rgb(137, 72, 0),
-      info: rgb(0, 98, 116),
-      onSolidText: rgb(255, 255, 255),
-      onSolidIcon: rgb(255, 255, 255),
-    },
-  },
+  default: stockThemeJson as unknown as ThemePreset,
 };
 
 export type ThemeTokens = ThemeSchemeTokens;
@@ -246,26 +193,6 @@ export function getThemeTokens(
   if (preset) return mode === "dark" ? preset.dark : preset.light;
   return null;
 }
-
-/**
- * The white-or-black ink for ONE solid fill. Deliberately NOT "whichever
- * side wins the WCAG ratio": on saturated fills the ratio winner is the
- * black ink far more often than design systems ship it (a 32-colour sweep
- * of shipped brand/semantic solids picked white only 19% of the time by
- * ratio, while Radix, Bootstrap and Material all ship white on them).
- * The house rule (user direction, 2026-11-12) is perception-first:
- *
- *   solid fill  → WHITE by default; BLACK only when the fill is light
- *                 enough to need it (perceptual luminance above 0.65,
- *                 which lands on Radix's "designed for dark foreground"
- *                 set: Sky, Mint, Lime, Yellow, Amber, plus the pale
- *                 Nord tones; see the threshold note in solidInk);
- *   translucent → ride the theme's text channel (never computed here).
- *
- * Per-fill, not per-theme: one global on-solid slot cannot be right for a
- * dark red AND a pale amber at once, which is exactly how the toast
- * copy/close glyphs went near-black on themed bands (2026-11-12 report).
- */
 /**
  * This colour as TEXT on `bg`: itself when it already clears `target`,
  * otherwise the nearest OKLCH-lightness step that does. Hue is preserved;

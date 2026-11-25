@@ -24,5 +24,8 @@ serde = { workspace = true, features = ["derive"] }
 # per collection, and generates the corresponding `pub const` block from
 # data/<name>.toml. Source modules are gated on those cfg flags.
 
+[dev-dependencies]
+serde_json = { workspace = true }
+
 [build-dependencies]
 regex-lite = "^0.1"

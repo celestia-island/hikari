@@ -406,52 +406,57 @@ pub fn derive_scheme_surface(tokens: &SchemeTokens, dark: bool) -> SchemeTokens 
     }
 }
 
-/// The shipped default preset, verbatim from `presets.ts` (dark = the
-/// retired Nord entry, light = the retired synthwave '84 entry) — kept
-/// reachable by name so a consumer that clears the stock table still has
-/// a seed (Vue: `stockDefaultPreset`).
+/// The shipped default preset — DERIVED from `hikari-palette`'s stock
+/// table (`stock::stock_default`), which is now the single source of truth
+/// for these values across the family (hikari#1546 Phase 2: the palette
+/// crate owns the data; the web lane consumes the JSON artifact, this crate
+/// maps it into the editor's shapes). Kept reachable by name so a consumer
+/// that clears the stock table still has a seed (Vue: `stockDefaultPreset`).
+///
+/// History note: this seed used to carry the retired Nord semantic accents
+/// (163,190,140 / 191,97,106 / ...) while `presets.ts` carried the canonical
+/// 7:1 family — a drift the "verbatim from presets.ts" claim had outlived.
+/// Deriving from the palette crate re-aligns this crate with the web lane.
 pub fn stock_default_preset() -> SchemePreset {
-    let dark = SchemeTokens {
-        primary: SchemeRgb::rgb8(136, 192, 208),
-        secondary: SchemeRgb::rgb8(143, 188, 187),
-        accent: SchemeRgb::rgb8(94, 129, 172),
-        text: SchemeRgb::rgb8(247, 249, 252),
-        muted: SchemeRgb::rgb8(180, 180, 180),
-        border: SchemeRgb::rgb8(128, 128, 128),
-        focused_border: SchemeRgb::rgb8(136, 192, 208),
-        background: SchemeRgb::rgb8(22, 27, 38),
-        surface: SchemeRgb::rgb8(34, 40, 54),
-        selected_background: SchemeRgb::rgb8(70, 70, 85),
-        selected_text: SchemeRgb::rgb8(248, 248, 250),
-        status_bar_background: SchemeRgb::rgb8(34, 40, 54),
-        success: SchemeRgb::rgb8(163, 190, 140),
-        error: SchemeRgb::rgb8(191, 97, 106),
-        warning: SchemeRgb::rgb8(208, 135, 112),
-        info: SchemeRgb::rgb8(136, 192, 208),
-        // The pale primary puts dark ink on solid fills (white is ~1.9:1).
-        on_solid_text: Some(SchemeRgb::rgb8(46, 52, 64)),
-        on_solid_icon: Some(SchemeRgb::rgb8(46, 52, 64)),
+    let stock = hikari_palette::stock::stock_default();
+    let to_scheme = |s: &hikari_palette::stock::StockTokenScheme| SchemeTokens {
+        primary: SchemeRgb::rgb8(s.primary.r, s.primary.g, s.primary.b),
+        secondary: SchemeRgb::rgb8(s.secondary.r, s.secondary.g, s.secondary.b),
+        accent: SchemeRgb::rgb8(s.accent.r, s.accent.g, s.accent.b),
+        text: SchemeRgb::rgb8(s.text.r, s.text.g, s.text.b),
+        muted: SchemeRgb::rgb8(s.muted.r, s.muted.g, s.muted.b),
+        border: SchemeRgb::rgb8(s.border.r, s.border.g, s.border.b),
+        focused_border: SchemeRgb::rgb8(s.focused_border.r, s.focused_border.g, s.focused_border.b),
+        background: SchemeRgb::rgb8(s.background.r, s.background.g, s.background.b),
+        surface: SchemeRgb::rgb8(s.surface.r, s.surface.g, s.surface.b),
+        selected_background: SchemeRgb::rgb8(
+            s.selected_background.r,
+            s.selected_background.g,
+            s.selected_background.b,
+        ),
+        selected_text: SchemeRgb::rgb8(s.selected_text.r, s.selected_text.g, s.selected_text.b),
+        status_bar_background: SchemeRgb::rgb8(
+            s.status_bar_background.r,
+            s.status_bar_background.g,
+            s.status_bar_background.b,
+        ),
+        success: SchemeRgb::rgb8(s.success.r, s.success.g, s.success.b),
+        error: SchemeRgb::rgb8(s.error.r, s.error.g, s.error.b),
+        warning: SchemeRgb::rgb8(s.warning.r, s.warning.g, s.warning.b),
+        info: SchemeRgb::rgb8(s.info.r, s.info.g, s.info.b),
+        on_solid_text: Some(SchemeRgb::rgb8(
+            s.on_solid_text.r,
+            s.on_solid_text.g,
+            s.on_solid_text.b,
+        )),
+        on_solid_icon: Some(SchemeRgb::rgb8(
+            s.on_solid_icon.r,
+            s.on_solid_icon.g,
+            s.on_solid_icon.b,
+        )),
     };
-    let light = SchemeTokens {
-        primary: SchemeRgb::rgb8(214, 51, 132),
-        secondary: SchemeRgb::rgb8(156, 106, 222),
-        accent: SchemeRgb::rgb8(230, 167, 0),
-        text: SchemeRgb::rgb8(30, 30, 30),
-        muted: SchemeRgb::rgb8(80, 80, 80),
-        border: SchemeRgb::rgb8(128, 128, 128),
-        focused_border: SchemeRgb::rgb8(214, 51, 132),
-        background: SchemeRgb::rgb8(245, 245, 240),
-        surface: SchemeRgb::rgb8(255, 255, 255),
-        selected_background: SchemeRgb::rgb8(200, 200, 205),
-        selected_text: SchemeRgb::rgb8(40, 40, 45),
-        status_bar_background: SchemeRgb::rgb8(230, 230, 225),
-        success: SchemeRgb::rgb8(16, 185, 129),
-        error: SchemeRgb::rgb8(239, 68, 68),
-        warning: SchemeRgb::rgb8(245, 158, 11),
-        info: SchemeRgb::rgb8(6, 182, 212),
-        on_solid_text: Some(SCHEME_WHITE),
-        on_solid_icon: Some(SCHEME_WHITE),
-    };
+    let dark = to_scheme(&stock.dark);
+    let light = to_scheme(&stock.light);
     SchemePreset {
         id: "default".to_string(),
         name: "Default".to_string(),
@@ -869,7 +874,10 @@ mod tests {
         assert_eq!(dark.status_bar_background, SchemeRgb::new(24.0, 24.0, 32.0));
         // The accent table passes through untouched.
         assert_eq!(dark.primary, SchemeRgb::rgb8(136, 192, 208));
-        assert_eq!(dark.error, SchemeRgb::rgb8(191, 97, 106));
+        // The semantics now come from the shared canonical quartet (the
+        // palette crate's stock table), matching presets.ts — the old
+        // Nord accents here were the drift this unification removed.
+        assert_eq!(dark.error, SchemeRgb::rgb8(166, 41, 55));
 
         let light = derive_scheme_surface(&stock_default_preset().light, false);
         assert_eq!(light.background, SchemeRgb::new(245.0, 245.0, 240.0));

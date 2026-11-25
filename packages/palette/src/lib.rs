@@ -70,6 +70,7 @@
 pub mod classes;
 pub mod color_math;
 pub mod colors;
+pub mod stock;
 pub mod themes;
 
 pub use classes::*;

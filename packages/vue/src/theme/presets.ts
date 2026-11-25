@@ -98,6 +98,16 @@ export interface CustomThemePreset {
 
 const CUSTOM_STORAGE_KEY = "hikari-custom-themes";
 
+/** The runtime's own memo of a CUSTOM theme's computed cssvars, keyed by
+ *  theme id then mode, so the PRE-PAINT boot asset can replay the colors
+ *  without re-implementing (or duplicating) the color math (hikari#1546
+ *  point 2). Written by applyTheme for non-stock themes only — the stock
+ *  preset already ships as the static sheet. Versioned: a change to
+ *  tokensToCSSVars MUST bump this, which invalidates every stored memo and
+ *  costs exactly one load of stock colors instead of a wrong palette. */
+export const THEME_VARS_MEMO_KEY = "hikari-theme-vars";
+export const THEME_VARS_MEMO_VERSION = 1;
+
 export function loadCustomThemes(): CustomThemePreset[] {
   try {
     const raw = readStorageItem(CUSTOM_STORAGE_KEY);

@@ -1,27 +1,34 @@
+/* GENERATED from the TypeScript source of the same name in this directory. Do not edit by hand. Regenerate with (from packages/vue): pnpm run gen:res-scripts */
 "use strict";
 (() => {
   function storagePrefix() {
     try {
       if (typeof localStorage !== "undefined") {
-        if (localStorage.getItem("shittim-locale") !== null) return "shittim-";
-        if (localStorage.getItem("arona-locale") !== null) return "arona-";
+        if (localStorage.getItem("shittim-locale") !== null)
+          return "shittim-";
+        if (localStorage.getItem("arona-locale") !== null)
+          return "arona-";
       }
-    } catch (_) {}
+    }
+    catch (_) { }
     return "celestia-";
   }
-  // src/scripts/os-prefs.ts
   function isNative() {
     return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
   }
   function getOsPrefs() {
-    const prefs = window.__CELESTIA_OS_PREFS__;
-    if (!prefs) return null;
+    const prefs = window
+      .__CELESTIA_OS_PREFS__;
+    if (!prefs)
+      return null;
     return prefs;
   }
   (function applyOsPrefs() {
-    if (!isNative()) return;
+    if (!isNative())
+      return;
     const prefs = getOsPrefs();
-    if (!prefs) return;
+    if (!prefs)
+      return;
     if (prefs.locale) {
       const existing = localStorage.getItem(storagePrefix() + "locale");
       if (!existing) {
@@ -43,7 +50,8 @@
     const lang = lower.split("-")[0];
     const region = lower.split("-")[1];
     if (lang === "zh") {
-      if (region === "tw" || region === "hk" || region === "mo") return "zh-Hant";
+      if (region === "tw" || region === "hk" || region === "mo")
+        return "zh-Hant";
       return "zh-Hans";
     }
     const direct = {

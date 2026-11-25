@@ -38,7 +38,7 @@ const VUE_DIR = resolve(HERE, "..");
 const SRC_DIR = resolve(VUE_DIR, "src");
 
 /** Compile one entry exactly the way the drift test does. */
-function compileEntry(entryPath) {
+function compileEntry(entryPath: string): string {
   const compiled = sass.compile(entryPath, {
     loadPaths: [SRC_DIR, resolve(SRC_DIR, "styles"), resolve(SRC_DIR, "styles", "theme")],
     style: "compressed",
@@ -51,12 +51,12 @@ function compileEntry(entryPath) {
 }
 
 /** JSON string literal safe to paste into the generated module. */
-function literal(css) {
+function literal(css: string): string {
   return JSON.stringify(css);
 }
 
 /** Reject a sheet that could break the inline <script> or the CSP hash. */
-function assertAsciiCss(label, css) {
+function assertAsciiCss(label: string, css: string): void {
   for (let i = 0; i < css.length; i += 1) {
     if (css.charCodeAt(i) > 0x7f) {
       throw new Error(

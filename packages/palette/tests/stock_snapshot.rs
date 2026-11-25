@@ -19,6 +19,7 @@
 //! expected to differ (the web default is pink/paper + Nord-black-blue;
 //! the components palettes are the chinese-constant aesthetic).
 
+use hikari_palette::derivation::{stock_vars, StockMode};
 use hikari_palette::stock::{stock_default, StockRgb};
 use hikari_palette::themes::{Hikari, Tairitsu};
 
@@ -77,6 +78,37 @@ fn serialized_matches_the_web_artifact() {
     assert!(
         json.contains("\"primary\":{\"r\":136,\"g\":192,\"b\":208}"),
         "the dark Nord primary must survive any regen"
+    );
+}
+
+/// The DERIVED-vars artifact — the web lane's `theme-vars.css` and the
+/// cross-language drift test both read it. BTreeMap serialization is
+/// deterministic (lexical key order), so the byte compare is stable.
+const VARS_ARTIFACT: &str = include_str!("../../vue/src/theme/stock-vars.json");
+
+#[test]
+fn derived_vars_match_the_web_artifact() {
+    let artifact = serde_json::to_string(&serde_json::json!({
+        "dark": stock_vars(StockMode::Dark),
+        "light": stock_vars(StockMode::Light),
+    }))
+    .expect("the vars map serializes");
+    if std::env::var("REGEN_STOCK_JSON").as_deref() == Ok("1") {
+        std::fs::write(
+            concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/../vue/src/theme/stock-vars.json"
+            ),
+            &artifact,
+        )
+        .expect("write the vars artifact");
+        println!("REGEN: rewrote packages/vue/src/theme/stock-vars.json");
+        return;
+    }
+    assert_eq!(
+        artifact, VARS_ARTIFACT,
+        "the checked-in vars JSON must equal this crate's derivation — \
+         regen with REGEN_STOCK_JSON=1 cargo test -p hikari-palette --test stock_snapshot"
     );
 }
 

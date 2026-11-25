@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { buildThemeVarsCss } from "./themeVarsCss";
+import { tokensToCSSVars, getThemeTokens } from "./presets";
+import { buildThemeVarsCss, stockVars } from "./themeVarsCss";
 
 /**
  * Drift contract for the PRE-RENDERED theme CSS (hikari#1546): the checked
@@ -46,7 +47,35 @@ describe("pre-rendered theme vars CSS (hikari#1546)", () => {
     expect(checkedIn).toBe(css);
   });
 
+  it("CROSS-LANGUAGE LOCK: the TS derivation equals the Rust derivation, key-for-key", () => {
+    // hikari#1546 Phase 2 endgame: the shipped sheet now comes from the
+    // Rust palette crate's derivation (via stock-vars.json). The same
+    // derivation ALSO lives here for runtime-authored custom themes. Two
+    // implementations of one algorithm drift silently — this compare
+    // VERIFIED the lock on first run (55 keys x 2 modes byte-identical)
+    // and always catches a divergence: any value edit on either side
+    // REDS the named key and mode. MUT:mut-derivation-lock. `tokensToCSSVars` is the runtime
+    // authority for custom themes; this file's CSS composition is the
+    // boot-time authority for the stock preset.
+    for (const mode of ["dark", "light"] as const) {
+      const tokens = getThemeTokens("default", mode);
+      const tsVars = tokensToCSSVars(tokens!);
+      const rustVars = stockVars[mode];
+      const tsKeys = Object.keys(tsVars).sort();
+      const rustKeys = Object.keys(rustVars).sort();
+      expect(tsKeys, `TS/Rust key sets must match (${mode})`).toEqual(rustKeys);
+      for (const key of tsKeys) {
+        expect(
+          tsVars[key]?.replace(/\s+/g, " ").trim(),
+          `${key} (${mode})`,
+        ).toBe(rustVars[key]?.replace(/\s+/g, " ").trim());
+      }
+    }
+  });
+
   it("covers both modes with the core color tokens", () => {
+    expect(css).toContain('html[data-mode="dark"]');
+    expect(css).toContain('html[data-mode="light"]');
     // Load-bearing for hikari#1546 Phase 2: the values now originate in the
     // Rust palette crate (stock.rs) and reach this composition through the
     // JSON artifact presets.ts imports. A migration typo would change one

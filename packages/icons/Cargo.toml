@@ -24,7 +24,7 @@ default = []
 tairitsu = ["tairitsu-vdom", "tairitsu-hooks", "tairitsu-macros"]
 
 [build-dependencies]
-hikari-builder = { version = "^0.5", path = "../builder" }
+hikari-builder = { version = "^0.6", path = "../builder" }
 anyhow = "^1"
 
 [dependencies]

@@ -15,17 +15,22 @@ import { themePresets, tokensToCSSVars, getThemeTokens } from "./presets";
  * CUSTOM theme id cannot be pre-rendered (user-authored, lives in
  * localStorage), so pre-hydration those users see the stock colors in the
  * right MODE — strictly better than the previous unthemed flash — and
- * `applyTheme()` replaces the vars the moment the bundle lands (its inline
- * style beats any stylesheet).
+ * `applyTheme()` replaces them the moment the bundle lands. Override
+ * mechanics: the runtime writes a managed `<style data-hikari-theme-vars>`
+ * block whose selector (`html:root`, 0-1-1) TIES with these `html[data-mode]`
+ * blocks — the runtime wins by head ORDER (its block is appended after the
+ * SSR sheet), so the static sheet must stay in the SSR head; a late/async
+ * -loaded copy would re-tie and could snap the theme back.
  *
  * Phase 2 (de-Vue): the table itself moves to the Rust palette crate
  * (tairitsu lane) and this module consumes generated JSON — the CSS form
  * and the bootstrap contract stay exactly as they are here.
  *
  * Group tokens (shape/radius) are intentionally NOT included: every
- * component reads them with its own CSS fallback
- * (`var(--hk-radius-control, 8px)`), so the pre-hydration window degrades
- * to identical geometry, and the runtime emission covers them anyway.
+ * component reads them with its own CSS fallback (e.g.
+ * `var(--hk-radius-sm, 4px)` in HkSkeleton, `var(--hk-z-*)`,
+ * `var(--hk-picker-*)`), so the pre-hydration window degrades to identical
+ * geometry, and the runtime emission covers them anyway.
  */
 const MODES = ["dark", "light"] as const;
 

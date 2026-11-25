@@ -21,8 +21,10 @@
 //             div.hk-blocking-toast-actions
 //               button.hk-btn.hk-btn-primary|danger.hk-btn-sm
 //                      > span.hk-btn-label             (confirm, LEFT)
-//               button.hk-btn.hk-btn-secondary.hk-btn-sm
-//                      > span.hk-btn-label             (cancel, RIGHT)
+//               button.hk-icon-button.hk-icon-button-24.hk-icon-button-ghost
+//                      .hk-blocking-toast-cancel
+//                      [aria-label] [title]
+//                      > span.hk-icon-button-icon      (cancel X, RIGHT)
 //
 // Behaviour contract taken from the Vue sources, not invented here:
 //
@@ -34,10 +36,13 @@
 //     resolves every pending prompt as cancelled.
 //   * `HkBlockingToast.tsx` — the per-variant glyph, the confirm label
 //     (falling back to `hikari::blockingToast.confirm`), the cancel label
-//     (falling back to `hikari::blockingToast.cancel`), `role="alertdialog"`
-//     with `aria-label = title ?? message`, the confirm button taking the
-//     `danger` variant on the danger card, and the shared confirmation
-//     button ORDER: primary action first (left), dismiss second (right).
+//     (falling back to `hikari::blockingToast.cancel`; since the
+//     2026-11-25 cancel-X sweep it is the cancel ICON button's accessible
+//     name — aria-label + title — with no visible text),
+//     `role="alertdialog"` with `aria-label = title ?? message`, the
+//     confirm button taking the `danger` variant on the danger card, and
+//     the shared confirmation button ORDER: primary action first (left),
+//     dismiss second (right).
 //
 // The promise → callback mapping (Vue `showBlockingToast` returns
 // `Promise<boolean>`; Rust has no awaitable here):
@@ -59,10 +64,18 @@
 //   * TRANSITIONS / leave pinning — the `hk-blocking-toast-enter/leave/move`
 //     classes and `pinLeaveGeometry` are not reproduced: a settled card is
 //     gone on the next render, so there is no leaving box to freeze.
-//   * BUTTONS — Vue renders `<HButton>`; the Rust `Button` is still the
-//     legacy `hk-button-*` component, so the card emits the `hk-btn*`
-//     contract the mirror sheet targets directly. Swap in `Button` once the
-//     Button mirror lands.
+//   * BUTTONS — the CONFIRM: Vue renders `<HButton>`; the Rust `Button` is
+//     still the legacy `hk-button-*` component, so the card emits the
+//     `hk-btn*` contract the mirror sheet targets directly. Swap in
+//     `Button` once the Button mirror lands. The CANCEL rides the standard
+//     `IconButton` mirror (`basic/icon_button.rs`), the same seat grammar
+//     as Toast's close / PersistentToast's dismiss: host class
+//     `hk-blocking-toast-cancel`, ghost ink re-pinned per band by the
+//     sheet, glyph lucide `X` mirrored as `MdiIcon::Close` (the packed-MDI
+//     X twin — no glyph delta, the same icon Toast's close already uses),
+//     and Vue's `stopPropagation` click hygiene reproduced via
+//     `stop_propagation` (the card lives in the pointer-managed toast
+//     column in both forms).
 //   * TIMEOUT — the auto-cancel timer rides `dom_ops::set_timeout`; a host
 //     with no timer op (SSR / unit tests) never fires it, so a card without
 //     a manual answer stays open there (Vue always has a timer).
@@ -77,6 +90,7 @@ use hikari_i18n::t;
 use hikari_icons::{Icon, MdiIcon};
 use tairitsu_vdom::dom_ops::{clear_timeout, set_timeout};
 
+use crate::basic::icon_button::{IconButton, IconButtonSize, IconButtonVariant};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -120,7 +134,10 @@ impl BlockingToastVariant {
 
     /// The confirm button classes. Vue passes
     /// `variant={item.variant === "danger" ? "danger" : "primary"}` to
-    /// `HButton size="sm"`, so info/warning confirm as `primary`.
+    /// `HButton size="sm"`, so info/warning confirm as `primary`. (The
+    /// cancel has no counterpart here: it is the standard `IconButton`
+    /// ghost at size 24 on every variant — the emission in
+    /// `BlockingToastCard` composes it directly.)
     pub fn confirm_button_class(self) -> &'static str {
         match self {
             BlockingToastVariant::Danger => "hk-btn hk-btn-danger hk-btn-sm",
@@ -128,12 +145,6 @@ impl BlockingToastVariant {
                 "hk-btn hk-btn-primary hk-btn-sm"
             }
         }
-    }
-
-    /// The cancel button classes (Vue: `HButton variant="secondary"
-    /// size="sm"`).
-    pub fn cancel_button_class(self) -> &'static str {
-        "hk-btn hk-btn-secondary hk-btn-sm"
     }
 }
 
@@ -407,7 +418,6 @@ pub fn BlockingToastCard(props: BlockingToastCardProps) -> Element {
     let confirm_label = item.confirm_label_text();
     let cancel_label = item.cancel_label_text();
     let confirm_class = variant.confirm_button_class();
-    let cancel_class = variant.cancel_button_class();
     let on_resolve_confirm = props.on_resolve.clone();
     let on_resolve_cancel = props.on_resolve;
 
@@ -447,17 +457,29 @@ pub fn BlockingToastCard(props: BlockingToastCardProps) -> Element {
                             "{confirm_label}"
                         }
                     }
-                    button {
-                        class: cancel_class,
-                        "type": "button",
-                        onclick: move |_| {
+                    // The cancel X — Vue's `<HIconButton class="hk-blocking-toast-cancel"
+                    // size={24} variant="ghost" aria-label + title>`: the
+                    // resolved cancel label is the accessible name (the control
+                    // renders no visible text), and the glyph is lucide `X`,
+                    // mirrored as `MdiIcon::Close`.
+                    IconButton {
+                        size: IconButtonSize::S24,
+                        variant: IconButtonVariant::Ghost,
+                        aria_label: Some(cancel_label.clone()),
+                        title: Some(cancel_label),
+                        class: "hk-blocking-toast-cancel".to_string(),
+                        onclick: Some(EventHandler::new(move |event: MouseEvent| {
+                            event.stop_propagation();
                             if let Some(handler) = on_resolve_cancel.as_ref() {
                                 handler.call(false);
                             }
+                        })),
+                        children: rsx! {
+                            Icon {
+                                icon: MdiIcon::Close,
+                                size: 12,
+                            }
                         },
-                        span { class: "hk-btn-label",
-                            "{cancel_label}"
-                        }
                     }
                 }
             }
@@ -554,6 +576,9 @@ mod tests {
     #[test]
     fn blocking_toast_confirm_button_follows_the_card_tone() {
         // Vue: variant === "danger" ? "danger" : "primary", size "sm".
+        // (Only the confirm has a per-variant class table left: the cancel
+        // is the standard ghost IconButton on every variant — pinned by the
+        // rendered-html test below.)
         assert_eq!(
             BlockingToastVariant::Danger.confirm_button_class(),
             "hk-btn hk-btn-danger hk-btn-sm"
@@ -565,10 +590,6 @@ mod tests {
         assert_eq!(
             BlockingToastVariant::Warning.confirm_button_class(),
             "hk-btn hk-btn-primary hk-btn-sm"
-        );
-        assert_eq!(
-            BlockingToastVariant::Info.cancel_button_class(),
-            "hk-btn hk-btn-secondary hk-btn-sm"
         );
     }
 
@@ -688,6 +709,7 @@ mod tests {
             ".hk-blocking-toast-card",
             ".hk-blocking-toast-actions",
             ".hk-btn-primary",
+            ".hk-blocking-toast-cancel",
         ] {
             assert!(
                 css.contains(class_name),
@@ -697,6 +719,46 @@ mod tests {
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored blocking-toast sheet"
+        );
+    }
+
+    /// Ledger L177 pin (the alert/toast/persistent-toast pattern): the
+    /// sheet this card uses is byte-mirrored into this crate, so ONE
+    /// stylesheet serves both renderers — and it pins the cancel's ink on
+    /// the STANDARD icon-button classes. If this renderer emitted a bare
+    /// `button.hk-blocking-toast-cancel` while Vue emits the icon button,
+    /// the shared sheet could only style one of them. Pin the RENDERED
+    /// class list (and the accessible-name pair the label moved onto), not
+    /// the presence of the seat string.
+    #[test]
+    fn blocking_toast_cancel_renders_the_standard_icon_button_layers() {
+        let html = BlockingToastCard(BlockingToastCardProps {
+            item: BlockingToastItem {
+                message: String::from("m"),
+                ..Default::default()
+            },
+            on_resolve: None,
+        })
+        .render_to_html();
+        assert!(html.contains("hk-blocking-toast-cancel"), "{html}");
+        assert!(html.contains("hk-icon-button "), "{html}");
+        assert!(html.contains("hk-icon-button-24"), "{html}");
+        assert!(html.contains("hk-icon-button-ghost"), "{html}");
+        assert!(
+            !html.contains(r#"class="hk-blocking-toast-cancel""#),
+            "the seat must not sit on a bare button: {html}"
+        );
+        // The resolved cancel label is the accessible name now (aria-label
+        // + title); no visible text may leak into the control.
+        assert!(html.contains("aria-label=\"Cancel\""), "{html}");
+        assert!(html.contains("title=\"Cancel\""), "{html}");
+        assert!(!html.contains(">Cancel<"), "{html}");
+        // Never a form submitter, and the seat renders exactly once.
+        assert!(html.contains("type=\"button\""), "{html}");
+        assert_eq!(
+            html.matches("hk-blocking-toast-cancel").count(),
+            1,
+            "{html}"
         );
     }
 }

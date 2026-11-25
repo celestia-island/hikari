@@ -119,8 +119,9 @@
 // danger confirm's own red dissolves into its red card. The confirm
 // inverts to a filled white control labeled in a deepened shade of the
 // variant color — the strongest move on every variant surface — and the
-// cancel quiets to a translucent outline in the card's own ink (the
-// house grammar for quiet controls on tinted toast surfaces).
+// cancel is the house ghost icon button (the ✕, 2026-11-25 product
+// call: every right-side cancel on a toast surface) re-pinned to the
+// band's on-tone ink below (the HkToast copy/close grammar).
 .hk-blocking-toast-info {
   --hk-blocking-toast-ink: var(--hi-color-info, #006274);
 }
@@ -162,26 +163,43 @@
   background: rgb(255 255 255 / 78%);
 }
 
-/* The secondary cancel stops being a heavy surface block (it rendered
-   as a white pill competing with the confirm on the tinted card) and
-   picks up the quiet outline in the card's currentColor — white on
-   info/danger, near-black on warning — so it reads on every variant
-   without its own per-variant table. */
-.hk-blocking-toast-actions .hk-btn-secondary {
-  background: transparent;
-  border-color: color-mix(in srgb, currentColor 45%, transparent);
-  @include backdrop-filter(none);
-  color: inherit;
+/* The cancel is the STANDARD ghost icon button, whose ink defaults to
+   the page's secondary text color — wrong on any tinted band — and
+   ghost declares that ink ON the button element, so no inherited value
+   can beat it: each band re-pins the --hi-icon-button-* bridge at that
+   same seat, riding the band's own on-tone ink (info/danger white via
+   the on-info/on-danger slots, warning dark via on-warning — the
+   HkToast copy/close grammar). Hover/press washes ride currentColor so
+   their polarity follows the band's ink too; the global ghost's grey
+   wash would otherwise read as a dead spot on the saturated fills. */
+.hk-blocking-toast-info .hk-blocking-toast-cancel {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-info, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-info, #ffffff);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
 }
 
-.hk-blocking-toast-actions .hk-btn-secondary:hover:not(:disabled) {
-  border-color: color-mix(in srgb, currentColor 70%, transparent);
-  background: color-mix(in srgb, currentColor 18%, transparent);
+.hk-blocking-toast-warning .hk-blocking-toast-cancel {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-warning, #1c1c1e);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-warning, #1c1c1e);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
 }
 
-.hk-blocking-toast-actions .hk-btn-secondary:active:not(:disabled) {
-  filter: none;
-  background: color-mix(in srgb, currentColor 28%, transparent);
+.hk-blocking-toast-danger .hk-blocking-toast-cancel {
+  --hi-icon-button-icon-color: var(--hi-color-text-on-danger, #ffffff);
+  --hi-icon-button-icon-color-active: var(--hi-color-text-on-danger, #ffffff);
+  --hi-icon-button-bg-hover: color-mix(in srgb, currentColor 14%, transparent);
+  --hi-icon-button-bg-active: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* The cancel is the STANDARD icon button (HkToast's close rule); what
+   remains here is only a flex layout nudge — `flex-shrink: 0`, the
+   same value the standard layer already declares, so this flat key
+   carries no box/ink of its own and cannot fight the component
+   regardless of bundle order. */
+.hk-blocking-toast-cancel {
+  flex-shrink: 0;
 }
 
 /* The keyboard ring follows the card ink too — the global primary ring

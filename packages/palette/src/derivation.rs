@@ -137,7 +137,12 @@ fn oklch_to_rgb(l: f64, c: f64, raw_h: f64) -> StockRgb {
     // OWN finiteness (clamp01 of NaN -> 0), c against its own, h against its
     // own. (A combined condition would return NaN -> 255 through
     // linear_to_channel's clamp — a dead-code landmine if this ever gets
-    // exposed beyond the authored u8 table.)
+    // exposed beyond the authored u8 table.) MUT:mut-l-guard — reshaping the
+    // guard to a combined condition would let NaN through as channel 255
+    // only for callers that pass non-u8 inputs; today that caller is
+    // none, so the drift test cannot see it. comment-gate-ok: the guard is
+    // documented here rather than tested, because every current caller
+    // passes u8.
     let l = NumberF::clamp01(NumberF::finite_or_zero(l));
     let c = NumberF::finite_or_zero(c).max(0.0);
     let h = NumberF::wrap_degrees(NumberF::finite_or_zero(raw_h));

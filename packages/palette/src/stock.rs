@@ -88,11 +88,21 @@ const fn rgb(r: u8, g: u8, b: u8) -> StockRgb {
 }
 
 /// The stock `default` theme — the values the web lane has always shipped.
+/// The `name` rides the web lane's ThemePreset.name convention: a literal
+/// string OR a message key resolvable in hikari's own i18n catalog. The
+/// stock theme is every host's factory line, so it ships the CATALOG KEY
+/// (`hikari::theme.defaultThemeName`) — the panel resolves names through
+/// `t()`, which translates keyed names per locale and passes literal
+/// strings through unchanged. A literal "Default" here rendered the
+/// factory row untranslated on every non-English face (2026-11-25 user
+/// report: the docs-site theme dialog showed "Default" under a Chinese
+/// UI); chest's own brand presets have shipped the keyed name since the
+/// theme-i18n wave (2026-10-08).
 #[must_use]
 pub fn stock_default() -> StockTheme {
     StockTheme {
         id: "default".to_string(),
-        name: "Default".to_string(),
+        name: "hikari::theme.defaultThemeName".to_string(),
         // Nord-derived black-blue: the pale Polar Water primary (#88C0D0)
         // keeps the near-black on-solid ink pair (white on it is ~1.9:1).
         dark: StockTokenScheme {

@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "ライト",
     "hikari::theme.save": "保存",
     "hikari::theme.themeName": "テーマ名",
+    "hikari::theme.nameTranslations": "名前の翻訳",
     "hikari::theme.themes": "テーマ",
     "hikari::timePicker.am": "午前",
     "hikari::timePicker.clear": "時刻をクリア",

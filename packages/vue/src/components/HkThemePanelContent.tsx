@@ -10,6 +10,7 @@ import {
   themePresets,
   useI18n,
   useTheme,
+  resolveThemeDisplayNameT,
   type CustomThemePreset,
   type ThemeId,
   type ThemePreset,
@@ -330,12 +331,18 @@ export const HkThemePanelContent = defineComponent({
             const nameSuffixSlot = slots["item-name-suffix"];
             const trailingSlot = slots["item-trailing"];
             // A preset/custom name may be a message key into hikari's own
-            // catalog (the documented ThemePreset.name convention — hosts
-            // ship localized built-ins like "hikari::theme.defaultThemeName").
-            // `t()` falls back to the raw string for anything that is not a
-            // key, so literal display names pass through unchanged, and the
-            // reactive message lookup re-renders rows on locale switches.
-            const displayName = t(th.name);
+            // catalog (the documented ThemePreset.name convention — the
+            // stock preset ships "hikari::theme.defaultThemeName"), and a
+            // custom theme may carry per-locale translations authored in
+            // the scheme editor's localized-name input. Resolution order:
+            // the theme's own nameI18n map (family fallbacks), then the
+            // keyed/literal name through t() — `t()` falls back to the raw
+            // string for anything that is not a key. The reactive message
+            // lookup re-renders rows on locale switches.
+            const displayName = resolveThemeDisplayNameT(
+              th.name,
+              scope.preset?.nameI18n,
+            );
             const isActive = currentTheme.value === th.id;
             // Default lane anatomy: the host's `itemActions` builder wins;
             // a host that renders `item-trailing` owns the affordance

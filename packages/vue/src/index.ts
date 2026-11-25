@@ -337,9 +337,11 @@ export {
   solarManualLocation, setSolarManualLocation, manualLocationOf,
   listTimeZones, systemTimeZoneId,
   initFontContext, applyFontContext, resetFontContext, useFontContext,
+  resolveThemeDisplayName, resolveThemeDisplayNameT,
   HIKARI_FONT_SANS, HIKARI_FONT_MONO, HIKARI_FONT_READING,
   type ThemeTokenRGB, type ThemeSchemeTokens, type ThemePreset, type ThemeMode,
   type ThemeId, type ThemeTokens, type CustomThemePreset, type TimePeriod,
+  type ThemeNameI18n,
   type GeoLocation, type GeoLocationProvider,
   type SolarLocationStrategy, type SolarHemisphere, type SolarManualLocation,
   type ThemeTokenGroupValues, type ThemeTokenGroupModes, type ThemeTokenValue,
@@ -541,6 +543,10 @@ export {
   activeLocale,
   mergeMessages,
 } from "./i18n/context";
+// The shipped language catalog (codes + endonyms, mirrored from the
+// hikari-i18n crate) — the default `localeOptions` of per-language
+// editors and the list hosts without an app i18n config offer.
+export { HK_LOCALE_CATALOG, type HkLocaleCatalogEntry } from "./i18n/localeCatalog";
 
 // ── Generic utils ───────────────────────────────────────────────
 export { fuzzyScore, fuzzyScoreFields, fuzzySearch } from "./utils/fuzzy";

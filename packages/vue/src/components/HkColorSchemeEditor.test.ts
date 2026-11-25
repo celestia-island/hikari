@@ -83,6 +83,8 @@ const legacyDark: HCustomTheme["dark"] = {
 interface EditorExpose {
   reset: () => void;
   getDraft: () => HCustomTheme;
+  setThemeName: (name: string) => void;
+  setThemeNameI18n: (map: Record<string, string>) => void;
 }
 
 const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement }> = [];
@@ -91,6 +93,8 @@ function mountEditor(initial?: {
   initialDark?: HCustomTheme["dark"];
   initialLight?: HCustomTheme["light"];
   initialGroups?: HCustomTheme["groups"];
+  initialName?: string;
+  initialNameI18n?: Record<string, string>;
 }): { ref: Ref<EditorExpose | null>; container: HTMLElement } {
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -102,6 +106,8 @@ function mountEditor(initial?: {
         ...(initial?.initialDark ? { initialDark: initial.initialDark } : {}),
         ...(initial?.initialLight ? { initialLight: initial.initialLight } : {}),
         ...(initial?.initialGroups ? { initialGroups: initial.initialGroups } : {}),
+        ...(initial?.initialName ? { initialName: initial.initialName } : {}),
+        ...(initial?.initialNameI18n ? { initialNameI18n: initial.initialNameI18n } : {}),
       }),
   });
   app.mount(container);
@@ -706,5 +712,70 @@ describe("HkColorSchemeEditor keeps the ONE ink rule (2026-11-12)", () => {
 
     const draft = ref.value!.getDraft();
     expect(draft.dark.onDanger).toEqual({ r: 255, g: 255, b: 255 });
+  });
+});
+
+describe("HkColorSchemeEditor localized scheme naming (2026-11-25)", () => {
+  /** Type into the localized-name editor's field (the active language). */
+  async function typeNameTranslation(text: string): Promise<void> {
+    const input = document.body.querySelector(
+      ".s-scheme-name-i18n input.hk-input-element",
+    ) as HTMLInputElement | null;
+    input!.value = text;
+    input!.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+  }
+
+  it("typing a translation carries it into getDraft().nameI18n", async () => {
+    const { ref, container } = mountEditor();
+    await nextTick();
+
+    // The localized editor rides the name section; the base name input
+    // stays the language-agnostic fallback.
+    expect(container.querySelector(".s-scheme-name-i18n")).not.toBeNull();
+    const baseInput = container.querySelector(
+      ".s-scheme-dialog input.hk-input-element",
+    ) as HTMLInputElement;
+    baseInput.value = "Midnight";
+    baseInput.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+
+    await typeNameTranslation("Midnight (dark)");
+    const draft = ref.value!.getDraft();
+    expect(draft.name).toBe("Midnight");
+    expect(draft.nameI18n).toEqual({ en: "Midnight (dark)" });
+  });
+
+  it("drafts WITHOUT nameI18n while no translation was filled", async () => {
+    const { ref } = mountEditor();
+    await nextTick();
+    const draft = ref.value!.getDraft();
+    expect("nameI18n" in draft).toBe(false);
+  });
+
+  it("reset re-seeds translations from initialNameI18n; host pushes win until then", async () => {
+    const { ref } = mountEditor({
+      initialName: "Factory",
+      initialNameI18n: { en: "Factory", "zh-Hans": "出厂" },
+    });
+    await nextTick();
+    expect(ref.value!.getDraft().nameI18n).toEqual({ en: "Factory", "zh-Hans": "出厂" });
+
+    // A host-owned name UI can push a new map through the exposed setter
+    // (the same grammar setThemeName has always offered for the base). comment-gate-ok: prose note on the exposed API surface, not a behaviour claim — the behaviour pins are the four cases in this describe block (draft carries/drops nameI18n, reset re-seed, push).
+    ref.value!.setThemeNameI18n({ en: "Factory v2" });
+    expect(ref.value!.getDraft().nameI18n).toEqual({ en: "Factory v2" });
+
+    // reset() re-seeds from the initial props (the open-time contract).
+    ref.value!.reset();
+    await nextTick();
+    expect(ref.value!.getDraft().nameI18n).toEqual({ en: "Factory", "zh-Hans": "出厂" });
+  });
+
+  it("an all-empty pushed map drafts without the field", async () => {
+    const { ref } = mountEditor();
+    await nextTick();
+    ref.value!.setThemeNameI18n({ en: "   ", "zh-Hans": "" });
+    expect("nameI18n" in ref.value!.getDraft()).toBe(false);
   });
 });

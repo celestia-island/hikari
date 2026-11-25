@@ -447,14 +447,40 @@ export default defineComponent({
     const rowRefs = ref<Record<string, HTMLElement | null>>({});
     const anchorCache = new Map<string, PanelAnchor>();
 
+    /** Measured width (root visual px) of an already-mounted cascade
+     *  panel, 0 while it has not laid out yet (the first positioning
+     *  pass runs before the DOM settles). The flipped side hangs the
+     *  panel's near EDGE off the trigger, so the visual gap between the
+     *  panel and the trigger is the anchor offset itself — not the
+     *  leftover of the width estimate. Subtracting the bare
+     *  CASCADE_PANEL_W guess left every flipped cascade floating ~
+     *  (224 − real width) px away from its trigger (2026-11-25 user
+     *  report: the docs-site language popup sat ~50px left of its
+     *  button; on a narrow window the guess also slammed the panel
+     *  against the viewport's leading edge, detaching it entirely).
+     *  offsetWidth is local and transform-agnostic; the zoom factor
+     *  lifts it into the root visual space the anchor math runs in.
+     *  HkSelectPanel repositions after the DOM settles, so the first
+     *  pass (estimate fallback) is corrected by the second — no
+     *  feedback loop: the anchor only READS the width, and positioning
+     *  changes where the panel is, never how wide it is. */
+    function measuredCascadeWidth(level: number): number {
+      const el = panelInsts.value[level]?.panelEl?.() ?? null;
+      if (!el) return 0;
+      const w = el.offsetWidth;
+      return w > 0 ? w * ancestorZoom(el) : 0;
+    }
+
     /** Synthetic anchor placing a sub-panel beside its parent row:
      *  popout to the right, flipping to the left when the viewport runs
      *  out (classic menubar cascade). The rect stays LIVE — HkSelectPanel
-     *  re-reads it on every reposition (open, resize). The fixed panel
-     *  width is a LOCAL constant while the row rect and the viewport are
-     *  in the root VISUAL space (standardized zoom applies ancestor zoom
-     *  to gBCR and innerWidth alike), so the width is scaled by the
-     *  cumulative zoom before the flip comparison. */
+     *  re-reads it on every reposition (open, resize). The measured
+     *  panel width places the flip (estimate only until the panel has
+     *  laid out); the fixed panel width stays a LOCAL constant for the
+     *  side decision's worst case while the row rect and the viewport
+     *  are in the root VISUAL space (standardized zoom applies ancestor
+     *  zoom to gBCR and innerWidth alike), so the width is scaled by
+     *  the cumulative zoom before the flip comparison. */
     function rowAnchor(level: number, key: string): PanelAnchor {
       const id = `${level}:${key}`;
       let anchor = anchorCache.get(id);
@@ -465,7 +491,9 @@ export default defineComponent({
             if (!row) return pointRect(0, 0);
             const r = row.getBoundingClientRect();
             if (!r.width && !r.height) return pointRect(0, 0); // detached
-            const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
+            const z = ancestorZoom(document.body);
+            const cascadeW =
+              measuredCascadeWidth(level + 1) || CASCADE_PANEL_W * z;
             // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
             const pad = viewportGutterPx();
             const frame = popupViewportRect();
@@ -481,8 +509,12 @@ export default defineComponent({
     }
 
     /** Synthetic anchor for root placements HkSelectPanel does not model
-     *  natively (right-/left-start): the panel hangs off the anchor's
-     *  right edge, flipping to the left when out of viewport. */
+     *  natively (right-/left-start): the panel hangs off the trigger's
+     *  near edge at the anchor offset — its left edge at the trigger's
+     *  right + gap when it opens right, its right edge at the trigger's
+     *  left − gap when it flips (measured panel width; estimate until
+     *  the panel has laid out, corrected by HkSelectPanel's settle
+     *  reposition). */
     function rootCascadeAnchor(side: "right" | "left"): PanelAnchor {
       return {
         getBoundingClientRect: () => {
@@ -491,7 +523,8 @@ export default defineComponent({
           const r = real.getBoundingClientRect();
           if (!r.width && !r.height) return pointRect(0, 0);
           const gap = props.offset; // visual-space gap, same as the native placements
-          const cascadeW = CASCADE_PANEL_W * ancestorZoom(document.body);
+          const z = ancestorZoom(document.body);
+          const cascadeW = measuredCascadeWidth(0) || CASCADE_PANEL_W * z;
           // Shared viewport gutter (--viewport-gutter: 8 mobile / 16 desktop).
           const pad = viewportGutterPx();
           const frame = popupViewportRect();
@@ -499,7 +532,7 @@ export default defineComponent({
           const left =
             side === "right" && openRight
               ? r.right + gap
-              : Math.max(frame.x + pad, r.left - cascadeW - gap);
+              : Math.max(frame.x + pad, r.left - gap - cascadeW);
           return pointRect(left, r.top);
         },
         contains: (node) => !!props.anchorRef?.contains(node),

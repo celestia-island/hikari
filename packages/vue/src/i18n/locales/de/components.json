@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "Hell",
     "hikari::theme.save": "Speichern",
     "hikari::theme.themeName": "Themenname",
+    "hikari::theme.nameTranslations": "Namensübersetzungen",
     "hikari::theme.themes": "Themen",
     "hikari::timePicker.am": "Vorm.",
     "hikari::timePicker.clear": "Uhrzeit löschen",

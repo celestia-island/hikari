@@ -245,6 +245,7 @@
     "hikari::theme.modeLight": "فاتح",
     "hikari::theme.save": "حفظ",
     "hikari::theme.themeName": "اسم السمة",
+    "hikari::theme.nameTranslations": "ترجمات الاسم",
     "hikari::theme.themes": "السمات",
     "hikari::timePicker.am": "ص",
     "hikari::timePicker.clear": "مسح الوقت",

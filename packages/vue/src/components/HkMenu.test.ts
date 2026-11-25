@@ -1124,6 +1124,45 @@ describe("HkMenu cascade against an app-chrome band", () => {
     await settle();
     expect(popoutHosts()[0]?.style.left).toBe("1016px"); // frame.x + gutter
   });
+  it("hangs a flipped right-start cascade at the trigger's edge — measured width, not the estimate", async () => {
+    // 2026-11-25 user report: on a right-edge trigger the flipped language
+    // popup sat far from its button — the flip subtracted the bare 224px
+    // CASCADE_PANEL_W guess while the real panel is ~175px, so the panel's
+    // right edge landed (224 − real) px short of the trigger. The flip now
+    // subtracts the panel's MEASURED width (estimate only until the panel
+    // has laid out; HkSelectPanel's settle reposition corrects the first
+    // pass), so the gap between the panel and the trigger is exactly the
+    // anchor offset.
+    // MUT:hk1562-m1 — reverting `measuredCascadeWidth` to a constant 0
+    // turns the measured assertion below red (`1118px` ≠ `1167px`) while
+    // the estimate assertion stays green; R3 evidence, PR #1562.
+    const rect = (x: number, y: number, w: number, h: number): DOMRect =>
+      ({ x, y, width: w, height: h, top: y, left: x, right: x + w, bottom: y + h, toJSON: () => ({}) }) as DOMRect;
+
+    window.innerWidth = 1440;
+    const openRef = ref(false);
+    const m = mountMenu(openRef, items, {}, { props: { placement: "right-start", offset: 6 } });
+    // Trigger at the header's right edge: nothing fits to its right, so
+    // the cascade flips left.
+    vi.spyOn(m.anchor, "getBoundingClientRect").mockReturnValue(rect(1348, 8, 32, 32));
+    openRef.value = true;
+    await settle();
+    // First pass, no layout yet: the estimate fallback (offsetWidth 0 in
+    // happy-dom) pins the historical estimate math — 1348 − 6 − 224.
+    expect(popoutHosts()[0].style.left).toBe("1118px");
+
+    // The panel lays out at its real width; the settle reposition
+    // (window resize is one of its reposition triggers) re-reads the
+    // anchor, which now measures the panel instead of guessing.
+    const host = popoutHosts()[0];
+    Object.defineProperty(host, "offsetWidth", { configurable: true, value: 175 });
+    window.dispatchEvent(new Event("resize"));
+    await settle();
+    // 1348 − 6 − 175 = 1167 → the panel's RIGHT edge (1167 + 175 = 1342)
+    // sits exactly the 6px offset from the trigger's left edge (1348).
+    expect(host.style.left).toBe("1167px");
+    Object.defineProperty(host, "offsetWidth", { configurable: true, value: 0 });
+  });
   it("animates the group body open and closed (WAAPI height fold)", async () => {
     // happy-dom has no WAAPI and reports scrollHeight 0; stub both so the
     // disclosure hooks take their animated path and we can inspect the

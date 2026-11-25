@@ -73,9 +73,11 @@ describe("HkBadge pulse stylesheet contract", () => {
 // The pill's gap is the single source of truth for icon spacing. A utility
 // margin on an embedded svg (the OAuth provider pill shipped `mr-1` under
 // the shield) double-spaces the label; the sheet neutralizes child svg/img
-// margins and this guard keeps the rule shipped (the base block is the
-// highest-specificity home — a regression here re-opens the double gap
-// everywhere at once).
+// margins so a stale utility stays harmless. Mutation contract — 变异表 in
+// the PR body: MUT:badge-child-margin drops the sheet block and "zeroes
+// margins on embedded svg and img children" reds; widen the selector to a
+// descendant form and "never widens the rule past direct children" catches
+// it too. A regression here re-opens the double gap everywhere at once.
 describe("HkBadge icon-spacing stylesheet contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const css = compile(resolve(here, "HkBadge.scss"), { style: "expanded" }).css;

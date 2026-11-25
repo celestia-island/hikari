@@ -8,6 +8,7 @@ import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from 
 import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
+import { THEME_BOOT_STYLE_ATTR } from "./themeBoot";
 import { getGeolocation, getTimePeriod, hydrateSolarLocationState, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
 const DEFAULT_THEME = "default";
@@ -258,7 +259,19 @@ function themeVarsStyleElement(): HTMLStyleElement {
   return styleEl;
 }
 
+/** Retire the pre-paint block once the runtime owns the vars (hikari#1546
+ *  point 2, review round 1): it exists ONLY to cover the first paint, and
+ *  leaving it live poisons `injectThemeVars`' baseline measurement — a memo
+ *  key that the new vars map no longer carries would never be overridden,
+ *  so a stale first-paint value would survive every later theme switch. */
+function retireBootVars(): void {
+  document.head
+    .querySelector(`style[${THEME_BOOT_STYLE_ATTR}]`)
+    ?.remove();
+}
+
 function injectThemeVars(el: HTMLElement, vars: Record<string, string>): void {
+  retireBootVars();
   const styleEl = themeVarsStyleElement();
   // Measure the cascade WITHOUT our own previous overrides: disable the
   // managed block, read every candidate, re-enable. One recalc serves
@@ -321,6 +334,20 @@ function applyTheme() {
 // through this injected hook. Hikari wires it once on module load;
 // applications never call setTokenGroupsReapply themselves.
 setTokenGroupsReapply(() => applyTheme());
+
+/** Drop a removed theme's memo so deleted ids cannot replay forever. */
+function forgetVarsForFirstPaint(themeId: ThemeId): void {
+  try {
+    const raw = readStorageItem(THEME_VARS_MEMO_KEY);
+    if (!raw) return;
+    const memo = JSON.parse(raw) as Record<string, unknown>;
+    if (!(themeId in memo)) return;
+    delete memo[themeId];
+    writeStorageItem(THEME_VARS_MEMO_KEY, JSON.stringify(memo));
+  } catch {
+    // Unavailable or foreign payload — nothing to prune.
+  }
+}
 
 function getAllThemePresets(): Record<string, ThemePreset> {
   const result: Record<string, ThemePreset> = { ...themePresets };
@@ -409,6 +436,7 @@ export function useTheme() {
 
   function removeCustomTheme(id: string) {
     removeCustomThemeFromStorage(id);
+    forgetVarsForFirstPaint(id);
     customThemes.value = loadCustomThemes();
     if (currentTheme.value === id) {
       // A deleted custom whose id still resolves as a builtin preset falls

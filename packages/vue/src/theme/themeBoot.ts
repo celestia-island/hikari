@@ -39,9 +39,20 @@ import {
  *   the boot asset is read-only (pre-paint storage writes would be a
  *   surprise) and falls back instead. Removal happens at initTheme.
  *
+ * It also REPLAYS the runtime's memo for a user's custom theme (see the
+ * CUSTOM THEME FIRST PAINT block in the emitted wrapper): the boot never
+ * composes a palette itself, so there is no second implementation of the
+ * color math to drift. `applyTheme` retires the replayed block on its first
+ * run, so a memo can never outlive the paint it was written for.
+ *
  * `buildThemeBootJs()` ships the chain as a dependency-free IIFE for
  * consumers to inline in `<head>` (lagrange interpolates it with a `?raw`
- * import). The math is serialized via `Function.prototype.toString` from
+ * import). CONSUMERS MUST INLINE IT AFTER THEIR STYLESHEET LINKS AND BEFORE
+ * `</head>`: every var-bearing block (the static `html[data-mode]` sheet,
+ * this asset's `html:root` replay, the runtime's own `html:root` block) has
+ * the same specificity, so HEAD ORDER is the only thing deciding who wins,
+ * and the intended chain is sheet -> replay -> runtime. The math is
+ * serialized via `Function.prototype.toString` from
  * useSolarTime's OWN definitions — the asset cannot drift from the
  * runtime's solar chain by construction; `themeBoot.contract.test.ts`
  * executes the emitted asset against `resolveSystemModeAt` across a date

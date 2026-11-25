@@ -31,7 +31,11 @@ const jsPath = join(here, "..", "styles", "theme-boot.js");
 function runBoot(
   js: string,
   opts: { now: Date; storage?: Record<string, string> },
-): { theme: string | null; mode: string | null } {
+): {
+  theme: string | null;
+  mode: string | null;
+  styles: Array<{ tag: string; attr: Record<string, string>; text: string }>;
+} {
   const attrs: Record<string, string> = {};
   const appended: Array<{ tag: string; attr: Record<string, string>; text: string }> = [];
   const fakeHead = {
@@ -76,12 +80,19 @@ function runBoot(
   // `Date` is SHADOWED in the asset's scope with a subclass pinned to the
   // grid instant — the wrapper's bare `new Date()` must observe the grid
   // date, not the wall clock, or the compare is meaningless.
+  const pinned = opts.now.getTime();
   const PinnedDate = class extends Date {
-    constructor(...args: unknown[]) {
-      super(...(args.length ? (args as ConstructorParameters<typeof Date>) : [opts.now.getTime()]));
+    // Zero-arg construction is the only call the asset makes; anything else
+    // forwards the same arguments (a typed overload avoids the spread-args
+    // error a variadic `unknown[]` would raise under vue-tsc).
+    constructor();
+    constructor(value: number);
+    constructor(year: number, month: number, day?: number);
+    constructor(a?: number, b?: number, c?: number) {
+      super(a === undefined ? pinned : b === undefined ? a : new Date(a, b, c ?? 1).getTime());
     }
     static now() {
-      return opts.now.getTime();
+      return pinned;
     }
   };
   // eslint-disable-next-line no-new-func -- executing the emitted asset is the point

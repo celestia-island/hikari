@@ -5,6 +5,53 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 type ThemeModule = typeof import("./useTheme");
 type SolarModule = typeof import("./useSolarTime");
 
+describe("custom-theme first-paint memo (hikari#1546 point 2)", () => {
+  it("memoizes a custom theme's vars for the boot asset and skips the stock preset", async () => {
+    const { THEME_VARS_MEMO_KEY, THEME_VARS_MEMO_VERSION, stockDefaultPreset } =
+      await import("./presets");
+    const theme = await import("./useTheme");
+    const api = theme.useTheme();
+    const { nextTick } = await import("vue");
+    // The API's own adder updates the live `customThemes` ref (calling the
+    // presets-layer helper would only write storage, which the ref read at
+    // import time).
+    api.addCustomTheme({
+      id: "brand-x",
+      name: "Brand X",
+      light: { ...stockDefaultPreset.light, primary: { r: 1, g: 2, b: 3 } },
+      dark: { ...stockDefaultPreset.dark, primary: { r: 4, g: 5, b: 6 } },
+    } as never);
+    theme.initTheme();
+    api.setTheme("brand-x");
+    await nextTick();
+    // `setTheme` persists the id; applyTheme ran synchronously on the watch
+    // flush, so the memo must already be there.
+    await Promise.resolve();
+    const raw = localStorage.getItem(THEME_VARS_MEMO_KEY);
+    expect(raw, "a custom theme writes a memo").toBeTruthy();
+    const memo = JSON.parse(raw!) as Record<string, unknown>;
+    expect(memo.v).toBe(THEME_VARS_MEMO_VERSION);
+    const entry = memo["brand-x"] as Record<string, Record<string, string>>;
+    expect(entry, "keyed by theme id then mode").toBeTruthy();
+    // Both modes are memoized, and the value is the REAL composition of
+    // that mode's tokens (the boot asset replays it verbatim).
+    expect(Object.keys(entry).sort()).toEqual(["dark", "light"]);
+    expect(entry.light!["--color-primary"]).toContain("1 2 3");
+    expect(entry.dark!["--color-primary"]).toContain("4 5 6");
+
+    // The stock preset never memoizes: it already ships as the static sheet
+    // MUT:mut-memo-stock-skip — dropping the stock guard adds a "default"
+    // entry and REDS the assertion below (verified).
+    api.setTheme("default");
+    await nextTick();
+    const after = JSON.parse(localStorage.getItem(THEME_VARS_MEMO_KEY)!) as Record<string, unknown>;
+    expect(after["default"], "no memo for a stock theme").toBeUndefined();
+    // Both modes are composed here (8 × the 400-step OKLCH search), which is
+    // slow under the suite's parallel load even though a browser does it in
+    // tens of milliseconds — this is a timeout, not a hang.
+  }, 30_000);
+});
+
 describe("useTheme theme clock", () => {
   let theme: ThemeModule;
   let solar: SolarModule;

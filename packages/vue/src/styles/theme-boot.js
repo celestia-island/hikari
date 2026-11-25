@@ -99,7 +99,54 @@ try {
   if (!(m === "light" || m === "dark")) {
     m = alt > 6 ? "light" : "dark";
   }
-  d.setAttribute("data-theme", t || (typeof window !== "undefined" && window.__celestiaDefaultTheme) || "default");
+  var themeId = t || (typeof window !== "undefined" && window.__celestiaDefaultTheme) || "default";
+  d.setAttribute("data-theme", themeId);
   d.setAttribute("data-mode", m);
+
+  /* CUSTOM THEME FIRST PAINT (hikari#1546 point 2). The static sheet only
+   * carries the stock preset, so a user's own theme used to paint stock
+   * colors and snap. applyTheme() now memoizes its computed vars
+   * (hikari-theme-vars, versioned); this block REPLAYS that memo — no
+   * color math is duplicated here, the runtime stays the single source.
+   * The block is injected as the LAST <head> child that exists at this
+   * point and uses html:root, so it ties with the runtime's own block
+   * (which is appended later and therefore wins once the bundle lands)
+   * and outranks the static html[data-mode] sheet by document order. */
+  try {
+    /* A crafted/edited memo could otherwise smuggle a brace or semicolon into a key
+     * and escape the html:root block into arbitrary selectors. localStorage
+     * is same-origin (writing it already needs live JS), so this is
+     * hardening rather than a trust boundary — but the boot runs before ANY
+     * app code, which is the one place we cannot afford to trust it. */
+    var SAFE_KEY = /^--[A-Za-z0-9_-]+$/;
+    var SAFE_VALUE = /^[A-Za-z0-9 .,%()/#-]*$/;
+    {
+      var memo = JSON.parse(read("hikari-theme-vars") || "null");
+      var memoV = 1;
+      if (memo && memo.v === memoV) {
+        var entry = memo[themeId];
+        /* EXACT mode only: replaying the other mode's palette onto this
+         * one's background is worse than the stock colors the static sheet
+         * already paints, so a missing entry simply falls through. */
+        var vars = entry && entry[m];
+        if (vars && typeof vars === "object") {
+          var css = "";
+          for (var k in vars) {
+            if (!Object.prototype.hasOwnProperty.call(vars, k)) continue;
+            if (!SAFE_KEY.test(k)) continue;
+            var value = "" + vars[k];
+            if (!SAFE_VALUE.test(value)) continue;
+            css += k + ":" + value + ";";
+          }
+          if (css) {
+            var styleEl = document.createElement("style");
+            styleEl.setAttribute("data-hikari-boot-vars", "");
+            styleEl.textContent = "html:root{" + css + "}";
+            (document.head || d).appendChild(styleEl);
+          }
+        }
+      }
+    }
+  } catch (e) {}
 } catch (e) {}
 })();

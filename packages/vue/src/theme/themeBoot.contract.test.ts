@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { buildThemeBootJs, resolveSystemModeAt } from "./themeBoot";
+import { THEME_VARS_MEMO_VERSION } from "./presets";
 
 /**
  * Drift contract for the SHIPPED BOOT ASSET (hikari#1546 Phase 1.5): the
@@ -30,9 +31,40 @@ const jsPath = join(here, "..", "styles", "theme-boot.js");
 function runBoot(
   js: string,
   opts: { now: Date; storage?: Record<string, string> },
-): { theme: string | null; mode: string | null } {
+): {
+  theme: string | null;
+  mode: string | null;
+  styles: Array<{ tag: string; attr: Record<string, string>; text: string }>;
+} {
   const attrs: Record<string, string> = {};
+  const appended: Array<{ tag: string; attr: Record<string, string>; text: string }> = [];
+  const fakeHead = {
+    appendChild(el: { tag: string; attr: Record<string, string>; text: string }) {
+      appended.push(el);
+    },
+  };
   const fakeDoc = {
+    head: fakeHead,
+    createElement(tag: string) {
+      const el = {
+        tag,
+        attr: {} as Record<string, string>,
+        text: "",
+        setAttribute(k: string, v: string) {
+          el.attr[k] = v;
+        },
+        // The emitted code assigns `textContent` (real DOM semantics); the
+        // fake mirrors it onto `text` so assertions read what a browser
+        // would apply.
+        get textContent() {
+          return el.text;
+        },
+        set textContent(v: string) {
+          el.text = v;
+        },
+      };
+      return el;
+    },
     documentElement: {
       setAttribute(k: string, v: string) {
         attrs[k] = v;
@@ -48,12 +80,19 @@ function runBoot(
   // `Date` is SHADOWED in the asset's scope with a subclass pinned to the
   // grid instant — the wrapper's bare `new Date()` must observe the grid
   // date, not the wall clock, or the compare is meaningless.
+  const pinned = opts.now.getTime();
   const PinnedDate = class extends Date {
-    constructor(...args: unknown[]) {
-      super(...(args.length ? (args as ConstructorParameters<typeof Date>) : [opts.now.getTime()]));
+    // Zero-arg construction is the only call the asset makes; anything else
+    // forwards the same arguments (a typed overload avoids the spread-args
+    // error a variadic `unknown[]` would raise under vue-tsc).
+    constructor();
+    constructor(value: number);
+    constructor(year: number, month: number, day?: number);
+    constructor(a?: number, b?: number, c?: number) {
+      super(a === undefined ? pinned : b === undefined ? a : new Date(a, b, c ?? 1).getTime());
     }
     static now() {
-      return opts.now.getTime();
+      return pinned;
     }
   };
   // eslint-disable-next-line no-new-func -- executing the emitted asset is the point
@@ -63,7 +102,11 @@ function runBoot(
     fakeDoc,
     fakeStorage,
   );
-  return { theme: attrs["data-theme"] ?? null, mode: attrs["data-mode"] ?? null };
+  return {
+    theme: attrs["data-theme"] ?? null,
+    mode: attrs["data-mode"] ?? null,
+    styles: appended,
+  };
 }
 
 describe("shipped theme boot asset (hikari#1546 Phase 1.5)", () => {
@@ -104,6 +147,73 @@ describe("shipped theme boot asset (hikari#1546 Phase 1.5)", () => {
     expect(explicit.mode).toBe("light");
     const explicitDark = runBoot(js, { now: at, storage: { "hikari-theme-mode": "dark" } });
     expect(explicitDark.mode).toBe("dark");
+  });
+
+  it("replays the runtime's memoized custom-theme vars, and only for a live version", () => {
+    // hikari#1546 point 2: the static sheet carries the STOCK preset, so a
+    // user's own theme used to paint stock colors and snap. applyTheme()
+    // memoizes what it computed; the asset REPLAYS it — no color math is
+    // duplicated in the boot path.
+    const at = new Date(Date.UTC(2026, 6, 1, 12, 0, 0));
+    const memo = (version: number) =>
+      JSON.stringify({
+        v: version,
+        "my-theme": {
+          light: { "--color-primary": "1 2 3", "--color-text": "4 5 6" },
+        },
+      });
+    const storage = (version: number) => ({
+      "hikari-theme": "my-theme",
+      "hikari-theme-mode": "light",
+      "hikari-theme-vars": memo(version),
+    });
+
+    const live = runBoot(js, { now: at, storage: storage(THEME_VARS_MEMO_VERSION) });
+    expect(live.theme, "the stored custom id is honored").toBe("my-theme");
+    expect(live.styles, "one vars block is injected").toHaveLength(1);
+    expect(live.styles[0]!.attr["data-hikari-boot-vars"]).toBe("");
+    expect(live.styles[0]!.text, "the memo's vars land in the block").toContain(
+      "--color-primary:1 2 3;",
+    );
+    expect(live.styles[0]!.text, "and its second slot too").toContain("--color-text:4 5 6;");
+
+    // A memo from an older math version must be IGNORED: replaying stale
+    // vars would paint a palette the runtime no longer agrees with.
+    const stale = runBoot(js, { now: at, storage: storage(THEME_VARS_MEMO_VERSION - 1) });
+    expect(stale.styles, "a stale memo is not replayed").toHaveLength(0);
+
+    // A hostile/garbled memo must not escape the html:root block: keys and
+    // values that are not plain cssvar shapes are dropped, the rest survive.
+    const hostile = runBoot(js, {
+      now: at,
+      storage: {
+        "hikari-theme": "my-theme",
+        "hikari-theme-mode": "light",
+        "hikari-theme-vars": JSON.stringify({
+          v: THEME_VARS_MEMO_VERSION,
+          "my-theme": {
+            light: {
+              "--color-primary": "1 2 3",
+              "} body { display: none } .x{": "red",
+              "--color-text": "4 5 6 } .y{z:1",
+            },
+          },
+        }),
+      },
+    });
+    expect(hostile.styles, "the block still injects the safe key").toHaveLength(1);
+    expect(hostile.styles[0]!.text, "safe pairs survive").toContain("--color-primary:1 2 3;");
+    expect(hostile.styles[0]!.text, "a selector-shaped key is refused").not.toContain("display");
+    expect(hostile.styles[0]!.text, "a value carrying a brace is refused").not.toContain(".y{");
+
+    // A stock theme never has a memo and must not inject anything.
+    // MUT:mut-memo-replay — disabling the replay branch REDS the live case
+    // above (verified); this one pins the stock exemption.
+    const stock = runBoot(js, {
+      now: at,
+      storage: { "hikari-theme": "default", "hikari-theme-mode": "light", "hikari-theme-vars": memo(THEME_VARS_MEMO_VERSION) },
+    });
+    expect(stock.styles, "the stock preset rides the static sheet, not a memo").toHaveLength(0);
   });
 
   it("routes a stored manual config through the zone meridian, machine-independently", () => {

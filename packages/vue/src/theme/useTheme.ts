@@ -2,12 +2,13 @@ import { computed, ref, watch } from "vue";
 
 import { scheduleCronAfter, type CronHandle } from "../runtime/cronBus";
 import { scheduleInterval, type IntervalHandle } from "../runtime/intervalBus";
-import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
+import { addCustomTheme as addCustomThemeToStorage, loadCustomThemes, removeCustomTheme as removeCustomThemeFromStorage, themePresets, tokensToCSSVars, THEME_VARS_MEMO_KEY, THEME_VARS_MEMO_VERSION, type CustomThemePreset, type ThemeId, type ThemeMode, type ThemePreset } from "./presets";
 import { readStorageItem, removeStorageItem, writeStorageItem } from "./safeStorage";
 import { groupTokensToCSSVars, resolveGroupTokens, setTokenGroupsReapply } from "./tokenGroups";
 import { registerStandardThemeDecor } from "./standardDecor";
 import { registerStandardThemeGroups } from "./standardGroups";
 import { invalidateLuminanceCache } from "./useBackgroundLuminance";
+import { THEME_BOOT_STYLE_ATTR } from "./themeBoot";
 import { getGeolocation, getTimePeriod, hydrateSolarLocationState, timezoneFallback, type GeoLocation, type TimePeriod } from "./useSolarTime";
 
 const DEFAULT_THEME = "default";
@@ -210,6 +211,42 @@ export function pickThemeVarDeltas(
   return deltas;
 }
 
+/** Memoize a CUSTOM theme's computed vars so the pre-paint boot asset can
+ *  replay them on the next load (hikari#1546 point 2). The STOCK preset is
+ *  skipped: it already ships as the static sheet, and rewriting it would
+ *  duplicate ~50 vars into localStorage for no gain.
+ *
+ *  Failure is silent on purpose — a full/unavailable localStorage must
+ *  never break theming; it only costs the next load its exact first paint. */
+function rememberVarsForFirstPaint(preset: ThemePreset): void {
+  if (preset.id in themePresets) return;
+  try {
+    const raw = readStorageItem(THEME_VARS_MEMO_KEY);
+    const memo: Record<string, unknown> =
+      raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+    if (memo.v !== THEME_VARS_MEMO_VERSION) {
+      for (const key of Object.keys(memo)) delete memo[key];
+      memo.v = THEME_VARS_MEMO_VERSION;
+    }
+    // BOTH modes, every time: the boot asset resolves the mode from the
+    // clock, which can differ from the mode the user is looking at right
+    // now. Memoizing only the active one would leave the other mode
+    // unpainted (or, worse, tempt the boot into cross-mode fallback).
+    const perTheme: Record<string, Record<string, string>> = {};
+    for (const mode of ["dark", "light"] as const) {
+      const tokens = mode === "dark" ? preset.dark : preset.light;
+      perTheme[mode] = tokensToCSSVars(
+        tokens,
+        groupTokensToCSSVars(resolveGroupTokens(mode, preset.groups?.[mode])),
+      );
+    }
+    memo[preset.id] = perTheme;
+    writeStorageItem(THEME_VARS_MEMO_KEY, JSON.stringify(memo));
+  } catch {
+    // Storage unavailable or the payload is not ours — drop the memo.
+  }
+}
+
 function themeVarsStyleElement(): HTMLStyleElement {
   let styleEl = document.head.querySelector<HTMLStyleElement>(
     `style[${THEME_VARS_STYLE_ATTR}]`,
@@ -222,7 +259,19 @@ function themeVarsStyleElement(): HTMLStyleElement {
   return styleEl;
 }
 
+/** Retire the pre-paint block once the runtime owns the vars (hikari#1546
+ *  point 2, review round 1): it exists ONLY to cover the first paint, and
+ *  leaving it live poisons `injectThemeVars`' baseline measurement — a memo
+ *  key that the new vars map no longer carries would never be overridden,
+ *  so a stale first-paint value would survive every later theme switch. */
+function retireBootVars(): void {
+  document.head
+    .querySelector(`style[${THEME_BOOT_STYLE_ATTR}]`)
+    ?.remove();
+}
+
 function injectThemeVars(el: HTMLElement, vars: Record<string, string>): void {
+  retireBootVars();
   const styleEl = themeVarsStyleElement();
   // Measure the cascade WITHOUT our own previous overrides: disable the
   // managed block, read every candidate, re-enable. One recalc serves
@@ -262,6 +311,8 @@ function applyTheme() {
   );
   const vars = tokensToCSSVars(tokens, groupVars);
 
+  rememberVarsForFirstPaint(preset);
+
   invalidateLuminanceCache();
 
   injectThemeVars(el, vars);
@@ -283,6 +334,20 @@ function applyTheme() {
 // through this injected hook. Hikari wires it once on module load;
 // applications never call setTokenGroupsReapply themselves.
 setTokenGroupsReapply(() => applyTheme());
+
+/** Drop a removed theme's memo so deleted ids cannot replay forever. */
+function forgetVarsForFirstPaint(themeId: ThemeId): void {
+  try {
+    const raw = readStorageItem(THEME_VARS_MEMO_KEY);
+    if (!raw) return;
+    const memo = JSON.parse(raw) as Record<string, unknown>;
+    if (!(themeId in memo)) return;
+    delete memo[themeId];
+    writeStorageItem(THEME_VARS_MEMO_KEY, JSON.stringify(memo));
+  } catch {
+    // Unavailable or foreign payload — nothing to prune.
+  }
+}
 
 function getAllThemePresets(): Record<string, ThemePreset> {
   const result: Record<string, ThemePreset> = { ...themePresets };
@@ -371,6 +436,7 @@ export function useTheme() {
 
   function removeCustomTheme(id: string) {
     removeCustomThemeFromStorage(id);
+    forgetVarsForFirstPaint(id);
     customThemes.value = loadCustomThemes();
     if (currentTheme.value === id) {
       // A deleted custom whose id still resolves as a builtin preset falls

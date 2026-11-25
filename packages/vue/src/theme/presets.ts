@@ -98,6 +98,28 @@ export interface CustomThemePreset {
 
 const CUSTOM_STORAGE_KEY = "hikari-custom-themes";
 
+/** The runtime's own memo of a CUSTOM theme's computed cssvars, keyed by
+ *  theme id then mode, so the PRE-PAINT boot asset can replay the colors
+ *  without re-implementing (or duplicating) the color math (hikari#1546
+ *  point 2). Written by applyTheme for non-stock themes only — the stock
+ *  preset already ships as the static sheet.
+ *
+ *  VERSION DISCIPLINE: the memo bakes THREE inputs, and any of them
+ *  changing makes a stored payload wrong —
+ *    1. `tokensToCSSVars` / its OKLCH-contrast helpers (this repo),
+ *    2. the token GROUPS a host registers (their resolved defaults feed the
+ *       memo through `groupTokensToCSSVars`),
+ *    3. a host's own preset table (`window.__celestiaThemes` / in-place
+ *       preset overrides), whose values are memoized like any custom theme.
+ *  (1) is ours to police in review; (2) and (3) live in consumers, so the
+ *  version is also the hatch for a HOST-driven refresh — a host that changes
+ *  a group default or a preset's colors bumps nothing here, and its users
+ *  keep one load of the previous palette. That is accepted (the memo is a
+ *  first-paint hint, `applyTheme` overwrites it immediately) but it is why
+ *  this is a hint and not a cache of record. */
+export const THEME_VARS_MEMO_KEY = "hikari-theme-vars";
+export const THEME_VARS_MEMO_VERSION = 1;
+
 export function loadCustomThemes(): CustomThemePreset[] {
   try {
     const raw = readStorageItem(CUSTOM_STORAGE_KEY);

@@ -403,5 +403,17 @@ mod tests {
             css.contains("var(--hk-auth-card-max-width, 28rem)"),
             "the card width contract moved; keep HK_AUTH_CARD_MAX_WIDTH in sync"
         );
+
+        // The retired methods/divider family is gone from the sheet the
+        // card rides — pinned here because this test owns that sheet's
+        // contract (the per-class loop above only asserts what the card
+        // NEEDS; it cannot see an addition). The div contracts live in
+        // `sign_in_card.rs`; this arm keeps the card's own sheet honest.
+        for retired in [".s-auth-methods", ".s-auth-methods-divider", ".hk-alt-signin"] {
+            assert!(
+                !css.contains(retired),
+                "the vendored admin tokens must not style the retired selector {retired:?}"
+            );
+        }
     }
 }

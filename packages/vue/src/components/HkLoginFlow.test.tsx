@@ -611,14 +611,15 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(document.activeElement).toBe(trigger);
   });
 
-  it("extends the :has rhythm collapse to the bare fragment's descendant footer block (styles pin)", () => {
-    // The stable shell's bare fragment renders the footer block as a
-    // DESCENDANT of the shell's .s-auth-form — the sibling `:has(+ …)`
-    // rule cannot see it, so the descendant variant carries the same
-    // collapsed bottom padding (without it the form's full 24px bottom
-    // padding stacks onto the footer's top margin).
-    // MUT:r1487-rhythm-descendant (reverting to sibling-only rules
-    // makes this match empty).
+  it("keeps the descendant :has arm that the flow's footer shape needs (structure pin)", () => {
+    // The shell's bare credential fragment renders the footer block inside
+    // the SWAPPED BODY, several levels below the shell's `.s-auth-form`
+    // (`.s-auth-form > .hk-login-flow-body > .hk-crossfade >
+    // .hk-crossfade-item > .s-auth-footer`). The sibling `:has(+ …)` rule
+    // above it therefore does NOT match this shape — this descendant arm
+    // is the only rule that does, so it is load-bearing, not a fallback.
+    // MUT:r1487-rhythm-descendant (reverting to sibling-only rules makes
+    // this match empty; the pin below then has nothing to assert).
     const here = dirname(fileURLToPath(import.meta.url));
     const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
     const collapse = scss.match(/\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/g)?.join("\n") ?? "";
@@ -626,6 +627,29 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(collapse).toContain("padding-bottom: var(--space-8, 0.5rem)");
     // The retired methods block's rules stay gone (2026-11-26 grammar).
     expect(scss).not.toContain(".s-auth-methods");
+
+    // The DOM half — the reason the rule above exists, asserted against the
+    // REAL tree instead of a prose claim. jsdom has no CSS engine, so the
+    // pin is structural: it proves the footer is a descendant (and NOT a
+    // sibling) of the form, which is exactly what makes the sibling arm
+    // miss and the descendant arm the only working one. Behavioral
+    // confirmation in a real engine: Chrome 155 computed
+    // `padding-bottom: 8px` on this form via the descendant arm, and
+    // deleting that single rule from the sheet flipped it to 32px.
+    // MUT:r1487-footer-shape-drift (moving the footer out to sit beside
+    // the form — or wrapping the fragment so no `.s-auth-form` covers it —
+    // makes `matches` below flip and this goes red).
+    const c = mount(h(HkLoginFlow, {
+      modelValue: "cloud",
+      channels: [cloudChannel],
+    }, { footer: () => h("div", { class: "probe-footer" }, "row") }));
+    const form = c.querySelector(".s-auth-form");
+    const footer = c.querySelector(".s-auth-footer");
+    expect(form, "the flow's credentials body must carry the shell's form block").not.toBeNull();
+    expect(footer, "a passed footer must render its block").not.toBeNull();
+    expect(form!.contains(footer), "the footer must be a DESCENDANT of the form").toBe(true);
+    expect(footer!.previousElementSibling, "the footer must NOT be the form's sibling").not.toBe(form);
+    expect(form!.querySelector(".s-auth-footer")).toBe(footer);
   });
 
   it("renders no footer band when the host passed no footer slot (flow-level dead-space guard)", () => {

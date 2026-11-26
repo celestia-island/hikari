@@ -93,6 +93,39 @@ describe("HkCornerText", () => {
     expect(c.querySelector(".hk-corner-text")).toBeNull();
   });
 
+  it("treats a slot that PAINTS nothing as empty (the dead-space rule reads children, not the slot)", () => {
+    // A declared slot is always truthy, so `!slotContent` kept an
+    // invisible `.hk-corner-text` box (and the corner's flex margins with
+    // it) for every one of these shapes. The rule now walks the rendered
+    // nodes; each arm below is a shape a host writes by accident.
+    // MUT:corner-dead-space-slot-truthiness (restoring `!slotContent`
+    // renders the box for all of these and this goes red).
+    const emptyShapes: Array<[string, () => unknown]> = [
+      ["empty array", () => []],
+      ["nulls only", () => [null, null]],
+      ["false", () => false],
+      ["empty string", () => ""],
+      ["whitespace only", () => "   "],
+      ["nested null array", () => [null]],
+    ];
+    for (const [label, slot] of emptyShapes) {
+      const c = mount(h(HkCornerText, { items: [] }, { default: slot as never }));
+      expect(c.querySelector(".hk-corner-text"), `slot shape "${label}" must not paint a lane`).toBeNull();
+    }
+  });
+
+  it("keeps the lane for slot children that DO paint (zero and text are content)", () => {
+    // The counterpart arm: the new check must not swallow real content.
+    // MUT:corner-dead-space-overreach (treating numbers as empty or
+    // dropping text nodes hides these lanes).
+    const zero = mount(h(HkCornerText, { items: [] }, { default: () => 0 }));
+    expect(zero.querySelector(".hk-corner-text")?.textContent).toBe("0");
+    const text = mount(h(HkCornerText, { items: [] }, { default: () => "苏ICP备" }));
+    expect(text.querySelector(".hk-corner-text")?.textContent).toBe("苏ICP备");
+    const nested = mount(h(HkCornerText, { items: [] }, { default: () => [[h("i", { class: "deep" }, "x")]] }));
+    expect(nested.querySelector(".hk-corner-text .deep")).not.toBeNull();
+  });
+
   it("as=nav marks a link lane as a labeled landmark; div stays unlabeled", () => {
     const c = mount(h(HkCornerText, { items, as: "nav", ariaLabel: "备案" }));
     const nav = c.querySelector("nav.hk-corner-text")!;

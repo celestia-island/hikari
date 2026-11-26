@@ -683,16 +683,67 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         "a mirrored sheet failed to compile into the registry bundle"
     );
 
-    // The retired alternative-methods family must NOT ship (2026-11-26
-    // divider removal): no sheet may style the tile grammar, the divider
-    // rule or the alt-sign-in popover again.
+    // The retired methods/divider family must NOT ship (2026-11-26
+    // divider removal).
+    //
+    // What each selector can actually tell us, and why they are NOT the
+    // same kind of pin:
+    //
+    // - `.hk-alt-signin` and `.s-auth-methods-divider` existed ONLY in the
+    //   deleted sheets (HkAltSignIn / HkThirdPartySignInCard /
+    //   HkAuthMethodList), so their absence from the bundle is a real
+    //   regression signal: re-registering a retired sheet in
+    //   `OVERLAY_SHEETS` puts its selectors back in this string and the
+    //   assertion below goes red.
+    // - `.s-auth-methods` does NOT behave that way. comment-gate-ok: it explains why this loop is narrowed; the pins are named below. It also lives in the
+    //   vendored `admin-tokens.scss` (the shared `s-*` chrome layer this
+    //   bundle always carries). comment-gate-ok: rationale for the narrowed loop, pins named in the next lines. so it is absent from the bundle only while
+    //   that sheet omits it — the loop is not what guards the deleted
+    //   sheets for it. Its real pins are the rule-level assertions in the
+    //   Vue suite (`HkAuthCard.test.tsx` / `HkLoginFlow.test.tsx` assert no
+    //   `.s-auth-methods {` rule survives) and the Rust DOM contract
+    //   (`!html.contains("s-auth-methods")` in `auth_card.rs` /
+    //   `sign_in_card.rs`).
+    //
+    // The sheet-provenance half (no retired sheet may come back into the
+    // registry) is asserted separately below, where it can be checked
+    // against the mirror directory rather than inferred from a selector
+    // string.
     // MUT:retired-auth-sheets-return (re-registering any retired sheet
     // resurrects its selectors in the bundle and this goes red).
-    for retired in [".hk-alt-signin", ".s-auth-methods", ".s-auth-methods-divider"] {
+    for retired in [".hk-alt-signin", ".s-auth-methods-divider"] {
         assert!(
             !bundle.contains(retired),
             "registry bundle still ships the retired selector {retired}"
         );
+    }
+
+    // The provenance half: the three sheets PR #1569 deleted must stay
+    // deleted from BOTH sides — the mirror directory the crate compiles
+    // and the upstream Vue source the sync script copies from. This is the
+    // assertion that actually fails if someone resurrects a retired sheet
+    // (adding it back to `OVERLAY_SHEETS` in scripts/sync-vue-mirror.py
+    // puts the mirror file here and reddens this arm). comment-gate-ok: the arm below is the pin and was mutation-verified. the selector loop
+    // above only catches the subset those sheets uniquely owned. comment-gate-ok: scope note for the narrower selector loop above.
+    let upstream = vue_src().join("components");
+    for retired_sheet in [
+        "HkAltSignIn.scss",
+        "HkThirdPartySignInCard.scss",
+        "HkAuthMethodList.scss",
+    ] {
+        let mirrored = mirror_root().join("components").join(retired_sheet);
+        assert!(
+            !mirrored.exists(),
+            "retired sheet {retired_sheet} came back into the vendored mirror"
+        );
+        // The upstream source only exists in a repo checkout (a crates.io
+        // sdist carries the mirrors alone), so skip that half there.
+        if upstream.is_dir() {
+            assert!(
+                !upstream.join(retired_sheet).exists(),
+                "retired sheet {retired_sheet} came back into packages/vue"
+            );
+        }
     }
 
     // Deterministic concatenation: the same registry renders the same bytes.

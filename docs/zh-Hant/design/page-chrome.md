@@ -59,7 +59,13 @@ value 契約，`?tab=` 深鏈跨斷點不受影響。`HkAdaptiveTabs` 是預設�
 - 預設 chrome 弱墨（`text-2xs` + 0.6 不透明度）；`muted: false` 恢復全墨。
 - 一個角落要多行（識別行 + 備案行）就縱向堆疊多個實例——固定 3rem 狀態帶內
   容得下兩行 text-2xs。
-- 連結條目（備案連結）用 `items` + `as="nav"` + `ariaLabel`；自由內容（狀態
+- `items` 的條目形狀是 `{ key, text, href? }`：`key` 是列表渲染的穩定識別，
+  `text` 是顯示文字（備案號、系統名……），`href` 可省略——省略時渲染成普通的
+  `<span>`，給出則渲染成連結。
+- 帶 `href` 的條目一律在新分頁開啟：`target="_blank"` + `rel="noopener noreferrer"`
+  （與備案號同一契約——外站不得持有登入頁視窗的句柄）。這是元件的行為，宿主
+  不要自己再包一層 `<a>`。
+- 連結條目用 `items` + `as="nav"` + `ariaLabel`；自由內容（狀態
   晶片）走預設插槽，排在 `items` 之後。
 
 宿主不得再手寫 `flex-wrap: nowrap` 的單行擠壓道，也不得讓文字溢出固定高度帶。

@@ -81,6 +81,15 @@ un coin.
 - Plusieurs lignes dans un coin (ligne d'identité au-dessus de la ligne des
   déclarations) : empiler les instances verticalement — la bande d'état fixe
   de 3rem contient deux lignes text-2xs.
+- Une entrée de `items` est `{ key, text, href? }` : `key` est l'identité stable
+  utilisée par le rendu de liste, `text` est la chaîne affichée (un numéro de
+  déclaration, un nom de système, …) et `href` est facultatif — omis, l'entrée
+  s'affiche comme un simple `<span>` ; fourni, comme un lien.
+- Une entrée avec `href` s'ouvre toujours dans un nouvel onglet : `target="_blank"`
+  plus `rel="noopener noreferrer"` (le même contrat que le numéro de
+  déclaration — un site tiers ne doit jamais détenir de poignée sur la fenêtre de
+  la page de connexion). C'est le comportement du composant : les hôtes ne
+  doivent pas envelopper les entrées dans leur propre `<a>`.
 - Les entrées-liens (déclarations) utilisent `items` + `as="nav"` +
   `ariaLabel` ; le contenu libre (pastille d'état) passe par le slot par
   défaut, après `items`.

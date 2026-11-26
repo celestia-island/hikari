@@ -314,10 +314,12 @@ export default defineComponent({
       cam.zoomByFactor(factor, localPoint(e));
     }
 
-    /** Set once the HOST drives the camera through `expose`. A host that owns
-     *  the framing (`fitOnMount: false`, then its own `fit`/`setCamera`) must
-     *  not be overruled by the late recovery fit below — a deferred re-frame
-     *  would take the camera back after the host's own choice. */
+    /** One-way latch: set by the first call the HOST makes into the camera
+     *  through `expose` (`fit`, `reset`, `zoomIn`, `zoomOut`, `zoomToPercent`).
+     *  Any such call — a single zoom included — means the framing is the
+     *  host's, so the late recovery fit below must not take it back. The
+     *  board's own chrome (the minimap reset) does not trip it: that is the
+     *  component's UI, not a host decision. */
     let hostOwnsCamera = false;
 
     function refreshSize(): void {

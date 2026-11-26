@@ -52,11 +52,11 @@ function scaleOf(transform: string): number {
   return Number(/scale\((-?[\d.]+)\)/.exec(transform)?.[1] ?? 0);
 }
 
-function mountBoard(): { transform: () => string; unmount: () => void } {
+function mountBoard(props: Record<string, unknown> = {}): { transform: () => string; unmount: () => void } {
   const host = document.createElement("div");
   document.body.appendChild(host);
   const app = createApp(defineComponent({
-    setup: () => () => h(HkBoard, { nodes }),
+    setup: () => () => h(HkBoard, { nodes, ...props }),
   }));
   app.mount(host);
   return {
@@ -159,6 +159,26 @@ describe("HkBoard viewport recovery", () => {
     const after = scaleOf(document.body.querySelector<HTMLElement>(".hk-board-world")!.style.transform);
     expect(after).toBeCloseTo(hostChoice, 6);
     app.unmount();
+  });
+
+  it("leaves the camera alone when the host opted out of the mount fit", async () => {
+    // `fitOnMount: false` means "the host frames this board". A late recovery
+    // fit would overrule that opt-out even when the host never touched the
+    // camera itself, so the degenerate→real transition must not re-fit.
+    box.w = 2;
+    box.h = 304;
+    const { transform, unmount } = mountBoard({ fitOnMount: false });
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 30));
+    const atMount = transform();
+
+    box.w = VIEW_W;
+    box.h = VIEW_H;
+    triggerResize();
+    await nextTick();
+    await new Promise((r) => setTimeout(r, 260));
+    expect(transform()).toBe(atMount);
+    unmount();
   });
 
   it("keeps a real mount fit untouched when the first size is already real", async () => {

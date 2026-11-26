@@ -16,10 +16,35 @@ use crate::styled::StyledComponent;
 
 pub struct SidebarComponent;
 
+/// Selection shared with every [`SidebarLeaf`] below a [`Sidebar`].
+///
+/// `SidebarProps::active_id` was accepted but never read: nothing passed it down
+/// and no leaf could report a click, so a sidebar could only be decorative. This
+/// carries both, the way `MenuContext` carries the menu's popover state, so a
+/// consumer writes `Sidebar { active_id, on_select, SidebarLeaf { id } … }` and
+/// gets a working selection without hand-rolling attributes and listeners.
+#[derive(Clone, Default)]
+pub struct SidebarContext {
+    /// The leaf id that is currently selected; `""` means none.
+    pub active_id: String,
+    /// Called with the leaf's `id` when that leaf is clicked.
+    pub on_select: Option<Callback<String>>,
+}
+
+impl SidebarContext {
+    pub fn is_active(&self, id: &str) -> bool {
+        !self.active_id.is_empty() && self.active_id == id
+    }
+}
+
 #[define_props]
 pub struct SidebarProps {
     #[default("".to_string())]
     pub active_id: String,
+
+    /// Called with the clicked leaf's `id`. Leaves below this sidebar report
+    /// through it; see [`SidebarContext`].
+    pub on_select: Option<Callback<String>>,
 
     #[default("".to_string())]
     pub class: String,
@@ -38,6 +63,13 @@ pub fn Sidebar(props: SidebarProps) -> Element {
         .add(SidebarClass::Sidebar)
         .add_raw(&props.class)
         .build();
+
+    let active_id = props.active_id.clone();
+    let on_select = props.on_select.clone();
+    use_context_provider(move || SidebarContext {
+        active_id: active_id.clone(),
+        on_select: on_select.clone(),
+    });
 
     rsx! {
         nav {
@@ -292,8 +324,29 @@ pub fn SidebarLeaf(props: SidebarLeafProps) -> Element {
     let leaf_content_class = SidebarClass::LeafContent.as_class();
     let secondary_class = SidebarClass::ItemSecondary.as_class();
 
+    // Selection comes from the enclosing `Sidebar`; without one a leaf is just
+    // a row, which keeps the component usable on its own.
+    let ctx = use_context::<SidebarContext>().map(|c| c.get().clone());
+    let is_active = ctx
+        .as_ref()
+        .map(|c| c.is_active(&props.id))
+        .unwrap_or(false);
+    let leaf_id = props.id.clone();
+    let active_attr = if is_active { "true" } else { "false" };
+    let handle_click = move |_| {
+        if let Some(cb) = ctx.as_ref().and_then(|c| c.on_select.clone()) {
+            cb.call(leaf_id.clone());
+        }
+    };
+
     rsx! {
-        div { class: leaf_classes, "data-id": props.id,
+        div {
+            class: leaf_classes,
+            "data-id": props.id,
+            "data-active": active_attr,
+            role: "button",
+            tabindex: "0",
+            onclick: handle_click,
 
             div { class: leaf_content_class,
                 {props.children}

@@ -79,6 +79,10 @@ export interface BoardNodeInput {
   kind?: string;
   /** Invisible junction node — routes edges, paints nothing. */
   hidden?: boolean;
+  /** Paint-only node: the shell renders but pointer gestures pass straight
+   *  through to the board. Subgraph cluster frames need this — a frame covers
+   *  its members' surroundings, and it must not swallow the pan drag. */
+  passthrough?: boolean;
   /** Opt in to pointer dragging (world-coord moves + `node-move` events). */
   draggable?: boolean;
   /** Page payload, handed back through the scoped slot. */
@@ -587,7 +591,10 @@ export default defineComponent({
               key={n.id}
               class={[
                 "hk-board-node",
-                { "hk-board-node--draggable": Boolean(n.draggable) },
+                {
+                  "hk-board-node--draggable": Boolean(n.draggable),
+                  "hk-board-node--passthrough": Boolean(n.passthrough),
+                },
                 n.kind ? `hk-board-node--${n.kind}` : undefined,
               ]}
               style={{ left: `${n.x}px`, top: `${n.y}px`, width: `${n.w}px`, height: `${n.h}px` }}

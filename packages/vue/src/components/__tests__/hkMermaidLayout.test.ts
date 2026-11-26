@@ -16,6 +16,181 @@ function overlap(a: { x: number; y: number; w: number; h: number }, b: { x: numb
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 }
 
+describe("subgraph clusters", () => {
+  const CLUSTER = [
+    "flowchart TD",
+    '  C["client"]',
+    '  subgraph G["Gateway"]',
+    '    N0["router"]',
+    '    N1["memory"]',
+    "  end",
+    '  C -->|"call"| G',
+    '  N1 --> T["agent"]',
+  ].join("\n");
+
+  it("emits one frame node per cluster and no subgraph/end member nodes", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse(CLUSTER)!;
+    const model = buildBoardModel(doc, measure);
+    const frames = model.nodes.filter((n) => n.kind === "group");
+    expect(frames).toHaveLength(1);
+    expect(frames[0].id).toBe("g:G");
+    expect(frames[0].data.label).toBe("Gateway");
+    expect(frames[0].passthrough).toBe(true);
+    expect(model.nodes.filter((n) => n.kind === "shape").map((n) => n.id)).toEqual([
+      "n:C",
+      "n:N0",
+      "n:N1",
+      "n:T",
+    ]);
+  });
+
+  it("keeps frames first in paint order and encloses exactly the members", async () => {
+    await mermaidReady;
+    const model = buildBoardModel(wasmMermaidEngine.parse(CLUSTER)!, measure);
+    expect(model.nodes[0].kind).toBe("group");
+    const frame = model.nodes[0];
+    const inside = (id: string): boolean => {
+      const n = model.nodes.find((x) => x.id === id)!;
+      return n.x >= frame.x && n.y >= frame.y && n.x + n.w <= frame.x + frame.w && n.y + n.h <= frame.y + frame.h;
+    };
+    expect(inside("n:N0")).toBe(true);
+    expect(inside("n:N1")).toBe(true);
+    expect(inside("n:C")).toBe(false);
+    expect(inside("n:T")).toBe(false);
+    // The frame never starts above/left of the world origin (it is clipped
+    // by the board viewport otherwise).
+    expect(frame.x).toBeGreaterThanOrEqual(0);
+    expect(frame.y).toBeGreaterThanOrEqual(0);
+  });
+
+  it("routes an edge addressed to the cluster id onto its frame", async () => {
+    await mermaidReady;
+    const model = buildBoardModel(wasmMermaidEngine.parse(CLUSTER)!, measure);
+    const toFrame = model.edges.filter((e) => e.to === "g:G");
+    expect(toFrame).toHaveLength(1);
+    expect(toFrame[0].from).toBe("n:C");
+    expect(toFrame[0].label).toBe("call");
+    // Mermaid attaches the arrow to the cluster's border, so the endpoint
+    // must anchor on the frame's nearest edge (its center hides behind the
+    // members it encloses).
+    expect(toFrame[0].anchorTo).toBe("nearest");
+    // Nothing still points at a bare cluster id node.
+    expect(model.edges.some((e) => e.to === "n:G" || e.from === "n:G")).toBe(false);
+  });
+
+  it("anchors a cluster-as-SOURCE edge on the frame's border too", async () => {
+    await mermaidReady;
+    // The hub fixture has `G --> B` (cluster as the source). Without the
+    // override the edge anchors on the frame's CENTRE, i.e. inside the box
+    // behind its own members; `nearest` clamps the endpoint onto the frame's
+    // border for oblique geometry, the same rule the target side uses.
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  subgraph G["Gateway"]',
+      '    A["a"]',
+      "  end",
+      '  G --> B["b"]',
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const fromFrame = model.edges.filter((e) => e.from === "g:G");
+    expect(fromFrame).toHaveLength(1);
+    expect(fromFrame[0].anchorFrom).toBe("nearest");
+    expect(fromFrame[0].to).toBe("n:B");
+  });
+
+  it("nests an outer frame around the inner frame", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  subgraph Outer["outer"]',
+      '    subgraph Inner["inner"]',
+      '      A["a"]',
+      "    end",
+      '    B["b"]',
+      "  end",
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const frames = model.nodes.filter((n) => n.kind === "group");
+    expect(frames.map((f) => f.id)).toEqual(["g:Outer", "g:Inner"]);
+    const [outer, inner] = frames;
+    expect(inner.x).toBeGreaterThan(outer.x);
+    expect(inner.y).toBeGreaterThan(outer.y);
+    expect(inner.x + inner.w).toBeLessThan(outer.x + outer.w);
+    expect(inner.y + inner.h).toBeLessThan(outer.y + outer.h);
+  });
+
+  it("never lets side-by-side clusters (or a free neighbour) overlap in ANY direction", async () => {
+    await mermaidReady;
+    // TD/BT put siblings side by side; LR/RL stack them, where the frame's
+    // header band (26px) joins the two pads — a direction-blind gap passes TD
+    // and overlaps LR (measured: 14px).
+    for (const direction of ["TD", "BT", "LR", "RL"]) {
+      const doc = wasmMermaidEngine.parse([
+        `flowchart ${direction}`,
+        '  R["root"]',
+        '  subgraph GA["alpha"]',
+        '    A1["a1"]',
+        "  end",
+        '  subgraph GB["beta"]',
+        '    B1["b1"]',
+        "  end",
+        '  R --> A1',
+        '  R --> B1',
+      ].join("\n"))!;
+      const model = buildBoardModel(doc, measure);
+      const rects = model.nodes.map((n) => ({ id: n.id, kind: n.kind, x: n.x, y: n.y, w: n.w, h: n.h }));
+      const frames = rects.filter((r) => r.kind === "group");
+      expect(frames, direction).toHaveLength(2);
+      const [ga, gb] = frames;
+      // Frames must not intersect on EITHER axis in ANY direction.
+      const overlapX = ga.x < gb.x + gb.w && gb.x < ga.x + ga.w;
+      const overlapY = ga.y < gb.y + gb.h && gb.y < ga.y + ga.h;
+      expect(overlapX && overlapY, `${direction}: frames overlap`).toBe(false);
+      // A frame must not swallow a node it does not own.
+      const inside = (f: (typeof frames)[number], n: (typeof rects)[number]): boolean =>
+        n.x >= f.x && n.y >= f.y && n.x + n.w <= f.x + f.w && n.y + n.h <= f.y + f.h;
+      for (const frame of frames) {
+        for (const node of rects.filter((r) => r.kind !== "group")) {
+          const owned = frame.id === "g:GA" ? node.id === "n:A1" : node.id === "n:B1";
+          if (!owned) expect(inside(frame, node), `${direction}: ${frame.id} swallows ${node.id}`).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("keeps every frame inside the non-negative world box the board draws", async () => {
+    await mermaidReady;
+    // A cluster on the TOP rank is the case that would start above y = 0.
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  subgraph G["top cluster"]',
+      '    A["a"]',
+      "  end",
+      '  A --> B["b"]',
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const frame = model.nodes.find((n) => n.kind === "group")!;
+    expect(frame.x).toBeGreaterThanOrEqual(0);
+    expect(frame.y).toBeGreaterThanOrEqual(0);
+    // The edge SVG is anchored at (0,0) with the content box's size: the
+    // model's width/height must cover the frame or its shell gets cut off.
+    expect(model.width).toBeGreaterThan(frame.x + frame.w);
+    expect(model.height).toBeGreaterThan(frame.y + frame.h);
+    // The component's visible height comes from suggestedHeight; it must be
+    // derived from the framed height, not the pre-frame one.
+    expect(model.suggestedHeight).toBeGreaterThanOrEqual(Math.min(frame.y + frame.h + 24, 540));
+  });
+
+  it("plain graphs carry no frames (the field is absent, not empty)", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse("graph TD\nA --> B")!;
+    expect("groups" in doc).toBe(false);
+    const model = buildBoardModel(doc, measure);
+    expect(model.nodes.every((n) => n.kind !== "group")).toBe(true);
+  });
+});
+
 describe("layoutGraph", () => {
   const items = [
     { id: "A", w: 80, h: 40, order: 0 },

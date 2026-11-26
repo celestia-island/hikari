@@ -5,8 +5,13 @@
  * This is a faithful TS mirror of `ratatui-markdown`'s `mermaid/types.rs`
  * (the family's pest-driven Rust parser, v0.3.6). The Rust side stays the
  * semantic reference: when a syntax question arises, ratatui-markdown's
- * grammar wins, and the golden fixtures in `__tests__/hkMermaidParse.test.ts`
- * exist to keep the two implementations honest.
+ * grammar wins, and the golden fixtures in `__golden.test.ts` exist to keep
+ * the two implementations honest.
+ *
+ * Two fields are hikari-line EXTENSIONS over that vendor shape (see
+ * `packages/wasm/mermaid/src/mermaid/mod.rs`): `MermaidGroup`/`groups` for
+ * `subgraph … end` clusters, and the quote-stripped labels the shipped
+ * renderers paint.
  *
  * Framework-free on purpose: no Vue imports, safe in pure computation
  * modules (same rule as components/nodeCanvasTypes.ts).
@@ -36,6 +41,24 @@ export interface MermaidEdge {
   edgeType: MermaidEdgeType;
 }
 
+/**
+ * A `subgraph` cluster — the frame drawn around its members. The Rust
+ * component omits the field entirely for a plain graph, so pre-cluster
+ * documents keep their exact JSON.
+ */
+export interface MermaidGroup {
+  /** Subgraph id — the head's identifier, or a generated `_sg<N>`. Edges may
+   *  point at it exactly like a node id. */
+  id: string;
+  /** Caption painted on the frame. */
+  label: string;
+  /** Node ids inside the cluster, parse order. A nested cluster's nodes also
+   *  appear here, so the outer frame encloses the inner one. */
+  members: string[];
+  /** Enclosing cluster id for a nested subgraph. */
+  parent?: string | null;
+}
+
 // ── Flowchart & state (both lay out as node-edge graphs) ─────────────
 
 export interface MermaidGraphDoc {
@@ -46,6 +69,9 @@ export interface MermaidGraphDoc {
   direction: MermaidDirection;
   nodes: MermaidNode[];
   edges: MermaidEdge[];
+  /** `subgraph` clusters, outer-first in parse order (absent for a plain
+   * graph — the Rust serializer omits an empty list). */
+  groups?: MermaidGroup[];
 }
 
 // ── Sequence ─────────────────────────────────────────────────────────

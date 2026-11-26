@@ -123,6 +123,14 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
         </div>
       );
     }
+    case "group":
+      // Subgraph cluster frame: a paint-only shell behind its members. The
+      // board marks passthrough nodes so the frame never eats a pan drag.
+      return (
+        <div class="hk-mmd-group">
+          <span class="hk-mmd-group__label">{data.label}</span>
+        </div>
+      );
     case "section":
       return <div class={{ "hk-mmd-section": true, "hk-mmd-section--subtle": Boolean(data.subtle), "hk-mmd-section--header": Boolean(data.header) }}>{data.label}</div>;
     case "task":
@@ -293,6 +301,7 @@ export default defineComponent({
         w: n.w,
         h: n.h,
         hidden: n.hidden,
+        passthrough: n.passthrough,
         kind: n.kind,
         data: n.data,
       })),
@@ -304,6 +313,8 @@ export default defineComponent({
         from: e.from,
         to: e.to,
         style: e.style,
+        anchorFrom: e.anchorFrom,
+        anchorTo: e.anchorTo,
         dashed: e.dashed,
         arrow: e.arrow,
         label: e.label ?? undefined,

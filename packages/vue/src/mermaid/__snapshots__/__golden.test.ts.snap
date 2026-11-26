@@ -75,6 +75,49 @@ exports[`mermaid golden snapshots (wasm is the reference) > mermaid: flowchart-s
 }
 `;
 
+exports[`mermaid golden snapshots (wasm is the reference) > mermaid: flowchart-subgraph 1`] = `
+{
+  "direction": "TD",
+  "edges": [
+    {
+      "edgeType": "arrow",
+      "label": "call",
+      "source": "C",
+      "target": "G",
+    },
+  ],
+  "groups": [
+    {
+      "id": "G",
+      "label": "Gateway",
+      "members": [
+        "N0",
+        "N1",
+      ],
+    },
+  ],
+  "kind": "graph",
+  "nodes": [
+    {
+      "id": "C",
+      "label": "client",
+      "shape": "rect",
+    },
+    {
+      "id": "N0",
+      "label": "router",
+      "shape": "rect",
+    },
+    {
+      "id": "N1",
+      "label": "memory",
+      "shape": "rect",
+    },
+  ],
+  "variant": "flowchart",
+}
+`;
+
 exports[`mermaid golden snapshots (wasm is the reference) > mermaid: gantt-basic 1`] = `
 {
   "kind": "gantt",

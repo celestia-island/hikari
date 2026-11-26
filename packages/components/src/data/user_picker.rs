@@ -46,18 +46,21 @@
 //       span.hk-user-picker-add [.is-placeholder?]     (the add hint)
 //   ── the surface (ONLY while open; desktop popout branch) ──
 //   div.hk-select-popout-host [data-side] [data-align] [style=geometry]
-//     div.hk-select-popout [aria-label] [style=cap] [onkeydown]
-//       div.hk-user-picker-panel
-//         div.hk-user-picker-search [role=search]
-//           {mirrored SearchInput}                      (the query box)
-//         div.hk-user-picker-rows [role=listbox] [aria-multiselectable?]
-//             [aria-label] [data-state=loading|failed|empty|ready]
-//           p.hk-user-picker-note?        (Searching… / the standing hint)
-//           button.hk-user-picker-retry?  (failed; click = re-run the query)
-//           div.hk-user-picker-row [role=option] [aria-selected]
-//               [data-checked?] [.is-selected] [data-kind=group?]
-//               (per hit; kind=group renders a leading
-//                div.hk-icon.hk-user-picker-row-kind glyph — MDI
+//     div.hk-select-popout.is-pinned-header [aria-label] [style=cap] [onkeydown]
+//       div.hk-select-popout-pinned              ← the PINNED search head
+//         div.hk-user-picker-search [role=search] [.is-trigger-anchor]
+//           {mirrored SearchInput}                    (the query box)
+//       div.hk-select-popout-body-host
+//         div.hk-select-popout-body            ← THE scroll region
+//           div.hk-user-picker-panel [.is-trigger-anchor]
+//             div.hk-user-picker-rows [role=listbox] [aria-multiselectable?]
+//                 [aria-label] [data-state=loading|failed|empty|ready]
+//               p.hk-user-picker-note?        (Searching… / the standing hint)
+//               button.hk-user-picker-retry?  (failed; click = re-run the query)
+//               div.hk-user-picker-row [role=option] [aria-selected]
+//                   [data-checked?] [.is-selected] [data-kind=group?]
+//                   (per hit; kind=group renders a leading
+//                    div.hk-icon.hk-user-picker-row-kind glyph — MDI
 //                account-group, the packed twin of Vue's lucide
 //                UsersRound — before the name column)
 //             span.hk-user-picker-row-main
@@ -73,15 +76,25 @@
 //   ── the surface (mobile sheet branch) ──
 //   div.hk-select-sheet-scrim                       (click closes)
 //   div.hk-select-sheet-panel [role=dialog] [aria-modal] [aria-label]
-//       [tabindex=-1] [onkeydown]
+//       [tabindex=-1] [onkeydown]                   (NO inline style)
 //     div.hk-select-sheet-grabber aria-hidden=true  (click closes)
 //     div.hk-select-sheet-header
 //       div.hk-select-sheet-title {title}?          (only when titled)
 //       button.hk-icon-button… .hk-window-close.hk-select-sheet-close
 //           [aria-label="Close"]                    (the shared ✕)
+//     div.hk-select-sheet-pinned                    ← the PINNED search head
+//       div.hk-user-picker-search [role=search] [.is-trigger-anchor]
 //     div.hk-select-sheet-body
-//       div.hk-select-sheet-list [style=cap]
+//       div.hk-select-sheet-list                    (NO cap style)
 //         div.hk-select-sheet-content > the panel div above
+//
+// TWO CONTENT BANDS, and the search is PINNED chrome (2026-11-27 user
+// direction): the query box rides HkSelectPanel's `pinnedHeader` band —
+// outside the scroll region on both form factors — so a long result list
+// scrolls under it instead of taking it along (the phone report). The panel
+// div (rows + multi footer) is the scrolling content. `maxHeight` is a
+// DESKTOP POPOUT measure: the sheet's list band publishes no cap, so the
+// sheet hugs its content up to the stylesheet's family ceiling.
 //
 // STATE CONTRACT (the crate's zero-signal rule): Vue owns the panel's
 // whole session in refs — `open`, `query`, `results`, `loading`, `failed`,
@@ -137,7 +150,8 @@
 //     [`select_panel_popout_style`] places the popout (with a measured
 //     anchor rect it IS Vue's `positionPanel`; without one it pins to the
 //     picker root's `position:relative` box), [`select_panel_cap_style`]
-//     lands the max-height hook, [`select_panel_branch`] decides the form
+//     lands the max-height hook ON THE POPOUT (a desktop measure — the sheet
+//     never reads it), [`select_panel_branch`] decides the form
 //     factor and [`step_highlight`] walks the keyboard cursor.
 //   * The × glyph and the row check are TEXT ("×" / "✓") exactly like
 //     Vue's — no SVG involved.
@@ -523,8 +537,9 @@ pub struct UserPickerProps {
     #[default(4.0)]
     pub offset: f64,
 
-    /// Cap for the scrolling surface (Vue: `maxHeight`, default
-    /// `min(22rem, 50dvh)`).
+    /// Cap for the DESKTOP POPOUT (Vue: `maxHeight`, default
+    /// `min(22rem, 50dvh)`). The mobile sheet ignores it — its list band
+    /// carries no inline style.
     pub max_height: Option<String>,
 
     /// The field was activated (click / Enter / Space): the host opens the
@@ -822,14 +837,11 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         rows = rows.child(VNode::Element(Box::new(row)));
     }
 
-    // The panel body: search lane + rows band + the multi footer.
+    // The panel body — the SCROLLING content (the query box is pinned above
+    // it, in HkSelectPanel's `pinnedHeader` band): rows band + multi footer.
+    // No `.is-trigger-anchor` here: the mirror keeps the FIELD form only (see
+    // the form delta), and that class is the trigger presentation's measure.
     let mut panel = VElement::new("div").class("hk-user-picker-panel");
-    panel = panel.child(VNode::Element(Box::new(
-        VElement::new("div")
-            .class("hk-user-picker-search")
-            .attr("role", "search")
-            .child(search),
-    )));
     panel = panel.child(VNode::Element(Box::new(rows)));
     if props.mode == UserPickerMode::Multi {
         let mut footer = VElement::new("div").class("hk-user-picker-footer");
@@ -922,6 +934,14 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
         .as_deref(),
     );
     let panel_node = VNode::Element(Box::new(panel));
+    // The pinned search head (Vue: HkSelectPanel's `pinnedHeader` slot) —
+    // rendered OUTSIDE the scroll region on both form factors.
+    let pinned_node = VNode::Element(Box::new(
+        VElement::new("div")
+            .class("hk-user-picker-search")
+            .attr("role", "search")
+            .child(search),
+    ));
 
     let layer: Option<VNode> = if open {
         match branch {
@@ -975,10 +995,13 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
                             }
                         }
                         div {
+                            class: "hk-select-sheet-pinned",
+                            {pinned_node}
+                        }
+                        div {
                             class: "hk-select-sheet-body",
                             div {
                                 class: "hk-select-sheet-list",
-                                style: cap_style.clone(),
                                 div { class: "hk-select-sheet-content",
                                     {panel_node}
                                 }
@@ -1005,11 +1028,19 @@ pub fn UserPicker(props: UserPickerProps) -> Element {
                         "data-align": align.token(),
                         style: geometry,
                         div {
-                            class: "hk-select-popout",
+                            class: "hk-select-popout is-pinned-header",
                             "aria-label": aria_label,
                             style: cap_style.clone(),
                             onkeydown: panel_keydown,
-                            {panel_node}
+                            div { class: "hk-select-popout-pinned",
+                                {pinned_node}
+                            }
+                            div {
+                                class: "hk-select-popout-body-host",
+                                div { class: "hk-select-popout-body",
+                                    {panel_node}
+                                }
+                            }
                         }
                     }
                 })
@@ -1354,19 +1385,25 @@ mod tests {
 
         for needle in [
             r#"class="hk-select-popout-host""#,
-            r#"class="hk-select-popout""#,
+            // The pinned-header column (the search head sits outside the
+            // scroll region — 2026-11-27) …
+            r#"class="hk-select-popout is-pinned-header""#,
             r#"aria-label="Select users""#,
             // The anchored geometry IS Vue's positionPanel output: the
             // field rect + the 4px offset, width tied to the anchor.
             "left:12px",
             "top:78px",
             "min-width:320px",
-            // The panel body and its two lanes.
-            r#"class="hk-user-picker-panel""#,
+            // … with the search in the PINNED band and the rows in the body.
+            r#"class="hk-select-popout-pinned""#,
             r#"class="hk-user-picker-search""#,
             r#"role="search""#,
             "hk-search-input",
             r#"placeholder="Nickname, username or email""#,
+            r#"class="hk-select-popout-body-host""#,
+            r#"class="hk-select-popout-body""#,
+            // The panel body (rows + footer; the search moved OUT of it).
+            r#"class="hk-user-picker-panel""#,
             r#"class="hk-user-picker-rows""#,
             r#"role="listbox""#,
             r#"data-state="empty""#,

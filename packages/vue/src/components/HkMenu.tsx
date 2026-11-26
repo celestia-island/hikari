@@ -48,6 +48,18 @@ import "./HkMenu.scss";
  * Data-driven mode (`items`) and composition mode (default slot) are
  * mutually exclusive per instance: when a default slot is provided its
  * content replaces the item model entirely (no cascade).
+ *
+ * Two head slots on the root level (popup variant):
+ *   - `header` — a scrolling band ABOVE the rows, inside the panel's scroll
+ *     region (section labels, identity cards): it travels with the list.
+ *   - `pinnedHeader` — PINNED chrome that must not travel: a live-filter
+ *     search field, first of all. Forwarded to HkSelectPanel's own
+ *     `pinnedHeader` slot, which renders it outside the scroll region on
+ *     both form factors (a band under the sheet's title row / the
+ *     non-shrinking head of the popout column). Composition pickers
+ *     (HkAffixPicker) put their search here so a long catalog scrolls
+ *     under the field instead of taking it along (2026-11-27 user report).
+ * Cascade levels and mobile sub-sheets carry neither.
  */
 
 export interface HkMenuItem {
@@ -677,6 +689,20 @@ export default defineComponent({
       );
     }
 
+    /** Slots for the ROOT panel (desktop popout and mobile sheet alike):
+     *  the level's surface in the scrolling default slot, plus the
+     *  consumer's `pinnedHeader` — forwarded only when the consumer passed
+     *  one, so every other menu renders the exact pre-slot panel DOM. The
+     *  band is root-only: cascade levels and mobile sub-sheets never see
+     *  the host's filter field. */
+    function rootLevelSlots() {
+      const pinned = slots.pinnedHeader;
+      return {
+        default: () => levelSurface(0, props.items),
+        ...(pinned ? { pinnedHeader: () => pinned() } : {}),
+      };
+    }
+
     // ── desktop popouts ──────────────────────────────────────────────
     function renderPanels(): VNode[] {
       const cfg = rootPanelConfig.value;
@@ -697,7 +723,7 @@ export default defineComponent({
             panelInsts.value[0] = inst as PanelInstance | null;
           }}
         >
-          {levelSurface(0, props.items)}
+          {rootLevelSlots()}
         </HkSelectPanel>,
       ];
       if (!slots.default) {
@@ -747,7 +773,7 @@ export default defineComponent({
             panelInsts.value[0] = inst as PanelInstance | null;
           }}
         >
-          {levelSurface(0, props.items)}
+          {rootLevelSlots()}
         </HkSelectPanel>,
       ];
       mobileStack.value.forEach((entry, i) => {

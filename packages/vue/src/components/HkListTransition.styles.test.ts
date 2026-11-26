@@ -29,9 +29,11 @@ const css = compile(join(here, "HkListTransition.scss"), {
   style: "expanded",
 }).css;
 
-/** Body of the first top-level `selector { … }` block. */
+/** Body of the first top-level `selector { … }` block — a selector LIST
+ *  (`.a,\n.b,\n.c {`) matches on any of its members. */
 function rule(cssText: string, selector: string): string {
-  const start = cssText.indexOf(`${selector} {`);
+  let start = cssText.indexOf(`${selector} {`);
+  if (start === -1) start = cssText.indexOf(`${selector},`);
   if (start === -1) return "";
   const open = cssText.indexOf("{", start);
   let depth = 0;
@@ -81,5 +83,64 @@ describe("HkListTransition pop variant", () => {
         `.hk-list-${variant}-leave-active`,
       );
     }
+  });
+});
+
+/** The family's duration contract (2026-11-27 user direction): one default
+ *  for every list-shaped surface — move `--hk-list-duration` (0.3s), enter /
+ *  leave half of it (0.15s), all three starting together — and every track
+ *  winning the cascade over the item sheets' own `transition`s. */
+describe("HkListTransition duration contract", () => {
+  const HALF = "var(--duration-short, 0.15s)";
+
+  it("every move track runs on --hk-list-duration", () => {
+    for (const variant of ["pop", "slide", "fade", "grow", "reveal", "surface"]) {
+      const move = rule(css, `.hk-list-${variant}-move`);
+      expect(move, `${variant} move rule compiles`).not.toBe("");
+      expect(move, `${variant} move duration`).toContain("var(--hk-list-duration, var(--duration-normal, 0.3s))");
+    }
+  });
+
+  it("enter and leave tracks default to half the move", () => {
+    for (const variant of ["pop", "slide", "fade", "grow", "reveal"]) {
+      expect(rule(css, `.hk-list-${variant}-enter-active`), `${variant} enter`).toContain(
+        `var(--hk-list-enter-duration, ${HALF})`,
+      );
+      expect(rule(css, `.hk-list-${variant}-leave-active`), `${variant} leave`).toContain(
+        `var(--hk-list-leave-duration, ${HALF})`,
+      );
+    }
+  });
+
+  it("every track is !important so an item sheet's own transition cannot swallow it", () => {
+    // Items carry their own transitions (the menu-item grammar's 0.12s hover
+    // faces) at the same specificity and later in the bundle; a non-important
+    // track lost that cascade and the FLIP silently snapped.
+    const tracks = [
+      ".hk-list-pop-move", ".hk-list-slide-move", ".hk-list-fade-move", ".hk-list-grow-move",
+      ".hk-list-reveal-move", ".hk-list-surface-move",
+      ".hk-list-pop-enter-active", ".hk-list-pop-leave-active",
+      ".hk-list-slide-enter-active", ".hk-list-slide-leave-active",
+      ".hk-list-fade-enter-active", ".hk-list-fade-leave-active",
+      ".hk-list-grow-enter-active", ".hk-list-grow-leave-active",
+      ".hk-list-reveal-enter-active", ".hk-list-reveal-leave-active",
+      ".hk-list-surface-enter-active", ".hk-list-surface-leave-active",
+    ];
+    for (const sel of tracks) {
+      const body = rule(css, sel);
+      expect(body, `${sel} compiles`).not.toBe("");
+      const decls = body
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .split(";")
+        .map((d) => d.trim())
+        .filter((d) => /^transition/.test(d));
+      expect(decls.length, `${sel} declares a transition`).toBeGreaterThan(0);
+      for (const d of decls) expect(d, `${sel} → ${d}`).toMatch(/!important\s*$/);
+    }
+  });
+
+  it("surface keeps the window family's own enter/leave timings (the documented exception)", () => {
+    expect(rule(css, ".hk-list-surface-enter-active")).toContain("var(--duration-normal, 0.3s)");
+    expect(rule(css, ".hk-list-surface-leave-active")).toContain("var(--duration-short, 0.15s)");
   });
 });

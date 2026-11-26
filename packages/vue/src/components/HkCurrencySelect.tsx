@@ -439,32 +439,38 @@ export default defineComponent({
       );
     }
 
+    /* PINNED search head (2026-11-27 user direction): the filter is
+     * chrome, not content — it rides HkSelectPanel's `pinnedHeader` slot,
+     * outside the scroll region on both form factors, so a long currency
+     * list scrolls under it. Nothing renders when `searchable` is off. */
+    const pinnedSearch = () =>
+      props.searchable ? (
+        <div class="hk-currency-select-search-row">
+          <Search size={14} class="hk-currency-select-search-icon" aria-hidden="true" />
+          <input
+            ref={searchRef}
+            class="hk-currency-select-search"
+            type="text"
+            autocomplete="off"
+            spellcheck={false}
+            value={query.value}
+            placeholder={searchPlaceholder.value}
+            aria-label={searchPlaceholder.value}
+            // APG combobox: the FOCUSED element names the active option.
+            role="combobox"
+            aria-autocomplete="list"
+            aria-controls={listboxId}
+            aria-expanded={open.value ? "true" : "false"}
+            aria-activedescendant={activeDescendant.value}
+            onInput={(event: Event) => {
+              query.value = (event.target as HTMLInputElement).value;
+            }}
+          />
+        </div>
+      ) : null;
+
     const panelContent = () => (
       <div class="hk-currency-select-panel">
-        {props.searchable && (
-          <div class="hk-currency-select-search-row">
-            <Search size={14} class="hk-currency-select-search-icon" aria-hidden="true" />
-            <input
-              ref={searchRef}
-              class="hk-currency-select-search"
-              type="text"
-              autocomplete="off"
-              spellcheck={false}
-              value={query.value}
-              placeholder={searchPlaceholder.value}
-              aria-label={searchPlaceholder.value}
-              // APG combobox: the FOCUSED element names the active option.
-              role="combobox"
-              aria-autocomplete="list"
-              aria-controls={listboxId}
-              aria-expanded={open.value ? "true" : "false"}
-              aria-activedescendant={activeDescendant.value}
-              onInput={(event: Event) => {
-                query.value = (event.target as HTMLInputElement).value;
-              }}
-            />
-          </div>
-        )}
         {flat.value.length === 0 ? (
           <div class="hk-currency-select-empty" role="status">
             {emptyText.value}
@@ -555,7 +561,12 @@ export default defineComponent({
           offset={4}
           onKeydown={onPanelKeydown}
         >
-          {panelContent()}
+          {{
+            // An empty pinned band would still cost its padding — forward
+            // the slot only when there is a search field to pin.
+            ...(props.searchable ? { pinnedHeader: pinnedSearch } : {}),
+            default: panelContent,
+          }}
         </HkSelectPanel>
         {props.error ? (
           <p class="hk-currency-select-error" id={errorId} role="alert">

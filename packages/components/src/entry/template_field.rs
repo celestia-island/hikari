@@ -40,6 +40,8 @@
 //     div.hk-select-popout-host data-side="bottom" data-align="start" [style]
 //       div.hk-select-popout [aria-label]
 //           style="--hk-select-panel-max-height:min(18rem, 45dvh)"
+//         (NO pinned header — the filter is the field itself, so both form
+//          factors render the header-less popout shape)
 //         div#{panelRowsId}.hk-tpl-rows                    (rows present)
 //           div.hk-tpl-group role="group" aria-label={label}   (grouped run)
 //             div.hk-tpl-group-label aria-hidden="true" {label}
@@ -603,7 +605,9 @@ pub fn template_field_panel_style(anchor: Option<PopoverAnchorRect>, offset: f64
     }
 }
 
-/// Vue's `maxHeight="min(18rem, 45dvh)"` — the panel's one scroll cap.
+/// Vue's `maxHeight="min(18rem, 45dvh)"` — the panel's one scroll cap, published
+/// on the DESKTOP POPOUT (the `--hk-select-panel-max-height` hook HkSelect.scss
+/// reads there; the mobile sheet ignores it and would carry no cap style).
 pub const TEMPLATE_FIELD_PANEL_MAX_HEIGHT: &str = "min(18rem, 45dvh)";
 
 /// Vue: `t("hikari::templateField.suggestTitle", "Placeholders")` — the

@@ -1927,10 +1927,13 @@ describe("HkTagInput panel geometry and drag reordering", () => {
 
     // A two-row visible band (80px) over the five-row strip: the last row is
     // only reachable by scrolling the surface — no new scroll region, the
-    // popout that already owns the one scrollbar.
+    // popout BODY that owns the one scrollbar (the pinned search head sits
+    // above it, outside the scroll region).
     const popout = document.querySelector<HTMLElement>(".hk-select-popout")!;
     expect(popout).toBeTruthy();
-    pinScrollBand(popout, 80, selected);
+    const surface = popout.querySelector<HTMLElement>(".hk-select-popout-body");
+    expect(surface, "the pinned-head popout scrolls its body").toBeTruthy();
+    pinScrollBand(surface!, 80, selected);
 
     // Press the first row and hold near the bottom edge.
     holdPointer({ x: 10, y: 10 }, { x: 10, y: 78 }, grip(selected[0]));
@@ -1939,8 +1942,8 @@ describe("HkTagInput panel geometry and drag reordering", () => {
       rowByLabel("中华人民共和国"),
     );
 
-    for (let i = 0; i < 40 && popout.scrollTop < 120; i += 1) await frames(1);
-    expect(popout.scrollTop, "the surface is pulled along").toBeGreaterThanOrEqual(120);
+    for (let i = 0; i < 40 && surface!.scrollTop < 120; i += 1) await frames(1);
+    expect(surface!.scrollTop, "the surface is pulled along").toBeGreaterThanOrEqual(120);
     expect(dropRow(), "the slot follows the scrolled content").toBe(
       rowByLabel("Retired"),
     );
@@ -2137,7 +2140,7 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     for (const row of rows()) expect(row.parentElement).toBe(list);
   });
 
-  it("caps the mobile sheet too — on the band that scrolls", async () => {
+  it("does NOT cap the mobile sheet — the popout measure stays a popout measure", async () => {
     const original = window.innerWidth;
     Object.defineProperty(window, "innerWidth", {
       configurable: true,
@@ -2147,14 +2150,21 @@ describe("HkTagInput panel geometry and drag reordering", () => {
     try {
       const { container } = mountTagInput({ modelValue: ["news"] });
       await openPanel(container);
-      // Phone width: the sheet replaces the popout, and the same cap lands
-      // on the sheet's scrolling list (the surface the user actually drags).
+      // Phone width: the sheet replaces the popout — and the popout measure
+      // (`min(18rem, 45dvh)`) must NOT reach the sheet: that cap squashed
+      // every picker sheet to under half the phone (2026-11-27 user
+      // report). The sheet hugs its content up to the family ceiling (80%
+      // of the viewport, HkSelect.scss) and publishes no hook at all.
       expect(document.querySelector(".hk-select-popout-host")).toBeNull();
       const list = document.querySelector<HTMLElement>(".hk-select-sheet-list");
       expect(list, "the sheet list renders").toBeTruthy();
-      expect(list!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(
-        "min(18rem, 45dvh)",
-      );
+      expect(list!.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+      expect(list!.hasAttribute("style"), "no inline style on the band").toBe(false);
+      const panel = document.querySelector<HTMLElement>(".hk-select-sheet-panel")!;
+      expect(panel.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+      // The search head is pinned OUTSIDE the scrolling list band.
+      expect(document.querySelector(".hk-select-sheet-pinned .hk-tag-input-search")).toBeTruthy();
+      expect(list!.querySelector(".hk-tag-input-search")).toBeNull();
     } finally {
       Object.defineProperty(window, "innerWidth", {
         configurable: true,

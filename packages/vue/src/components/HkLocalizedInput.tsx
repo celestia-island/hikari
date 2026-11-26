@@ -301,6 +301,11 @@ export const HkLocalizedInput = defineComponent({
                 <HkAffixPicker
                   options={affixOptions.value}
                   mode="multi"
+                  // The value-editor layout: the selected languages are the
+                  // TAG LIST (one tag per language, showing its typed
+                  // translation), not checked rows — the regular picker
+                  // layout (2026-11-27 user direction) is `rows`.
+                  layout="tags"
                   side="suffix"
                   selected={selectedCodes.value}
                   activeKey={editLang.value}

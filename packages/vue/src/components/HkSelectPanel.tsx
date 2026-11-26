@@ -65,6 +65,20 @@ import { ensureOverlayRoot } from "../overlay/overlayRoot";
  * (`.hk-sheet-dup-title`) — the sheet header already names the sheet, and
  * composition-slot consumers (HkMenu pickers) often carry a section label
  * with the same word. Desktop popouts draw no header and keep the heading.
+ *
+ * TWO content bands: `default` SCROLLS, `pinnedHeader` does not. The
+ * default slot is the surface's one scroll region (the desktop popout's
+ * body / the mobile sheet's list). The `pinnedHeader` slot is chrome that
+ * must stay reachable while that region scrolls — a live-filter search
+ * field above a long catalog, first of all — and renders OUTSIDE the scroll
+ * region on both form factors: a band under the sheet's title row, and a
+ * non-shrinking head of the popout column whose body hosts the scrollbar.
+ * It used to be that every picker (HkAffixPicker, HkTagInput, HkUserPicker,
+ * HkCurrencySelect) painted its search field INSIDE the scrolling content,
+ * so the first swipe down scrolled the filter off the sheet (2026-11-27
+ * user report, phone). A consumer that passes no `pinnedHeader` renders
+ * exactly the pre-slot DOM: the popout scrolls as one box, as it always
+ * did.
  */
 
 /**
@@ -126,13 +140,12 @@ export default defineComponent({
     offset: { type: Number, default: 4 },
     /** Popout min-width follows the anchor width (select parity). */
     matchAnchorWidth: { type: Boolean, default: true },
-    /** Cap for the surface that scrolls — the desktop popout or the
-     *  mobile sheet's list band — as ANY CSS length (`min(18rem, 45dvh)`,
+    /** Cap for the DESKTOP POPOUT — as ANY CSS length (`min(18rem, 45dvh)`,
      *  `24rem`, `calc(50vh - 3rem)`).
      *
-     *  Undefined (the default) keeps the stylesheet's own ceilings, so
+     *  Undefined (the default) keeps the stylesheet's own ceiling, so
      *  every existing consumer is untouched; a consumer whose content
-     *  should scroll instead of stretching the panel to the viewport sets
+     *  should scroll instead of stretching the popout to the viewport sets
      *  it, and the panel's ONE scrollbar (never a second region) does the
      *  rest. Applied through the `--hk-select-panel-max-height` hook
      *  HkSelect.scss reads, inside its `@supports (height: 1dvh)` branch —
@@ -141,7 +154,15 @@ export default defineComponent({
      *  A MALFORMED value (a typo, a bare number) is likewise not sanitized:
      *  the substituted declaration becomes invalid at computed-value time
      *  and resolves to `max-height: none`, i.e. the surface is UNCAPPED —
-     *  the type gate is a CSS length, the value gate is the consumer's. */
+     *  the type gate is a CSS length, the value gate is the consumer's.
+     *
+     *  The MOBILE SHEET ignores it (2026-11-27 user direction): a sheet
+     *  hugs its content up to the family ceiling of 80% of the viewport,
+     *  whatever a consumer tuned for the anchored popout. The same
+     *  `min(18rem, 45dvh)` that keeps a desktop catalog compact used to
+     *  land on the sheet's list band too and squashed every picker sheet
+     *  to under half the phone screen — the cap is a popout measure, and
+     *  on the phone the content decides. */
     maxHeight: { type: String, default: undefined },
     /** Dock as a bottom sheet on phone-width viewports. */
     sheetOnMobile: { type: Boolean, default: true },
@@ -192,6 +213,14 @@ export default defineComponent({
      *  regardless of scroll — the sheet size morph measures this (see
      *  useSizeMorph). */
     const sheetContentRef = ref<HTMLElement>();
+    /** Desktop popout with a `pinnedHeader`: the BODY is the scroll
+     *  viewport (the panel itself no longer scrolls) and its dedicated
+     *  wrapper is the overlay rail's host — the track contract requires a
+     *  box wrapping exactly the viewport (see OverlayScrollbarOptions.host),
+     *  and the panel now also holds the pinned band above the body. Both
+     *  probes read null on every other shape (no pinned header / sheet). */
+    const popoutBodyRef = ref<HTMLElement>();
+    const popoutBodyHostRef = ref<HTMLElement>();
     // Content-driven size morphing on the mobile sheet: the panel follows
     // content growth (a language list gaining rows, filtered options)
     // with the height transition instead of snapping.
@@ -381,17 +410,25 @@ export default defineComponent({
     const sheetBodyRef = ref<HTMLElement>();
     const coords = ref<{ top?: string; left?: string; minWidth?: string }>({});
 
-    /** Host-tunable surface cap (the `maxHeight` prop): published as the
-     *  custom property HkSelect.scss reads on whichever element scrolls,
-     *  so the stylesheet keeps today's ceiling as its fallback and a
-     *  consumer that passes nothing renders exactly as before. */
+    /** Host-tunable popout cap (the `maxHeight` prop): published as the
+     *  custom property HkSelect.scss reads on the DESKTOP POPOUT only, so
+     *  the stylesheet keeps today's ceiling as its fallback and a consumer
+     *  that passes nothing renders exactly as before. The mobile sheet
+     *  never reads it (see the prop doc): its list band is bounded by the
+     *  panel's family ceiling alone. */
     const surfaceCap = computed<Record<string, string> | undefined>(() =>
       props.maxHeight ? { "--hk-select-panel-max-height": props.maxHeight } : undefined,
     );
+    /** Whether this render carries a pinned band — the slot's presence,
+     *  read fresh every time: a parent may forward the slot conditionally
+     *  (HkCurrencySelect pins a search only while `searchable`), and a
+     *  dynamic-slots parent re-renders this panel when that flips. */
+    const hasPinnedHeader = () => typeof slots.pinnedHeader === "function";
 
     // ── overlay scrollbar (shared chrome) ─────────────────────────
     // Attached per open on whichever surface scrolls — the desktop
-    // popout or the mobile sheet list — and detached on close/unmount
+    // popout (the panel itself, or its BODY when a pinned header sits
+    // above it), or the mobile sheet list — and detached on close/unmount
     // so nothing leaks across the panel's lifetime (the sheet Teleport
     // stays mounted through its leave transition).
     let panelScrollbar: OverlayScrollbarHandle | null = null;
@@ -403,14 +440,28 @@ export default defineComponent({
 
     function attachPanelScrollbar(): void {
       detachPanelScrollbar();
-      const viewport = sheetMode.value ? sheetListRef.value : panelRef.value;
+      // Pinned-header popout: the body scrolls and its dedicated wrapper
+      // hosts the rail (a host must wrap exactly its viewport — the
+      // panel no longer does, the pinned band lives in it too). Every
+      // other popout scrolls as one box inside the fixed host, exactly as
+      // before the slot existed.
+      const pinnedPopout = !sheetMode.value && hasPinnedHeader();
+      const viewport = sheetMode.value
+        ? sheetListRef.value
+        : pinnedPopout
+          ? popoutBodyRef.value
+          : panelRef.value;
       if (!viewport) return;
       panelScrollbar = attachOverlayScrollbars(viewport, {
         axis: "vertical",
         // Both surfaces get an exact host: the popout host (panel + tracks)
         // and the sheet body wrapper (list only — the sheet panel also
         // carries the grabber/title bands, which rails must not span).
-        host: sheetMode.value ? sheetBodyRef.value : popoutHostRef.value,
+        host: sheetMode.value
+          ? sheetBodyRef.value
+          : pinnedPopout
+            ? popoutBodyHostRef.value
+            : popoutHostRef.value,
       });
     }
 
@@ -722,11 +773,23 @@ export default defineComponent({
                       <HIcon name="close" size={16} />
                     </HIconButton>
                   </div>
+                  {/* Pinned chrome band (a live-filter search field): a
+                      non-shrinking sibling ABOVE the scrolling list, so a
+                      long catalog scrolls under it instead of taking it
+                      along. The dup-title filter below never scans it — a
+                      band that repeats the sheet title here is a label
+                      the consumer meant to keep. */}
+                  {hasPinnedHeader() ? (
+                    <div class="hk-select-sheet-pinned">{slots.pinnedHeader!()}</div>
+                  ) : null}
                   <div class="hk-select-sheet-body" ref={sheetBodyRef}>
+                    {/* No `surfaceCap` here: the sheet's list is bounded by
+                        the PANEL's family ceiling (80% of the viewport, see
+                        HkSelect.scss) and the `maxHeight` prop is a popout
+                        measure the sheet deliberately ignores. */}
                     <div
                       class="hk-select-sheet-list"
                       ref={sheetListRef}
-                      style={surfaceCap.value}
                     >
                       <div class="hk-select-sheet-content" ref={sheetContentRef}>
                         {slots.default?.()}
@@ -757,12 +820,32 @@ export default defineComponent({
               >
                 <div
                   ref={panelRef}
-                  class="hk-select-popout"
+                  class={[
+                    "hk-select-popout",
+                    hasPinnedHeader() ? "is-pinned-header" : "",
+                    ...machine.classesFor("hk-select-popout"),
+                  ]}
                   style={surfaceCap.value}
                   aria-label={props.title || undefined}
                   onKeydown={forwardKeydown}
                 >
-                  {slots.default?.()}
+                  {hasPinnedHeader() ? (
+                    <>
+                      {/* Pinned chrome: a non-shrinking head of the column
+                          (the panel's `is-pinned-header` rule moves its
+                          inset here and closes the box). */}
+                      <div class="hk-select-popout-pinned">{slots.pinnedHeader!()}</div>
+                      {/* The body is THE scroll viewport; its wrapper is the
+                          overlay rail's exact host (see attachPanelScrollbar). */}
+                      <div class="hk-select-popout-body-host" ref={popoutBodyHostRef}>
+                        <div class="hk-select-popout-body" ref={popoutBodyRef}>
+                          {slots.default?.()}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    slots.default?.()
+                  )}
                 </div>
               </div>
         </Teleport>

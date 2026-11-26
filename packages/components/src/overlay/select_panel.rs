@@ -44,22 +44,47 @@
 // branch, the `--hk-select-panel-max-height` hook, the Escape/outside-click
 // semantics and the row/`data-*` mapping.
 //
+// TWO CONTENT BANDS (Vue's `default` slot SCROLLS, its `pinnedHeader` slot
+// does not). The row model has no slot, but the band does not depend on what
+// it holds: the pinned band is a structural decision, so the mirror takes it
+// as `pinned_header: Option<Element>` — the host passes the search field (the
+// mirrors that do have one: `layout/affix_picker.rs`, `data/user_picker.rs`)
+// and renders exactly Vue's DOM. A panel with no `pinned_header` renders the
+// pre-slot DOM byte for byte: no modifier class, no wrapper, and
+// `.hk-select-popout` itself scrolls.
+//
 // DOM contract (mirrors the Vue render output one-to-one):
 //
-//   ── desktop popout branch (Vue: `activeBranch === "popout"`) ──
+//   ── desktop popout branch, NO pinned header (Vue: `activeBranch ===
+//      "popout"`, no `pinnedHeader` slot passed) ──
 //   div.hk-select-popout-host [host class]
 //       data-side={top|bottom} data-align={start|center|end}
 //       (style: inline anchor geometry — no Teleport, no popup-manager band)
 //     div.hk-select-popout
 //         aria-label?              (Vue: `title || undefined`)
-//         (style: --hk-select-panel-max-height hook)
+//         (style: --hk-select-panel-max-height hook — pops HERE)
 //       div.hk-select-option       (one per option; only while open)
 //           data-highlighted data-select-index data-checked data-disabled
 //         span {label}
+//   ── desktop popout branch, WITH a pinned header (Vue: `pinnedHeader`
+//      passed — `hasPinnedHeader()` reads the slot's presence every render) ──
+//   div.hk-select-popout-host …                  (identical to the above)
+//     div.hk-select-popout.is-pinned-header
+//         aria-label?
+//         (style: --hk-select-panel-max-height hook — the SAME element; the
+//          rule's `@supports (height: 1dvh)` branch reads it, and the panel's
+//          `is-pinned-header` rule closes the box: `padding: 0`,
+//          `overflow: hidden`)
+//       div.hk-select-popout-pinned {pinned_header}
+//       div.hk-select-popout-body-host            (the overlay rail's host —
+//                                                   wraps exactly the viewport)
+//         div.hk-select-popout-body               (THE scroll region)
+//           the option rows above
 //   ── mobile sheet branch (Vue: `activeBranch === "sheet"`) ──
 //   div.hk-select-sheet-scrim                       (click closes)
 //   div.hk-select-sheet-panel [host class] role=dialog aria-modal=true
 //       aria-label? tabindex=-1                     (keydown: the panel keys)
+//       (NO inline style, with or without a pinned header)
 //     div.hk-select-sheet-grabber aria-hidden=true  (click closes)
 //     div.hk-select-sheet-header
 //       div.hk-select-sheet-title {title}?          (only when titled)
@@ -67,9 +92,18 @@
 //              .hk-window-close.hk-select-sheet-close
 //           aria-label  (the shared modal "Close" label)
 //         span.hk-icon-button-icon > the ✕ glyph
+//     div.hk-select-sheet-pinned {pinned_header}?   (only with a pinned header)
 //     div.hk-select-sheet-body
-//       div.hk-select-sheet-list                    (the cap hook lands HERE)
+//       div.hk-select-sheet-list                    (NO cap style — the sheet's
+//                                                   ceiling is the PANEL's
+//                                                   80%-of-viewport family cap)
 //         div.hk-select-sheet-content > the option rows above
+//
+// `maxHeight` IS A DESKTOP POPOUT MEASURE (2026-11-27 user direction): the
+// `--hk-select-panel-max-height` hook is published on the popout and nowhere
+// else. It used to land on `.hk-select-sheet-list` too, so a desktop measure
+// like `min(18rem, 45dvh)` squashed every picker sheet to under half the
+// phone; the sheet now hugs its content up to the stylesheet's family ceiling.
 //
 // Vue prop mapping: `open` → [`SelectPanelProps::open`] (CONTROLLED),
 // `anchorRef` → [`SelectPanelProps::anchor`] (the measured rect — Vue takes a
@@ -77,8 +111,11 @@
 // `feedback::popover::PopoverAnchorRect`), `title`, `placement` →
 // [`SelectPanelPlacement`] (Vue default `"bottom-start"`), `offset` (4),
 // `matchAnchorWidth` (true), `maxHeight` → `max_height`, `sheetOnMobile`
-// (true). Emits: `update:open` → `on_open_change`, `keydown` → nothing (the
-// mirror owns the option navigation, see below).
+// (true), and the `pinnedHeader` SLOT → [`SelectPanelProps::pinned_header`]
+// (the crate's slots are props carrying an `Element`; `None` = Vue renders no
+// band, and a parent may forward it conditionally — HkCurrencySelect pins a
+// search only while `searchable`). Emits: `update:open` → `on_open_change`,
+// `keydown` → nothing (the mirror owns the option navigation, see below).
 //
 // Controlled state: Vue keeps `open`'s writer in the parent, `highlightedIndex`
 // and `activeBranch` in LOCAL refs, plus a surface machine, a back guard and
@@ -117,7 +154,17 @@
 //     first non-interactive content node whose text repeats the panel title,
 //     decided by a `MutationObserver` over live DOM. The mirror renders option
 //     rows only, and a row label is never the heading — the class stays a hook
-//     for hosts that slot their own markup.
+//     for hosts that slot their own markup. Vue's filter deliberately never
+//     scans the `pinnedHeader` band (a band repeating the title is a label the
+//     consumer meant to keep); the mirror needs no rule for that, since its
+//     pinned band is whatever the host passed and is never filtered at all.
+//   * The pinned band changes WHERE THE RAIL WOULD GO, not that there is one:
+//     Vue attaches the shared overlay scrollbar to `.hk-select-popout-body`
+//     (host: `.hk-select-popout-body-host`) when a pinned header is up, and to
+//     `.hk-select-popout` / `.hk-select-sheet-list` otherwise. This mirror
+//     ships no overlay scrollbar at all (see the transitions delta), so it
+//     renders the same three boxes and leaves the native bar to the sheet —
+//     `HkSelect.scss` hides it on the body exactly as it does on the panel.
 //   * `data-highlighted` / `data-checked` / `data-disabled` are PRESENCE
 //     markers (Vue: `cond || undefined`); a serialized `="false"` would still
 //     match a `[data-*]` selector, so the mirror emits the attribute only when
@@ -186,11 +233,16 @@ pub fn select_panel_popout_style(
 }
 
 /// Vue's `surfaceCap`: the host-tunable cap published as the
-/// `--hk-select-panel-max-height` custom property on whichever element
-/// scrolls (the desktop popout, the sheet's list band). An absent or empty
-/// value publishes nothing, so the stylesheet's own ceiling stays in charge
-/// (`HkSelect.scss` reads the hook inside its `@supports (height: 1dvh)`
-/// branch for the popout and unguarded for the sheet list).
+/// `--hk-select-panel-max-height` custom property on the DESKTOP POPOUT — the
+/// only surface that reads it (with a pinned header the property sits on the
+/// same closed box and bounds the body under the pinned band). An absent or
+/// empty value publishes nothing, so the stylesheet's own ceiling stays in
+/// charge (`HkSelect.scss` reads the hook inside its `@supports (height:
+/// 1dvh)` branch on `.hk-select-popout`).
+///
+/// The MOBILE SHEET publishes no cap at all (Vue's `maxHeight` doc): its list
+/// band carries no inline style, because the panel's family ceiling (80% of
+/// the viewport) is the one bound a sheet has.
 pub fn select_panel_cap_style(max_height: Option<&str>) -> String {
     match max_height {
         Some(value) if !value.is_empty() => {
@@ -338,8 +390,17 @@ pub struct SelectPanelProps {
     #[default(true)]
     pub match_anchor_width: bool,
 
-    /// Cap for the scrolling surface, as any CSS length (Vue: `maxHeight`).
+    /// Cap for the DESKTOP POPOUT, as any CSS length (Vue: `maxHeight`). The
+    /// mobile sheet ignores it (see [`select_panel_cap_style`]).
     pub max_height: Option<String>,
+
+    /// Vue's `pinnedHeader` SLOT: chrome that must stay reachable while the
+    /// content scrolls — a live-filter search field above a long catalog,
+    /// first of all. Rendered OUTSIDE the scroll region on both form factors
+    /// (the popout's `.hk-select-popout-pinned` head / the sheet's
+    /// `.hk-select-sheet-pinned` band under the title row). `None` renders
+    /// exactly the pre-slot panel.
+    pub pinned_header: Option<Element>,
 
     /// Dock as a bottom sheet on phone-width viewports (Vue default true).
     #[default(true)]
@@ -450,6 +511,9 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
     let aria_label = Some(props.title.clone()).filter(|title| !title.is_empty());
     let cap_style = select_panel_cap_style(props.max_height.as_deref());
     let surface_class = props.class.clone();
+    // Vue: `hasPinnedHeader()` — the slot's presence, read on every render.
+    let pinned_header = props.pinned_header.clone();
+    let has_pinned_header = pinned_header.is_some();
 
     let wiring = SelectPanelWiring {
         highlighted,
@@ -509,6 +573,9 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
             });
         }
         let row_nodes = VNode::Fragment(row_nodes);
+        // Both arms take one clone of the band: the panel renders ONE branch.
+        let pinned_header_for_sheet = pinned_header.clone();
+        let pinned_header_for_popout = pinned_header;
 
         Some(match branch {
             SelectPanelBranch::Sheet => {
@@ -522,7 +589,8 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                 } else {
                     format!("hk-select-sheet-panel {surface_class}")
                 };
-                let list_cap = cap_style.clone();
+                // The whole cap hook is a POPOUT measure: the sheet renders no
+                // inline style at all (see the header's two-band contract).
                 rsx! {
                     div {
                         class: "hk-select-sheet-scrim",
@@ -556,11 +624,15 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                                 })),
                             }
                         }
+                        // Pinned chrome band: a non-shrinking sibling ABOVE the
+                        // scrolling list, between the title row and the body.
+                        if let Some(pinned) = pinned_header_for_sheet {
+                            div { class: "hk-select-sheet-pinned", {pinned} }
+                        }
                         div {
                             class: "hk-select-sheet-body",
                             div {
                                 class: "hk-select-sheet-list",
-                                style: list_cap,
                                 div { class: "hk-select-sheet-content",
                                     {row_nodes}
                                 }
@@ -583,18 +655,45 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                     format!("hk-select-popout-host {surface_class}")
                 };
                 let popout_cap = cap_style.clone();
-                rsx! {
-                    div {
-                        class: host_classes,
-                        "data-side": side.token(),
-                        "data-align": align.token(),
-                        style: geometry,
+                if has_pinned_header {
+                    // The modifier closes the flex column: a pinned head above
+                    // the scrolling body (`.hk-select-popout.is-pinned-header`).
+                    let pinned = pinned_header_for_popout.unwrap_or_else(empty_vnode);
+                    rsx! {
                         div {
-                            class: "hk-select-popout",
-                            "aria-label": aria_label,
-                            style: popout_cap,
-                            onkeydown: panel_keydown,
-                            {row_nodes}
+                            class: host_classes,
+                            "data-side": side.token(),
+                            "data-align": align.token(),
+                            style: geometry,
+                            div {
+                                class: "hk-select-popout is-pinned-header",
+                                "aria-label": aria_label,
+                                style: popout_cap,
+                                onkeydown: panel_keydown,
+                                div { class: "hk-select-popout-pinned", {pinned} }
+                                div {
+                                    class: "hk-select-popout-body-host",
+                                    div { class: "hk-select-popout-body",
+                                        {row_nodes}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    rsx! {
+                        div {
+                            class: host_classes,
+                            "data-side": side.token(),
+                            "data-align": align.token(),
+                            style: geometry,
+                            div {
+                                class: "hk-select-popout",
+                                "aria-label": aria_label,
+                                style: popout_cap,
+                                onkeydown: panel_keydown,
+                                {row_nodes}
+                            }
                         }
                     }
                 }
@@ -811,6 +910,8 @@ mod tests {
         assert!(props.match_anchor_width);
         assert_eq!(props.max_height, None);
         assert!(props.sheet_on_mobile);
+        // Vue's `pinnedHeader` slot is optional: no band without it.
+        assert!(props.pinned_header.is_none());
         assert_eq!(props.active_branch, None);
         assert!(props.anchor.is_none());
         assert_eq!(props.class, "");
@@ -856,13 +957,23 @@ mod tests {
         assert!(html.contains("hk-icon-button-ghost"), "{html}");
         assert!(html.contains("hk-icon-button-32"), "{html}");
         assert!(html.contains(r#"aria-label="Close""#), "{html}");
-        // Body → list (the cap hook) → content → the rows.
+        // Body → list → content → the rows.
         assert!(html.contains(r#"class="hk-select-sheet-body""#), "{html}");
         assert!(html.contains(r#"class="hk-select-sheet-list""#), "{html}");
+        // The cap hook is a POPOUT measure (2026-11-27): the sheet's list band
+        // publishes NO inline style, whatever `max_height` says. (This
+        // assertion replaced `style="--hk-select-panel-max-height:24rem"`,
+        // which pinned the pre-direction contract.)
         assert!(
-            html.contains(r#"style="--hk-select-panel-max-height:24rem""#),
-            "{html}"
+            !html.contains("--hk-select-panel-max-height"),
+            "the sheet list carries no cap style: {html}"
         );
+        assert!(
+            !html.contains(r#"class="hk-select-sheet-list" style="#),
+            "the sheet list carries no inline style at all: {html}"
+        );
+        // No pinned band without a `pinned_header`.
+        assert!(!html.contains("hk-select-sheet-pinned"), "{html}");
         assert!(
             html.contains(r#"class="hk-select-sheet-content""#),
             "{html}"
@@ -918,6 +1029,110 @@ mod tests {
         // No cap hook without `max_height`, and no sheet in this branch.
         assert!(!html.contains("--hk-select-panel-max-height"), "{html}");
         assert!(!html.contains("hk-select-sheet"), "{html}");
+        // No pinned header → EXACTLY the pre-slot popout: no modifier, no
+        // wrapper, no body, and the rows are the panel's own children.
+        assert!(!html.contains("is-pinned-header"), "{html}");
+        assert!(!html.contains("hk-select-popout-pinned"), "{html}");
+        assert!(!html.contains("hk-select-popout-body"), "{html}");
+        // Rows are the panel's OWN children (attributes serialize sorted).
+        let panel_open = html.find(r#"class="hk-select-popout""#).expect("the panel");
+        let row_at = html.find(r#"class="hk-select-option""#).expect("a row");
+        assert!(
+            !html[panel_open..row_at].contains("hk-select-popout-body"),
+            "the rows sit directly inside the panel: {html}"
+        );
+    }
+
+    #[test]
+    fn select_panel_renders_the_pinned_popout_column() {
+        // Vue: `pinnedHeader` passed → `hasPinnedHeader()` is true, the panel
+        // wears `is-pinned-header` and both bands render.
+        let html = SelectPanel(SelectPanelProps {
+            open: true,
+            options: options(),
+            title: "Channel".to_string(),
+            active_branch: Some(SelectPanelBranch::Popout),
+            max_height: Some("min(18rem, 45dvh)".to_string()),
+            pinned_header: Some(rsx! {
+                div { class: "host-pinned-probe", "Search" }
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+
+        // The closed flex column, with the cap hook on the SAME element.
+        assert!(
+            html.contains(r#"class="hk-select-popout is-pinned-header""#),
+            "{html}"
+        );
+        assert!(
+            html.contains("--hk-select-panel-max-height:min(18rem, 45dvh)"),
+            "the popout still publishes the hook: {html}"
+        );
+        // Pinned head → body host → body → rows, in that order.
+        let pinned_at = html.find("hk-select-popout-pinned").expect("pinned band");
+        let host_at = html.find("hk-select-popout-body-host").expect("body host");
+        // Anchor on the class attribute: the raw substring also matches the
+        // `-host` wrapper, which precedes the viewport by design.
+        let body_at = html.find(r#"class="hk-select-popout-body""#).expect("body");
+        let row_at = html
+            .find(r#"class="hk-select-option""#)
+            .expect("option row");
+        assert!(pinned_at < host_at, "{html}");
+        assert!(host_at < body_at, "{html}");
+        assert!(body_at < row_at, "rows live in the body: {html}");
+        // The host's band content renders INSIDE the pinned head and never in
+        // the scrolling body.
+        let band_at = html.find("host-pinned-probe").expect("band content");
+        assert!(pinned_at < band_at && band_at < host_at, "{html}");
+        assert!(
+            !html
+                .split("hk-select-popout-body-host")
+                .nth(1)
+                .expect("body host subtree")
+                .contains("host-pinned-probe"),
+            "the band must not travel with the rows: {html}"
+        );
+        // The rows render exactly ONCE (the band is not a second row list).
+        assert_eq!(
+            html.matches(r#"class="hk-select-option""#).count(),
+            2,
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn select_panel_renders_the_pinned_sheet_band_between_title_and_list() {
+        let html = SelectPanel(SelectPanelProps {
+            open: true,
+            options: options(),
+            title: "Channel".to_string(),
+            active_branch: Some(SelectPanelBranch::Sheet),
+            pinned_header: Some(rsx! {
+                div { class: "host-pinned-probe", "Search" }
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+
+        assert!(html.contains(r#"class="hk-select-sheet-pinned""#), "{html}");
+        assert!(html.contains("host-pinned-probe"), "{html}");
+        // Band order inside the panel: header → pinned → body.
+        let header_at = html.find("hk-select-sheet-header").expect("header");
+        let pinned_at = html.find("hk-select-sheet-pinned").expect("pinned band");
+        let body_at = html.find("hk-select-sheet-body").expect("body");
+        assert!(header_at < pinned_at && pinned_at < body_at, "{html}");
+        // The band is a SIBLING of the body, never inside the scrolling list.
+        assert!(
+            !html
+                .split("hk-select-sheet-list")
+                .nth(1)
+                .expect("list subtree")
+                .contains("host-pinned-probe"),
+            "the band must not scroll with the list: {html}"
+        );
+        // A pinned header does NOT revive the sheet cap.
+        assert!(!html.contains("--hk-select-panel-max-height"), "{html}");
     }
 
     #[test]
@@ -944,12 +1159,17 @@ mod tests {
         for class in [
             ".hk-select-popout-host",
             ".hk-select-popout ",
+            ".is-pinned-header",
+            ".hk-select-popout-pinned",
+            ".hk-select-popout-body-host",
+            ".hk-select-popout-body",
             ".hk-select-sheet-scrim",
             ".hk-select-sheet-panel",
             ".hk-select-sheet-grabber",
             ".hk-select-sheet-header",
             ".hk-select-sheet-close",
             ".hk-select-sheet-title",
+            ".hk-select-sheet-pinned",
             ".hk-select-sheet-body",
             ".hk-select-sheet-list",
             "--hk-select-panel-max-height",

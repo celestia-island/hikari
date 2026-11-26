@@ -1,10 +1,40 @@
+/* ── The family's duration contract (user direction 2026-11-27) ──────────
+ * ONE default for every list-shaped surface, customizable per host:
+ *   --hk-list-duration         the move (FLIP) track — the normal token, 0.3s
+ *   --hk-list-enter-duration   the enter track — the short token, 0.15s
+ *   --hk-list-leave-duration   the leave track — the short token, 0.15s
+ * Enter/leave start AT THE SAME TIME as the move (no phase waits): the
+ * old row shrinks away while its neighbours glide, the new one grows in
+ * where they make room. HkListTransition's `duration` / `enterDuration` /
+ * `leaveDuration` props publish the three properties inline (a lone
+ * `duration` also derives the two halves); a fragment host (`tag=""`)
+ * sets the properties on an ancestor — they inherit. Written as plain
+ * `var()` fallbacks on purpose: this sheet is mirrored into the Rust
+ * crate and recompiled by grass, which has no `calc()` inside a
+ * `var()` fallback. The `surface` variant is the documented exception
+ * (rows are windows; entrance and exit keep the window family's own
+ * timings, only its move follows). */
+
+/* WHY EVERY TRACK BELOW IS `!important`: the transition classes are
+ * transient state classes the group stamps for the length of one
+ * choreography, and they must own the element's `transition` for that
+ * window — but every real row carries its OWN transition (the menu-item
+ * grammar's 0.12s hover faces, a card's border fade), at the same (0,1,0)
+ * weight and almost always LATER in the bundle (the item sheet imports
+ * this primitive before its own). A non-important track lost that
+ * cascade silently: the FLIP transform snapped, the enter/leave never
+ * ran — the choreography the host asked for simply did not happen
+ * (2026-11-27, found while making this the base container for cards and
+ * waterfalls). `.hk-list-move-disabled` already relied on exactly this
+ * precedence; now the whole family does. The item's own faces come back
+ * the moment the class leaves. */
+
 /* FLIP move: vue applies `${name}-move` (runtime-dom resolves moveClass
- * as `${name}-move`), never a bare `.hk-list-move`. pop/slide/fade share
- * the normal duration; grow/reveal define their staggered bases below. */
+ * as `${name}-move`), never a bare `.hk-list-move`. */
 .hk-list-pop-move,
 .hk-list-slide-move,
 .hk-list-fade-move {
-  transition: transform var(--duration-normal, 0.3s) ease;
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
 }
 
 .hk-list-move-disabled {
@@ -13,14 +43,14 @@
 
 .hk-list-pop-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-pop-leave-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease-in,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in,
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0) !important;
   position: absolute;
   /* A dying row must not take clicks (or a drag) while it fades: the
      bell's rows carry copy / dismiss / restore buttons — the first
@@ -46,14 +76,14 @@
 
 .hk-list-slide-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) ease,
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-slide-leave-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease-in,
-    transform var(--duration-normal, 0.3s) ease-in;
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in,
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   position: absolute;
 }
 
@@ -78,11 +108,11 @@
 }
 
 .hk-list-fade-enter-active {
-  transition: opacity var(--duration-normal, 0.3s) ease;
+  transition: opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) ease !important;
 }
 
 .hk-list-fade-leave-active {
-  transition: opacity var(--duration-normal, 0.3s) ease-in;
+  transition: opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   position: absolute;
 }
 
@@ -91,11 +121,15 @@
   opacity: 0;
 }
 
+/* grow keeps its ONE-BEAT STAGGER (the entering row waits out the leave
+ * track before it scales in, and the siblings wait the same beat before
+ * closing the gap) — that sequence is this variant's signature, not a
+ * duration; the beats themselves follow the family's leave track. */
 .hk-list-grow-enter-active {
   transition:
-    transform var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--duration-fast, 0.15s);
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: var(--hk-list-leave-duration, var(--duration-short, 0.15s)) !important;
   pointer-events: none;
 }
 
@@ -112,8 +146,8 @@
  * defect class). */
 .hk-list-grow-leave-active {
   transition:
-    transform var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--duration-fast, 0.15s) ease-in;
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   pointer-events: none;
   position: absolute;
 }
@@ -124,16 +158,16 @@
 }
 
 .hk-list-grow-move {
-  transition: transform var(--duration-fast, 0.15s) ease;
-  transition-delay: var(--duration-fast, 0.15s);
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
+  transition-delay: var(--hk-list-leave-duration, var(--duration-short, 0.15s)) !important;
 }
 
 .hk-list-reveal-enter-active {
   interpolate-size: allow-keywords;
   overflow: hidden;
   transition:
-    height var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+    height var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-reveal-leave-active {
@@ -143,8 +177,8 @@
    * activating the body of a just-erased row would resurrect it. */
   pointer-events: none;
   transition:
-    height var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--duration-fast, 0.15s) ease-in;
+    height var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
 }
 
 .hk-list-reveal-enter-from,
@@ -158,7 +192,7 @@
 }
 
 .hk-list-reveal-move {
-  transition: transform var(--duration-fast, 0.15s) ease;
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
 }
 
 /* surface — the window choreography (HkModal's whole-window entrance,
@@ -173,13 +207,13 @@
 .hk-list-surface-enter-active {
   transition:
     opacity var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
 .hk-list-surface-leave-active {
   transition:
     opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
-    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
+    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1) !important;
   position: absolute;
   pointer-events: none;
 }
@@ -207,6 +241,8 @@
 }
 
 .hk-list-surface-move {
+  /* The exception's one shared track: the glide follows the family's
+     move duration; the enter/leave above stay the window family's. */
   /* opacity rides along on purpose: if a multi-row batch ever classifies
      a leaving ghost as moved (its FLIP delta measured before the
      correction pass lands), the stamped move transition would REPLACE
@@ -216,7 +252,7 @@
      moved rows the property goes 1→1 and is inert. */
   transition:
     opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+    transform var(--hk-list-duration, var(--duration-normal, 0.3s)) cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
 .hk-list-none-enter-active,

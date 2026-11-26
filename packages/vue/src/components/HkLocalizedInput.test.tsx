@@ -238,6 +238,17 @@ async function typeIntoSearch(value: string) {
   input!.dispatchEvent(new Event("input", { bubbles: true }));
   await nextTick();
   await nextTick();
+  // The picker's rows ride HkListTransition: a filtered-out row LEAVES
+  // (a ghost for the transition window) instead of vanishing on the
+  // patch — wait the ghosts out before the row counts are read.
+  const deadline = Date.now() + 800;
+  while (
+    document.querySelectorAll(".hk-affix-row.hk-list-pop-leave-active").length > 0 &&
+    Date.now() < deadline
+  ) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await nextTick();
+  }
 }
 
 /** Dismiss every open message box and wait out its host's self-unmount

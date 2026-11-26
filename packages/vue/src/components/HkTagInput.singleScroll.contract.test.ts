@@ -5,7 +5,8 @@
  * toggling list, so it is exactly the shape that invites a second
  * `max-height: 17rem; overflow: auto` row region. It has none: the
  * HkSelectPanel window surface (desktop popout / mobile sheet) owns THE
- * single scrollbar and scrolls the search field with the rows as one.
+ * single scrollbar and scrolls the rows; the search field is PINNED chrome
+ * outside that region (HkSelectPanel's `pinnedHeader` slot, 2026-11-27).
  *
  * The 2026-09-11 geometry wave leans on the same contract from the other
  * side: the field used to hand the panel its own width (`matchAnchorWidth`,
@@ -122,9 +123,15 @@ describe("HkTagInput single-scrollbar-per-window contract", () => {
       /max-height:\s*var\(\s*--hk-select-panel-max-height,\s*max\(240px, min\(36rem, calc\(100dvh - 32px\)\)\)\s*\)/,
     );
     expect(popout).toContain("max-height: max(240px, min(36rem, calc(100vh - 32px)));");
-    // The sheet band the same prop caps falls back to being uncapped — the
-    // property's own initial value, i.e. today's behaviour.
-    expect(panelScss).toMatch(
+    // The cap is a DESKTOP POPOUT measure and reaches the sheet nowhere
+    // (2026-11-27 user report): the same `min(18rem, 45dvh)` landing on the
+    // sheet's list band squashed every picker sheet to under half the
+    // phone. The band is bounded by the panel's family ceiling alone
+    // (80% of the viewport) and publishes no hook.
+    const sheetList = cssBlock(panelScss, ".hk-select-sheet-list {");
+    expect(sheetList, "the sheet list block exists").toBeTruthy();
+    expect(sheetList).not.toMatch(/max-height\s*:/);
+    expect(panelScss).not.toMatch(
       /max-height:\s*var\(--hk-select-panel-max-height,\s*none\)/,
     );
     const panelTsx = readFileSync(join(here, "HkSelectPanel.tsx"), "utf-8");

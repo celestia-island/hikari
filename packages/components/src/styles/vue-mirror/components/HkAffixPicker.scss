@@ -11,8 +11,10 @@
 /* HkAffixPicker — the shared "affix chip + searchable popup list".
  * Field hosts drop this into an HkInput prefix/suffix slot; the chip
  * visuals come from the host through the scoped chip slot (hosts layer
- * their own class on top via chipClass), while the popup — search,
- * selected tags, option rows, custom row — is fully standardized here. */
+ * their own class on top via chipClass), while the popup — pinned search
+ * (and, tag layout only, the selected tags), the option rows with their
+ * check cells and selected/unselected divider, the custom row — is fully
+ * standardized here. */
 
 @use "./menu-item" as mi;
 
@@ -72,7 +74,11 @@
   transform: rotate(180deg);
 }
 
-/* ── popup head: tags (multi) + search ─────────────────────────────── */
+/* ── popup head: the PINNED chrome band ───────────────────────────────
+ * Rides HkSelectPanel's `pinnedHeader` slot: outside the scroll region
+ * on both form factors (a band under the sheet's title row / the head of
+ * the popout column), so the catalog scrolls under it. Holds the search
+ * field, and — in the tag layout only — the selected tags above it. */
 .hk-affix-head {
   display: flex;
   flex-direction: column;
@@ -296,6 +302,29 @@
   line-height: 1;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji",
     sans-serif;
+}
+
+/* The rows layout's leading check cell (multi + `layout="rows"`): the
+ * SAME reserved-cell grammar as HkMenu's checked rows — the icon cell
+ * box (16px desktop / 20px in sheets, normalized by `mi.icon`) sits on
+ * every row, filled only while the row is checked, so labels line up
+ * whether or not anything is selected. Ink = the primary (the checked
+ * face's text color). Nothing is built in front of the search field
+ * for a selection anymore (2026-11-27 user direction): the check IS the
+ * selected state, and the row floats up behind the divider below. */
+.hk-affix-check {
+  @include mi.icon;
+
+  color: rgb(var(--color-primary));
+}
+
+/* Selected / unselected boundary inside the rows layout — the menu
+ * family's one divider grammar (`mi.divider`: inset hairline, never a
+ * hand-rolled border-top). A keyed child of the list transition, so it
+ * pops in with the first check and out with the last uncheck while the
+ * rows around it FLIP. */
+.hk-affix-divider {
+  @include mi.divider;
 }
 
 /* The standard leading capsule (HkAffixOption.badge): the HBadge base

@@ -83,6 +83,40 @@ function key(target: HTMLElement, name: string) {
 }
 
 describe("HkUserPicker", () => {
+  it("pins the search head outside the popout's scrolling body (2026-11-27)", async () => {
+    mount(() => h(HkUserPicker, { modelValue: [], search: async () => [] }));
+    await openPanel();
+    // The search rides the pinned band; the rows (and the multi footer)
+    // scroll in the body under it.
+    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.classList.contains("is-pinned-header")).toBe(true);
+    expect(popout.querySelector(":scope > .hk-select-popout-pinned .hk-user-picker-search")).toBeTruthy();
+    expect(popout.querySelector(".hk-select-popout-body .hk-user-picker-search")).toBeNull();
+    expect(popout.querySelector(".hk-select-popout-body .hk-user-picker-rows")).toBeTruthy();
+    // Keyboard wiring is untouched: the pinned field is still the combobox.
+    expect(searchField()!.getAttribute("role")).toBe("combobox");
+  });
+
+  it("pins the search head between the sheet's title row and its list (2026-11-27)", async () => {
+    const prev = window.innerWidth;
+    window.innerWidth = 375;
+    window.dispatchEvent(new Event("resize"));
+    try {
+      mount(() => h(HkUserPicker, { modelValue: [], search: async () => [] }));
+      await openPanel();
+      const sheet = document.body.querySelector<HTMLElement>(".hk-select-sheet-panel")!;
+      expect(sheet, "the sheet renders at phone width").toBeTruthy();
+      const order = [...sheet.children].map((c) => c.className);
+      expect(order.indexOf("hk-select-sheet-pinned")).toBeGreaterThan(order.indexOf("hk-select-sheet-header"));
+      expect(order.indexOf("hk-select-sheet-pinned")).toBeLessThan(order.indexOf("hk-select-sheet-body"));
+      expect(sheet.querySelector(".hk-select-sheet-pinned .hk-user-picker-search")).toBeTruthy();
+      expect(sheet.querySelector(".hk-select-sheet-list .hk-user-picker-search")).toBeNull();
+    } finally {
+      window.innerWidth = prev;
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
   it("renders the value as tags showing the display name and email", () => {
     mount(() => h(HkUserPicker, { modelValue: [alice, bob], search: async () => [] }));
     const tags = [...document.body.querySelectorAll(".hk-user-picker-tag")];

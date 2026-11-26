@@ -472,26 +472,42 @@ export default defineComponent({
             maxHeight="min(22rem, 50dvh)"
             onKeydown={onPanelKeydown}
           >
+            {{
+              /* PINNED search head (2026-11-27 user direction): the filter
+               * is chrome — it rides HkSelectPanel's `pinnedHeader` slot,
+               * outside the scroll region on both form factors, so a long
+               * result list scrolls under it. It carries the panel's own
+               * width class so the trigger-anchored measure (and the sheet's
+               * centered cap) still comes from the search line too. */
+              pinnedHeader: () => (
+                <div
+                  class={{
+                    "hk-user-picker-search": true,
+                    "is-trigger-anchor": Boolean(triggerSlot),
+                  }}
+                  role="search"
+                >
+                  <HkSearchInput
+                    role="combobox"
+                    aria-expanded={true}
+                    aria-controls={listboxId}
+                    aria-autocomplete="list"
+                    aria-activedescendant={activeId}
+                    // The field's accessible name: the placeholder reads as
+                    // the instruction ("Nickname, username or email") — the
+                    // HkAffixPicker / HkTagInput precedent, so no new i18n
+                    // key is invented for it.
+                    aria-label={searchPlaceholder.value}
+                    modelValue={query.value}
+                    disabled={props.disabled}
+                    placeholder={searchPlaceholder.value}
+                    clearAriaLabel={t("hikari::search.clear", "Clear search")}
+                    onUpdate:modelValue={(v: string) => { query.value = v; }}
+                  />
+                </div>
+              ),
+              default: () => (
             <div class={{ "hk-user-picker-panel": true, "is-trigger-anchor": Boolean(triggerSlot) }}>
-              <div class="hk-user-picker-search" role="search">
-                <HkSearchInput
-                  role="combobox"
-                  aria-expanded={true}
-                  aria-controls={listboxId}
-                  aria-autocomplete="list"
-                  aria-activedescendant={activeId}
-                  // The field's accessible name: the placeholder reads as
-                  // the instruction ("Nickname, username or email") — the
-                  // HkAffixPicker / HkTagInput precedent, so no new i18n
-                  // key is invented for it.
-                  aria-label={searchPlaceholder.value}
-                  modelValue={query.value}
-                  disabled={props.disabled}
-                  placeholder={searchPlaceholder.value}
-                  clearAriaLabel={t("hikari::search.clear", "Clear search")}
-                  onUpdate:modelValue={(v: string) => { query.value = v; }}
-                />
-              </div>
               <div
                 id={listboxId}
                 class="hk-user-picker-rows"
@@ -595,6 +611,8 @@ export default defineComponent({
                 </div>
               )}
             </div>
+              ),
+            }}
           </HkSelectPanel>
         </div>
       );

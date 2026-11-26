@@ -63,6 +63,50 @@ al punto de ruptura. `HkAdaptiveTabs` es la implementación por defecto;
 los conmutadores de listas de proyectos dinámicas con filas propias (el selector de
 plataforma) son el caso especial exento, no el modelo a copiar.
 
+## Hojas de selector y búsqueda fijada
+
+Una superficie desplegable (`HkSelectPanel`, bajo `HkSelect` / `HkMenu` / los
+selectores con pastilla) tiene dos bandas de contenido, y a qué banda
+pertenece cada cosa no se negocia:
+
+- **`default` se desplaza.** Filas, tarjetas, catálogos — todo lo que puede
+  superar la superficie.
+- **`pinnedHeader` no se desplaza.** El cromo que debe seguir al alcance
+  mientras la lista se desplaza: primero, el campo de filtrado en vivo. Se
+  pinta fuera de la zona de desplazamiento en ambas formas — una banda bajo
+  la fila de título de la hoja en el teléfono, la cabeza de la columna del
+  popout en escritorio (cuyo cuerpo aloja entonces la única barra de
+  desplazamiento). Un campo de búsqueda dentro del contenido desplazable se
+  va con el primer gesto; es un defecto, no una elección de estilo
+  (2026-11-27).
+
+Las hojas de teléfono de la familia selector/menú se ajustan a su contenido
+hasta el **80 % de la vista**; el contenido más largo se desplaza dentro. Un
+tope ajustado para el popout de escritorio (`maxHeight`, p. ej.
+`min(18rem, 45dvh)`) nunca llega a la hoja. La hoja también corta la
+encadenación del desplazamiento: un gesto en el tirador, la fila de título o
+la banda fijada nunca arrastra la página de atrás.
+
+## Movimiento de listas
+
+Siempre que cambien los elementos de una lista — añadidos, quitados,
+reordenados — el desplazamiento pasa por `HkListTransition` de hikari (un
+`TransitionGroup` con clave cuyo FLIP se informa al bus de animación del
+runtime), nunca un tween hecho a mano. Un solo valor por defecto para toda
+superficie con forma de lista (filas, tarjetas, cascadas): la pista de
+movimiento dura 0,3 s, la entrada y la salida 0,15 s cada una y empiezan a la
+vez que el movimiento. El anfitrión personaliza con las props `duration` /
+`enterDuration` / `leaveDuration` (tiempos CSS; un `duration` solo deriva
+las dos mitades). `surface` es la única excepción (las filas que son
+ventanas conservan los tiempos de entrada/salida de la familia ventana).
+
+Un selector múltiple (`HkAffixPicker` en modo `multi`, `layout="rows"`) no
+construye nada delante de la búsqueda para su selección: las filas marcadas
+llevan la marca de verificación inicial y flotan arriba en orden de catálogo
+tras un separador; un toque alterna la fila y ésta se desliza hacia o desde
+su hueco. `layout="tags"` es la forma de editor de valores (un valor escrito
+por entrada) y conserva la lista de pastillas sobre la búsqueda.
+
 ## Texto de las esquinas del pie
 
 El texto en cualquiera de las seis esquinas de cabecera/pie (izquierda/centro/

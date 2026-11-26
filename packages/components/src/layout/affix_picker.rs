@@ -2,8 +2,7 @@
 // AffixPicker — mirror of the canonical Vue `HkAffixPicker`: the standardized
 // "affix chip + searchable popup list" control. The chip rides the prefix (left)
 // or suffix (right) slot of a host field (`Input`'s `prefix` / `suffix`), and one
-// canonical popup carries the search field, the multi-select tag list and the
-// option rows.
+// canonical popup carries the pinned search head and the option rows.
 //
 // The stylesheet is the SAME sheet the Vue library ships
 // (`packages/vue/src/components/HkAffixPicker.scss`, vendored under
@@ -11,9 +10,20 @@
 // compiled with `no_hash` so the `.hk-affix-*` class names are literal and
 // identical in both forms. The sheet styles the CHIP and the popup CONTENT; the
 // popup's canvas is HkSelectPanel's (`.hk-select-popout-host` /
-// `.hk-select-popout`, painted by the mirrored `HkSelect.scss` that
-// `basic/select.rs` compiles) — the same split the Vue component ships, since
-// it mounts `HkMenu`. DOM contract:
+// `.hk-select-popout` / `.hk-select-popout-pinned` / `.hk-select-popout-body*`,
+// painted by the mirrored `HkSelect.scss` that `basic/select.rs` compiles) — the
+// same split the Vue component ships, since it mounts `HkMenu`.
+//
+// TWO CONTENT BANDS (Vue: HkSelectPanel's `default` slot SCROLLS, its
+// `pinnedHeader` slot does not). The head — the search field, plus the selected
+// TAG LIST in the tag layout — rides the pinned band on both form factors, so a
+// long catalog scrolls UNDER it instead of taking it along (2026-11-27 user
+// report, phone: "the search box scrolls away with the list"). The rows stay in
+// the scrolling default slot. The mirror passes the head as
+// `SelectPanelProps::pinned_header`, so the band's DOM is HkSelectPanel's, not
+// this file's.
+//
+// DOM contract:
 //
 //   ── the chip (Vue: `button.hk-affix-chip`) ──
 //   button.hk-affix-chip [chipClass]
@@ -25,39 +35,63 @@
 //   ── the popup, while open (HkMenu + HkSelectPanel) ──
 //   div.hk-select-popout-host data-side="bottom" data-align={start|end}
 //       (style: inline geometry)
-//     div.hk-select-popout [aria-label={title}]
+//     div.hk-select-popout.is-pinned-header [aria-label={title}]
 //         (style: --hk-select-panel-max-height:min(18rem, 45dvh))
-//       div.hk-affix-head
-//         div.hk-affix-tags role="group" [aria-label]      (multi, tags present)
-//           div.hk-affix-tag-list
-//             div.hk-affix-tag [data-active]
-//               button.hk-affix-tag-body type="button" title [aria-label]
-//                 span.hk-affix-tag-flag [aria-hidden] {flag}
-//                 span.hk-affix-tag-text [data-unset] {value|unset|label}
-//                 span.hk-affix-tag-meta {meta}
-//                 span.hk-affix-tag-dot [aria-hidden]      (active tag)
-//               button.hk-affix-tag-x type="button" aria-label title
-//                 span[style="display:contents"] > <x 11>
-//         div.hk-affix-search role="search"
-//           <the mirrored `Input`, size sm, search glyph prefix>
-//       ── rows present (or the custom row visible) ──
-//       div.hk-affix-scroll                                (width container only)
-//         div.hk-affix-list
-//           button.hk-affix-row [data-active] [data-disabled]
-//             span.hk-affix-row-flag [aria-hidden] {flag}
-//             span.hk-affix-row-label {label}
-//             span.hk-affix-row-meta {meta}
-//           button.hk-affix-row data-custom="true"         (the "Use <q>" row)
-//       ── nothing to show ──
-//       div.hk-affix-empty {emptyText}
+//       div.hk-select-popout-pinned                     ← THE PINNED HEAD
+//         div.hk-affix-head
+//           div.hk-affix-tags role="group" [aria-label] (TAG LAYOUT only, tags present)
+//             div.hk-affix-tag-list
+//               div.hk-affix-tag [data-active]
+//                 button.hk-affix-tag-body type="button" title [aria-label]
+//                   span.hk-affix-tag-flag [aria-hidden] {flag}
+//                   span.hk-affix-tag-text [data-unset] {value|unset|label}
+//                   span.hk-affix-tag-meta {meta}
+//                   span.hk-affix-tag-dot [aria-hidden]      (active tag)
+//                 button.hk-affix-tag-x type="button" aria-label title
+//                   span[style="display:contents"] > <x 11>
+//           div.hk-affix-search role="search"           (searchable)
+//             <the mirrored `Input`, size sm, search glyph prefix>
+//       div.hk-select-popout-body-host
+//         div.hk-select-popout-body                    ← THE scroll region
+//           ── rows present (or the custom row visible) ──
+//           div.hk-affix-scroll                         (width container only)
+//             div.hk-affix-list
+//               button.hk-affix-row [data-active] [data-checked] [data-disabled]
+//                   [aria-pressed={true|false}]         (rows layout only)
+//                 span.hk-affix-check [data-on] aria-hidden  (rows layout only;
+//                     <check 12> only while checked)
+//                 span.hk-affix-row-flag [aria-hidden] {flag}
+//                 span.hk-affix-row-label {label}
+//                 span.hk-affix-row-meta {meta}
+//               div.hk-affix-divider role="separator"
+//                   aria-orientation="horizontal"       (rows layout, both groups)
+//               button.hk-affix-row data-custom="true"  (the "Use <q>" row)
+//           ── nothing to show ──
+//           div.hk-affix-empty {emptyText}
+//
+// THE TWO LAYOUTS (Vue's `layout` prop, `rows` by default; no effect in single
+// mode — see [`AffixLayout`]):
+//   * `rows` — every option stays a ROW. Selected rows come FIRST in catalog
+//     order (and the rest keep catalog order — a check floats a row to the end
+//     of the selected run, unchecking returns it to its catalog slot, nothing
+//     else ever reorders), `div.hk-affix-divider` separates them only while BOTH
+//     groups are non-empty AFTER filtering, and a tap TOGGLES: unchecked →
+//     `select`, checked → `remove` (no confirm dialog — `confirm_remove` guards
+//     erasing a typed VALUE through the tag ×, not a one-tap reversible check).
+//     No `.hk-affix-tag*` node exists in this layout.
+//   * `tags` — the value-editor shape (`HkLocalizedInput` passes it): the
+//     selected keys render as the pinned TAG LIST above the search, and the rows
+//     list only the NOT-yet-selected options; the × keeps the two-step confirm.
+//   * single — the pinned head is the search only (no tag list); rows are
+//     unchanged and carry NO check cell; `data-active` marks the current value.
 //
 // Vue prop mapping: `options` → [`AffixPickerProps::options`]
-// ([`AffixOption`]), `mode` → [`AffixMode`], `selected` (Vue: `string |
-// string[]`) → the [`AffixPickerProps::selected`] key list (`Vec<String>`, so
-// both Vue shapes are one field: empty = nothing selected), `activeKey` →
-// `active_key`, `side` → [`AffixSide`], `searchable`, `allowCustom` →
-// `allow_custom`, `confirmRemove` → `confirm_remove`, `tagValues` →
-// `tag_values`, `tagUnsetText` → `tag_unset_text`, `closeOnSelect` →
+// ([`AffixOption`]), `mode` → [`AffixMode`], `layout` → [`AffixLayout`],
+// `selected` (Vue: `string | string[]`) → the [`AffixPickerProps::selected`] key
+// list (`Vec<String>`, so both Vue shapes are one field: empty = nothing
+// selected), `activeKey` → `active_key`, `side` → [`AffixSide`], `searchable`,
+// `allowCustom` → `allow_custom`, `confirmRemove` → `confirm_remove`, `tagValues`
+// → `tag_values`, `tagUnsetText` → `tag_unset_text`, `closeOnSelect` →
 // `close_on_select`, `disabled`, `title` / `searchPlaceholder` / `emptyText` →
 // `title` / `search_placeholder` / `empty_text`, `chipClass` → `chip_class`,
 // `chipLabel` → `chip_label`, and the scoped `chip` slot → the plain
@@ -74,20 +108,26 @@
 // [`affix_filter_rows`], [`affix_exact_label_match`],
 // [`affix_custom_visible`], [`affix_tag_entries`],
 // [`affix_resolved_close_on_select`], [`affix_selected_count_label`],
-// [`affix_tag_value`], [`affix_enter_action`] and [`affix_popup_style`].
+// [`affix_tag_value`], [`affix_enter_action`], [`affix_row_checked`],
+// [`affix_row_toggle_removes`], [`affix_selected_run_length`],
+// [`affix_divider_visible`], [`affix_row_sequence`] and [`affix_popup_style`].
 //
 // Behaviour deltas vs Vue (documented, not accidental):
 //   * NO `<Teleport>`, no popup-manager z-band, no mobile sheet, no auto-flip
 //     and no outside-click close: the popup renders in place with inline
-//     geometry (`affix_popup_style`). With an `anchor` rect the chip is the
-//     anchor exactly like `basic/select.rs`; without one the surface pins to
-//     the nearest positioned ancestor — and because the natural mount is an
-//     affix slot inside the field, that ancestor is the field's
-//     `.hk-input-box` (`position: relative`), so the popup lands under the
-//     field. ONE SCROLLBAR PER WINDOW is preserved: `.hk-affix-scroll` /
-//     `.hk-affix-list` stay scroll-free and the panel owns the only scroll
-//     region, capped through `--hk-select-panel-max-height`
-//     (`min(18rem, 45dvh)`, Vue's `maxHeight`).
+//     geometry (`affix_popup_style`) — the DESKTOP POPOUT shape of both form
+//     factors, so the pinned head is always the popout's
+//     `.hk-select-popout-pinned` band (a phone-width host never gets Vue's
+//     `.hk-select-sheet-pinned`). With an `anchor` rect the chip is the anchor
+//     exactly like `basic/select.rs`; without one the surface pins to the
+//     nearest positioned ancestor — and because the natural mount is an affix
+//     slot inside the field, that ancestor is the field's `.hk-input-box`
+//     (`position: relative`), so the popup lands under the field. ONE SCROLLBAR
+//     PER WINDOW is preserved and sharpened: `.hk-affix-scroll` / `.hk-affix-list`
+//     stay scroll-free and the ONLY scroll region is `.hk-select-popout-body`
+//     under the pinned head, capped through `--hk-select-panel-max-height`
+//     (`min(18rem, 45dvh)`, Vue's `maxHeight` — a popout measure; the phone
+//     sheet's own family ceiling never applies here).
 //   * NO `HkMessageBox` CONFIRM: Vue's tag × opens the shared confirm dialog and
 //     only its Confirm emits `remove` (the popup deliberately stays open behind
 //     it). A global dialog service has no tairitsu analogue in this wave, so the
@@ -96,9 +136,13 @@
 //     `confirmRemove={false}` delegates), and `on_remove` directly when the host
 //     opted out. `confirmHeld` (swallow-close-while-our-dialog-is-up) has nothing
 //     to guard, and the dialog's own copy (`removeConfirmTitle` /
-//     `removeConfirm`) is the host's.
-//   * NO `HkListTransition`: no FLIP move animation and no leave-squeeze ghost
-//     on the tag list — the tags render as one ordered list, host order.
+//     `removeConfirm`) is the host's. The rows layout's row toggle bypasses
+//     the gate entirely, exactly like Vue (it emits `remove` directly).
+//   * NO `HkListTransition`: the rows layout's FLIP move (a checked row gliding
+//     to the front behind the divider) and the tag list's reveal choreography are
+//     Vue-only. The DOM shape is the same — the divider is a SIBLING between the
+//     selected run and the rest, inside the keyed list — but a host that wants
+//     motion runs the list through `display/list_transition.rs` itself.
 //   * NO `isComposing` GUARD: `KeyboardEvent` carries no composition flag, so an
 //     Enter pressed mid-IME-composition is handled like any other (the same
 //     trade `basic/tag_input.rs` documents).
@@ -109,10 +153,13 @@
 //   * NO `.hk-menu-slot` BAND WRAPPER: HkMenu wraps its header slot in
 //     `div.hk-menu-slot.hk-menu-slot--head`. That wrapper goes with the menu
 //     itself (it is a hook with no vendored sheet and no rule of its own in the
-//     affix sheet), so the popup content is Vue's `.hk-affix-head` plus the
-//     default slot's `.hk-affix-scroll` / `.hk-affix-empty`, verbatim.
-//   * The glyphs (chevron-down 12, search 13, x 11, plus 13) are lucide
-//     `lucide-vue-next` nodes rendered through `dangerous_inner_html` on
+//     affix sheet), so the popup content is Vue's `.hk-affix-head` inside the
+//     panel's pinned band, verbatim.
+//   * The `badge` capsule is not rendered: [`AffixOption`] has no badge field,
+//     so Vue's `span.hk-affix-row-badge` / `.hk-affix-tag-badge` (an `HBadge`)
+//     never appears. `flag` stays the emoji slot.
+//   * The glyphs (chevron-down 12, search 13, x 11, plus 13, check 12) are
+//     lucide `lucide-vue-next` nodes rendered through `dangerous_inner_html` on
 //     `display:contents` hosts (`rsx!`'s `svg {}` lands in the HTML namespace in
 //     this host stack). Markup, 24-unit viewBox, stroke attributes, the
 //     `lucide lucide-{name}-icon lucide-{name}` class pair and the automatic
@@ -158,12 +205,25 @@ pub struct AffixOption {
 }
 
 /// Vue's `mode`: `single` closes on pick and shows the active mark on the
-/// selected row; `multi` renders the tag list and keeps the popup open.
+/// selected row; `multi` keeps the popup open for batch toggles.
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub enum AffixMode {
     #[default]
     Single,
     Multi,
+}
+
+/// Vue's `layout` (default `Rows`) — how a MULTI picker presents its selection.
+/// No effect in single mode ([`AffixLayout::tag_layout`] gates every branch).
+#[derive(Clone, Copy, PartialEq, Debug, Default)]
+pub enum AffixLayout {
+    /// Every option stays a row: checked rows wear the leading check, float to
+    /// the top in catalog order behind a divider, and a tap toggles them.
+    #[default]
+    Rows,
+    /// The value-editor shape (`HkLocalizedInput`): selected keys as the pinned
+    /// tag list above the search; rows list only the remaining options.
+    Tags,
 }
 
 /// Which affix edge the chip rides — it steers the popup's anchor alignment
@@ -227,23 +287,58 @@ pub fn affix_is_subsequence(query: &str, text: &str) -> bool {
     false
 }
 
-/// Vue's `filteredRows`: multi hides already-selected keys (they live in the
-/// tag list instead), single always shows everything.
+/// Vue's `tagLayout` computed: the tag list is the `tags` layout of a MULTI
+/// picker and nothing else, so the two layouts can never half-apply (single
+/// mode ignores `layout` entirely).
+pub fn affix_tag_layout(mode: AffixMode, layout: AffixLayout) -> bool {
+    mode == AffixMode::Multi && layout == AffixLayout::Tags
+}
+
+impl AffixLayout {
+    /// [`affix_tag_layout`] — the one flag every branch keys off.
+    pub fn tag_layout(self, mode: AffixMode) -> bool {
+        affix_tag_layout(mode, self)
+    }
+}
+
+/// Vue's `isSelected`: a key is in the controlled selection.
+fn affix_is_selected(selected: &[String], key: &str) -> bool {
+    selected.iter().any(|selected| selected == key)
+}
+
+/// Vue's `filteredRows`: the pick list in RENDER order, before the rank pass.
 ///
-/// Filtering is TWO-PASS over ONE field at a time (never across concatenated
-/// fields, which produces noise): an exact case-folded substring first, then the
-/// in-order subsequence fallback so a renamed or CJK-composed label is still
-/// found by its short form.
+/// The tag layout hides already-selected keys (they live in the tag list
+/// instead); the rows layout and single mode keep every option. Filtering is
+/// TWO-PASS over ONE field at a time (never across concatenated fields, which
+/// produces noise): an exact case-folded substring first, then the in-order
+/// subsequence fallback so a renamed or CJK-composed label is still found by its
+/// short form. A query filters, it never re-sorts.
 pub fn affix_filter_rows(
     options: &[AffixOption],
     selected: &[String],
     mode: AffixMode,
     query: &str,
 ) -> Vec<AffixOption> {
+    affix_filter_rows_for(options, selected, mode, AffixLayout::Tags, query)
+}
+
+/// Vue's `filteredRows` for an explicit [`AffixLayout`] — the full surface.
+/// [`affix_filter_rows`] is the same function with the pre-`layout` default
+/// (`Tags`), kept because that is what a plain "hide the selected keys" call
+/// means.
+pub fn affix_filter_rows_for(
+    options: &[AffixOption],
+    selected: &[String],
+    mode: AffixMode,
+    layout: AffixLayout,
+    query: &str,
+) -> Vec<AffixOption> {
     let q = query.trim().to_lowercase();
-    options
+    let tag_layout = affix_tag_layout(mode, layout);
+    let matched: Vec<AffixOption> = options
         .iter()
-        .filter(|option| mode == AffixMode::Single || !selected.contains(&option.key))
+        .filter(|option| !tag_layout || !affix_is_selected(selected, &option.key))
         .filter(|option| {
             if q.is_empty() {
                 return true;
@@ -283,7 +378,107 @@ pub fn affix_filter_rows(
                 .is_some_and(|keywords| affix_is_subsequence(&q, keywords))
         })
         .cloned()
-        .collect()
+        .collect();
+    // The rows layout ranks SELECTED FIRST — both groups in catalog order, so
+    // a check floats a row to the end of the selected run and nothing else ever
+    // reorders. A list with no selected row keeps its catalog order verbatim.
+    if tag_layout || mode != AffixMode::Multi {
+        return matched;
+    }
+    let mut ranked: Vec<AffixOption> = Vec::with_capacity(matched.len());
+    ranked.extend(
+        matched
+            .iter()
+            .filter(|option| affix_is_selected(selected, &option.key))
+            .cloned(),
+    );
+    if ranked.is_empty() {
+        return matched;
+    }
+    ranked.extend(
+        matched
+            .into_iter()
+            .filter(|option| !affix_is_selected(selected, &option.key)),
+    );
+    ranked
+}
+
+/// Vue's `selectedRunLength`: the length of the SELECTED run at the head of the
+/// rows (rows layout of a multi picker; 0 everywhere else), and therefore where
+/// the divider goes.
+pub fn affix_selected_run_length(rows: &[AffixOption], selected: &[String]) -> usize {
+    rows.iter()
+        .take_while(|option| affix_is_selected(selected, &option.key))
+        .count()
+}
+
+/// Vue's `dividerVisible`: the selected/unselected boundary renders only while
+/// BOTH groups are visible — an all-selected or all-unselected list has no
+/// boundary to draw.
+pub fn affix_divider_visible(rows: &[AffixOption], selected: &[String]) -> bool {
+    let run = affix_selected_run_length(rows, selected);
+    run > 0 && run < rows.len()
+}
+
+/// One child of the rows list, in render order: an option row or the divider at
+/// the selected/unselected boundary. Vue pushes the divider while iterating the
+/// rows, so it lands BETWEEN two siblings — the DOM shape this enum keeps.
+#[derive(Clone, PartialEq, Debug)]
+pub enum AffixRowSlot {
+    /// A `button.hk-affix-row` for this catalog option.
+    Row(AffixOption),
+    /// `div.hk-affix-divider role="separator" aria-orientation="horizontal"`.
+    Divider,
+}
+
+/// Vue's `rowNodes()` (minus the trailing custom row, which the caller appends
+/// after every option like Vue's `customVisible` arm): the rows with the divider
+/// inserted at index [`affix_selected_run_length`] when it is visible.
+pub fn affix_row_sequence(rows: &[AffixOption], selected: &[String]) -> Vec<AffixRowSlot> {
+    let divider_at = if affix_divider_visible(rows, selected) {
+        Some(affix_selected_run_length(rows, selected))
+    } else {
+        None
+    };
+    let mut slots: Vec<AffixRowSlot> =
+        Vec::with_capacity(rows.len() + usize::from(divider_at.is_some()));
+    for (index, option) in rows.iter().enumerate() {
+        if divider_at == Some(index) {
+            slots.push(AffixRowSlot::Divider);
+        }
+        slots.push(AffixRowSlot::Row(option.clone()));
+    }
+    slots
+}
+
+/// Vue's `checkable`: only the rows layout renders the leading check column —
+/// the one layout where a row IS the selection. Single mode keeps its checked
+/// FACE on the active row and no glyph column.
+pub fn affix_rows_checkable(mode: AffixMode, layout: AffixLayout) -> bool {
+    mode == AffixMode::Multi && !affix_tag_layout(mode, layout)
+}
+
+/// One row's `data-checked` / `aria-pressed` state (false when the row carries
+/// no check column at all).
+pub fn affix_row_checked(
+    mode: AffixMode,
+    layout: AffixLayout,
+    selected: &[String],
+    key: &str,
+) -> bool {
+    affix_rows_checkable(mode, layout) && affix_is_selected(selected, key)
+}
+
+/// Vue's `pick(option)`: single mode and the tag layout ADD (`select`); the rows
+/// layout TOGGLES, so a checked row leaves through `remove`. `true` = this tap
+/// removes.
+pub fn affix_row_toggle_removes(
+    mode: AffixMode,
+    layout: AffixLayout,
+    selected: &[String],
+    key: &str,
+) -> bool {
+    mode == AffixMode::Multi && !affix_tag_layout(mode, layout) && affix_is_selected(selected, key)
 }
 
 /// Vue's `exactMatch`: an exact case-folded label match suppresses the custom
@@ -412,6 +607,8 @@ const LUCIDE_CHEVRON_DOWN_BODY: &str = r#"<path d="m6 9 6 6 6-6"></path>"#;
 const LUCIDE_X_BODY: &str = r#"<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>"#;
 /// lucide `plus`'s two paths (the custom row's growth mark, `<Plus size={13} />`).
 const LUCIDE_PLUS_BODY: &str = r#"<path d="M5 12h14"></path><path d="M12 5v14"></path>"#;
+/// lucide `check`'s path (the rows layout's checked cell, `<Check size={12} />`).
+const LUCIDE_CHECK_BODY: &str = r#"<path d="M20 6 9 17l-5-5"></path>"#;
 /// lucide `search`'s path + circle (the search field's prefix glyph).
 const LUCIDE_SEARCH_BODY: &str =
     r#"<path d="m21 21-4.34-4.34"></path><circle cx="11" cy="11" r="8"></circle>"#;
@@ -441,9 +638,13 @@ fn glyph_host(markup: String) -> Element {
 struct AffixPickerWiring {
     confirm_remove: bool,
     mode: AffixMode,
+    layout: AffixLayout,
     disabled: bool,
     open: bool,
     query: String,
+    /// The controlled selection — the rows layout's toggle reads it (Vue closes
+    /// over `selectedKeys`), the tag path does not.
+    selected: Vec<String>,
     /// Vue's `resolvedCloseOnSelect`.
     close_on_select: bool,
     on_open_change: Option<EventHandler<bool>>,
@@ -474,13 +675,20 @@ impl AffixPickerWiring {
         }
     }
 
-    /// Vue's `pick(option)`: emit the key, then close when the resolved
-    /// close-on-select says so.
+    /// Vue's `pick(option)`: single mode and the tag layout ADD (`select`); the
+    /// rows layout TOGGLES, so a checked row leaves through the same `remove`
+    /// event the tag × fires — minus the confirm dialog (`confirm_remove` guards
+    /// erasing a typed VALUE in the tag layout; unchecking a row is one
+    /// reversible tap). Close-on-select follows the resolved flag on both edges.
     fn pick(&self, key: &str, option_disabled: bool) {
         if option_disabled {
             return;
         }
-        if let Some(handler) = self.on_select.as_ref() {
+        if affix_row_toggle_removes(self.mode, self.layout, &self.selected, key) {
+            if let Some(handler) = self.on_remove.as_ref() {
+                handler.call(key.to_string());
+            }
+        } else if let Some(handler) = self.on_select.as_ref() {
             handler.call(key.to_string());
         }
         if self.close_on_select {
@@ -554,9 +762,13 @@ pub struct AffixPickerProps {
     /// props struct must be `Default`-constructible, so it defaults empty).
     pub options: Vec<AffixOption>,
 
-    /// `single` closes on pick and marks the active row; `multi` renders the
-    /// tag list and keeps the popup open (Vue default `single`).
+    /// `single` closes on pick and marks the active row; `multi` keeps the
+    /// popup open for batch toggles (Vue default `single`).
     pub mode: AffixMode,
+
+    /// How a MULTI picker presents its selection (Vue `layout`, default
+    /// [`AffixLayout::Rows`]). No effect in single mode.
+    pub layout: AffixLayout,
 
     /// Selected key(s), in HOST order (Vue: a string in single mode, an array in
     /// multi). Empty means "nothing selected" in both modes.
@@ -659,6 +871,7 @@ pub struct AffixPickerProps {
 pub fn AffixPicker(props: AffixPickerProps) -> Element {
     let options = props.options.clone();
     let mode = props.mode;
+    let layout = props.layout;
     let selected = props.selected.clone();
     let disabled = props.disabled;
     let is_open = props.open;
@@ -691,7 +904,11 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
     let custom_template = t("components.hk.affixPicker.useCustom", "Use \"{query}\"");
 
     // ── the pure algebra ─────────────────────────────────────────────────
-    let rows = affix_filter_rows(&options, &selected, mode, &query);
+    // Vue's `tagLayout` flag first: every layout branch keys off it, so the two
+    // layouts can never half-apply.
+    let tag_layout = affix_tag_layout(mode, layout);
+    let rows = affix_filter_rows_for(&options, &selected, mode, layout, &query);
+    let checkable = affix_rows_checkable(mode, layout);
     let exact_match = affix_exact_label_match(&options, &query);
     let custom_visible = affix_custom_visible(props.allow_custom, &query, exact_match);
     let close_on_select = affix_resolved_close_on_select(props.close_on_select, mode);
@@ -719,9 +936,11 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
     let wiring = AffixPickerWiring {
         confirm_remove: props.confirm_remove,
         mode,
+        layout,
         disabled,
         open: is_open,
         query: query.clone(),
+        selected: selected.clone(),
         close_on_select,
         on_open_change: props.on_open_change.clone(),
         on_query_change: props.on_query_change.clone(),
@@ -790,8 +1009,9 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
 
     // ── the popup, while open ─────────────────────────────────────────────
     let layer = if is_open {
-        // `search`, the tag list and the rows all live inside the ONE panel.
-        let tags = if mode == AffixMode::Multi && !tag_entries.is_empty() {
+        // The pinned head carries the search and — TAG LAYOUT ONLY — the
+        // selected tag list; the rows live in the scrolling body below it.
+        let tags = if tag_layout && !tag_entries.is_empty() {
             let mut tag_nodes: Vec<VNode> = Vec::with_capacity(tag_entries.len());
             for entry in &tag_entries {
                 let key = entry.key.clone();
@@ -939,10 +1159,32 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
             None
         };
 
-        // ── rows (and the custom row last) ────────────────────────────────
-        let mut row_nodes: Vec<VNode> = Vec::with_capacity(rows.len() + 1);
-        for option in &rows {
+        // ── rows (the optional divider, and the custom row last) ──────────
+        // Vue's `rowNodes()`: rows in RENDER order (the rows layout ranks the
+        // selected run first), the divider inserted as a SIBLING at the
+        // selected/unselected boundary, the custom row after everything.
+        let row_slots = affix_row_sequence(&rows, &selected);
+        let mut row_nodes: Vec<VNode> = Vec::with_capacity(row_slots.len() + 1);
+        for slot in row_slots {
+            let option = match slot {
+                AffixRowSlot::Divider => {
+                    // The menu family's one divider grammar; a keyed child of
+                    // Vue's list transition, here a plain sibling.
+                    row_nodes.push(rsx! {
+                        div {
+                            class: "hk-affix-divider",
+                            "role": "separator",
+                            "aria-orientation": "horizontal",
+                        }
+                    });
+                    continue;
+                }
+                AffixRowSlot::Row(option) => option,
+            };
+            // Single mode keeps its checked FACE on the active row and no glyph
+            // column; the rows layout IS the selection, so it wears both.
             let is_active = mode == AffixMode::Single && selected.contains(&option.key);
+            let is_checked = checkable && selected.contains(&option.key);
             let row_disabled = option.disabled;
             let label = option.label.clone();
             let meta = option.meta.clone();
@@ -954,11 +1196,32 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
                     "type": "button",
                     class: "hk-affix-row",
                     "data-active": marker_attr(is_active),
+                    "data-checked": marker_attr(is_checked),
                     "data-disabled": marker_attr(row_disabled),
+                    // APG toggle-button state: published in the rows layout
+                    // only (`checkable`), where a row is a check on the list.
+                    "aria-pressed": checkable.then_some(if is_checked { "true" } else { "false" }),
                     onclick: move |event: MouseEvent| {
                         event.stop_propagation();
                         row_wiring.pick(&key, row_disabled);
                     },
+                    if checkable {
+                        // The reserved icon cell: on every row, filled only
+                        // while checked, so labels line up either way.
+                        span {
+                            class: "hk-affix-check",
+                            "data-on": marker_attr(is_checked),
+                            "aria-hidden": "true",
+                            if is_checked {
+                                {glyph_host(lucide_icon_svg(
+                                    "check",
+                                    12,
+                                    LUCIDE_CHECK_BODY,
+                                    None,
+                                ))}
+                            }
+                        }
+                    }
                     if let Some(flag) = flag {
                         span {
                             class: "hk-affix-row-flag",
@@ -1005,7 +1268,8 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
         } else {
             let row_nodes = VNode::Fragment(row_nodes);
             // `.hk-affix-scroll` is a WIDTH container only — no max-height and
-            // no overflow anywhere below the panel (ONE SCROLLBAR PER WINDOW).
+            // no overflow anywhere below the panel's scrolling body (ONE
+            // SCROLLBAR PER WINDOW).
             rsx! {
                 div {
                     class: "hk-affix-scroll",
@@ -1017,8 +1281,8 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
         };
 
         let host_style = affix_popup_style(props.side, props.anchor, props.offset);
-        // Vue: the `maxHeight` prop lands on whichever element scrolls — here
-        // the panel, the ONE scroll region of the window.
+        // Vue: the `maxHeight` prop lands on the popout — the box the sheet
+        // caps, whose BODY scrolls under the pinned head.
         let panel_style = format!("--hk-select-panel-max-height:{}", AFFIX_PICKER_MAX_HEIGHT);
         let key_wiring = wiring.clone();
         let panel_keydown = move |event: KeyboardEvent| {
@@ -1028,27 +1292,59 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
                 key_wiring.request_open(false);
             }
         };
-        Some(rsx! {
+        // The PINNED head: the tag list (tag layout only) and the search field,
+        // outside the scroll region on both form factors. An unsearchable,
+        // tag-less picker (single + `searchable={false}`) pins nothing at all
+        // and renders the header-less popout shape, exactly as before the slot
+        // existed.
+        let has_head = tags.is_some() || search.is_some();
+        let head = rsx! {
             div {
-                class: "hk-select-popout-host",
-                "data-side": "bottom",
-                "data-align": props.side.align_token(),
-                style: host_style,
+                class: "hk-affix-head",
+                if let Some(tags) = tags {
+                    {tags}
+                }
+                if let Some(search) = search {
+                    {search}
+                }
+            }
+        };
+        Some(if has_head {
+            rsx! {
                 div {
-                    class: "hk-select-popout",
-                    "aria-label": title,
-                    style: panel_style,
-                    onkeydown: panel_keydown,
+                    class: "hk-select-popout-host",
+                    "data-side": "bottom",
+                    "data-align": props.side.align_token(),
+                    style: host_style,
                     div {
-                        class: "hk-affix-head",
-                        if let Some(tags) = tags {
-                            {tags}
-                        }
-                        if let Some(search) = search {
-                            {search}
+                        class: "hk-select-popout is-pinned-header",
+                        "aria-label": title,
+                        style: panel_style,
+                        onkeydown: panel_keydown,
+                        div { class: "hk-select-popout-pinned", {head} }
+                        div {
+                            class: "hk-select-popout-body-host",
+                            div { class: "hk-select-popout-body",
+                                {body}
+                            }
                         }
                     }
-                    {body}
+                }
+            }
+        } else {
+            rsx! {
+                div {
+                    class: "hk-select-popout-host",
+                    "data-side": "bottom",
+                    "data-align": props.side.align_token(),
+                    style: host_style,
+                    div {
+                        class: "hk-select-popout",
+                        "aria-label": title,
+                        style: panel_style,
+                        onkeydown: panel_keydown,
+                        {body}
+                    }
                 }
             }
         })
@@ -1211,7 +1507,9 @@ mod tests {
             )),
             vec!["cn"]
         );
-        // Multi hides the already-selected keys (they live in the tag list).
+        // Multi hides the already-selected keys in the TAG layout (they live in
+        // the tag list). The default (`Rows`) keeps them as checked rows — see
+        // `affix_rows_layout_ranks_selected_first`.
         let selected = vec!["cn".to_string()];
         assert_eq!(
             keys(&affix_filter_rows(
@@ -1221,6 +1519,16 @@ mod tests {
                 ""
             )),
             vec!["jp", "zz"]
+        );
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog(),
+                &selected,
+                AffixMode::Multi,
+                AffixLayout::Rows,
+                ""
+            )),
+            vec!["cn", "jp", "zz"]
         );
         // Single always shows everything, selected or not.
         assert_eq!(
@@ -1359,6 +1667,8 @@ mod tests {
         let props = AffixPickerProps::default();
         assert!(props.options.is_empty());
         assert_eq!(props.mode, AffixMode::Single);
+        // Vue's `layout` default is "rows".
+        assert_eq!(props.layout, AffixLayout::Rows);
         assert!(props.selected.is_empty());
         assert!(props.active_key.is_none());
         assert_eq!(props.side, AffixSide::Prefix);
@@ -1418,13 +1728,16 @@ mod tests {
     }
 
     #[test]
-    fn affix_picker_renders_the_open_multi_panel_contract() {
+    fn affix_picker_renders_the_open_tag_layout_panel_contract() {
         let mut tag_values = HashMap::new();
         tag_values.insert("cn".to_string(), "中国话".to_string());
         tag_values.insert("jp".to_string(), "   ".to_string());
         let html = AffixPicker(AffixPickerProps {
             options: catalog(),
             mode: AffixMode::Multi,
+            // The value-editor shape (HkLocalizedInput): the pre-`layout`
+            // behaviour this test pinned before the rows layout existed.
+            layout: AffixLayout::Tags,
             selected: vec!["cn".to_string(), "jp".to_string(), "gone".to_string()],
             active_key: Some("jp".to_string()),
             open: true,
@@ -1440,7 +1753,7 @@ mod tests {
         .render_to_html();
 
         // The popup surface: suffix side → bottom-end, anchored geometry, the
-        // single-scroll cap published on the scrolling panel.
+        // single-scroll cap on the popout, and the pinned-header column.
         assert!(html.contains(r#"class="hk-select-popout-host""#), "{html}");
         assert!(html.contains(r#"data-side="bottom""#), "{html}");
         assert!(html.contains(r#"data-align="end""#), "{html}");
@@ -1452,14 +1765,49 @@ mod tests {
             html.contains("--hk-select-panel-max-height:min(18rem, 45dvh)"),
             "{html}"
         );
+        assert!(
+            html.contains(r#"class="hk-select-popout is-pinned-header""#),
+            "{html}"
+        );
+        // The head is PINNED: `.hk-select-popout-pinned > .hk-affix-head`, and
+        // the rows live in `.hk-select-popout-body`.
+        assert!(
+            html.contains(r#"class="hk-select-popout-pinned"><div class="hk-affix-head""#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"class="hk-select-popout-pinned""#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"class="hk-select-popout-body-host""#),
+            "{html}"
+        );
+        let pinned_at = html.find("hk-select-popout-pinned").expect("pinned band");
+        let head_at = html.find(r#"class="hk-affix-head""#).expect("head");
+        let body_at = html.find("hk-select-popout-body").expect("body");
+        let scroll_at = html.find(r#"class="hk-affix-scroll""#).expect("rows");
+        assert!(pinned_at < head_at, "{html}");
+        assert!(head_at < body_at, "the head is outside the body: {html}");
+        assert!(body_at < scroll_at, "the rows are in the body: {html}");
         // The head: the tag group publishes Vue's group role/label, then search.
-        assert!(html.contains(r#"class="hk-affix-head""#), "{html}");
         assert!(html.contains(r#"class="hk-affix-tags""#), "{html}");
         assert!(html.contains(r#"role="group""#), "{html}");
         assert!(html.contains(r#"aria-label="Selected""#), "{html}");
         assert!(html.contains(r#"class="hk-affix-tag-list""#), "{html}");
         assert!(html.contains(r#"class="hk-affix-search""#), "{html}");
         assert!(html.contains(r#"role="search""#), "{html}");
+        // BOTH live in the pinned band — never in the scrolling body.
+        let body_subtree = html.split(r#"class="hk-select-popout-body""#).nth(1);
+        assert!(
+            !body_subtree
+                .unwrap_or_default()
+                .contains(r#"class="hk-affix-tags""#)
+                && !body_subtree
+                    .unwrap_or_default()
+                    .contains(r#"class="hk-affix-search""#),
+            "tags and search must not scroll with the rows: {html}"
+        );
         // The search field renders through the mirrored Input.
         assert!(html.contains(r#"class="hk-input-wrapper""#), "{html}");
         assert!(html.contains(r#"class="hk-input-element""#), "{html}");
@@ -1476,9 +1824,9 @@ mod tests {
         );
         assert!(html.contains(r#"aria-label="Switch to Japan""#), "{html}");
         assert!(html.contains(r#"aria-label="Remove — Japan""#), "{html}");
-        // Rows: multi hides the selected keys (cn/jp/gone live in the tag list)
-        // and "res" keeps only the disabled Reserved row; the custom row comes
-        // LAST, exactly Vue's slot order.
+        // Rows: the tag layout hides the selected keys (cn/jp/gone live in the
+        // tag list) and "res" keeps only the disabled Reserved row; the custom
+        // row comes LAST, exactly Vue's slot order.
         assert_eq!(html.matches(r#"class="hk-affix-row""#).count(), 2, "{html}");
         assert!(html.contains(r#"data-custom="true""#), "{html}");
         assert!(
@@ -1489,15 +1837,87 @@ mod tests {
             html.contains("lucide hk-affix-row-flag lucide-plus-icon"),
             "{html}"
         );
-        // The catalog row keeps its data faces (the disabled one included).
+        // The catalog row keeps its data faces (the disabled one included) —
+        // and the tag layout draws NO check column and NO divider.
         assert!(html.contains(r#"data-disabled="true""#), "{html}");
         assert!(
             html.contains(r#"class="hk-affix-row-label">Reserved<"#),
             "{html}"
         );
+        assert!(!html.contains("hk-affix-check"), "{html}");
+        assert!(!html.contains("hk-affix-divider"), "{html}");
+        assert!(!html.contains(r#"aria-pressed="#), "{html}");
         // The scroll band is the width container only.
         assert!(html.contains(r#"class="hk-affix-scroll""#), "{html}");
         assert!(html.contains(r#"class="hk-affix-list""#), "{html}");
+    }
+
+    #[test]
+    fn affix_picker_renders_the_rows_layout_with_checked_rows() {
+        // The multi DEFAULT since 2026-11-27: every option stays a row, checked
+        // rows rank first, the boundary divider separates them, and nothing is
+        // built in front of the search for the selection (no tag list).
+        let html = AffixPicker(AffixPickerProps {
+            options: catalog(),
+            mode: AffixMode::Multi,
+            selected: vec!["jp".to_string()],
+            open: true,
+            ..Default::default()
+        })
+        .render_to_html();
+
+        assert!(
+            html.contains(r#"class="hk-select-popout is-pinned-header""#),
+            "{html}"
+        );
+        // The search is still pinned, and there is NO tag list at all.
+        assert!(
+            html.contains(r#"class="hk-select-popout-pinned""#),
+            "{html}"
+        );
+        assert!(html.contains(r#"class="hk-affix-search""#), "{html}");
+        assert!(!html.contains("hk-affix-tags"), "{html}");
+        assert!(!html.contains("hk-affix-tag "), "{html}");
+        // Every catalog option is a row — the SELECTED one included.
+        assert_eq!(html.matches(r#"class="hk-affix-row""#).count(), 3, "{html}");
+        // The checked row leads: catalog order cn < jp < zz, so the selected
+        // run (jp) floats to the head and the rest keeps catalog order.
+        let jp_at = html
+            .find(r#"class="hk-affix-row-label">Japan"#)
+            .expect("jp row");
+        let cn_at = html
+            .find(r#"class="hk-affix-row-label">中华人民共和国"#)
+            .expect("cn row");
+        assert!(jp_at < cn_at, "the checked row ranks first: {html}");
+        // The divider sits BETWEEN the two runs, as a sibling. (The checked
+        // row's `hk-affix-check` cell also matches a naive `hk-affix-divider`
+        // search, so anchor on the class attribute.)
+        let divider_at = html
+            .find(r#"class="hk-affix-divider""#)
+            .expect("the boundary divider renders");
+        assert!(jp_at < divider_at && divider_at < cn_at, "{html}");
+        assert!(html.contains(r#"role="separator""#), "{html}");
+        assert!(html.contains(r#"aria-orientation="horizontal""#), "{html}");
+        // The check column: one per row, filled only on the checked row.
+        assert_eq!(
+            html.matches(r#"class="hk-affix-check""#).count(),
+            3,
+            "{html}"
+        );
+        assert_eq!(html.matches(r#"data-on="true""#).count(), 1, "{html}");
+        assert_eq!(
+            html.matches("lucide hk-affix-check").count()
+                + html.matches("lucide lucide-check-icon").count(),
+            1,
+            "exactly one check glyph: {html}"
+        );
+        // `aria-pressed` on EVERY row (APG toggle), `data-checked` on one only.
+        assert_eq!(html.matches(r#"aria-pressed="true""#).count(), 1, "{html}");
+        assert_eq!(html.matches(r#"aria-pressed="false""#).count(), 2, "{html}");
+        assert_eq!(html.matches(r#"data-checked="true""#).count(), 1, "{html}");
+        // Single mode's marker is NOT used in the rows layout.
+        assert!(!html.contains(r#"data-active="#), "{html}");
+        assert!(!html.contains(r#"data-checked="false""#), "{html}");
     }
 
     #[test]
@@ -1516,6 +1936,289 @@ mod tests {
         assert!(!html.contains("hk-affix-scroll"), "{html}");
         assert!(!html.contains("hk-affix-list"), "{html}");
         assert!(!html.contains("hk-affix-row"), "{html}");
+        // The PINNED head survives an empty list: the search never scrolls
+        // away with rows that are not there.
+        assert!(
+            html.contains(r#"class="hk-select-popout-pinned""#),
+            "{html}"
+        );
+        assert!(html.contains(r#"class="hk-affix-search""#), "{html}");
+        assert!(html.contains(r#"class="hk-select-popout-body""#), "{html}");
+    }
+
+    #[test]
+    fn affix_single_mode_keeps_no_check_cell_and_pins_the_search() {
+        // Single mode: `layout` has no effect, rows keep catalog order and the
+        // `data-active` marker, and no check column / divider exists.
+        let html = AffixPicker(AffixPickerProps {
+            options: catalog(),
+            mode: AffixMode::Single,
+            layout: AffixLayout::Tags,
+            selected: vec!["jp".to_string()],
+            open: true,
+            ..Default::default()
+        })
+        .render_to_html();
+
+        assert_eq!(html.matches(r#"class="hk-affix-row""#).count(), 3, "{html}");
+        assert!(html.contains(r#"data-active="true""#), "{html}");
+        assert!(!html.contains("hk-affix-check"), "{html}");
+        assert!(!html.contains(r#"class="hk-affix-divider""#), "{html}");
+        assert!(!html.contains(r#"aria-pressed="#), "{html}");
+        // `layout="tags"` is inert here: no tag list for a single picker.
+        assert!(!html.contains("hk-affix-tags"), "{html}");
+        // Rows keep catalog order (the active row is not floated).
+        let cn_at = html
+            .find(r#"class="hk-affix-row-label">中华人民共和国"#)
+            .expect("cn row");
+        let jp_at = html
+            .find(r#"class="hk-affix-row-label">Japan"#)
+            .expect("jp row");
+        assert!(cn_at < jp_at, "{html}");
+        // The search is pinned exactly like the multi layouts.
+        assert!(
+            html.contains(r#"class="hk-select-popout is-pinned-header""#),
+            "{html}"
+        );
+        assert!(
+            html.contains(r#"class="hk-select-popout-pinned""#),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn affix_unsearchable_single_picker_renders_the_headerless_popout() {
+        // Nothing to pin (no search, no tag list) → the pre-slot shape, so a
+        // host that turned the field off is not paying for an empty band.
+        let html = AffixPicker(AffixPickerProps {
+            options: catalog(),
+            open: true,
+            searchable: false,
+            ..Default::default()
+        })
+        .render_to_html();
+
+        assert!(html.contains(r#"class="hk-select-popout""#), "{html}");
+        assert!(!html.contains("is-pinned-header"), "{html}");
+        assert!(!html.contains("hk-select-popout-pinned"), "{html}");
+        assert!(!html.contains("hk-select-popout-body"), "{html}");
+        assert!(html.contains("--hk-select-panel-max-height"), "{html}");
+        assert!(html.contains(r#"class="hk-affix-row""#), "{html}");
+    }
+
+    #[test]
+    fn affix_rows_layout_ranks_selected_first_in_catalog_order() {
+        let catalog = catalog();
+        let selected = vec!["zz".to_string(), "cn".to_string()];
+        // Catalog order cn < jp < zz: the selected run keeps it (cn, zz) and the
+        // rest keeps it too — never the selection order.
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &selected,
+                AffixMode::Multi,
+                AffixLayout::Rows,
+                ""
+            )),
+            vec!["cn", "zz", "jp"]
+        );
+        // A single check floats to the END of the selected run …
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &["cn".to_string()],
+                AffixMode::Multi,
+                AffixLayout::Rows,
+                ""
+            )),
+            vec!["cn", "jp", "zz"]
+        );
+        // … and nothing checked leaves the catalog order untouched.
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &[],
+                AffixMode::Multi,
+                AffixLayout::Rows,
+                ""
+            )),
+            vec!["cn", "jp", "zz"]
+        );
+        // A query filters WITHIN the groups: "r" hits China's keywords and
+        // Reserved's label, and the rank still applies.
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &selected,
+                AffixMode::Multi,
+                AffixLayout::Rows,
+                "r"
+            )),
+            vec!["cn", "zz"]
+        );
+        // The tag layout and single mode never rank.
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &selected,
+                AffixMode::Multi,
+                AffixLayout::Tags,
+                ""
+            )),
+            vec!["jp"]
+        );
+        assert_eq!(
+            keys(&affix_filter_rows_for(
+                &catalog,
+                &selected,
+                AffixMode::Single,
+                AffixLayout::Rows,
+                ""
+            )),
+            vec!["cn", "jp", "zz"]
+        );
+    }
+
+    #[test]
+    fn affix_divider_sits_on_the_boundary_only_between_two_groups() {
+        let catalog = catalog();
+        let selected = vec!["cn".to_string()];
+        let rows =
+            affix_filter_rows_for(&catalog, &selected, AffixMode::Multi, AffixLayout::Rows, "");
+        assert_eq!(affix_selected_run_length(&rows, &selected), 1);
+        assert!(affix_divider_visible(&rows, &selected));
+        let sequence = affix_row_sequence(&rows, &selected);
+        // The divider lands BETWEEN two siblings, at index == the run length.
+        assert_eq!(
+            sequence
+                .iter()
+                .map(|slot| match slot {
+                    AffixRowSlot::Divider => "|".to_string(),
+                    AffixRowSlot::Row(option) => option.key.clone(),
+                })
+                .collect::<Vec<_>>(),
+            vec!["cn", "|", "jp", "zz"]
+        );
+        // Nothing checked → no boundary, and no slot at all.
+        let none = affix_row_sequence(&rows, &[]);
+        assert_eq!(none.len(), 3);
+        assert!(none.iter().all(|slot| matches!(slot, AffixRowSlot::Row(_))));
+        assert!(!affix_divider_visible(&rows, &[]));
+        // EVERYTHING checked → likewise (an all-selected list has no boundary).
+        let all: Vec<String> = catalog.iter().map(|option| option.key.clone()).collect();
+        let all_rows =
+            affix_filter_rows_for(&catalog, &all, AffixMode::Multi, AffixLayout::Rows, "");
+        assert_eq!(affix_selected_run_length(&all_rows, &all), 3);
+        assert!(!affix_divider_visible(&all_rows, &all));
+        // A FILTERED list that holds only unchecked options draws none either
+        // (Vue ranks the FILTERED rows).
+        let one = affix_filter_rows_for(
+            &catalog,
+            &selected,
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            "japan",
+        );
+        assert_eq!(keys(&one), vec!["jp"]);
+        assert!(!affix_divider_visible(&one, &selected));
+    }
+
+    #[test]
+    fn affix_rows_layout_toggles_between_select_and_remove() {
+        // Pure view of Vue's `pick()`: the rows layout TOGGLES, everything else
+        // adds.
+        assert!(affix_rows_checkable(AffixMode::Multi, AffixLayout::Rows));
+        assert!(!affix_rows_checkable(AffixMode::Multi, AffixLayout::Tags));
+        assert!(!affix_rows_checkable(AffixMode::Single, AffixLayout::Rows));
+        let selected = vec!["cn".to_string()];
+        assert!(affix_row_checked(
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            &selected,
+            "cn"
+        ));
+        assert!(!affix_row_checked(
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            &selected,
+            "jp"
+        ));
+        // Unchecked → `select`; checked → `remove` (the tag layout adds).
+        assert!(affix_row_toggle_removes(
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            &selected,
+            "cn"
+        ));
+        assert!(!affix_row_toggle_removes(
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            &selected,
+            "jp"
+        ));
+        assert!(!affix_row_toggle_removes(
+            AffixMode::Multi,
+            AffixLayout::Tags,
+            &selected,
+            "cn"
+        ));
+        assert!(affix_tag_layout(AffixMode::Multi, AffixLayout::Tags));
+        assert!(!affix_tag_layout(AffixMode::Single, AffixLayout::Tags));
+        assert!(!affix_tag_layout(AffixMode::Multi, AffixLayout::Rows));
+        assert!(AffixLayout::Tags.tag_layout(AffixMode::Multi));
+    }
+
+    #[test]
+    fn affix_row_pick_emits_select_then_remove_across_layouts() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
+        let log: Rc<RefCell<Vec<String>>> = Rc::new(RefCell::new(Vec::new()));
+        let select_log = Rc::clone(&log);
+        let remove_log = Rc::clone(&log);
+        let wiring = AffixPickerWiring {
+            confirm_remove: true,
+            mode: AffixMode::Multi,
+            layout: AffixLayout::Rows,
+            disabled: false,
+            open: true,
+            query: String::new(),
+            selected: vec!["cn".to_string()],
+            close_on_select: false,
+            on_open_change: None,
+            on_query_change: None,
+            on_select: Some(EventHandler::new(move |key: String| {
+                select_log.borrow_mut().push(format!("select:{key}"));
+            })),
+            on_remove: Some(EventHandler::new(move |key: String| {
+                remove_log.borrow_mut().push(format!("remove:{key}"));
+            })),
+            on_remove_request: None,
+            on_custom: None,
+        };
+        // Unchecked row → `select`.
+        wiring.pick("jp", false);
+        // Checked row → `remove`, even with the confirm gate ON: unchecking a
+        // row is a one-tap reversible act, never a dialog.
+        wiring.pick("cn", false);
+        // A disabled row emits nothing.
+        wiring.pick("zz", true);
+        assert_eq!(
+            log.borrow().as_slice(),
+            ["select:jp".to_string(), "remove:cn".to_string()]
+        );
+        // The tag layout ADDs on both edges (its × owns the removal path).
+        log.borrow_mut().clear();
+        let tag_wiring = AffixPickerWiring {
+            layout: AffixLayout::Tags,
+            ..wiring.clone()
+        };
+        tag_wiring.pick("cn", false);
+        tag_wiring.pick("jp", false);
+        assert_eq!(
+            log.borrow().as_slice(),
+            ["select:cn".to_string(), "select:jp".to_string()]
+        );
     }
 
     #[test]
@@ -1528,9 +2231,11 @@ mod tests {
         let wiring = AffixPickerWiring {
             confirm_remove: true,
             mode: AffixMode::Multi,
+            layout: AffixLayout::Rows,
             disabled: false,
             open: true,
             query: String::new(),
+            selected: Vec::new(),
             close_on_select: false,
             on_open_change: None,
             on_query_change: None,
@@ -1576,13 +2281,23 @@ mod tests {
                 && css.contains(".hk-affix-empty"),
             "affix picker css must carry the vue chip, tag, row and empty classes"
         );
+        // The 2026-11-27 grammar: the pinned head, the rows layout's check cell
+        // and its selected/unselected divider.
+        for selector in [".hk-affix-head", ".hk-affix-search", ".hk-affix-check"] {
+            assert!(css.contains(selector), "the sheet is missing {selector}");
+        }
+        assert!(
+            css.contains(".hk-affix-divider"),
+            "the rows layout's divider has no rule in the sheet"
+        );
         assert!(
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored affix picker sheet"
         );
         // ONE SCROLLBAR PER WINDOW: the width container and the row list never
-        // become scroll regions of their own — the hosting panel owns the only
-        // scrollbar, capped through `--hk-select-panel-max-height`.
+        // become scroll regions of their own — the hosting panel's
+        // `.hk-select-popout-body` owns the only scrollbar, capped through
+        // `--hk-select-panel-max-height` on the popout.
         for selector in [".hk-affix-scroll", ".hk-affix-list"] {
             let block = css_block(css, selector);
             assert!(
@@ -1605,6 +2320,8 @@ mod tests {
             options: catalog(),
             selected: vec!["jp".to_string()],
             mode: AffixMode::Multi,
+            // The tag layout is the only one that renders a tag × at all.
+            layout: AffixLayout::Tags,
             open: true,
             ..Default::default()
         })

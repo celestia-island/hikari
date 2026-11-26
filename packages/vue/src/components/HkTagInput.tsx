@@ -675,9 +675,14 @@ export const HkTagInput = defineComponent({
       // already owns THE scrollbar (never a region of this component's
       // own). Resolved per drag, because the form factor is decided by the
       // viewport at open time.
+      // The pinned search head sits OUTSIDE the scroll region, so on
+      // the desktop popout the scrolling box is the panel's BODY (its
+      // `is-pinned-header` shape), not the popout itself; the sheet's
+      // list band is unchanged. (A header-less popout — any other host
+      // of these rows — still scrolls as `.hk-select-popout`.)
       scrollContainer: () =>
         panelRef.value?.closest<HTMLElement>(
-          ".hk-select-popout, .hk-select-sheet-list",
+          ".hk-select-popout-body, .hk-select-popout, .hk-select-sheet-list",
         ) ?? null,
       onDrop: reorderSelectedRows,
     });
@@ -982,33 +987,39 @@ export const HkTagInput = defineComponent({
             onKeydown={onPanelKeydown}
           >
             {{
+              /* PINNED search head (2026-11-27 user direction): the filter
+               * field is chrome, not content — it rides HkSelectPanel's
+               * `pinnedHeader` slot, outside the scroll region on both
+               * form factors, so a long catalog scrolls under it. */
+              pinnedHeader: () => (
+                <div class="hk-tag-input-search" role="search">
+                  <HkInput
+                    modelValue={query.value}
+                    onUpdate:modelValue={(v: string) => {
+                      query.value = v;
+                    }}
+                    size="sm"
+                    placeholder={searchPlaceholder}
+                    aria-label={searchPlaceholder}
+                    // The search field is the second combobox surface:
+                    // arrows pressed here move the SAME cursor, and the
+                    // row is published the same way.
+                    aria-activedescendant={activeId}
+                    autocomplete="off"
+                    onKeydown={onSearchKeydown}
+                  >
+                    {{
+                      prefixIcon: () => <Search size={13} aria-hidden="true" />,
+                    }}
+                  </HkInput>
+                </div>
+              ),
               default: () => (
                 /* Width container only — the window surface (HkSelectPanel
-                 * popout / sheet) owns THE single scrollbar and scrolls the
-                 * search field with the rows; no inner max-height/overflow
-                 * here, ever. */
+                 * popout body / sheet list) owns THE single scrollbar and
+                 * scrolls the rows under the pinned search; no inner
+                 * max-height/overflow here, ever. */
                 <div class="hk-tag-input-panel" ref={panelRef}>
-                  <div class="hk-tag-input-search" role="search">
-                    <HkInput
-                      modelValue={query.value}
-                      onUpdate:modelValue={(v: string) => {
-                        query.value = v;
-                      }}
-                      size="sm"
-                      placeholder={searchPlaceholder}
-                      aria-label={searchPlaceholder}
-                      // The search field is the second combobox surface:
-                      // arrows pressed here move the SAME cursor, and the
-                      // row is published the same way.
-                      aria-activedescendant={activeId}
-                      autocomplete="off"
-                      onKeydown={onSearchKeydown}
-                    >
-                      {{
-                        prefixIcon: () => <Search size={13} aria-hidden="true" />,
-                      }}
-                    </HkInput>
-                  </div>
                   {/* The listbox element exists for as long as the panel is
                     * open — including when the filter matches nothing — so
                     * the input's `aria-controls` always resolves; the empty

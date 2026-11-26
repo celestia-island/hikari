@@ -5,9 +5,10 @@ import {
   watch,
   type PropType,
   type SlotsType,
+  type VNode,
 } from "vue";
 
-import { ChevronDown, Plus, Search, X } from "lucide-vue-next";
+import { Check, ChevronDown, Plus, Search, X } from "lucide-vue-next";
 
 import { useI18n } from "../i18n/context";
 
@@ -61,16 +62,32 @@ function isSubsequence(query: string, text: string): boolean {
  * host field (compose it inside an `HkInput` affix slot); clicking it
  * opens one canonical popup:
  *
- *   - a SEARCH FIELD on top (live filter over label / meta / keywords);
- *   - in `multi` mode, a TAG LIST of the currently selected keys.
- *     Deleting a tag is a TWO-STEP interaction: the × opens the shared
- *     HkMessageBox confirm dialog (danger tone, naming the entry), and
- *     only its Confirm fires `remove`. `confirmRemove={false}` opts
- *     out for hosts that confirm themselves. The popup stays open
- *     behind the dialog so several tags can be managed in one pass;
+ *   - a SEARCH FIELD on top (live filter over label / meta / keywords) —
+ *     PINNED chrome (2026-11-27 user direction): it rides the panel's
+ *     `pinnedHeader` slot, outside the scroll region on both form factors,
+ *     so a long catalog scrolls UNDER it instead of taking it along;
+ *   - `layout="rows"` (the multi default) — every option stays a row;
+ *     selected rows wear the leading check mark and float to the top of
+ *     the list in catalog order (stable — checking #4 drops it in after
+ *     #3 and never reorders anything else), a divider separates them from
+ *     the unselected rows, and a tap toggles the row (`select` when it
+ *     joins, `remove` when it leaves — no confirm dialog: a check is a
+ *     one-tap reversible act, unlike erasing a typed value). Reordering,
+ *     filtering and the divider's arrival/exit all run through
+ *     `HkListTransition` (FLIP move reported to the runtime animation
+ *     bus — never a hand-rolled tween), so a checked row GLIDES to the
+ *     front and an unchecked one glides back to its catalog slot;
+ *   - `layout="tags"` — the value-editor shape (HkLocalizedInput's
+ *     translation languages): in `multi` mode a TAG LIST of the currently
+ *     selected keys renders above the search field (both pinned), and the
+ *     rows list only the NOT-yet-selected options. Deleting a tag is a
+ *     TWO-STEP interaction: the × opens the shared HkMessageBox confirm
+ *     dialog (danger tone, naming the entry), and only its Confirm fires
+ *     `remove`. `confirmRemove={false}` opts out for hosts that confirm
+ *     themselves. The popup stays open behind the dialog so several tags
+ *     can be managed in one pass;
  *   - the option rows themselves: single mode shows every option and
- *     closes on pick; multi mode lists the NOT-yet-selected options and
- *     stays open for batch adds;
+ *     closes on pick; multi mode keeps the popup open for batch toggles;
  *   - a row (or tag) can carry a `badge` — the standard leading capsule
  *     (primary mono, the model-tag num-segment language) for roster
  *     ordinals and short codes; `flag` stays the emoji glyph slot and
@@ -83,15 +100,19 @@ function isSubsequence(query: string, text: string): boolean {
  * ONE SCROLLBAR PER WINDOW: the popup mounts NO scroll region of its
  * own — the window surface it opens as (the desktop popout or the
  * mobile bottom sheet, both provided by HkSelectPanel) owns THE single
- * scrollbar and scrolls the whole popup content (tags + search + rows)
- * as one. The row list deliberately carries no max-height/overflow; a
- * nested second scrollbar inside the same window is a contract
- * violation (2026-09-08 user report: the language sheet scrolled twice).
- * The surface itself is capped at `min(18rem, 45dvh)` through HkMenu's
- * `maxHeight` forwarding (the HkTagInput measure, so the family reads
- * consistently), which bounds the one scroll region instead of letting it
- * stretch to the shared panel's 36rem ceiling. The popup's own designed
- * measure (13–19rem wide) is unchanged: the cap bounds HEIGHT only.
+ * scrollbar and scrolls the row list; the pinned head (tags + search)
+ * sits outside that region. The row list deliberately carries no
+ * max-height/overflow; a nested second scrollbar inside the same window
+ * is a contract violation (2026-09-08 user report: the language sheet
+ * scrolled twice). The DESKTOP popout is capped at `min(18rem, 45dvh)`
+ * through HkMenu's `maxHeight` forwarding (the HkTagInput measure, so the
+ * family reads consistently), which bounds the one scroll region instead
+ * of letting it stretch to the shared panel's 36rem ceiling; the MOBILE
+ * sheet ignores that measure and hugs its content up to the family
+ * ceiling of 80% of the viewport (HkSelectPanel's `maxHeight` doc — the
+ * same popout measure used to squash every picker sheet to under half
+ * the phone). The popup's own designed measure (13–19rem wide) is
+ * unchanged: the cap bounds HEIGHT only.
  *
  * With `tagValues`, the multi picker's TAG LIST switches to
  * value-driven primary text: a selected key renders its mapped value
@@ -113,9 +134,17 @@ export const HkAffixPicker = defineComponent({
   props: {
     /** The full catalog of pickable entries. */
     options: { type: Array as PropType<readonly HkAffixOption[]>, required: true },
-    /** "single" closes on pick and shows a check on the active row;
-     *  "multi" renders the tag list and keeps the popup open. */
+    /** "single" closes on pick and shows the active row's checked face;
+     *  "multi" toggles rows and keeps the popup open. */
     mode: { type: String as PropType<"single" | "multi">, default: "single" },
+    /** How a MULTI picker presents its selection (user direction
+     *  2026-11-27). "rows" (default): every option stays a row — selected
+     *  rows wear the leading check mark, float to the top in catalog
+     *  order behind a divider, and a tap toggles them. "tags": the
+     *  value-editor shape — selected keys render as a tag list pinned
+     *  above the search, and the rows list only the remaining options.
+     *  No effect in single mode. */
+    layout: { type: String as PropType<"rows" | "tags">, default: "rows" },
     /** Selected key(s). A string in single mode, an array in multi. */
     selected: {
       type: [String, Array] as PropType<string | readonly string[]>,
@@ -203,8 +232,20 @@ export const HkAffixPicker = defineComponent({
       props.mode === "single" ? selectedKeys.value : props.activeKey ? [props.activeKey] : [],
     );
 
-    /** Rows of the pick list. Multi hides already-selected keys (they
-     *  live in the tag list instead); single always shows everything.
+    /** Whether the selection renders as the value-editor TAG list
+     *  (multi + `layout="tags"`). Everything else keys off this one flag
+     *  so the two layouts can never half-apply. */
+    const tagLayout = computed(() => props.mode === "multi" && props.layout === "tags");
+
+    const isSelected = (key: string): boolean => selectedKeys.value.includes(key);
+
+    /** Rows of the pick list, in render order. The tag layout hides
+     *  already-selected keys (they live in the tag list instead); the
+     *  rows layout and single mode list every option. Multi + rows then
+     *  ranks SELECTED FIRST — both groups in catalog order, so a check
+     *  floats the row up to the end of the selected run and unchecking
+     *  returns it to its catalog slot, and nothing else ever reorders
+     *  (`selectedRunLength` below says where the divider goes).
      *
      *  Filtering is TWO-PASS over a single field at a time (never across
      *  concatenated fields, which produces noise):
@@ -213,26 +254,49 @@ export const HkAffixPicker = defineComponent({
      *    2. an in-order character subsequence fallback (gaps allowed) —
      *       so a renamed or CJK-composed label like "中华人民共和国" is
      *       still found by its short form "中国" (中 at 0, 国 at 6).
-     */
+     *  The rank applies to the FILTERED rows: a query showing only
+     *  unselected options draws no divider and no selected run. */
     const filteredRows = computed<readonly HkAffixOption[]>(() => {
-      const base =
-        props.mode === "multi"
-          ? props.options.filter((o) => !selectedKeys.value.includes(o.key))
-          : props.options;
+      const base = tagLayout.value
+        ? props.options.filter((o) => !isSelected(o.key))
+        : props.options;
       const q = query.value.trim().toLowerCase();
-      if (!q) return base;
-      return base.filter((o) => {
-        if (o.label.toLowerCase().includes(q)) return true;
-        if (o.meta && o.meta.toLowerCase().includes(q)) return true;
-        if (o.key.toLowerCase().includes(q)) return true;
-        if (o.keywords && o.keywords.toLowerCase().includes(q)) return true;
-        // Fuzzy fallback — per field, in-order subsequence, gaps allowed.
-        if (isSubsequence(q, o.label.toLowerCase())) return true;
-        if (o.meta && isSubsequence(q, o.meta.toLowerCase())) return true;
-        if (isSubsequence(q, o.key.toLowerCase())) return true;
-        return !!o.keywords && isSubsequence(q, o.keywords.toLowerCase());
-      });
+      const matched = q
+        ? base.filter((o) => {
+            if (o.label.toLowerCase().includes(q)) return true;
+            if (o.meta && o.meta.toLowerCase().includes(q)) return true;
+            if (o.key.toLowerCase().includes(q)) return true;
+            if (o.keywords && o.keywords.toLowerCase().includes(q)) return true;
+            // Fuzzy fallback — per field, in-order subsequence, gaps allowed.
+            if (isSubsequence(q, o.label.toLowerCase())) return true;
+            if (o.meta && isSubsequence(q, o.meta.toLowerCase())) return true;
+            if (isSubsequence(q, o.key.toLowerCase())) return true;
+            return !!o.keywords && isSubsequence(q, o.keywords.toLowerCase());
+          })
+        : base;
+      if (!tagLayout.value && props.mode === "multi") {
+        const selected = matched.filter((o) => isSelected(o.key));
+        if (selected.length === 0) return matched;
+        return [...selected, ...matched.filter((o) => !isSelected(o.key))];
+      }
+      return matched;
     });
+
+    /** Length of the SELECTED run at the head of `filteredRows` (multi +
+     *  rows layout; 0 otherwise). The divider renders between index
+     *  `selectedRunLength - 1` and `selectedRunLength`, and only while
+     *  BOTH groups are visible — an all-selected or all-unselected list
+     *  has no boundary to draw. */
+    const selectedRunLength = computed(() =>
+      !tagLayout.value && props.mode === "multi"
+        ? filteredRows.value.filter((o) => isSelected(o.key)).length
+        : 0,
+    );
+    const dividerVisible = computed(
+      () =>
+        selectedRunLength.value > 0 &&
+        selectedRunLength.value < filteredRows.value.length,
+    );
 
     /** Exact label match suppresses the custom row while the user is
      *  simply re-typing an existing entry. */
@@ -264,9 +328,18 @@ export const HkAffixPicker = defineComponent({
       if (!props.disabled) open.value = !open.value;
     }
 
+    /** A row tap. Single mode and the tag layout ADD (`select`); the
+     *  rows layout TOGGLES — a checked row leaves the selection through
+     *  the same `remove` event the tag × fires, minus the confirm dialog
+     *  (`confirmRemove` guards erasing a typed VALUE in the tag layout;
+     *  unchecking a row is one reversible tap). Close-on-select follows
+     *  `resolvedCloseOnSelect` on both edges. */
     function pick(option: HkAffixOption) {
       if (option.disabled) return;
-      emit("select", option.key);
+      const togglesOff =
+        !tagLayout.value && props.mode === "multi" && isSelected(option.key);
+      if (togglesOff) emit("remove", option.key);
+      else emit("select", option.key);
       if (resolvedCloseOnSelect.value) open.value = false;
     }
 
@@ -324,7 +397,7 @@ export const HkAffixPicker = defineComponent({
 
     return () => {
       const rows = filteredRows.value;
-      const tags = props.mode === "multi" ? tagEntries.value : [];
+      const tags = tagLayout.value ? tagEntries.value : [];
       const title = props.title ?? t("hikari::affixPicker.title", "Options");
       const searchPlaceholder =
         props.searchPlaceholder ?? t("hikari::affixPicker.search", "Search");
@@ -338,7 +411,108 @@ export const HkAffixPicker = defineComponent({
         props.tagUnsetText ?? t("hikari::affixPicker.unset", "Not set");
       const tagValue = (key: string): string =>
         (props.tagValues?.[key] ?? "").trim();
+      /** Whether rows carry the leading check column (multi + rows
+       *  layout — the only layout where a row IS the selection). Single
+       *  mode keeps its checked FACE on the active row and no glyph
+       *  column, exactly as before. */
+      const checkable = !tagLayout.value && props.mode === "multi";
       const placement = props.side === "suffix" ? "bottom-end" : "bottom-start";
+
+      /** One option row. `checked` is the rows layout's selection state
+       *  (`data-checked` → the menu-item grammar's checked face, the same
+       *  one HkMenu's checked rows wear); `active` stays single mode's
+       *  "current value" marker. */
+      function renderRow(option: HkAffixOption): VNode {
+        const checked = checkable && isSelected(option.key);
+        const active = props.mode === "single" ? isSelected(option.key) : false;
+        return (
+          <button
+            key={option.key}
+            type="button"
+            class="hk-affix-row"
+            data-active={active || undefined}
+            data-checked={checked || undefined}
+            data-disabled={option.disabled || undefined}
+            aria-pressed={checkable ? checked : undefined}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              pick(option);
+            }}
+          >
+            {checkable && (
+              <span class="hk-affix-check" data-on={checked || undefined} aria-hidden="true">
+                {checked ? <Check size={12} /> : null}
+              </span>
+            )}
+            {option.flag && (
+              <span class="hk-affix-row-flag" aria-hidden="true">
+                {option.flag}
+              </span>
+            )}
+            {option.badge && (
+              <HBadge
+                variant="primary"
+                size="sm"
+                mono
+                pill={false}
+                class="hk-affix-row-badge"
+              >
+                {option.badge}
+              </HBadge>
+            )}
+            <span class="hk-affix-row-label">{option.label}</span>
+            {option.meta && (
+              <span class="hk-affix-row-meta">{option.meta}</span>
+            )}
+          </button>
+        );
+      }
+
+      /** The keyed children of the list transition, in render order:
+       *  rows (with the selected/unselected divider inserted at the
+       *  boundary, when there is one) then the "Use <query>" row. Every
+       *  child is keyed, so a re-rank is a FLIP move and a filter
+       *  change is an enter/leave batch — never a remount. */
+      function rowNodes(): VNode[] {
+        const out: VNode[] = [];
+        rows.forEach((option, index) => {
+          if (dividerVisible.value && index === selectedRunLength.value) {
+            out.push(
+              <div
+                key="hk-affix-divider"
+                class="hk-affix-divider"
+                role="separator"
+                aria-orientation="horizontal"
+              />,
+            );
+          }
+          out.push(renderRow(option));
+        });
+        if (customVisible.value) {
+          out.push(
+            <button
+              key="hk-affix-custom"
+              type="button"
+              class="hk-affix-row"
+              data-custom="true"
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                useCustom();
+              }}
+            >
+              <Plus size={13} class="hk-affix-row-flag" aria-hidden="true" />
+              <span class="hk-affix-row-label">
+                {interpolate(
+                  t("hikari::affixPicker.useCustom", 'Use "{query}"'),
+                  { query: query.value.trim() },
+                )}
+              </span>
+            </button>,
+          );
+        }
+        return out;
+      }
+
       return (
         <>
           <button
@@ -395,9 +569,9 @@ export const HkAffixPicker = defineComponent({
             title={title}
           >
             {{
-              header: () => (
+              pinnedHeader: () => (
                 <div class="hk-affix-head">
-                  {props.mode === "multi" && tags.length > 0 && (
+                  {tagLayout.value && tags.length > 0 && (
                     <div
                       class="hk-affix-tags"
                       role="group"
@@ -508,77 +682,23 @@ export const HkAffixPicker = defineComponent({
                 </div>
               ),
               default: () =>
-                rows.length > 0 || customVisible.value ? (
-                  /* Width container only — the window surface (HkSelectPanel
-                   * popout / sheet) owns THE single scrollbar and scrolls this
-                   * list with the rest of the popup content; no inner
-                   * max-height/overflow here, ever. */
-                  <div class="hk-affix-scroll">
-                    <div class="hk-affix-list">
-                      {rows.map((option) => {
-                      const active =
-                        props.mode === "single"
-                          ? selectedKeys.value.includes(option.key)
-                          : false;
-                      return (
-                        <button
-                          key={option.key}
-                          type="button"
-                          class="hk-affix-row"
-                          data-active={active || undefined}
-                          data-disabled={option.disabled || undefined}
-                          onClick={(e: MouseEvent) => {
-                            e.stopPropagation();
-                            pick(option);
-                          }}
-                        >
-                          {option.flag && (
-                            <span class="hk-affix-row-flag" aria-hidden="true">
-                              {option.flag}
-                            </span>
-                          )}
-                          {option.badge && (
-                            <HBadge
-                              variant="primary"
-                              size="sm"
-                              mono
-                              pill={false}
-                              class="hk-affix-row-badge"
-                            >
-                              {option.badge}
-                            </HBadge>
-                          )}
-                          <span class="hk-affix-row-label">{option.label}</span>
-                          {option.meta && (
-                            <span class="hk-affix-row-meta">{option.meta}</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                    {customVisible.value && (
-                      <button
-                        type="button"
-                        class="hk-affix-row"
-                        data-custom="true"
-                        onClick={(e: MouseEvent) => {
-                          e.stopPropagation();
-                          useCustom();
-                        }}
-                      >
-                        <Plus size={13} class="hk-affix-row-flag" aria-hidden="true" />
-                        <span class="hk-affix-row-label">
-                          {interpolate(
-                            t("hikari::affixPicker.useCustom", 'Use "{query}"'),
-                            { query: query.value.trim() },
-                          )}
-                        </span>
-                      </button>
-                    )}
+                rows.length > 0 || customVisible.value
+                  ? (
+                    /* Width container only — the window surface (HkSelectPanel
+                     * popout / sheet) owns THE single scrollbar and scrolls this
+                     * list; no inner max-height/overflow here, ever. The rows
+                     * ride HkListTransition: a check re-ranks the list
+                     * (selected first) and every displaced row FLIPs to its
+                     * new slot, the divider pops in/out with the boundary. */
+                    <div class="hk-affix-scroll">
+                      <HkListTransition tag="div" class="hk-affix-list" variant="pop" move>
+                        {rowNodes()}
+                      </HkListTransition>
                     </div>
-                  </div>
-                ) : (
-                  <div class="hk-affix-empty">{emptyText}</div>
-                ),
+                  )
+                  : (
+                    <div class="hk-affix-empty">{emptyText}</div>
+                  ),
             }}
           </HkMenu>
         </>

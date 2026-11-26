@@ -385,24 +385,28 @@ describe("HkMenu surface cap (maxHeight)", () => {
     expect(popoutHosts()[0].style.minWidth).toBe("");
   });
 
-  it("caps the mobile sheet path — on the band that actually scrolls", async () => {
+  it("keeps the mobile sheet path free of the popout cap — at every level", async () => {
     window.innerWidth = 390;
     mountMenu(ref(true), siblingItems, {}, { props: { maxHeight: CAP } });
     await settle();
     expect(sheets().length).toBe(1);
 
-    // In sheet mode the element the panel caps (and the one that scrolls) is
-    // the list band inside the sheet, not the sheet panel itself.
+    // In sheet mode the cap is deliberately NOT published: `maxHeight` is a
+    // desktop popout measure, and letting it reach the sheet's list band
+    // squashed every picker sheet to under half the phone (2026-11-27 user
+    // report). The sheet hugs its content up to the family ceiling (80% of
+    // the viewport) instead.
     const band = sheets()[0].querySelector<HTMLElement>(".hk-select-sheet-list");
     expect(band, "the sheet list band renders").toBeTruthy();
-    expect(band!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+    expect(band!.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
+    expect(band!.hasAttribute("style"), "no inline style on the band").toBe(false);
 
     rowByLabel("Branch One")!.click();
     await settle();
     expect(sheets().length).toBe(2);
     const subBand = sheets()[1].querySelector<HTMLElement>(".hk-select-sheet-list");
     expect(subBand, "the pushed sheet's band renders").toBeTruthy();
-    expect(subBand!.style.getPropertyValue("--hk-select-panel-max-height")).toBe(CAP);
+    expect(subBand!.style.getPropertyValue("--hk-select-panel-max-height")).toBe("");
   });
 
   it("leaves the mobile sheet band uncapped when the prop is absent", async () => {

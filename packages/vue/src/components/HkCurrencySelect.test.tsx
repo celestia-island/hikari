@@ -165,6 +165,25 @@ describe("HkCurrencySelect trigger", () => {
 });
 
 describe("HkCurrencySelect opened surface", () => {
+  it("pins the search head outside the scrolling region; searchable=false forwards no band", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.classList.contains("is-pinned-header")).toBe(true);
+    expect(popout.querySelector(":scope > .hk-select-popout-pinned .hk-currency-select-search")).toBeTruthy();
+    expect(popout.querySelector(".hk-select-popout-body .hk-currency-select-search")).toBeNull();
+    expect(popout.querySelector(".hk-select-popout-body .hk-currency-select-list")).toBeTruthy();
+    // No search → no pinned band at all (not an empty padded one): the
+    // header-less popout shape, exactly as before the slot existed.
+    const bare = mount({ searchable: false });
+    await openPanel(bare);
+    const popouts = document.body.querySelectorAll<HTMLElement>(".hk-select-popout");
+    const barePopout = popouts[popouts.length - 1]!;
+    expect(barePopout.classList.contains("is-pinned-header")).toBe(false);
+    expect(barePopout.querySelector(".hk-select-popout-pinned")).toBeNull();
+  });
+
   it("uses HkSelectPanel's desktop popout on wide viewports", async () => {
     setViewportWidth(1280);
     const harness = mount();

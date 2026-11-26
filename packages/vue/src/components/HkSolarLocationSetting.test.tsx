@@ -571,12 +571,19 @@ describe("HkSolarLocationSetting editor", () => {
       expect(detectedSection().querySelector('[data-state="probing"]')).toBeTruthy();
     });
     const probing = detectedSection().querySelector('[data-state="probing"]')!;
-    // MUT:solar-probe-spinner: the visible grammar is the centered circle
-    // (HkSpinner's center contract) — the probing sentence never shows as
-    // visible text while the probe is in flight.
+    // MUT:solar-probe-spinner: the region's children are EXACTLY the
+    // centered circle and the hidden announcement — re-introducing visible
+    // probing text adds a child and goes red, as does dropping the
+    // spinner. (The gate promise is wall-clock bounded by the engine's
+    // 4s fetch abort; the assertions run well inside it. The module-level
+    // ipProbeInflight resolves in this test's releaseProbe, so the
+    // next test's fresh mount cannot inherit an in-flight probe.)
     expect(probing.querySelector(".hk-spinner-centered")).toBeTruthy();
     expect(probing.querySelector(".hk-spinner")).toBeTruthy();
-    expect(probing.querySelector(".hk-spinner-text")).toBeNull();
+    expect([...probing.children].map((child) => child.className)).toEqual([
+      expect.stringContaining("hk-spinner-centered"),
+      "hk-solar-detected-sr",
+    ]);
     // The status region keeps its announcement for screen readers.
     expect(probing.querySelector(".hk-solar-detected-sr")?.textContent).toContain("Detecting");
     expect(probing.getAttribute("role")).toBe("status");

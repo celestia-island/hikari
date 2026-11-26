@@ -420,6 +420,63 @@ describe("HkMenu surface cap (maxHeight)", () => {
   });
 });
 
+describe("HkMenu pinnedHeader forwarding (root level only)", () => {
+  const pinnedBands = () =>
+    Array.from(document.querySelectorAll(".hk-select-popout-pinned"));
+
+  it("renders the pinned band on the root popout and NOWHERE in the cascade", async () => {
+    // Claim C (2026-11-27): the pinned band is chrome of the ROOT surface —
+    // a host's live-filter search field. A cascade level is a different
+    // subject (a branch's children), so a forwarded band there would put a
+    // second live filter inside every nested popout. The invariant is
+    // asserted in prose at rootLevelSlots(); this pins it.
+    mountMenu(ref(true), siblingItems, {}, {
+      slots: { pinnedHeader: () => h("input", { class: "pin", type: "search" }) },
+    });
+    await settle();
+    expect(popouts().length, "root popout open").toBe(1);
+    expect(pinnedBands().length, "one band on the root").toBe(1);
+    expect(popouts()[0].querySelector(".pin"), "the host's field rides the root band").toBeTruthy();
+    // The rows still scroll in the body under it.
+    expect(popouts()[0].querySelector(".hk-select-popout-body .pin")).toBeNull();
+
+    rowByLabel("Branch One")!.click();
+    await settle();
+    expect(popouts().length, "cascade level opened").toBe(2);
+    expect(pinnedBands().length, "still exactly ONE band in the whole tree").toBe(1);
+    expect(popouts()[0].querySelector(".pin"), "the band stays on the root").toBeTruthy();
+    expect(popouts()[1].classList.contains("is-pinned-header"), "the cascade level is header-less").toBe(false);
+    expect(popouts()[1].querySelector(".pin"), "no band leaked into the cascade").toBeNull();
+    expect(popouts()[1].querySelector(".hk-select-popout-body"), "no body wrapper either").toBeNull();
+
+    // …and the same holds for the mobile sub-sheets.
+    window.innerWidth = 390;
+    const sheetBands = () => Array.from(document.querySelectorAll(".hk-select-sheet-pinned"));
+    await settle();
+    mountMenu(ref(true), siblingItems, {}, {
+      slots: { pinnedHeader: () => h("input", { class: "pin", type: "search" }) },
+    });
+    await settle();
+    expect(sheets().length).toBeGreaterThanOrEqual(1);
+    expect(sheetBands().length, "one band across every sheet layer").toBe(1);
+    expect(sheets()[0].querySelector(".hk-select-sheet-pinned .pin")).toBeTruthy();
+    for (const layer of sheets().slice(1)) {
+      expect(layer.querySelector(".hk-select-sheet-pinned"), "sub-sheets carry no band").toBeNull();
+    }
+    window.innerWidth = 1200;
+  });
+
+  it("forwards nothing when the host passes no slot (pre-slot DOM everywhere)", async () => {
+    mountMenu(ref(true), siblingItems);
+    await settle();
+    expect(document.querySelector(".hk-select-popout-pinned")).toBeNull();
+    expect(popouts()[0].classList.contains("is-pinned-header")).toBe(false);
+    rowByLabel("Branch One")!.click();
+    await settle();
+    expect(document.querySelector(".hk-select-popout-pinned")).toBeNull();
+  });
+});
+
 describe("HkMenu check column (selectMode)", () => {
   const checkedItems: HkMenuItem[] = [
     { key: "a", label: "Alpha", checked: true },

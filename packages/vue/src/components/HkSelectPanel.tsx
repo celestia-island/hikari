@@ -53,12 +53,12 @@ import { ensureOverlayRoot } from "../overlay/overlayRoot";
  *
  * Geometry is the surface's to decide: `matchAnchorWidth` (default true,
  * select parity) ties the popout's minimum width to the trigger, and the
- * optional `maxHeight` caps whichever element scrolls (the desktop popout,
- * the mobile sheet's list band). Both are opt-outs — a consumer that passes
- * neither gets the historic panel, which is what every existing caller
- * does; a consumer whose content should scroll inside a hugged surface
- * (a tag catalog, a long filter list) sets them and relies on the panel's
- * ONE scrollbar.
+ * optional `maxHeight` caps the DESKTOP POPOUT (its body when a pinned
+ * header sits above it; the mobile sheet never reads it — see that prop's
+ * own doc). Both are opt-outs — a consumer that passes neither gets the
+ * historic panel, which is what every existing caller does; a consumer
+ * whose content should scroll inside a hugged surface (a tag catalog, a
+ * long filter list) sets them and relies on the panel's ONE scrollbar.
  *
  * Mobile sheets also run a duplicate-title filter: content that opens with
  * a non-interactive heading exactly repeating the panel `title` is hidden

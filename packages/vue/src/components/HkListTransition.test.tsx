@@ -155,6 +155,43 @@ describe("HkListTransition duration props", () => {
     warn.mockRestore();
   });
 
+  it("the animation-bus report window follows a custom duration (a long choreography is not cut short)", async () => {
+    // The bus report is what tells JS choreography that a transition is in
+    // flight (a sheet re-measuring after a row leaves, a size morph). The
+    // static REPORT_MS budget (320ms) covers the default 0.3s family, but a
+    // host that slows the choreography down must not have its report end
+    // early — the window is re-read on every arm.
+    const { reportTransition } = await import("../runtime/animationBus");
+    const spy = vi.spyOn(await import("../runtime/animationBus"), "reportTransition");
+    const { container, warn } = mountDurations("ul", { duration: "2s" });
+    const keys = ref<string[]>(["a"]);
+    // Re-render with an added row so a real enter batch arms the report.
+    const app = createApp({
+      render: () =>
+        h(
+          HkListTransition,
+          { tag: "ul", variant: "pop", move: true, duration: "2s" },
+          { default: () => keys.value.map((k) => h("li", { key: k }, k)) },
+        ),
+    });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    app.mount(host);
+    mounts.push({ app, container: host });
+    spy.mockClear();
+    keys.value = ["a", "b"];
+    await nextTick();
+    expect(spy, "an enter batch was reported").toHaveBeenCalled();
+    // 2s of choreography + the 20ms settle slack — far past the static
+    // 320ms budget, which is exactly what the spy would see if the window
+    // ignored the prop.
+    expect(spy.mock.calls.at(-1)![0]).toBe(2020);
+    spy.mockRestore();
+    warn.mockRestore();
+    void container;
+    void reportTransition;
+  });
+
   it("a fragment host refuses the props loudly instead of ignoring them silently", () => {
     const { container, warn } = mountDurations("", { duration: "0.5s" });
     expect(container.querySelector("ul")).toBeNull();

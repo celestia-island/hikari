@@ -309,14 +309,15 @@ const RIDE = [
 
 const child = (parent: MockElement, cls: string): MockElement => el([cls], parent);
 
-// The centering translate carries TWO offsets: the drag shift and the
-// top-edge anchor (useAnchoredTop — a centred frame lifts by half of every
-// height growth, so the anchor folds the measured drift back). Both compose
+// The centering translate carries ONE offset: the drag shift. A height
+// morph moves both edges symmetrically — the window ends each growth
+// centered for its new height (the retired --hk-modal-anchor-y top-edge
+// pin held the pre-morph top instead; 2026-11-26 user report). It composes
 // on the individual `translate` property, never on `transform`: the ride
 // below animates `transform` outright.
 const CENTERING_TRANSLATE =
   "calc(-50% + var(--hk-modal-shift-x, 0px))"
-  + " calc(-50% + var(--hk-modal-shift-y, 0px) + var(--hk-modal-anchor-y, 0px))";
+  + " calc(-50% + var(--hk-modal-shift-y, 0px))";
 
 /** Frame ride states: the centering translate lives on the INDIVIDUAL
  *  `translate` property (never animated, re-resolves against the live box

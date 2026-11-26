@@ -319,11 +319,15 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
 const GROUP_PAD = 18;
 /** Caption band reserved at the top of a cluster frame, world px. */
 const GROUP_HEADER = 26;
-/** Same-rank gap used when the graph has clusters. Two neighbouring frames
- *  eat `2 × GROUP_PAD` of the gap, so the plain 28px budget would leave them
- *  exactly 8px INSIDE each other; 48 keeps a visible 12px channel between
- *  side-by-side clusters (and between a frame and a free neighbour). */
-const GROUP_CROSS_GAP = GROUP_PAD * 2 + 12;
+/** Same-rank gap used when the graph has clusters — DIRECTION-AWARE, because
+ *  the frame is not symmetric: it pads `GROUP_PAD` on every side and reserves
+ *  `GROUP_HEADER` on top. Two TD siblings sit side by side, so they need
+ *  `2 × GROUP_PAD` of channel; two LR/RL siblings sit one under the other and
+ *  eat `2 × GROUP_PAD + GROUP_HEADER` (the upper frame's header band plus both
+ *  pads). The plain 28px same-rank budget leaves either pair INSIDE each
+ *  other, hence the extra 12px of visible channel on top of the real cost. */
+const GROUP_CROSS_GAP_H = GROUP_PAD * 2 + 12; // 48 — TD / BT (side by side)
+const GROUP_CROSS_GAP_V = GROUP_PAD * 2 + GROUP_HEADER + 12; // 74 — LR / RL (stacked)
 
 interface Rect { x: number; y: number; w: number; h: number }
 
@@ -393,11 +397,14 @@ function layoutGraphDoc(
     return { id: n.id, w, h, order };
   });
   const groups = doc.groups ?? [];
+  const horizontal = doc.direction === "LR" || doc.direction === "RL";
   const { positions, width, height } = layoutGraph({
     items,
     edges: doc.edges.map((e) => ({ from: e.source, to: e.target })),
     direction: doc.direction,
-    ...(groups.length > 0 ? { crossGap: GROUP_CROSS_GAP } : {}),
+    ...(groups.length > 0
+      ? { crossGap: horizontal ? GROUP_CROSS_GAP_V : GROUP_CROSS_GAP_H }
+      : {}),
   });
 
   const byId = new Map(doc.nodes.map((n) => [n.id, n]));

@@ -548,6 +548,56 @@ describe("HkSolarLocationSetting editor", () => {
     expect(detectedSection().querySelector(".hk-solar-detected-retry")).toBeTruthy();
   });
 
+  it("an in-flight probe reads as a centered spinner, not a flashing sentence", async () => {
+    // 2026-11-26 user direction: the probing state was a text sentence, and
+    // a fast probe made it read as a flicker — the in-flight state renders
+    // the family's centered loading circle instead; the i18n probing line
+    // stays only as the status region's hidden announcement.
+    const container = mountSetting();
+    await openEditor(container);
+    resetSolarIpInsight();
+    // The probe's fetch holds behind a gate the test controls: the
+    // in-flight state stays up for the assertions, then releases into
+    // the failure path for the retry pin.
+    let releaseProbe!: () => void;
+    const gate = new Promise<void>((resolve) => { releaseProbe = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      await gate;
+      return { ok: false };
+    }));
+    clickStrategy("ip");
+    await settle();
+    await vi.waitFor(() => {
+      expect(detectedSection().querySelector('[data-state="probing"]')).toBeTruthy();
+    });
+    const probing = detectedSection().querySelector('[data-state="probing"]')!;
+    // MUT:solar-probe-spinner: the region's children are EXACTLY the
+    // centered circle and the hidden announcement — re-introducing visible
+    // probing text adds a child and goes red, as does dropping the
+    // spinner. (The gate promise is wall-clock bounded by the engine's
+    // 4s fetch abort; the assertions run well inside it. The module-level
+    // ipProbeInflight resolves in this test's releaseProbe, so the
+    // next test's fresh mount cannot inherit an in-flight probe.)
+    // The compact circle (NOT the padded centered contract, which would
+    // inflate this one-line strip by several times the height of the text
+    // it replaces — R4 measured the padding trap).
+    expect(probing.querySelector(".hk-spinner")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner-sm")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner-centered")).toBeNull();
+    expect([...probing.children].map((child) => child.className)).toEqual([
+      expect.stringContaining("hk-spinner-wrapper"),
+      "hk-solar-detected-sr",
+    ]);
+    // The status region keeps its announcement for screen readers.
+    expect(probing.querySelector(".hk-solar-detected-sr")?.textContent).toContain("Detecting");
+    expect(probing.getAttribute("role")).toBe("status");
+    releaseProbe();
+    await vi.waitFor(() => {
+      expect(detectedSection().querySelector('[data-state="failed"]')).toBeTruthy();
+    });
+    expect(detectedSection().querySelector(".hk-solar-detected-retry")).toBeTruthy();
+  });
+
   it("switching strategies swaps the hint and reveals the manual pane", async () => {
     const container = mountSetting();
     await openEditor(container);

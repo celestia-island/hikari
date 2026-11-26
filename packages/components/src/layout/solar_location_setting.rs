@@ -61,7 +61,8 @@
 //         span.hk-solar-detected-label {label}
 //         div.hk-solar-detected-value
 //           {mirrored CopyBadge}…                         (click-to-copy tags)
-//       div.hk-solar-detected-status [data-state]?        (probe note)
+//       div.hk-solar-detected-status [data-state]?        (probe note:
+//         probing = mirrored Spinner, centered + hidden announcement)
 //         span {message}
 //         button.hk-btn…hk-solar-detected-retry?          (retry affordance)
 //     ── manual only ──
@@ -172,6 +173,7 @@ use crate::basic::{
     IconButtonVariant,
 };
 use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant, ModalProps};
+use crate::feedback::{Spinner, SpinnerProps, SpinnerSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 use crate::theme::copy_badge::{CopyBadge, CopyBadgeProps};
@@ -895,20 +897,44 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
             let mut line = VElement::new("div")
                 .class("hk-solar-detected-status")
                 .attr("data-state", status.status.token());
-            line = line.child(VNode::Element(Box::new(
-                VElement::new("span").child(VNode::Text(VText::new(&status.message))),
-            )));
-            if let Some(label) = &status.retry_label {
-                let handler = props.on_retry_probe.clone();
-                line = line.child(Button(ButtonProps {
-                    variant: ButtonVariant::Ghost,
-                    size: ButtonSize::Sm,
-                    class: "hk-solar-detected-retry".to_string(),
-                    label: Some(label.clone()),
-                    onclick: handler
-                        .map(|h| EventHandler::new(move |_event: MouseEvent| h.call(()))),
+            if status.status == SolarProbeStatus::Probing {
+                // In-flight probe (2026-11-26 user direction, the same
+                // change as the Vue editor): a fast probe made the visible
+                // sentence read as a flicker, so the in-flight state renders
+                // the centered circle — the mirrored Spinner carrying
+                // HkSpinner's centered placement contract — and the i18n
+                // sentence stays as the status region's hidden announcement.
+                // The failure state keeps its visible copy (informative,
+                // not transient) plus the retry affordance.
+                // Compact circle in the one-line status row — NOT the
+                // padded centered contract (1.5rem/1rem padding + an 8rem
+                // floor), which would inflate this strip by several times
+                // the height of the text it replaces.
+                line = line.child(Spinner(SpinnerProps {
+                    size: SpinnerSize::Sm,
                     ..Default::default()
                 }));
+                line = line.child(VNode::Element(Box::new(
+                    VElement::new("span")
+                        .class("hk-solar-detected-sr")
+                        .child(VNode::Text(VText::new(&status.message))),
+                )));
+            } else {
+                line = line.child(VNode::Element(Box::new(
+                    VElement::new("span").child(VNode::Text(VText::new(&status.message))),
+                )));
+                if let Some(label) = &status.retry_label {
+                    let handler = props.on_retry_probe.clone();
+                    line = line.child(Button(ButtonProps {
+                        variant: ButtonVariant::Ghost,
+                        size: ButtonSize::Sm,
+                        class: "hk-solar-detected-retry".to_string(),
+                        label: Some(label.clone()),
+                        onclick: handler
+                            .map(|h| EventHandler::new(move |_event: MouseEvent| h.call(()))),
+                        ..Default::default()
+                    }));
+                }
             }
             block = block.child(VNode::Element(Box::new(line)));
         }
@@ -1396,7 +1422,13 @@ mod tests {
         .render_to_html();
         assert!(html.contains(r#"class="hk-solar-detected""#), "{html}");
         assert!(html.contains(r#"data-state="probing""#), "{html}");
+        // The in-flight grammar is the centered circle (mirrored Spinner);
+        // the probing sentence rides in the hidden announcement span.
+        assert!(html.contains("hk-spinner-sm"), "{html}");
+        assert!(!html.contains("hk-spinner-centered"), "{html}");
+        assert!(html.contains(r#"class="hk-solar-detected-sr""#), "{html}");
         assert!(html.contains("Detecting over the network…"), "{html}");
+        assert!(!html.contains("hk-spinner-text"), "{html}");
         // No retry affordance, no rows.
         assert!(!html.contains("hk-solar-detected-retry"), "{html}");
         assert!(!html.contains(r#"class="hk-solar-detected-row""#), "{html}");

@@ -159,6 +159,15 @@ export function boardClampPan(
  * boards shrink as far as needed to show everything — fit is allowed
  * below the interaction minimum (the ladder is for gestures, not for
  * the initial framing); tiny boards never blow up past the cap.
+ *
+ * The usable span is floored at zero, so k is never NEGATIVE. A viewport
+ * narrower than the padding is degenerate (a board mounted inside a
+ * hidden tab / collapsed panel / an unlaid-out flex item measures 0), and
+ * an unfloored `(0 - 80) / 1538 = -0.052` makes the whole world render
+ * mirrored and shrunken instead of merely unplaced — measured on the docs
+ * site, where the mermaid card's canvas collapsed and every diagram
+ * vanished. Zero is the honest answer for "no room"; the host re-fits
+ * once a real viewport exists (HkBoard's ResizeObserver path).
  */
 export function boardFit(
   content: BoardRect,
@@ -167,8 +176,10 @@ export function boardFit(
 ): BoardCamera {
   const pad = opts.pad ?? BOARD_FIT_PAD;
   const cap = opts.cap ?? BOARD_FIT_CAP;
-  const kw = content.w > 0 ? (viewport.w - pad * 2) / content.w : cap;
-  const kh = content.h > 0 ? (viewport.h - pad * 2) / content.h : cap;
+  const availW = Math.max(0, viewport.w - pad * 2);
+  const availH = Math.max(0, viewport.h - pad * 2);
+  const kw = content.w > 0 ? availW / content.w : cap;
+  const kh = content.h > 0 ? availH / content.h : cap;
   const k = Math.min(cap, Math.min(kw, kh));
   return {
     k,

@@ -43,6 +43,7 @@ import {
 import { useBoardCamera } from "../composables/useBoardCamera";
 import HkMinimap, { type MinimapBox } from "./HkMinimap";
 import {
+  BOARD_FIT_PAD,
   boardBBox,
   boardStepRung,
   quantizeBoardK,
@@ -83,6 +84,10 @@ export interface BoardNodeInput {
   /** Page payload, handed back through the scoped slot. */
   data?: Record<string, unknown>;
 }
+
+/** Below twice the fit padding, `boardFit` has no room left after its own
+ * padding: the board is unplaced (k = 0) until its container grows past it. */
+const FIT_FLOOR_PX = BOARD_FIT_PAD * 2;
 
 /** Per-instance sequence for document-unique marker ids (url(#id)
  * resolves document-wide — two boards must never mint the same id). */
@@ -309,10 +314,36 @@ export default defineComponent({
       cam.zoomByFactor(factor, localPoint(e));
     }
 
+    /** One-way latch: set by the first call the HOST makes into the camera
+     *  through `expose` (`fit`, `reset`, `zoomIn`, `zoomOut`, `zoomToPercent`).
+     *  Any such call — a single zoom included — means the framing is the
+     *  host's, so the late recovery fit below must not take it back. The
+     *  board's own chrome (the minimap reset) does not trip it: that is the
+     *  component's UI, not a host decision. */
+    let hostOwnsCamera = false;
+
     function refreshSize(): void {
       const el = viewportRef.value;
       if (!el) return;
-      viewportSize.value = { w: el.clientWidth, h: el.clientHeight };
+      const next = { w: el.clientWidth, h: el.clientHeight };
+      // "Unplaced" is the fit's own notion of no room: below twice the fit
+      // padding there is nothing left to frame into, so a fit on that box
+      // yields k = 0 and paints nothing. That covers a 0×0 hidden container
+      // AND the collapsed flex item measured on the docs hub (2px, its
+      // borders only) — a `w > 0` test would have missed the real case.
+      const unplaced = (s: BoardViewport): boolean => s.w <= FIT_FLOOR_PX || s.h <= FIT_FLOOR_PX;
+      const wasUnplaced = unplaced(viewportSize.value);
+      viewportSize.value = next;
+      // A board can mount before its container has a box: a hidden tab, a
+      // collapsed panel, a card whose own parent is still unmounted. The
+      // mount fit then frames against nothing and the camera stayed there
+      // forever — the diagram/chart only appeared after a manual reset.
+      // Re-fit on the FIRST size that follows an unplaced one; ordinary
+      // resizes keep the reader's camera, and a host that drives the camera
+      // itself keeps it too.
+      if (wasUnplaced && props.fitOnMount && !hostOwnsCamera) {
+        cam.fit();
+      }
     }
 
     let resizeObs: ResizeObserver | null = null;
@@ -470,11 +501,26 @@ export default defineComponent({
     });
 
     expose({
-      fit: () => cam.fit(),
-      zoomIn: () => cam.zoomIn(),
-      zoomOut: () => cam.zoomOut(),
-      zoomToPercent: (p: number, anchor?: BoardPoint) => cam.zoomToPercent(p, anchor),
-      reset: () => cam.fit(),
+      fit: () => {
+        hostOwnsCamera = true;
+        cam.fit();
+      },
+      zoomIn: () => {
+        hostOwnsCamera = true;
+        cam.zoomIn();
+      },
+      zoomOut: () => {
+        hostOwnsCamera = true;
+        cam.zoomOut();
+      },
+      zoomToPercent: (p: number, anchor?: BoardPoint) => {
+        hostOwnsCamera = true;
+        cam.zoomToPercent(p, anchor);
+      },
+      reset: () => {
+        hostOwnsCamera = true;
+        cam.fit();
+      },
       camera,
     });
 

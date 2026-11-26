@@ -113,6 +113,27 @@ describe("boardCamera — pan clamp + fit", () => {
     expect(tl.x).toBeGreaterThanOrEqual(0);
     expect(br.x).toBeLessThanOrEqual(viewport.w);
   });
+
+  it("never mirrors a degenerate viewport (0 or sub-padding size)", () => {
+    // A board mounted inside a hidden tab / collapsed panel measures 0 and
+    // the old formula produced (0 - 80) / width = a NEGATIVE k, which paints
+    // the whole world mirrored and shrunken (measured on the docs site's
+    // mermaid cards). Fit must answer "no room" with zero, never a negative.
+    const contentWide = { x: 0, y: 0, w: 1538, h: 266 };
+    for (const vp of [
+      { w: 0, h: 0 },
+      { w: 0, h: 304 },
+      { w: 40, h: 40 },
+    ]) {
+      const cam = boardFit(contentWide, vp);
+      expect(cam.k).toBeGreaterThanOrEqual(0);
+    }
+    // The wide-board framing that used to be negative still works once the
+    // viewport is real.
+    const recovered = boardFit(contentWide, { w: 786, h: 304 });
+    expect(recovered.k).toBeGreaterThan(0);
+    expect(recovered.k).toBeCloseTo((786 - 80) / 1538, 6);
+  });
 });
 
 describe("boardCamera — minimap step rungs", () => {

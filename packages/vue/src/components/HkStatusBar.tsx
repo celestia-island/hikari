@@ -211,7 +211,8 @@ export const HkStatusBar = defineComponent({
     /**
      * Optional extra rows appended to the connection-info popover (after
      * the network row): host-supplied label/value pairs with a prebuilt
-     * icon vnode each — the same loose-icon contract as HkAuthMethodList.
+     * icon vnode each — the same loose-icon contract as the auth kit's
+     * channel rows.
      * Rows grow with their content but cap at 400px; values past the cap
      * ellipsize (full text rides the native title). Lets a host surface
      * stage endpoints (gateway, registry…) inside the popover without

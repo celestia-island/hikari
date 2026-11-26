@@ -579,17 +579,16 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-windowed-item",
         ".hk-star-system-chip",
         ".hk-blank-canvas",
-        // W6 overlay + auth family
+        // W6 overlay + auth family. The retired tile family's needles
+        // (`.hk-alt-signin`, `.s-auth-methods-divider`) are GONE with the
+        // 2026-11-26 divider removal — the bundle must NOT ship them.
         ".hk-adaptive-dialog-drawer-header",
         ".hk-popup-select-wrapper",
         ".hk-floating-layer",
         // The ambient HUD family (the screen-identify host + card).
         ".hk-ambient-layer",
         ".hk-screen-identify",
-        ".hk-alt-signin",
         ".s-auth-form",
-        ".s-auth-form",
-        ".s-auth-methods-divider",
         ".s-auth-submit",
         ".hk-pwd-box",
         ".s-captcha-modal",
@@ -683,6 +682,18 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         !bundle.contains("CSS generation failed"),
         "a mirrored sheet failed to compile into the registry bundle"
     );
+
+    // The retired alternative-methods family must NOT ship (2026-11-26
+    // divider removal): no sheet may style the tile grammar, the divider
+    // rule or the alt-sign-in popover again.
+    // MUT:retired-auth-sheets-return (re-registering any retired sheet
+    // resurrects its selectors in the bundle and this goes red).
+    for retired in [".hk-alt-signin", ".s-auth-methods", ".s-auth-methods-divider"] {
+        assert!(
+            !bundle.contains(retired),
+            "registry bundle still ships the retired selector {retired}"
+        );
+    }
 
     // Deterministic concatenation: the same registry renders the same bytes.
     // Compare digests so a failure prints hashes, not two 300 KB bundles.

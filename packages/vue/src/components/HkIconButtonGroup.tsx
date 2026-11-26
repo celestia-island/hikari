@@ -13,7 +13,7 @@ export interface HkIconButtonGroupOption {
   label: string;
   /** Icon-only content: a prebuilt vnode (brand SVG, lucide component,
    *  <img>) or anything renderable. Typed loose on purpose (same as
-   *  HkAuthMethodList entries): hosts materialize hikari against their
+   *  the auth kit's channel-row entries): hosts materialize hikari against their
    *  own vue minor, and a hard VNode type breaks typecheck whenever the
    *  host's vue differs. Missing icons fall back to the label's initial. */
   icon?: unknown;
@@ -43,9 +43,8 @@ export interface HkIconButtonGroupOption {
  *     toolbar grammar
  *
  * Anything else is NOT a group: independent actions that merely live on
- * the same row (e.g. a login card's third-party provider tiles) render
- * as separate framed buttons with comfortable spacing — see
- * HkAuthMethodList for the reference pattern.
+ * the same row render as separate framed buttons with comfortable
+ * spacing — the auth kit's channel rows are the reference pattern.
  *
  * Every item is icon-only and rides one size taller than a standard
  * icon button (md = 44px vs the 32px icon button / 40px text button) —

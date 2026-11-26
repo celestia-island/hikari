@@ -106,7 +106,6 @@ describe("HkAuthCard", () => {
     const c = mount(
       h(HkAuthCard, { title: "Sign in", subtitle: "Welcome back" }, {
         default: () => h("input", { name: "probe-field" }),
-        methods: () => h("div", { class: "probe-methods" }, "methods"),
         footer: () => h("div", { class: "probe-footer" }, "footer"),
       }),
     );
@@ -118,10 +117,14 @@ describe("HkAuthCard", () => {
     expect(c.querySelector(".s-auth-title")?.textContent).toBe("Sign in");
     expect(c.querySelector(".s-auth-subtitle")?.textContent).toBe("Welcome back");
     expect(card.querySelector(".s-auth-form input[name='probe-field']")).toBeTruthy();
-    expect(card.querySelector(".s-auth-methods .probe-methods")).toBeTruthy();
     expect(card.querySelector(".s-auth-footer .probe-footer")).toBeTruthy();
-    // The wrapper is transparent to descendant styling: the header, form,
-    // methods and footer blocks all remain children of `.s-auth-card`.
+    // The retired methods block stays gone (2026-11-26 grammar: method
+    // choice lives in the flow's segment group, never under a form).
+    // MUT:authcard-methods-slot-return (re-adding the methods slot
+    // renders the band again and this goes red).
+    expect(card.querySelector(".s-auth-methods")).toBeNull();
+    // The wrapper is transparent to descendant styling: the header, form
+    // and footer blocks all remain children of `.s-auth-card`.
     expect(wrapper.querySelector(".s-auth-card")).toBe(card);
   });
 
@@ -265,30 +268,30 @@ describe("HkAuthCard", () => {
 });
 
 // SCSS spacing contract (house pattern, cf. HkButton icon-only SCSS
-// contract): happy-dom does not lay out, so the vertical breathing room of
-// the `methods` slot container is asserted on the sheet text. Block
-// comments are stripped first so a commented-out declaration cannot
-// satisfy the guard.
-describe("HkAuthCard methods-block SCSS spacing contract", () => {
+// contract): the vertical rhythm of the card's blocks is asserted on the
+// sheet text (comment-gate-ok: sheet-text pins, no runtime behaviour in
+// this describe). Block comments are stripped first so a commented-out
+// declaration cannot satisfy the guard.
+describe("HkAuthCard SCSS spacing contract", () => {
   const here = dirname(fileURLToPath(import.meta.url));
   const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8")
     .replace(/\/\*[\s\S]*?\*\//g, "");
 
-  it("bands the third-party methods block off its neighbours", () => {
-    // 2026-09-16 user feedback: with only `margin-top: 16px` and no vertical
-    // padding, the divider row sat on the submit button and the tiles sat on
-    // the footer rows — the block needs its own top/bottom breathing room.
-    const rule = scss.match(/\.s-auth-methods\s*{[^}]*}/)?.[0] ?? "";
-    expect(rule, ".s-auth-methods rule must exist in admin-tokens.scss").toBeTruthy();
-    expect(rule).toContain("padding: var(--space-8, 0.5rem) var(--space-32, 2rem)");
-    expect(rule).toContain("margin-top: var(--space-24, 1.5rem)");
+  it("keeps the methods block retired from the sheet (2026-11-26 grammar)", () => {
+    // The alternative-methods block is GONE: no rule may style
+    // `.s-auth-methods` again (method choice lives in the flow's segment
+    // group, never under a form).
+    // MUT:authcard-methods-rule-return (re-adding the rule brings the
+    // banned block's spacing back and this goes red).
+    expect(scss).not.toMatch(/\.s-auth-methods\s*{/);
+    expect(scss).not.toMatch(/\.s-auth-form:has\(\+ \.s-auth-methods\)/);
   });
 
-  it("keeps the form's collapsed bottom padding feeding that band", () => {
-    // The 40px form→divider distance is composed (8px form padding-bottom
-    // via :has + 24px margin-top + 8px own padding); losing the collapse
-    // would swap in the form's default 24px bottom padding instead.
-    const rule = scss.match(/\.s-auth-form:has\(\+ \.s-auth-methods\)\s*{[^}]*}/)?.[0] ?? "";
+  it("keeps the form's collapsed bottom padding feeding the footer band", () => {
+    // The form→footer distance is composed (8px form padding-bottom via
+    // :has + the footer's own margin); losing the collapse would swap in
+    // the form's default 24px bottom padding instead.
+    const rule = scss.match(/\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
     expect(rule, ":has collapse rule must exist").toBeTruthy();
     expect(rule).toContain("padding-bottom: var(--space-8, 0.5rem)");
   });

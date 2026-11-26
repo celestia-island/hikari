@@ -62,3 +62,26 @@ de valor gobierna ambas formas — los enlaces profundos `?tab=` sobreviven
 al punto de ruptura. `HkAdaptiveTabs` es la implementación por defecto;
 los conmutadores de listas de proyectos dinámicas con filas propias (el selector de
 plataforma) son el caso especial exento, no el modelo a copiar.
+
+## Texto de las esquinas del pie
+
+El texto en cualquiera de las seis esquinas de cabecera/pie (izquierda/centro/
+derecha ×2) va a través de `HkCornerText` de hikari: una instancia = una vía de
+texto para una esquina.
+
+- `align` elige la esquina: `start` (esquinas izquierdas) / `center` (vía
+  central) / `end` (esquinas derechas); las líneas envueltas se pegan al mismo
+  borde — una vía de esquina derecha sigue alineada a la derecha tras el salto.
+- Las entradas son átomos `nowrap`: la vía salta de línea ENTRE entradas,
+  nunca dentro de una (un número de registro no debe cortarse a mitad).
+- Por defecto, tinta cromo atenuada (`text-2xs` + opacidad 0.6); `muted: false`
+  restaura la tinta completa.
+- Varias líneas en una esquina (línea de identidad sobre la línea de
+  registros): apilar instancias verticalmente — la banda de estado fija de
+  3rem contiene dos líneas text-2xs.
+- Las entradas-enlace (registros) usan `items` + `as="nav"` + `ariaLabel`; el
+  contenido libre (chip de estado) va por el slot por defecto, tras `items`.
+
+Los anfitriones no deben escribir a mano vías apretadas con
+`flex-wrap: nowrap` ni dejar que el texto pinte fuera de una banda de altura
+fija. Implementación de referencia: `HkCornerText`.

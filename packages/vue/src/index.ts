@@ -2,7 +2,6 @@ export { default as HActionBar } from "./components/HkActionBar";
 export { default as HAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HAdaptiveTabs } from "./components/HkAdaptiveTabs";
 export { default as HAlert } from "./components/HkAlert";
-export { default as HAltSignIn } from "./components/HkAltSignIn";
 export { default as HAmbientLayer } from "./components/HkAmbientLayer";
 export { default as HAvatar } from "./components/HkAvatar";
 export { default as HBadge } from "./components/HkBadge";
@@ -684,9 +683,7 @@ export { HkSolarLocationSetting as HSolarLocationSetting } from "./components/Hk
 export { HkSolarLocationEditor as HSolarLocationEditor } from "./components/HkSolarLocationEditor";
 export { HkDateTag as HDateTag } from "./components/HkDateTag";
 export { HkAuthCard as HAuthCard } from "./components/HkAuthCard";
-export { default as HAuthMethodList } from "./components/HkAuthMethodList";
 export { HkSignInCard as HSignInCard } from "./components/HkSignInCard";
-export { HkThirdPartySignInCard as HThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { default as HAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export { HkAuthHandoff as HAuthHandoff } from "./components/HkAuthHandoff";
 export {
@@ -810,7 +807,6 @@ export { default as HkActionBar } from "./components/HkActionBar";
 export { default as HkAdaptiveDialog } from "./components/HkAdaptiveDialog";
 export { default as HkAdaptiveTabs } from "./components/HkAdaptiveTabs";
 export { default as HkAlert } from "./components/HkAlert";
-export { default as HkAltSignIn, type HkAltSignInEntry } from "./components/HkAltSignIn";
 export { default as HkAmbientLayer } from "./components/HkAmbientLayer";
 export { default as HkAvatar } from "./components/HkAvatar";
 export { default as HkBadge } from "./components/HkBadge";
@@ -1064,7 +1060,6 @@ export { default as HkSelectionGrid } from "./components/HkSelectionGrid";
 export { default as HkSelectionWaterfall } from "./components/HkSelectionWaterfall";
 export { default as HkMasonry } from "./components/HkMasonry";
 export { default as HkLogo } from "./components/HkLogo";
-export { default as HkAuthMethodList, type HkAuthMethodListEntry } from "./components/HkAuthMethodList";
 export { default as HkAuthSubmitButton } from "./components/HkAuthSubmitButton";
 export { type HkDockBarAnchor as HkDockBarAnchor } from "./components/HkDockBar";
 export { type HkDockBarSurface as HkDockBarSurface } from "./components/HkDockBar";
@@ -1108,7 +1103,6 @@ export { HkSolarLocationEditor as HkSolarLocationEditor } from "./components/HkS
 export { HkDateTag as HkDateTag } from "./components/HkDateTag";
 export { HkAuthCard as HkAuthCard } from "./components/HkAuthCard";
 export { HkSignInCard as HkSignInCard } from "./components/HkSignInCard";
-export { HkThirdPartySignInCard as HkThirdPartySignInCard } from "./components/HkThirdPartySignInCard";
 export { HkMfaVerifyCard as HkMfaVerifyCard } from "./components/HkMfaVerifyCard";
 export { type HkMfaFactor as HkMfaFactor } from "./components/HkMfaVerifyCard";
 // The step-up header derivation, for hosts that own the card frame and
@@ -1122,6 +1116,8 @@ export {
 } from "./components/HkMfaVerifyCard";
 export { HkAuthScreen as HkAuthScreen } from "./components/HkAuthScreen";
 export { type HkAuthScreenBeianEntry as HkAuthScreenBeianEntry } from "./components/HkAuthScreen";
+export { HkCornerText as HkCornerText } from "./components/HkCornerText";
+export { type HkCornerTextEntry as HkCornerTextEntry } from "./components/HkCornerText";
 export { HkLoginFlow as HkLoginFlow } from "./components/HkLoginFlow";
 export { type HkLoginChannel as HkLoginChannel } from "./components/HkLoginFlow";
 export { type HkLoginCredentialsChannel as HkLoginCredentialsChannel } from "./components/HkLoginFlow";

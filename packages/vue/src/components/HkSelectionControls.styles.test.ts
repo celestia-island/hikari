@@ -2743,11 +2743,14 @@ describe("label first-line anchoring", () => {
     );
     // `[\w-]+`, not `[\w]+`: `window-close.scss` is hyphenated, and the
     // narrower class silently read 158 of the 159 imports while this comment
-    // claimed all of them were pinned.
+    // claimed all of them were pinned. (159 → 156: the retired auth tile
+    // family's three mirrors — HkAltSignIn / HkThirdPartySignInCard /
+    // HkAuthMethodList — left the host entry with the 2026-11-26 divider
+    // removal; the pin tracks the LIVE import set, not a frozen count.)
     const imported = [
       ...host.matchAll(/@import\s+['"]\.\/vue-mirror\/components\/([\w-]+)\.scss['"]/g),
     ].map((m) => m[1]);
-    expect(imported.length, "mirror imports the regex reads").toBe(159);
+    expect(imported.length, "mirror imports the regex reads").toBe(156);
     expect(imported.length, "mirror imports in the host stylesheet").toBeGreaterThan(100);
     const at = (name: string) => imported.indexOf(name);
     for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {

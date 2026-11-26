@@ -156,19 +156,15 @@ describe("HkSignInCard", () => {
     expect(usernameField(c).getAttribute("placeholder")).toBeTruthy();
   });
 
-  it("renders no methods block when the consumer passes no methods slot", () => {
+  it("renders no methods block, ever (the slot is retired)", () => {
+    // The alternative-methods block is GONE from the card (2026-11-26
+    // grammar): the wrapper would otherwise render HkAuthCard's padded,
+    // top-margined `.s-auth-methods` wrapper as empty dead space under
+    // the form — and no consumer can pass the slot anymore.
+    // MUT:signin-methods-slot-return (re-adding the slot renders the
+    // band again and this goes red).
     const c = mount(h(HkSignInCard, { title: "T" }));
-    // The wrapper would otherwise render HkAuthCard's padded, top-margined
-    // `.s-auth-methods` wrapper as empty dead space under the form.
     expect(c.querySelector(".s-auth-methods")).toBeNull();
-  });
-
-  it("forwards the methods slot content when the consumer provides one", () => {
-    const c = mount(
-      h(HkSignInCard, { title: "T" }, { methods: () => h("div", { class: "methods-probe" }) }),
-    );
-    expect(c.querySelector(".s-auth-methods")).toBeTruthy();
-    expect(c.querySelector(".methods-probe")).toBeTruthy();
   });
 
   // ── Account-first mode (passwordField: false) ─────────────────────────
@@ -224,22 +220,20 @@ describe("HkSignInCard", () => {
     expect(btn.getAttribute("disabled")).not.toBeNull(); // password still empty
   });
 
-  it("renders the methods and footer blocks EXACTLY ONCE per card in shell mode", () => {
-    // The bare-mode extraction (2026-11) once rendered the wrapper divs
-    // in BOTH the credential fragment and HkAuthCard's own slots — a
-    // standalone card with slots showed two .s-auth-methods and two
-    // .s-auth-footer blocks (R3 of the extraction PR caught it live).
-    // MUT:r1487-double-blocks (rendering the blocks in shell mode too
-    // makes both counts 2).
+  it("renders the footer block EXACTLY ONCE per card in shell mode", () => {
+    // The bare-mode extraction (2026-11) once rendered the wrapper div
+    // in BOTH the credential fragment and HkAuthCard's own slot — a
+    // standalone card with a slot showed two .s-auth-footer blocks (R3
+    // of the extraction PR caught it live).
+    // MUT:r1487-double-blocks (rendering the block in shell mode too
+    // makes the count 2).
     const c = mount(
       h(HkSignInCard, { title: "T" }, {
-        methods: () => h("div", { class: "m-row" }, "m"),
         footer: () => h("div", { class: "f-row" }, "f"),
       }),
     );
-    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(1);
+    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(0);
     expect(c.querySelectorAll(".s-auth-footer")).toHaveLength(1);
-    expect(c.querySelectorAll(".m-row")).toHaveLength(1);
     expect(c.querySelectorAll(".f-row")).toHaveLength(1);
   });
 
@@ -271,9 +265,8 @@ describe("HkSignInCard", () => {
   });
 
   it("renders no footer wrapper at all when no footer slot was passed (dead-space guard)", () => {
-    // The footer half of the methods dead-space rule, made symmetric
-    // after R4 caught the unconditional forwarding: a methods-less,
-    // footer-less card must leave BOTH wrapper bands absent.
+    // The dead-space rule: a footer-less card must leave the wrapper
+    // band absent (and the retired methods band stays gone).
     // MUT:r1487-footer-dead-space (unconditional footer forwarding
     // renders an empty .s-auth-footer band here).
     const c = mount(h(HkSignInCard, { title: "T" }));
@@ -281,16 +274,15 @@ describe("HkSignInCard", () => {
     expect(c.querySelector(".s-auth-methods")).toBeNull();
   });
 
-  it("renders the blocks exactly once in BARE mode too", () => {
+  it("renders the footer block exactly once in BARE mode too", () => {
     const c = mount(
       h(HkSignInCard, { bare: true }, {
-        methods: () => h("div", { class: "m-row" }, "m"),
         footer: () => h("div", { class: "f-row" }, "f"),
       }),
     );
-    // No HkAuthCard exists in bare mode — the fragment owns the blocks.
+    // No HkAuthCard exists in bare mode — the fragment owns the block.
     expect(c.querySelectorAll(".s-auth-card")).toHaveLength(0);
-    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(1);
+    expect(c.querySelectorAll(".s-auth-methods")).toHaveLength(0);
     expect(c.querySelectorAll(".s-auth-footer")).toHaveLength(1);
   });
 });

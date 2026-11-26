@@ -7,7 +7,7 @@
 // auth vocabulary in `packages/vue/src/styles/admin-tokens.scss`
 // (`.s-auth-card` / `.s-auth-card-height` / `.s-auth-header` /
 // `.s-auth-title` / `.s-auth-subtitle` / `.s-auth-form` /
-// `.s-auth-methods` / `.s-auth-footer`, and the ONE width contract
+// `.s-auth-footer`, and the ONE width contract
 // `var(--hk-auth-card-max-width, 28rem)`), vendored byte-identically under
 // `src/styles/vue-mirror/styles/` and registered as the `vue-admin-tokens`
 // chrome layer by `StyleRegistry::register_vue_chrome`
@@ -26,21 +26,21 @@
 //         h1.s-auth-title           {title}
 //         p.s-auth-subtitle         (only when subtitle is non-empty)
 //       div.s-auth-form             {children}       (Vue's default slot)
-//       div.s-auth-methods          (only when a methods element is given)
 //       div.s-auth-footer           (only when a footer element is given)
 //
-// Slot contract (the same one Vue documents): `methods` is a FULL-WIDTH
-// block between the form and the footer so alternative sign-in buttons line
-// up with the inputs, while `footer` is a fit-content centered column of
-// rows. Both wrappers are omitted — not rendered empty — when the slot has no
-// element: an always-present slot would paint the sheet's padded, top-margined
-// box as dead space under the form (`HkSignInCard`'s forwarding note).
+// Slot contract (the same one Vue documents): `footer` is a fit-content
+// centered column of rows, omitted — not rendered empty — when the slot has
+// no element: an always-present slot would paint the sheet's padded,
+// top-margined box as dead space under the form (`HkSignInCard`'s forwarding
+// note). The old `methods` block between form and footer is GONE
+// (2026-11-26 user direction: method choice lives in the flow's segment
+// group, never in rows stacked under a form).
 //
 // Vue prop mapping: `title` (required in Vue) → [`AuthCardProps::title`],
 // `subtitle` → [`AuthCardProps::subtitle`], the `logo` / `default` /
-// `methods` / `footer` slots → [`AuthCardProps::logo`] /
-// [`AuthCardProps::children`] / [`AuthCardProps::methods`] /
-// [`AuthCardProps::footer`], `smoothHeight` → [`AuthCardProps::smooth_height`],
+// `footer` slots → [`AuthCardProps::logo`] /
+// [`AuthCardProps::children`] / [`AuthCardProps::footer`],
+// `smoothHeight` → [`AuthCardProps::smooth_height`],
 // `attrs.class` (Vue falls it through to the root wrapper) →
 // [`AuthCardProps::class`].
 //
@@ -152,10 +152,6 @@ pub struct AuthCardProps {
     /// Card body — Vue's default slot, rendered inside `.s-auth-form`.
     pub children: Element,
 
-    /// The `methods` slot: the full-width block between the form and the
-    /// footer (typically the alternative-method list). Omitted when absent.
-    pub methods: Option<Element>,
-
     /// The `footer` slot: one centered row per child under the card body.
     pub footer: Option<Element>,
 
@@ -185,7 +181,6 @@ pub fn AuthCard(props: AuthCardProps) -> Element {
     };
     let logo = props.logo.clone();
     let children = props.children.clone();
-    let methods = props.methods.clone();
     let footer = props.footer.clone();
     let wrapper_style = auth_card_width_style(props.max_width.as_deref());
 
@@ -209,9 +204,6 @@ pub fn AuthCard(props: AuthCardProps) -> Element {
                 }
                 div { class: "s-auth-form",
                     {children}
-                }
-                if let Some(methods) = methods {
-                    div { class: "s-auth-methods", {methods} }
                 }
                 if let Some(footer) = footer {
                     div { class: "s-auth-footer", {footer} }
@@ -246,7 +238,6 @@ mod tests {
         assert!(props.logo.is_none());
         // The default slot is the empty fragment `VNode::default()` renders.
         assert!(matches!(props.children, VNode::Fragment(ref nodes) if nodes.is_empty()));
-        assert!(props.methods.is_none());
         assert!(props.footer.is_none());
         // Vue: `smoothHeight` defaults to true.
         assert!(props.smooth_height);
@@ -321,13 +312,15 @@ mod tests {
         assert!(!html.contains("s-auth-methods"), "{html}");
         assert!(!html.contains("s-auth-footer"), "{html}");
         assert!(!html.contains("style="), "{html}");
-        // The slot wrappers nest in Vue's order: header, form, methods, footer.
+        // The slot wrappers nest in Vue's order: header, form, footer.
         let header = html.find("s-auth-header").unwrap();
         let form = html.find("s-auth-form").unwrap();
         assert!(header < form, "{html}");
 
         // Full card: logo first inside the header, then the subtitle line,
-        // the methods block, the footer block and the published width cap.
+        // the footer block and the published width cap. The retired
+        // `methods` block stays gone (2026-11-26 direction: method choice
+        // lives in the flow's segment group, never under a form).
         let html = AuthCard(AuthCardProps {
             title: "Sign in".to_string(),
             subtitle: Some("Continue to your account".to_string()),
@@ -337,9 +330,6 @@ mod tests {
             children: rsx! {
                 div { class: "test-body" }
             },
-            methods: Some(rsx! {
-                div { class: "test-methods" }
-            }),
             footer: Some(rsx! {
                 span { class: "test-footer" }
             }),
@@ -352,7 +342,7 @@ mod tests {
         assert!(html.contains("Continue to your account"), "{html}");
         assert!(html.contains(r#"class="test-logo""#), "{html}");
         assert!(html.contains(r#"class="test-body""#), "{html}");
-        assert!(html.contains(r#"class="test-methods""#), "{html}");
+        assert!(!html.contains("s-auth-methods"), "{html}");
         assert!(html.contains(r#"class="test-footer""#), "{html}");
         assert!(
             html.contains(r#"class="s-auth-card-height host-class""#),
@@ -369,9 +359,8 @@ mod tests {
             "the logo slot renders before the title: {html}"
         );
         let form = html.find("s-auth-form").unwrap();
-        let methods = html.find("s-auth-methods").unwrap();
         let footer = html.find("s-auth-footer").unwrap();
-        assert!(form < methods && methods < footer, "{html}");
+        assert!(form < footer, "{html}");
 
         // `smoothHeight: false` keeps the wrapper (Vue renders it either way).
         let html = AuthCard(AuthCardProps {
@@ -402,7 +391,6 @@ mod tests {
             ".s-auth-title",
             ".s-auth-subtitle",
             ".s-auth-form",
-            ".s-auth-methods",
             ".s-auth-footer",
         ] {
             assert!(

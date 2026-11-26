@@ -27,10 +27,10 @@ export interface HkAuthChannelListEntry {
  * user direction): one FULL-WIDTH ROW per channel, the mark on the left
  * and the channel's NAME in plain sight on the right.
  *
- * This replaces the small square icon tiles (`HkAuthMethodList`) as the
- * form for login-flow destination buttons — on every Celestia auth
- * surface. A tile hides the channel's name behind a hover tooltip; a
- * list row states it. The row is a plain bordered button (token-driven,
+ * This replaced the small square icon tiles as the form for login-flow
+ * destination buttons — on every Celestia auth surface (the tile
+ * component retired with the 2026-11-26 divider removal). A tile hides
+ * the channel's name behind a hover tooltip; a list row states it. The row is a plain bordered button (token-driven,
  * dark-mode automatic) — no square framing, no hover reveal.
  *
  * Control contract: the list never talks to a backend; the host injects
@@ -47,8 +47,6 @@ export interface HkAuthChannelListEntry {
 export const HkAuthChannelList = defineComponent({
   name: "HkAuthChannelList",
   props: {
-    /** Optional divider text rendered above the list (consumer copy). */
-    divider: { type: String, default: "" },
     /** Channel rows, in render order. */
     methods: {
       type: Array as () => HkAuthChannelListEntry[],
@@ -62,11 +60,6 @@ export const HkAuthChannelList = defineComponent({
   setup(props, { emit }) {
     return () => (
       <div class="hk-auth-channel-list">
-        {props.divider && (
-          <div class="hk-auth-channel-divider">
-            <span>{props.divider}</span>
-          </div>
-        )}
         <div class="hk-auth-channel-rows">
           {props.methods.map((method) => {
             // A disabled link carries no `href` at all (an anchor cannot be

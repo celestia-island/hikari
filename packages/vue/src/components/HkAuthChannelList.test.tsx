@@ -67,11 +67,6 @@ describe("HkAuthChannelList", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
-  it("renders an optional divider above the rows", () => {
-    const c = mount(h(HkAuthChannelList, { divider: "或", methods }));
-    expect(c.querySelector(".hk-auth-channel-divider")?.textContent).toContain("或");
-  });
-
   it("renders a real link for a row with href, and a button without", () => {
     const c = mount(
       h(HkAuthChannelList, {

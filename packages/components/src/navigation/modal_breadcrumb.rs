@@ -81,8 +81,8 @@
 //     strip inside its own Escape chain if it needs more.
 //   * The all-layers menu rows are `HkMenuPanel`/`HkMenuActionItem` DOM
 //     HOOKS (`hk-menu-list` / `hk-menu-action-item*`): those components
-//     have no mirror of their own this wave — the same deal
-//     `auth/alt_sign_in.rs` documents for its rows.
+//     have no mirror of their own this wave — the same deal the auth
+//     mirrors document for their composed rows.
 //   * The chevron is TRUSTED STATIC MARKUP through `dangerous_inner_html`
 //     on a `display:contents` host (ledger L49 — an `rsx!` `svg {}` child
 //     lands in the HTML namespace); the class sits on the `<svg>` itself

@@ -2,7 +2,7 @@ import { computed, defineComponent, ref, watch, type PropType } from "vue";
 
 import { useI18n } from "../i18n/context";
 import { asPropType } from "../utils/typing";
-import { HkAuthChannelList, type HkAuthChannelListEntry } from "./HkAuthChannelList";
+import { HkAuthChannelList } from "./HkAuthChannelList";
 import {
   HkMfaVerifyCard,
   hkMfaVerifySubtitle,
@@ -54,12 +54,6 @@ export interface HkLoginCredentialsChannel {
    *  only guard. Per channel on purpose: one body may be gated while
    *  the other is always submittable. */
   disabled?: boolean;
-  /** Alternative sign-in rows under the form (rendered only when
-   *  non-empty; an empty list omits the whole methods block instead of
-   *  padding a dead strip). */
-  methods?: HkAuthChannelListEntry[];
-  /** Divider text above the rows; consumer-localized on purpose. */
-  methodsDivider?: string;
 }
 
 /** A channel whose whole sign-in is one redirect (a.celestia.world's
@@ -115,13 +109,9 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  *   fail-safe).
  * - `account-submit(channel, username, password)` — credentials
  *   channel submitted (password is empty while `passwordField` is off).
- * - `method-select(channel, key)` — an alternative method row was picked.
  * - `sso-click(channel)` — the primary sso row was picked.
  * - `verify(kind, proof)` / `verify-resend` / `verify-back` — the MFA
  *   body's events, re-emitted one level up.
- * - `verifyMethods` — alternative sign-in rows on the verify step (the
- *   third-party providers the account can still sign in through);
- *   `verify-method-select(key)` re-emits a picked row.
  *
  * Card grammar (2026-11-24 user direction, the reason this file looks
  * the way it does): *"where the content can change inside the card, do
@@ -163,9 +153,15 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * verbatim here): segment labels are ALWAYS the panel's own locale keys,
  * never a server-provided provider name (a provider label leaked into
  * the channel tabs once and read as "log in to ERP" instead of "log in
- * with your organization"); the group renders only for 2+ channels; an
- * empty `methods` list omits the block entirely (a null-rendered slot
- * still pads the card's methods strip).
+ * with your organization"); the group renders only for 2+ channels.
+ *
+ * The 2026-11-26 user direction locked the method-selection grammar:
+ * a card NEVER stacks alternative sign-in rows (the old divider +
+ * rows-under-the-form facility is gone from the panel, the verify
+ * step and the auth kit). Every non-primary entrance — an OAuth
+ * provider, a passkey — is its own CHANNEL, and the segment group at
+ * the top is the only switcher (`federated + password` discovery now
+ * maps providers to channels for exactly this reason).
  *
  * `initialUsername` rides the account→verify→back round-trip (the
  * credentials body remounts when the user navigates back, so the typed
@@ -242,21 +238,10 @@ export const HkLoginFlow = defineComponent({
      *  announces exactly one factor (a plain password) passes false — a
      *  one-option chooser above the field is decoration. */
     verifyShowFactorPicker: { type: Boolean, default: true },
-    /** Alternative sign-in rows on the verify step: the third-party
-     *  providers the account can still sign in through (a linked OAuth
-     *  identity). A row is not a factor — see HkMfaVerifyCard.methods.
-     *  Rendered only when non-empty. */
-    verifyMethods: {
-      type: Array as PropType<readonly HkAuthChannelListEntry[]>,
-      default: () => [],
-    },
-    /** Divider text above the verify step's rows; consumer-localized. */
-    verifyMethodsDivider: { type: String, default: undefined },
   },
   emits: {
     "update:modelValue": (_key: string) => true,
     "account-submit": (_channel: string, _username: string, _password: string) => true,
-    "method-select": (_channel: string, _key: string) => true,
     "sso-click": (_channel: string) => true,
     // `verify` carries HkMfaFactor (not a bare string): consumers bind
     // factor-typed handlers (`onVerify={(kind: MfaFactor, …)}`), and a
@@ -265,9 +250,6 @@ export const HkLoginFlow = defineComponent({
     verify: (_kind: HkMfaFactor, _proof: string) => true,
     "verify-resend": () => true,
     "verify-back": () => true,
-    /** A third-party sign-in row was picked on the verify step — the
-     *  provider's key, as `method-select` carries on the account step. */
-    "verify-method-select": (_key: string) => true,
   },
   setup(props, { emit, slots, expose }) {
     const { t } = useI18n();
@@ -381,7 +363,6 @@ export const HkLoginFlow = defineComponent({
     }
 
     function renderCredentialsBody(channel: HkLoginCredentialsChannel) {
-      const methods = channel.methods ?? [];
       return (
         <HkSignInCard
           key={channel.key}
@@ -402,20 +383,9 @@ export const HkLoginFlow = defineComponent({
             // Forward the icon slot ONLY when the host passed one — an
             // unconditional lambda would shadow HkSignInCard's own
             // <User> fallback and leave the field icon-less (the same
-            // dead-slot rule as methods/footer).
+            // dead-slot rule as footer).
             ...(slots.usernameIcon
               ? { usernameIcon: () => slots.usernameIcon?.({ channel: channel.key }) }
-              : {}),
-            ...(methods.length > 0
-              ? {
-                  methods: () => (
-                    <HkAuthChannelList
-                      divider={channel.methodsDivider}
-                      methods={methods}
-                      onSelect={(key: string) => emit("method-select", channel.key, key)}
-                    />
-                  ),
-                }
               : {}),
             // The footer wrapper must not exist when no footer was
             // passed (HkAuthCard's dead-space rule; the bare fragment
@@ -519,13 +489,10 @@ export const HkLoginFlow = defineComponent({
                         resending={props.verifyResending}
                         passkeyRetryHint={props.passkeyRetryHint}
                         showFactorPicker={props.verifyShowFactorPicker}
-                        methods={props.verifyMethods}
-                        methodsDivider={props.verifyMethodsDivider}
                         autofocus
                         onVerify={(kind: HkMfaFactor, proof: string) => emit("verify", kind, proof)}
                         onResend={() => emit("verify-resend")}
                         onBack={() => emit("verify-back")}
-                        onMethod-select={(key: string) => emit("verify-method-select", key)}
                       />
                     </div>
                   </div>

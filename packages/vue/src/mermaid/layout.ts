@@ -203,8 +203,10 @@ export interface GraphLayoutInput {
   edges: Array<{ from: string; to: string }>;
   direction: MermaidGraphDoc["direction"];
   /** Cross-axis gap between same-rank siblings, world px. Cluster frames pad
-   *  their members on both sides, so a grouped graph widens this budget
-   *  (`GROUP_CROSS_GAP`) or side-by-side frames would touch and overlap. */
+   *  their members on both sides (and reserve a caption band on the stacked
+   *  axis), so a grouped graph widens this budget — `GROUP_CROSS_GAP_H` for
+   *  TD/BT, `GROUP_CROSS_GAP_V` for LR/RL — or neighbouring frames would
+   *  touch and overlap. */
   crossGap?: number;
 }
 

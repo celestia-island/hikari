@@ -128,13 +128,13 @@ describe("subgraph clusters", () => {
     for (const direction of ["TD", "BT", "LR", "RL"]) {
       const doc = wasmMermaidEngine.parse([
         `flowchart ${direction}`,
-      '  R["root"]',
-      '  subgraph GA["alpha"]',
-      '    A1["a1"]',
-      "  end",
-      '  subgraph GB["beta"]',
-      '    B1["b1"]',
-      "  end",
+        '  R["root"]',
+        '  subgraph GA["alpha"]',
+        '    A1["a1"]',
+        "  end",
+        '  subgraph GB["beta"]',
+        '    B1["b1"]',
+        "  end",
         '  R --> A1',
         '  R --> B1',
       ].join("\n"))!;

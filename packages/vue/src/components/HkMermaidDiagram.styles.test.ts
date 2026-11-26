@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -12,8 +11,9 @@ import { describe, expect, it } from "vitest";
  * `passthrough` flag is pinned twice as DATA (the layout node carries it, the
  * board DOM node gets the class), but the declaration that gives it any
  * effect — `pointer-events: none` on that class — could be neutralised to
- * `auto` and leave every test green (measured: 25/25 green). That would put
- * the frame back in the pointer path, where it eats the pan drag.
+ * `auto` and leave every other test green. That would put the frame back in
+ * the pointer path, where it eats the pan drag. This compiles the sheets and
+ * asserts the contract, the same shape HkFilterPanel/DockBar already use.
  */
 
 const componentDir = resolve(dirname(fileURLToPath(import.meta.url)));
@@ -23,7 +23,9 @@ function compiled(file: string): string {
 }
 
 /** The declaration block of the FIRST rule whose selector text contains
- *  `selector` (compiled CSS is flat enough; comments are not emitted). */
+ *  `selector`. Each caller passes a needle unique to its rule (the frame's
+ *  carries the literal brace), so the first-brace scan cannot land on a
+ *  neighbouring `__label` block. */
 function ruleFor(css: string, selector: string): string {
   const start = css.indexOf(selector);
   expect(start, `${selector} present in the compiled sheet`).toBeGreaterThanOrEqual(0);
@@ -48,7 +50,3 @@ describe("mermaid cluster frame stylesheet contract", () => {
     expect(ruleFor(css, ".hk-mmd-group__label")).toMatch(/position:\s*absolute/);
   });
 });
-
-// The sample text above is documentation, not a fixture: keep the file from
-// drifting into an unused import if the reader helper is refactored.
-void readFileSync;

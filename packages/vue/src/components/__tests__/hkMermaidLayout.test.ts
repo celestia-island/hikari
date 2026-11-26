@@ -82,8 +82,9 @@ describe("subgraph clusters", () => {
   it("anchors a cluster-as-SOURCE edge on the frame's border too", async () => {
     await mermaidReady;
     // The hub fixture has `G --> B` (cluster as the source). Without the
-    // anchor the arrow leaves the frame's centre, i.e. from behind its own
-    // members — the same reason the target side is anchored.
+    // override the edge anchors on the frame's CENTRE, i.e. inside the box
+    // behind its own members; `nearest` clamps the endpoint onto the frame's
+    // border for oblique geometry, the same rule the target side uses.
     const doc = wasmMermaidEngine.parse([
       "flowchart TD",
       '  subgraph G["Gateway"]',

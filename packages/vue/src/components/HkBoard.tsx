@@ -312,7 +312,16 @@ export default defineComponent({
     function refreshSize(): void {
       const el = viewportRef.value;
       if (!el) return;
-      viewportSize.value = { w: el.clientWidth, h: el.clientHeight };
+      const next = { w: el.clientWidth, h: el.clientHeight };
+      const wasDegenerate = viewportSize.value.w <= 0 || viewportSize.value.h <= 0;
+      viewportSize.value = next;
+      // A board can mount before its container has a box: a hidden tab, a
+      // collapsed panel, or a card whose own parent is still unmounted
+      // measures 0×0. The mount fit then frames against nothing (k = 0) and
+      // the camera stayed there forever — the diagram/chart only appeared
+      // after a manual reset. Re-fit on the FIRST real size that follows a
+      // degenerate one; ordinary resizes keep the user's camera.
+      if (wasDegenerate && next.w > 0 && next.h > 0 && props.fitOnMount) cam.fit();
     }
 
     let resizeObs: ResizeObserver | null = null;

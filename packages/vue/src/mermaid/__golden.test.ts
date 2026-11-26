@@ -11,6 +11,10 @@ import { wasmMermaidEngine, mermaidReady } from "./wasmEngine";
 const CASES: Array<{ name: string; source: string }> = [
   { name: "graph-basic", source: "graph TD\n  A --> B\n  B --> C" },
   { name: "flowchart-shaped", source: "flowchart LR\n  S[Start] --> M{Check} --> E" },
+  {
+    name: "flowchart-subgraph",
+    source: 'flowchart TD\n  C["client"]\n  subgraph G["Gateway"]\n    N0["router"]\n    N1["memory"]\n  end\n  C -->|"call"| G',
+  },
   { name: "sequence-basic", source: "sequenceDiagram\n  Alice->>Bob: Hello\n  Bob-->>Alice: Hi" },
   { name: "sequence-arrows", source: "sequenceDiagram\n  A->B: solid\n  B-->C: dotted\n  C->>D: solid-open" },
   { name: "pie-basic", source: 'pie\n  title Sales\n  "Alpha" : 40\n  "Beta" : 60' },

@@ -53,6 +53,27 @@ pub struct MermaidDiagram {
     pub direction: Direction,
     pub nodes: Vec<MermaidNode>,
     pub edges: Vec<MermaidEdge>,
+    /// `subgraph` clusters. Empty for a plain graph, so the field is omitted
+    /// from the JSON and every pre-cluster document keeps its exact output.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub groups: Vec<MermaidGroup>,
+}
+
+/// A `subgraph` cluster: the frame drawn around [`members`], addressable by
+/// node id like mermaid's subgraphs (`C --> G` points at the frame).
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct MermaidGroup {
+    /// The subgraph id — the head's identifier when it has one, else a
+    /// generated `_sg<N>` (stable per parse order).
+    pub id: String,
+    /// Caption painted on the frame.
+    pub label: String,
+    /// Node ids inside the cluster, in parse order. A nested cluster's nodes
+    /// also appear here, so the outer frame encloses the inner one.
+    pub members: Vec<String>,
+    /// Enclosing cluster id for a nested subgraph.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub parent: Option<String>,
 }
 
 impl MermaidDiagram {

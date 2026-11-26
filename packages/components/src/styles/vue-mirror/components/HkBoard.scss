@@ -148,3 +148,10 @@
 .hk-board-minimap > .hk-minimap {
   position: static;
 }
+
+/* Paint-only nodes (subgraph cluster frames, decoration layers): visible, but
+   never the target of a pointer — a pan drag or a node tap must reach what is
+   underneath. */
+.hk-board-node--passthrough {
+  pointer-events: none;
+}

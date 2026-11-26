@@ -20,6 +20,7 @@ import type {
   MermaidDoc,
   MermaidEdge,
   MermaidGraphDoc,
+  MermaidGroup,
   MermaidNodeShape,
 } from "./types";
 
@@ -27,6 +28,7 @@ import type {
 
 export type MermaidNodeKind =
   | "shape" // graph node (shape + label via data)
+  | "group" // subgraph cluster frame (paint-only, behind its members)
   | "participant"
   | "class"
   | "section"
@@ -44,6 +46,9 @@ export interface LaidOutNode {
   kind: MermaidNodeKind;
   /** Invisible junction — routes edges, paints nothing, no minimap box. */
   hidden?: boolean;
+  /** Paint-only node: pointer gestures pass through to the board (cluster
+   * frames must not eat the pan drag). */
+  passthrough?: boolean;
   data: Record<string, unknown>;
 }
 
@@ -53,6 +58,11 @@ export interface LaidOutEdge {
   to: string;
   /** Board route style; bezier = mermaid flowchart feel. */
   style: "straight" | "bezier" | "orthogonal";
+  /** Border anchor overrides. An edge into a subgraph cluster lands on the
+   *  frame's border (mermaid attaches there), not on its center — the center
+   *  sits behind the frame's own members. */
+  anchorFrom?: "center" | "nearest" | "top" | "top-left" | "fan";
+  anchorTo?: "center" | "nearest" | "top" | "top-left" | "fan";
   dashed: boolean;
   arrow: "none" | "solid" | "open";
   label: string | null;
@@ -299,6 +309,69 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
   return { positions, width: width + MARGIN, height: height + MARGIN };
 }
 
+// ── Subgraph clusters ────────────────────────────────────────────────
+
+/** Padding between a cluster's frame and the content inside it, world px. */
+const GROUP_PAD = 18;
+/** Caption band reserved at the top of a cluster frame, world px. */
+const GROUP_HEADER = 26;
+
+interface Rect { x: number; y: number; w: number; h: number }
+
+/** Depth of a cluster in the nesting chain (0 = top level). */
+function groupDepth(groups: MermaidGroup[], id: string): number {
+  let depth = 0;
+  let cursor = groups.find((g) => g.id === id)?.parent ?? null;
+  const seen = new Set<string>([id]);
+  while (cursor && !seen.has(cursor)) {
+    seen.add(cursor);
+    depth += 1;
+    cursor = groups.find((g) => g.id === cursor)?.parent ?? null;
+  }
+  return depth;
+}
+
+/**
+ * Frame rects for every cluster that has content: the union of its member
+ * rects (and its nested clusters' frames, computed first), padded, with a
+ * caption band on top. `memberRects` is keyed by BOARD node id (`n:<id>`),
+ * the same namespace the edges use; frames are keyed by cluster id.
+ */
+function layoutGroupFrames(
+  groups: MermaidGroup[],
+  memberRects: Map<string, Rect>,
+): Map<string, Rect> {
+  const frames = new Map<string, Rect>();
+  // Deepest first: an outer frame unions the inner frame's rect, so nesting
+  // widens the shell instead of drawing the two frames on top of each other.
+  const ordered = [...groups].sort((a, b) => groupDepth(groups, b.id) - groupDepth(groups, a.id));
+  for (const group of ordered) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    const absorb = (r: Rect | undefined): void => {
+      if (!r || r.w <= 0 || r.h <= 0) return;
+      minX = Math.min(minX, r.x);
+      minY = Math.min(minY, r.y);
+      maxX = Math.max(maxX, r.x + r.w);
+      maxY = Math.max(maxY, r.y + r.h);
+    };
+    for (const member of group.members) absorb(memberRects.get(`n:${member}`));
+    for (const child of groups) {
+      if (child.parent === group.id) absorb(frames.get(child.id));
+    }
+    if (!Number.isFinite(minX)) continue;
+    frames.set(group.id, {
+      x: Math.round(minX - GROUP_PAD),
+      y: Math.round(minY - GROUP_PAD - GROUP_HEADER),
+      w: Math.round(maxX - minX + GROUP_PAD * 2),
+      h: Math.round(maxY - minY + GROUP_PAD * 2 + GROUP_HEADER),
+    });
+  }
+  return frames;
+}
+
 // ── Flowchart / state ────────────────────────────────────────────────
 
 function layoutGraphDoc(
@@ -317,7 +390,7 @@ function layoutGraphDoc(
   });
 
   const byId = new Map(doc.nodes.map((n) => [n.id, n]));
-  const nodes: LaidOutNode[] = items.map((item) => {
+  const memberNodes: LaidOutNode[] = items.map((item) => {
     const p = positions.get(item.id) as { x: number; y: number };
     const meta = byId.get(item.id) as MermaidGraphDoc["nodes"][number];
     return {
@@ -331,19 +404,80 @@ function layoutGraphDoc(
     };
   });
 
+  const groups = doc.groups ?? [];
+  const frames = layoutGroupFrames(
+    groups,
+    new Map(memberNodes.map((n) => [n.id, { x: n.x, y: n.y, w: n.w, h: n.h }])),
+  );
+
+  // Shift everything right/down when a frame runs off the world origin (a
+  // cluster touching the top row would otherwise start above y = 0 and get
+  // clipped by the board's viewport).
+  let shiftX = 0;
+  let shiftY = 0;
+  for (const frame of frames.values()) {
+    shiftX = Math.max(shiftX, -frame.x);
+    shiftY = Math.max(shiftY, -frame.y);
+  }
+  shiftX += shiftX > 0 ? MARGIN : 0;
+  shiftY += shiftY > 0 ? MARGIN : 0;
+  if (shiftX !== 0 || shiftY !== 0) {
+    for (const n of memberNodes) {
+      n.x += shiftX;
+      n.y += shiftY;
+    }
+    for (const [id, frame] of frames) {
+      frames.set(id, { ...frame, x: frame.x + shiftX, y: frame.y + shiftY });
+    }
+  }
+
+  // Frames paint BEHIND everything else: the board renders nodes in array
+  // order, so outer clusters come first and nested ones follow.
+  const groupNodes: LaidOutNode[] = [...groups]
+    .filter((g) => frames.has(g.id))
+    .sort((a, b) => groupDepth(groups, a.id) - groupDepth(groups, b.id))
+    .map((g) => {
+      const frame = frames.get(g.id) as Rect;
+      return {
+        id: `g:${g.id}`,
+        x: frame.x,
+        y: frame.y,
+        w: frame.w,
+        h: frame.h,
+        kind: "group",
+        passthrough: true,
+        data: { label: g.label },
+      };
+    });
+
+  const nodes: LaidOutNode[] = [...groupNodes, ...memberNodes];
+
+  // An edge may address a cluster (`C --> G`): mermaid paints the arrow onto
+  // the frame, so redirect it to the frame's board node.
+  const endpoint = (id: string): string => (frames.has(id) ? `g:${id}` : `n:${id}`);
   const edges: LaidOutEdge[] = doc.edges
     .filter((e) => e.source !== e.target)
     .map((e, i) => ({
       id: `e:${i}`,
-      from: `n:${e.source}`,
-      to: `n:${e.target}`,
+      from: endpoint(e.source),
+      to: endpoint(e.target),
       style: "bezier" as const,
+      ...(frames.has(e.source) ? { anchorFrom: "nearest" as const } : {}),
+      ...(frames.has(e.target) ? { anchorTo: "nearest" as const } : {}),
       dashed: false,
       arrow: e.edgeType === "arrow" ? ("solid" as const) : ("none" as const),
       label: e.label,
     }));
 
-  return { nodes, edges, width, height };
+  // The frames extend past the member bbox the graph pass measured.
+  let outWidth = width;
+  let outHeight = height;
+  for (const frame of frames.values()) {
+    outWidth = Math.max(outWidth, frame.x + frame.w + MARGIN);
+    outHeight = Math.max(outHeight, frame.y + frame.h + MARGIN);
+  }
+
+  return { nodes, edges, width: outWidth, height: outHeight };
 }
 
 // ── Sequence ─────────────────────────────────────────────────────────

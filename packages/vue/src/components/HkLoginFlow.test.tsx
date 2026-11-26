@@ -144,35 +144,13 @@ describe("HkLoginFlow — credentials channel", () => {
     expect(onSubmit).toHaveBeenCalledWith("cloud", "demiurge", "");
   });
 
-  it("renders alternative method rows and forwards their selection", async () => {
-    const onSelect = vi.fn();
-    const channel: HkLoginChannel = {
-      key: "cloud",
-      mode: "credentials",
-      methods: [{ key: "feishu", label: "Feishu" }],
-      methodsDivider: "或",
-    };
-    const c = mount(
-      h(HkLoginFlow, {
-        channels: [channel],
-        modelValue: "cloud",
-        onMethodSelect: onSelect,
-      }),
-    );
-    const row = c.querySelector<HTMLButtonElement>('[data-key="feishu"]');
-    expect(row).not.toBeNull();
-    expect(row!.getAttribute("aria-label")).toBe("Feishu");
-    expect(c.querySelector(".hk-auth-channel-divider")?.textContent).toContain("或");
-    row!.click();
-    await nextTick();
-    expect(onSelect).toHaveBeenCalledWith("cloud", "feishu");
-  });
-
-  it("omits the whole methods block when the list is empty", () => {
+  it("never renders alternative rows under the credentials card (2026-11-26 grammar)", () => {
+    // The divider + rows-under-the-form facility is GONE: every non-primary
+    // entrance is its own channel and the segment group is the only
+    // switcher (see hkLoginPlanFromDiscovery — providers map to channels).
     const c = mount(h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }));
-    // An empty methods list must not pad a dead strip under the form
-    // (the operative pin is the channel list's absence — the retired
-    // tile wrapper's absence is not observable here, R2).
+    // MUT:login-methods-rows-return (re-adding a methods block under the
+    // credentials card reintroduces the banned divider shape and goes red).
     expect(c.querySelector(".hk-auth-channel-list")).toBeNull();
     expect(c.querySelector(".hk-auth-channel-divider")).toBeNull();
   });
@@ -413,9 +391,10 @@ describe("HkLoginFlow — verify step", () => {
     expect(c.querySelector(".hk-tabs")).toBeNull();
   });
 
-  it("lists third-party sign-in rows on the verify step and forwards their selection", async () => {
-    const onVerify = vi.fn();
-    const onSelect = vi.fn();
+  it("never renders third-party rows on the verify step (2026-11-26 grammar)", () => {
+    // The verify step's alternative-row lane is GONE with the rest of the
+    // divider facility: a visitor who would rather continue through a
+    // linked provider goes BACK and picks the provider's channel there.
     const c = mount(
       h(HkLoginFlow, {
         channels: [cloudChannel],
@@ -423,53 +402,17 @@ describe("HkLoginFlow — verify step", () => {
         step: "verify",
         verifyFactors: ["password"],
         verifyAccountName: "langyo",
-        verifyMethods: [{ key: "github", label: "GitHub" }],
-        verifyMethodsDivider: "or continue with",
-        onVerify,
-        onVerifyMethodSelect: onSelect,
       }),
     );
-    const row = c.querySelector<HTMLButtonElement>('[data-key="github"]');
-    expect(row).not.toBeNull();
-    expect(c.querySelector(".hk-auth-channel-divider")?.textContent)
-      .toContain("or continue with");
-    // The rows live INSIDE the one card frame (the verify generation's
-    // body), not in a second card or below the panel.
-    expect(
-      c.querySelector(".s-auth-card")!.contains(c.querySelector(".hk-auth-channel-list")!),
-    ).toBe(true);
-    row!.click();
-    await nextTick();
-    // MUT:flow-verify-method-unforwarded (dropping the `onMethod-select`
-    // forwarding leaves the host's handler uncalled and this goes red).
-    expect(onSelect).toHaveBeenCalledWith("github");
-    expect(onVerify).not.toHaveBeenCalled();
-  });
-
-  it("keeps the verify-step rows off the account step and off an empty list", () => {
+    // MUT:flow-verify-methods-return (re-adding a channel list to the
+    // verify generation reintroduces the banned divider shape and goes red).
+    expect(c.querySelector(".hk-auth-channel-list")).toBeNull();
+    expect(c.querySelector(".hk-auth-channel-divider")).toBeNull();
+    // And the account generation never carried one either.
     const onAccount = mount(
-      h(HkLoginFlow, {
-        channels: [cloudChannel],
-        modelValue: "cloud",
-        verifyMethods: [{ key: "github", label: "GitHub" }],
-      }),
+      h(HkLoginFlow, { channels: [cloudChannel], modelValue: "cloud" }),
     );
-    // MUT:flow-verify-methods-on-account (rendering the rows in the
-    // account generation as well puts a channel list on this probe and
-    // this goes red).
     expect(onAccount.querySelector(".hk-auth-channel-list")).toBeNull();
-    const empty = mount(
-      h(HkLoginFlow, {
-        channels: [cloudChannel],
-        modelValue: "cloud",
-        step: "verify",
-        verifyFactors: ["totp"],
-        verifyMethods: [],
-        verifyMethodsDivider: "or",
-      }),
-    );
-    expect(empty.querySelector(".hk-auth-channel-list")).toBeNull();
-    expect(empty.querySelector(".hk-auth-channel-divider")).toBeNull();
   });
 
   it("morphs account → verify → back when the host flips the step prop reactively", async () => {
@@ -668,19 +611,21 @@ describe("HkLoginFlow — stable shell channel swap (2026-11-24 user direction)"
     expect(document.activeElement).toBe(trigger);
   });
 
-  it("extends the :has rhythm collapse to the bare fragment's descendant blocks (styles pin)", () => {
-    // The stable shell's bare fragment renders the methods/footer
-    // blocks as DESCENDANTS of the shell's .s-auth-form — the sibling
-    // `:has(+ …)` rules cannot see them, so the descendant variants
-    // carry the same collapsed bottom padding (without them the form's
-    // full 24px bottom padding stacks onto the footer's top margin).
+  it("extends the :has rhythm collapse to the bare fragment's descendant footer block (styles pin)", () => {
+    // The stable shell's bare fragment renders the footer block as a
+    // DESCENDANT of the shell's .s-auth-form — the sibling `:has(+ …)`
+    // rule cannot see it, so the descendant variant carries the same
+    // collapsed bottom padding (without it the form's full 24px bottom
+    // padding stacks onto the footer's top margin).
     // MUT:r1487-rhythm-descendant (reverting to sibling-only rules
     // makes this match empty).
     const here = dirname(fileURLToPath(import.meta.url));
     const scss = readFileSync(join(here, "../styles/admin-tokens.scss"), "utf-8");
-    const methods = scss.match(/\.s-auth-form:has\(\.s-auth-methods\)\s*,\s*\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
-    expect(methods, "descendant :has collapse rule must exist").toBeTruthy();
-    expect(methods).toContain("padding-bottom: var(--space-8, 0.5rem)");
+    const collapse = scss.match(/\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/g)?.join("\n") ?? "";
+    expect(collapse, "descendant :has collapse rule must exist").toBeTruthy();
+    expect(collapse).toContain("padding-bottom: var(--space-8, 0.5rem)");
+    // The retired methods block's rules stay gone (2026-11-26 grammar).
+    expect(scss).not.toContain(".s-auth-methods");
   });
 
   it("renders no footer band when the host passed no footer slot (flow-level dead-space guard)", () => {

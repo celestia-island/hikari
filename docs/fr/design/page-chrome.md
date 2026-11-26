@@ -63,3 +63,28 @@ survivent au point de rupture. `HkAdaptiveTabs` est l'implémentation
 par défaut ; les commutateurs de listes de projets dynamiques avec des lignes
 propres (le sélecteur de plateforme) sont le cas particulier exempté,
 pas le modèle à copier.
+
+## Texte des coins de pied de page
+
+Le texte dans l'un des six coins d'en-tête/pied de page (gauche/centre/droite
+×2) passe par `HkCornerText` d'hikari : une instance = une voie de texte pour
+un coin.
+
+- `align` choisit le coin : `start` (coins gauches) / `center` (voie centrale)
+  / `end` (coins droits) ; les lignes renvoyées restent collées au même bord —
+  une voie de coin droit reste alignée à droite après retour à la ligne.
+- Les entrées sont des atomes `nowrap` : la voie revient à la ligne ENTRE les
+  entrées, jamais à l'intérieur (un numéro de déclaration ne doit pas se
+  couper en plein milieu).
+- Encre chrome atténuée par défaut (`text-2xs` + opacité 0.6) ; `muted: false`
+  restaure l'encre pleine.
+- Plusieurs lignes dans un coin (ligne d'identité au-dessus de la ligne des
+  déclarations) : empiler les instances verticalement — la bande d'état fixe
+  de 3rem contient deux lignes text-2xs.
+- Les entrées-liens (déclarations) utilisent `items` + `as="nav"` +
+  `ariaLabel` ; le contenu libre (pastille d'état) passe par le slot par
+  défaut, après `items`.
+
+Il est interdit aux hôtes d'écrire à la main des voies compressées
+`flex-wrap: nowrap` ou de laisser le texte peindre hors d'une bande à hauteur
+fixe. Implémentation de référence : `HkCornerText`.

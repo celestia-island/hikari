@@ -220,14 +220,13 @@ LAYOUT_SHEETS: list[str] = [
 # W6 — overlay + auth family. `HkSelectPanel` and `HkContextMenuProvider` ship no
 # sheet of their own (the panel composes HkSelect's surface; the provider renders
 # nothing), and the auth cards' geometry rides `admin-tokens.scss` (vendored).
+# The retired auth tile family (HkAltSignIn / HkThirdPartySignInCard /
+# HkAuthMethodList) left this list with the 2026-11-26 divider removal.
 OVERLAY_SHEETS: list[str] = [
     "HkAdaptiveDialog.scss",
     "HkPopupSelect.scss",
     "HkFloatingLayer.scss",
-    "HkAltSignIn.scss",
     "HkMfaVerifyCard.scss",
-    "HkThirdPartySignInCard.scss",
-    "HkAuthMethodList.scss",
     "HkAuthSubmitButton.scss",
     "HkAuthHandoff.scss",
     "HkPasswordSurface.scss",

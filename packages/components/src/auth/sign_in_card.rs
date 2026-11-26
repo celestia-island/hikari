@@ -30,13 +30,12 @@
 //           div.hk-input-wrapper       (Input, name="signin-password",
 //                                       type="password"; only with password_field)
 //           div.s-auth-submit > button.hk-btn…
-//       div.s-auth-methods?            (forwarded methods slot ONLY)
 //       div.s-auth-footer?             (forwarded footer slot ONLY)
 //
 // Vue prop mapping: `title` / `subtitle` / `logoSrc` / `logo` slot /
 // `loading` / `disabled` / `top` slot / `usernameType` /
 // `usernamePlaceholder` / `usernameAutocomplete` / `passwordAutocomplete` /
-// `submitLabel` / `passwordField` / `footer` slot / `methods` slot →
+// `submitLabel` / `passwordField` / `footer` slot →
 // the same-named fields on [`SignInCardProps`]. The `submit(username, password)`
 // emit → [`SignInCardProps::on_submit`], carrying [`SignInSubmit`].
 //
@@ -71,7 +70,7 @@
 //     slots.footer?.()` hands `HkAuthCard` a footer function unconditionally,
 //     which makes it paint the padded, top-margined footer band even when the
 //     consumer passed no footer — the same dead space `HkSignInCard`'s own
-//     `methods` comment says must not be rendered. Reproducing that wart byte
+//     `footer` comment says must not be rendered. Reproducing that wart byte
 //     for byte would add ~2.5rem of empty box to every footer-less card, so
 //     the mirror models the INTENT (a footer band exists iff there is footer
 //     content); a card that does pass a footer renders the identical DOM.
@@ -280,11 +279,6 @@ pub struct SignInCardProps {
     /// Footer slot (remember-me, protocol links, …), forwarded to the card.
     pub footer: Option<Element>,
 
-    /// Methods slot, forwarded to the card ONLY when provided (an
-    /// always-present slot would render the card's padded methods box as dead
-    /// space).
-    pub methods: Option<Element>,
-
     /// Field updates (Vue: `update:modelValue` on each `HkInput`) — the host
     /// owns the values.
     pub on_username_change: Option<EventHandler<String>>,
@@ -442,7 +436,6 @@ pub fn SignInCard(props: SignInCardProps) -> Element {
         subtitle: props.subtitle.clone(),
         logo,
         children: VNode::Fragment(body),
-        methods: props.methods.clone(),
         footer: props.footer.clone(),
         class: props.class.clone(),
         ..Default::default()
@@ -490,7 +483,6 @@ mod tests {
         // Vue: `passwordField` defaults to true (the classic two-field card).
         assert!(props.password_field);
         assert!(props.footer.is_none());
-        assert!(props.methods.is_none());
         assert!(props.on_username_change.is_none());
         assert!(props.on_password_change.is_none());
         assert!(props.on_submit.is_none());
@@ -652,7 +644,7 @@ mod tests {
         assert!(html.contains(r#"class="test-logo""#), "{html}");
         assert!(!html.contains("hk-logo-img"), "{html}");
 
-        // No footer / methods slot was passed → no bands at all (see the
+        // No footer slot was passed → no band at all (see the
         // header delta on Vue's unconditional footer lambda).
         let html = SignInCard(SignInCardProps {
             title: "Sign in".to_string(),
@@ -660,28 +652,24 @@ mod tests {
         })
         .render_to_html();
         assert!(!html.contains("s-auth-footer"), "{html}");
+        // The retired methods block stays gone (2026-11-26 direction).
         assert!(!html.contains("s-auth-methods"), "{html}");
 
-        // A passed footer does render the band, with the methods block
-        // between the form and the footer (Vue's slot order).
+        // A passed footer does render the band (Vue's slot order); the
+        // methods block between form and footer no longer exists.
         let html = SignInCard(SignInCardProps {
             footer: Some(rsx! {
                 span { class: "test-footer" }
-            }),
-            methods: Some(rsx! {
-                div { class: "test-methods" }
             }),
             ..Default::default()
         })
         .render_to_html();
         assert!(html.contains("s-auth-footer"), "{html}");
         assert!(html.contains(r#"class="test-footer""#), "{html}");
-        assert!(html.contains("s-auth-methods"), "{html}");
-        assert!(html.contains(r#"class="test-methods""#), "{html}");
+        assert!(!html.contains("s-auth-methods"), "{html}");
         let form = html.find("s-auth-form").unwrap();
-        let methods = html.find("s-auth-methods").unwrap();
         let footer = html.find("s-auth-footer").unwrap();
-        assert!(form < methods && methods < footer, "{html}");
+        assert!(form < footer, "{html}");
     }
 
     #[test]

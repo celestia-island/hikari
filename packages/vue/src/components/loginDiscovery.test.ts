@@ -37,50 +37,56 @@ describe("hkLoginPlanFromDiscovery", () => {
     expect(plan.mode).toBe("relay");
   });
 
-  it("local: exactly one credentials channel with the non-provider entrances as rows", () => {
+  it("local: the credentials channel leads, non-oauth entrances become sso channels", () => {
     const plan = hkLoginPlanFromDiscovery(doc({ mode: "local" }));
-    expect(plan.channels.length).toBe(1);
-    const channel = plan.channels[0]!;
-    expect(channel).toMatchObject({ key: "cloud", mode: "credentials" });
+    // 2026-11-26 grammar: no rows under the card — every entrance is a
+    // channel; the credentials tab leads.
+    expect(plan.channels.length).toBe(3);
+    expect(plan.channels[0]).toMatchObject({ key: "cloud", mode: "credentials" });
     expect(plan.defaultChannel).toBe("cloud");
-    // MUT:local-keeps-oauth-row (an OAuth provider row on a local-only
-    // deployment advertises an entrance the server refuses).
-    expect(channel.mode === "credentials" && (channel.methods ?? []).map((m) => m.key)).toEqual([
+    expect(plan.channels.slice(1).map((channel) => channel.mode === "sso" && channel.key)).toEqual([
       "passkey",
       "sms",
     ]);
-    // Rows carry the wire label, icon and href.
-    expect(channel.mode === "credentials" && channel.methods?.[1]).toEqual({
+    // MUT:local-keeps-oauth-row (an OAuth provider channel on a local-only
+    // deployment advertises an entrance the server refuses).
+    expect(plan.channels.some((channel) => channel.key === "feishu")).toBe(false);
+    // The sso channels carry the wire label, icon and href.
+    expect(plan.channels[2]).toEqual({
       key: "sms",
+      mode: "sso",
       label: "SMS",
+      icon: undefined,
       href: "/auth/sms",
+      buttonLabel: "SMS",
     });
+    // MUT:login-methods-rows-return (a credentials channel carrying a
+    // methods list reintroduces the banned divider shape and goes red).
+    const channel = plan.channels[0]!;
+    expect(channel).not.toHaveProperty("methods");
   });
 
-  it("local: no divider unless the host passes one; host key and label win", () => {
-    const bare = hkLoginPlanFromDiscovery(doc({ mode: "local" }));
-    expect(bare.channels[0]).not.toHaveProperty("methodsDivider");
+  it("local: the credentials channel carries no divider, ever; host key and label win", () => {
     const styled = hkLoginPlanFromDiscovery(doc({ mode: "local" }), {
       credentialsKey: "org",
       credentialsLabel: "组织登录",
-      divider: "其他方式",
     });
     const channel = styled.channels[0]!;
     expect(channel.key).toBe("org");
     expect(channel.label).toBe("组织登录");
     // MUT:local-divider-defaulted (inventing a divider makes a bare
     // single-row card grow an orphan rule line the host never asked for).
-    expect(channel.mode === "credentials" && channel.methodsDivider).toBe("其他方式");
+    expect(channel).not.toHaveProperty("methodsDivider");
     expect(styled.defaultChannel).toBe("org");
   });
 
-  it("federated + password: the credentials channel with ALL methods as rows, wire order", () => {
+  it("federated + password: the credentials channel leads and EVERY method becomes its own sso channel, wire order", () => {
     const plan = hkLoginPlanFromDiscovery(doc({ mode: "federated", password: true }));
-    const channel = plan.channels[0]!;
-    expect(channel.mode).toBe("credentials");
-    // MUT:federated-password-drops-oauth (dropping the provider rows from
-    // the password card hides every federated entrance).
-    expect(channel.mode === "credentials" && (channel.methods ?? []).map((m) => m.key)).toEqual([
+    expect(plan.channels.length).toBe(4);
+    expect(plan.channels[0]!.mode).toBe("credentials");
+    // MUT:federated-password-drops-oauth (dropping the provider channels
+    // hides every federated entrance).
+    expect(plan.channels.slice(1).map((channel) => channel.mode === "sso" && channel.key)).toEqual([
       "feishu",
       "passkey",
       "sms",
@@ -112,10 +118,9 @@ describe("hkLoginPlanFromDiscovery", () => {
       { kind: "oauth", id: "", label: "No id", href: "/x", provider: "p" },
     ] as unknown as HkLoginMethod[];
     const plan = hkLoginPlanFromDiscovery(doc({ mode: "federated", password: true, methods: foreign }));
-    const channel = plan.channels[0]!;
-    // MUT:unknown-kind-kept (a row for a kind the host cannot start is a
-    // dead button on the card).
-    expect(channel.mode === "credentials" && (channel.methods ?? []).map((m) => m.key)).toEqual([
+    // MUT:unknown-kind-kept (a channel for a kind the host cannot start is
+    // a dead tab on the group).
+    expect(plan.channels.slice(1).map((channel) => channel.mode === "sso" && channel.key)).toEqual([
       "feishu",
       "passkey",
       "sms",

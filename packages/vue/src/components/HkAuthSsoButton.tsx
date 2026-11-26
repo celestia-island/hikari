@@ -7,15 +7,13 @@ import "./HkAuthSsoButton.scss";
  * screens whose whole channel is one redirect ("Continue with Celestia",
  * an org channel that only offers Feishu, …).
  *
- * Sibling of the `HkAuthMethodList` tile, not a replacement: the tile row
- * is for ALTERNATIVE methods lining up under a credentials form (44px,
- * hover-revealed identity), while this button is the channel's main
- * action — one large centered square tile with the provider's name in
- * plain sight below it. The visual recipe (framed square, token-based
- * border/surface, brand icon at native colors) is the tile's, scaled up;
- * the label lives OUTSIDE the button so the click target stays a clean
- * square and the name stays readable at rest, matching the third-party
- * card pattern users already know.
+ * A single-provider sign-in button for auth screens whose whole channel
+ * is one redirect: one large centered square tile with the provider's
+ * name in plain sight below it. The visual recipe (framed square,
+ * token-based border/surface, brand icon at native colors) descends from
+ * the retired auth method tile; the label lives OUTSIDE the button so
+ * the click target stays a clean square and the name stays readable at
+ * rest.
  *
  * Control contract (same split as every auth card): the button never
  * talks to a backend or builds an OAuth URL — the consumer owns the
@@ -39,7 +37,7 @@ export const HkAuthSsoButton = defineComponent({
     label: { type: String, required: true },
     /** Prebuilt icon vnode (brand SVG, <img>, …) rendered inside the
      * framed square. A missing icon falls back to the label's initial,
-     * same as an HkAuthMethodList tile. */
+     * same as the retired auth method tile's contract. */
     icon: { type: null, default: undefined },
     /** Extra guard on top of the built-in in-flight checks. */
     disabled: { type: Boolean, default: false },

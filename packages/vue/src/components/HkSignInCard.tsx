@@ -38,12 +38,8 @@ import HkAuthSubmitButton from "./HkAuthSubmitButton";
  *   round-trip (the card remounts when the user navigates back).
  * - `footer` slot — content below the submit button (remember-me,
  *   protocol links, …).
- * - `methods` slot — forwarded to HkAuthCard's full-width methods block
- *   between the form and the footer (typically `HkAuthMethodList`), so
- *   alternative sign-in buttons line up with the inputs while the footer
- *   rows keep their centered-group layout.
  * - `bare: true` — render ONLY the credential fragment (the `<form>` plus
- *   the methods/footer blocks, same wrapper classes) with NO HkAuthCard
+ *   the footer block, same wrapper classes) with NO HkAuthCard
  *   shell: for hosts that own a stable card shell and swap this body
  *   inside it (HkLoginFlow's channel switch — 2026-11-24 user direction:
  *   the shell, its header and the channel tabs must NOT dissolve when
@@ -118,12 +114,12 @@ export const HkSignInCard = defineComponent({
 
     /** The credential fragment every mode shares: the `<form>` (username,
      *  optional password, block submit). `withBlocks` additionally
-     *  renders the methods/footer wrapper divs — BARE mode only: no
-     *  HkAuthCard exists there to own those layout blocks, while in
-     *  shell mode HkAuthCard's own slots render them (rendering both
-     *  would duplicate the blocks — R3 caught exactly that in the
-     *  standalone card). The wrapper classes match HkAuthCard's blocks
-     *  so the bare fragment occupies the same visual lanes inside a
+     *  renders the footer wrapper div — BARE mode only: no
+     *  HkAuthCard exists there to own that layout block, while in
+     *  shell mode HkAuthCard's own slot renders it (rendering both
+     *  would duplicate the block — R3 caught exactly that in the
+     *  standalone card). The wrapper classes match HkAuthCard's block
+     *  so the bare fragment occupies the same visual lane inside a
      *  host-owned shell. */
     const credentialBody = (withBlocks: boolean) => (
       <>
@@ -177,9 +173,6 @@ export const HkSignInCard = defineComponent({
           doSubmit={() => Promise.resolve(attemptSubmit())}
         />
         </form>
-        {withBlocks && slots.methods && (
-          <div class="s-auth-methods">{slots.methods()}</div>
-        )}
         {withBlocks && slots.footer && (
           <div class="s-auth-footer">{slots.footer()}</div>
         )}
@@ -207,14 +200,12 @@ export const HkSignInCard = defineComponent({
               {credentialBody(false)}
             </>
           ),
-          /* Both block slots forward ONLY when the consumer passed one —
+          /* The block slot forwards ONLY when the consumer passed one —
              an unconditional lambda makes HkAuthCard see an always-present
              slot and render its (padded, top-margined) wrapper as empty
-             dead space (the methods half pinned 2026-09; the footer half
-             made symmetric 2026-11 after R4 of the extraction PR caught
-             the asymmetry). */
+             dead space (the footer half pinned 2026-11 after R4 of the
+             extraction PR caught the asymmetry). */
           ...(slots.footer ? { footer: () => slots.footer?.() } : {}),
-          ...(slots.methods ? { methods: () => slots.methods?.() } : {}),
         }}
       </HkAuthCard>
     );

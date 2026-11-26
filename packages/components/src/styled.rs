@@ -453,14 +453,11 @@ impl StyleRegistry {
     #[cfg(feature = "auth")]
     pub fn register_auth_components(&mut self) {
         use crate::auth::{
-            AltSignInComponent, AuthCardComponent, AuthMethodListComponent,
-            AuthSubmitButtonComponent, CaptchaModalComponent, CaptchaWidgetComponent,
-            CookieConsentComponent, MfaVerifyCardComponent, PasswordSurfaceComponent,
-            SignInCardComponent, ThirdPartySignInCardComponent,
+            AuthCardComponent, AuthSubmitButtonComponent, CaptchaModalComponent,
+            CaptchaWidgetComponent, CookieConsentComponent, MfaVerifyCardComponent,
+            PasswordSurfaceComponent, SignInCardComponent,
         };
-        AltSignInComponent::register(self);
         AuthCardComponent::register(self);
-        AuthMethodListComponent::register(self);
         AuthSubmitButtonComponent::register(self);
         CaptchaModalComponent::register(self);
         CaptchaWidgetComponent::register(self);
@@ -468,7 +465,6 @@ impl StyleRegistry {
         MfaVerifyCardComponent::register(self);
         PasswordSurfaceComponent::register(self);
         SignInCardComponent::register(self);
-        ThirdPartySignInCardComponent::register(self);
     }
 
     #[cfg(not(feature = "auth"))]

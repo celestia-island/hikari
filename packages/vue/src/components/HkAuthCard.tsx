@@ -12,23 +12,19 @@ const MEASURE_BACKSTOP_MS = 450;
  * form body.
  *
  * Slot layout contract:
- * - `methods` renders into a full-width block between the form and the
- *   footer (typically `HkAuthMethodList`): alternative sign-in buttons
- *   that must line up with the form inputs. Keeping them OUT of the
- *   footer is what lets the footer's checkbox rows stay a centered,
- *   fit-content group instead of being dragged full width with the
- *   buttons.
  * - `footer` renders into `.s-auth-footer`, a flex column sized to its
  *   widest row and centered in the card: every slot child is its own row
  *   (remember-me, protocol consent, a sign-in link…) and the rows share
  *   one left edge. Children must not assume a shared inline line or
  *   per-row centering; content that must sit on one row belongs inside
- *   one child element.
+ *   one child element. The old `methods` block between the form and the
+ *   footer is retired (2026-11-26: method choice lives in the flow's
+ *   segment group, never under a form).
  * - `logo` swaps the header's logo slot; `default` is the form body.
  *
  * Smooth height contract:
  * The card's content is consumer-driven and changes at runtime — channel
- * tabs swap the OAuth `methods` list (3 buttons ↔ 1), validation banners
+ * tabs swap the channel bodies, validation banners
  * appear, locale switches reflow labels — and the card's height would
  * otherwise snap between the two layouts. The root card is therefore
  * wrapped in a `.s-auth-card-height` measuring wrapper that owns an
@@ -170,11 +166,6 @@ export const HkAuthCard = defineComponent({
           <div class="s-auth-form">
             {slots.default?.()}
           </div>
-          {slots.methods && (
-            <div class="s-auth-methods">
-              {slots.methods()}
-            </div>
-          )}
           {slots.footer && (
             <div class="s-auth-footer">
               {slots.footer()}

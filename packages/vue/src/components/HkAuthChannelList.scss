@@ -8,22 +8,6 @@
   gap: var(--space-8, 0.5rem);
 }
 
-.hk-auth-channel-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-12, 0.75rem);
-  color: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 55%, transparent);
-  font-size: 0.75rem;
-
-  &::before,
-  &::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: color-mix(in srgb, rgb(var(--color-text, 25 30 40)) 12%, transparent);
-  }
-}
-
 .hk-auth-channel-rows {
   display: flex;
   flex-direction: column;

@@ -70,9 +70,8 @@ pub use hikari_icons::{Icon, IconProps, MdiIcon};
 
 // Overlay + auth family Props
 pub use crate::auth::{
-    AltSignInProps, AuthCardProps, AuthMethodListProps, AuthSubmitButtonProps, CaptchaModalProps,
-    CaptchaWidgetProps, CookieConsentProps, MfaVerifyCardProps, PasswordSurfaceProps,
-    SignInCardProps, ThirdPartySignInCardProps,
+    AuthCardProps, AuthSubmitButtonProps, CaptchaModalProps, CaptchaWidgetProps,
+    CookieConsentProps, MfaVerifyCardProps, PasswordSurfaceProps, SignInCardProps,
 };
 // Add ArrowProps from basic module
 pub use crate::basic::ArrowProps;

@@ -1,7 +1,6 @@
 // AI-generated: developed with the DeepSeek Harness agent (model GLM-5.4),
 // directed and reviewed by the lead agent — SySL-1.0 §2.3 disclosure.
 
-import type { HkAuthChannelListEntry } from "./HkAuthChannelList";
 import type { HkLoginChannel, HkLoginCredentialsChannel } from "./HkLoginFlow";
 
 /**
@@ -52,18 +51,9 @@ export interface HkLoginPlanCopy {
   credentialsKey?: string;
   /** Optional segment label for the credentials channel. */
   credentialsLabel?: string;
-  /** Divider text above the provider rows. Omitted when not given (the
-   *  list renders no divider) — the consumer-localised rule is kept. */
-  divider?: string;
 }
 
 const KNOWN_KINDS: ReadonlySet<string> = new Set(["oauth", "passkey", "custom"]);
-
-function rowOf(method: HkLoginMethod): HkAuthChannelListEntry {
-  const row: HkAuthChannelListEntry = { key: method.id, label: method.label, href: method.href };
-  if (method.icon) row.icon = method.icon;
-  return row;
-}
 
 /** The usable methods in wire order: a known kind and a non-empty id.
  *  Anything else is a foreign document and is ignored, never thrown on. */
@@ -84,13 +74,19 @@ function usableMethods(d: HkLoginDiscovery): HkLoginMethod[] {
 /**
  * Map a discovery document to a `HkLoginPlan`.
  *
+ * The 2026-11-26 method-selection grammar: every non-password entrance is
+ * its OWN `sso` channel — the segment group at the top of the flow is the
+ * only switcher, and no card ever stacks alternative rows under a form
+ * (the divider facility is gone).
+ *
  * - `relay` → `channels: []`, `defaultChannel: null` (hand-off screen).
- * - `local` → ONE credentials channel whose rows are the non-provider
- *   entrances (`passkey`, `custom`); `defaultChannel` is its key.
- * - `federated` + `password: true` → the credentials channel with EVERY
- *   method as a row, wire order preserved.
- * - `federated` + `password: false` → no credentials channel; every method
- *   becomes its own `sso` channel. `defaultChannel` = the first one's key.
+ * - `password: true` → the credentials channel FIRST (the landing tab),
+ *   then every announced entrance as its own `sso` channel. `local` mode
+ *   keeps its old filter: an oauth method in a local document is not an
+ *   entrance (contradictory document; the server is the authority), so
+ *   only `passkey` / `custom` kinds become channels there.
+ * - `password: false` → no credentials channel; every method becomes its
+ *   own `sso` channel. `defaultChannel` = the first one's key.
  */
 export function hkLoginPlanFromDiscovery(
   d: HkLoginDiscovery,
@@ -99,39 +95,40 @@ export function hkLoginPlanFromDiscovery(
   const methods = usableMethods(d);
   const key = copy?.credentialsKey ?? "cloud";
   const label = copy?.credentialsLabel;
-  const divider = copy?.divider;
 
   if (d.mode === "relay") {
     return { mode: "relay", channels: [], defaultChannel: null };
-  }
-
-  if (d.mode === "federated" && d.password !== true) {
-    const channels: HkLoginChannel[] = methods.map((method) => ({
-      key: method.id,
-      mode: "sso" as const,
-      label: method.label,
-      icon: method.icon,
-      href: method.href,
-      buttonLabel: method.label,
-    }));
-    return {
-      mode: "federated",
-      channels,
-      defaultChannel: channels[0]?.key ?? null,
-    };
   }
 
   const entrances =
     d.mode === "local"
       ? methods.filter((method) => method.kind !== "oauth")
       : methods;
-  const channel: HkLoginCredentialsChannel = { key, mode: "credentials" };
-  if (label) channel.label = label;
-  channel.methods = entrances.map(rowOf);
-  // Only when the host passed one: the divider is consumer copy and an
-  // empty string must not render an orphan rule line.
-  if (divider) channel.methodsDivider = divider;
-  return { mode: d.mode, channels: [channel], defaultChannel: key };
+  const ssoChannels: HkLoginChannel[] = entrances.map((method) => ({
+    key: method.id,
+    mode: "sso" as const,
+    label: method.label,
+    icon: method.icon,
+    href: method.href,
+    buttonLabel: method.label,
+  }));
+
+  if (d.password === true) {
+    const channel: HkLoginCredentialsChannel = { key, mode: "credentials" };
+    if (label) channel.label = label;
+    // The credentials tab leads; the provider tabs follow in wire order.
+    return {
+      mode: d.mode,
+      channels: [channel, ...ssoChannels],
+      defaultChannel: key,
+    };
+  }
+
+  return {
+    mode: d.mode,
+    channels: ssoChannels,
+    defaultChannel: ssoChannels[0]?.key ?? null,
+  };
 }
 
 /** Characters a navigation target must never contain. A backslash is read

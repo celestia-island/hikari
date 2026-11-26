@@ -57,3 +57,24 @@ value contract drives both forms, so `?tab=` deep links survive the
 breakpoint. `HkAdaptiveTabs` is the default implementation; dynamic
 project-list switchers with bespoke rows (the platform switcher) are
 the exempt special case, not the pattern to copy.
+
+## Footer corner text
+
+Text in any of the six header/footer corners (left/center/right ×2) rides
+hikari's `HkCornerText`: one instance = one text lane for one corner.
+
+- `align` sets the corner: `start` (left corners) / `center` (the middle
+  lane) / `end` (right corners); wrapped rows keep hugging that edge — a
+  right-corner lane that wraps stays right-aligned.
+- Entries are `nowrap` atoms: the lane wraps BETWEEN entries, never inside
+  one (a filing number must not break mid-sequence).
+- Default is muted chrome ink (`text-2xs` + 0.6 opacity); `muted: false`
+  restores full ink.
+- Several rows in one corner (identity line above the filings line) stack
+  instances vertically — the fixed 3rem status band holds two text-2xs
+  rows.
+- Link entries (compliance filings) use `items` + `as="nav"` + `ariaLabel`;
+  free-form content (a status chip) rides the default slot, after `items`.
+
+Hosts must not hand-roll `flex-wrap: nowrap` squeeze lanes or let text
+paint outside a fixed-height band. Reference implementation: `HkCornerText`.

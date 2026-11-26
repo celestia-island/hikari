@@ -548,6 +548,45 @@ describe("HkSolarLocationSetting editor", () => {
     expect(detectedSection().querySelector(".hk-solar-detected-retry")).toBeTruthy();
   });
 
+  it("an in-flight probe reads as a centered spinner, not a flashing sentence", async () => {
+    // 2026-11-26 user direction: the probing state was a text sentence, and
+    // a fast probe made it read as a flicker — the in-flight state renders
+    // the family's centered loading circle instead; the i18n probing line
+    // stays only as the status region's hidden announcement.
+    const container = mountSetting();
+    await openEditor(container);
+    resetSolarIpInsight();
+    // The probe's fetch holds behind a gate the test controls: the
+    // in-flight state stays up for the assertions, then releases into
+    // the failure path for the retry pin.
+    let releaseProbe!: () => void;
+    const gate = new Promise<void>((resolve) => { releaseProbe = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      await gate;
+      return { ok: false };
+    }));
+    clickStrategy("ip");
+    await settle();
+    await vi.waitFor(() => {
+      expect(detectedSection().querySelector('[data-state="probing"]')).toBeTruthy();
+    });
+    const probing = detectedSection().querySelector('[data-state="probing"]')!;
+    // MUT:solar-probe-spinner: the visible grammar is the centered circle
+    // (HkSpinner's center contract) — the probing sentence never shows as
+    // visible text while the probe is in flight.
+    expect(probing.querySelector(".hk-spinner-centered")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner-text")).toBeNull();
+    // The status region keeps its announcement for screen readers.
+    expect(probing.querySelector(".hk-solar-detected-sr")?.textContent).toContain("Detecting");
+    expect(probing.getAttribute("role")).toBe("status");
+    releaseProbe();
+    await vi.waitFor(() => {
+      expect(detectedSection().querySelector('[data-state="failed"]')).toBeTruthy();
+    });
+    expect(detectedSection().querySelector(".hk-solar-detected-retry")).toBeTruthy();
+  });
+
   it("switching strategies swaps the hint and reveals the manual pane", async () => {
     const container = mountSetting();
     await openEditor(container);

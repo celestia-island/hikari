@@ -168,6 +168,22 @@
   flex-shrink: 0;
 }
 
+/* The probing state's status text, visually hidden but announced: the
+   visible grammar is the centered spinner (HkSpinner's center contract);
+   the region keeps its text content so screen readers have something to
+   say when it appears (same pattern as HkEmptyState's sr utility). */
+.hk-solar-detected-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hk-solar-manual {
   display: flex;
   flex-direction: column;

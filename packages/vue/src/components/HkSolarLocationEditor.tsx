@@ -341,14 +341,19 @@ export const HkSolarLocationEditor = defineComponent({
           {probeStatus.value && (probeStatus.value.kind === "probing" ? (
             // In-flight probe (2026-11-26 user direction): the progress
             // line was a text sentence, and a fast probe made it read as a
-            // flicker — the centered circle is the family's shared loading
-            // grammar (HkSpinner's center contract). The i18n probing line
-            // stays as the status region's text content, visually hidden,
-            // so screen readers still announce what is happening; the
-            // failure state below keeps its visible copy, which is
-            // informative rather than transient.
+            // flicker — a circle reads as "working" without the flicker.
+            // The COMPACT circle rides the status row: the centered
+            // placement contract (HkSpinner center) carries 1.5rem/1rem of
+            // padding and an 8rem-tall floor, which inside this one-line
+            // strip would inflate the dialog by several times the height
+            // of the text it replaces. The row centers it
+            // (.hk-solar-detected-status[data-state="probing"]), and the
+            // i18n probing line stays as the region's hidden announcement
+            // so screen readers still say what is happening. The failure
+            // state below keeps its visible copy: informative, not
+            // transient.
             <div class="hk-solar-detected-status" data-state="probing" role="status" aria-live="polite">
-              <HkSpinner center size="md" minHeight="3.5rem" />
+              <HkSpinner size="sm" />
               <span class="hk-solar-detected-sr">{probeStatus.value.text}</span>
             </div>
           ) : (

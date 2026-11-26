@@ -33,6 +33,33 @@ function bodyOf(selector: string): string | null {
   return m ? m[1] : null;
 }
 
+describe("solar readout + probe-row layout contract", () => {
+  it("puts the readout label LEFT and its value flush RIGHT", () => {
+    // 2026-11-26 user direction: a label with its value packed tight after
+    // it reads as ragged prose — the two-column readout wants the two ends.
+    // MUT:solar-readout-ends: dropping the flex-end alignment (or the
+    // content-sized label column) brings the packed-left look back and
+    // goes red.
+    const value = bodyOf(".hk-solar-detected-value");
+    expect(value, "the value ruleset exists").not.toBeNull();
+    expect(value).toContain("justify-content: flex-end");
+
+    const row = bodyOf(".hk-solar-detected-row");
+    expect(row).toContain("grid-template-columns: max-content minmax(0, 1fr)");
+  });
+
+  it("keeps the probing row a centered one-liner with a compact circle", () => {
+    // The centered placement contract carries padding + an 8rem floor;
+    // inside this one-line strip it would inflate the dialog, so the
+    // component renders the compact circle and the row centers it.
+    // MUT:solar-probe-spinner is pinned in the behaviour spec; this guards
+    // the sheet half (no padded box sneaks back in).
+    const probing = bodyOf('.hk-solar-detected-status[data-state="probing"]');
+    expect(probing, "the probing-row ruleset exists").not.toBeNull();
+    expect(probing).toContain("justify-content: center");
+  });
+});
+
 describe("HkSolarLocationSetting row geometry", () => {
   it("pins the row's cross size to the 28px action square", () => {
     const row = bodyOf(".hk-solar-row");

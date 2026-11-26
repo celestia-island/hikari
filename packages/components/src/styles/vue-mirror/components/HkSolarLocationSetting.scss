@@ -133,6 +133,12 @@
   gap: var(--space-8, 0.5rem);
 }
 
+/* One readout line = label LEFT, value RIGHT (2026-11-26 user direction:
+ * a label followed by its value packed tight in the left half reads as
+ * ragged prose; the two-column readout wants the two ends). The label
+ * column is content-sized and the value column absorbs the rest, so every
+ * row ends at the same right edge. Long values stay inside their own
+ * column and soft-wrap there — they never push the left edge around. */
 .hk-solar-detected-row {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
@@ -151,6 +157,7 @@
 .hk-solar-detected-value {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-6, 0.375rem);
   min-width: 0;
 }
@@ -162,6 +169,10 @@
   overflow-wrap: anywhere;
   text-align: left;
 }
+
+/* A chip that has to wrap keeps its own text left-aligned (above) while
+ * the chip itself stays flush to the row's right edge — the readout's
+ * two-column contract holds even when one value needs two lines. */
 
 /* Probe status line (IP pane): muted progress / failure note, with the
  * retry affordance inline after the text. */
@@ -176,6 +187,14 @@
 
 .hk-solar-detected-retry {
   flex-shrink: 0;
+}
+
+/* The probing row is ONE line: the compact circle sits centered in it
+ * (the label-less status strip carries no text of its own — the sentence
+ * rides the hidden announcement), and the circle takes the row's own
+ * height instead of the centered contract's padded box. */
+.hk-solar-detected-status[data-state="probing"] {
+  justify-content: center;
 }
 
 /* The probing state's status text, visually hidden but announced: the

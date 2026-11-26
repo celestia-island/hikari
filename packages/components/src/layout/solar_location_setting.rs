@@ -173,7 +173,7 @@ use crate::basic::{
     IconButtonVariant,
 };
 use crate::feedback::modal::{Modal, ModalAction, ModalActionVariant, ModalProps};
-use crate::feedback::{Spinner, SpinnerProps};
+use crate::feedback::{Spinner, SpinnerProps, SpinnerSize};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 use crate::theme::copy_badge::{CopyBadge, CopyBadgeProps};
@@ -906,9 +906,12 @@ pub fn SolarLocationSetting(props: SolarLocationSettingProps) -> Element {
                 // sentence stays as the status region's hidden announcement.
                 // The failure state keeps its visible copy (informative,
                 // not transient) plus the retry affordance.
+                // Compact circle in the one-line status row — NOT the
+                // padded centered contract (1.5rem/1rem padding + an 8rem
+                // floor), which would inflate this strip by several times
+                // the height of the text it replaces.
                 line = line.child(Spinner(SpinnerProps {
-                    center: true,
-                    min_height: Some("3.5rem".to_string()),
+                    size: SpinnerSize::Sm,
                     ..Default::default()
                 }));
                 line = line.child(VNode::Element(Box::new(
@@ -1421,7 +1424,8 @@ mod tests {
         assert!(html.contains(r#"data-state="probing""#), "{html}");
         // The in-flight grammar is the centered circle (mirrored Spinner);
         // the probing sentence rides in the hidden announcement span.
-        assert!(html.contains("hk-spinner-centered"), "{html}");
+        assert!(html.contains("hk-spinner-sm"), "{html}");
+        assert!(!html.contains("hk-spinner-centered"), "{html}");
         assert!(html.contains(r#"class="hk-solar-detected-sr""#), "{html}");
         assert!(html.contains("Detecting over the network…"), "{html}");
         assert!(!html.contains("hk-spinner-text"), "{html}");

@@ -578,10 +578,14 @@ describe("HkSolarLocationSetting editor", () => {
     // 4s fetch abort; the assertions run well inside it. The module-level
     // ipProbeInflight resolves in this test's releaseProbe, so the
     // next test's fresh mount cannot inherit an in-flight probe.)
-    expect(probing.querySelector(".hk-spinner-centered")).toBeTruthy();
+    // The compact circle (NOT the padded centered contract, which would
+    // inflate this one-line strip by several times the height of the text
+    // it replaces — R4 measured the padding trap).
     expect(probing.querySelector(".hk-spinner")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner-sm")).toBeTruthy();
+    expect(probing.querySelector(".hk-spinner-centered")).toBeNull();
     expect([...probing.children].map((child) => child.className)).toEqual([
-      expect.stringContaining("hk-spinner-centered"),
+      expect.stringContaining("hk-spinner-wrapper"),
       "hk-solar-detected-sr",
     ]);
     // The status region keeps its announcement for screen readers.

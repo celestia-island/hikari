@@ -368,6 +368,18 @@
   margin-left: -3px;
 }
 
+// Leaves take the same face when their enclosing `Sidebar` reports them as the
+// selected one. Same declaration list as the item above on purpose: one look
+// for "this is where you are", whichever component renders the row.
+.hk-sidebar-leaf[data-active="true"] > .hk-sidebar-leaf-content {
+  color: var(--hi-color-text-primary);
+  background: var(--hi-color-primary);
+  font-weight: 500;
+  border-left: 3px solid var(--hi-color-primary);
+  padding-left: calc(1.5rem - 3px);
+  margin-left: -3px;
+}
+
 // ------
 // Nested Level Indentation
 // ------

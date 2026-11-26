@@ -161,6 +161,7 @@ mod tests {
     fn test_sidebar_renders() {
         let _ = SidebarProps {
             active_id: "section1".to_string(),
+            on_select: None,
             class: "test-sidebar".to_string(),
             children: VNode::empty(),
         };
@@ -170,7 +171,35 @@ mod tests {
     fn test_sidebar_props_default() {
         let props = SidebarProps::default();
         assert_eq!(props.active_id, String::new());
+        assert!(props.on_select.is_none());
         assert_eq!(props.class, String::new());
+    }
+
+    /// A `Sidebar` is the only thing that can tell a leaf it is the selected
+    /// one, and it does that through `SidebarContext`. Before this the
+    /// `active_id` prop was accepted and then dropped, so no leaf could ever
+    /// render as active.
+    #[test]
+    fn test_sidebar_context_reports_the_active_leaf() {
+        use hikari_components::navigation::sidebar::SidebarContext;
+
+        let ctx = SidebarContext {
+            active_id: "settings".to_string(),
+            on_select: None,
+        };
+        assert!(ctx.is_active("settings"));
+        assert!(!ctx.is_active("profile"));
+    }
+
+    /// An empty `active_id` means "nothing selected", not "the leaf whose id is
+    /// empty" — otherwise a placeholder leaf would light up on its own.
+    #[test]
+    fn test_sidebar_context_without_a_selection_matches_nothing() {
+        use hikari_components::navigation::sidebar::SidebarContext;
+
+        let ctx = SidebarContext::default();
+        assert!(!ctx.is_active(""));
+        assert!(!ctx.is_active("anything"));
     }
 
     #[test]

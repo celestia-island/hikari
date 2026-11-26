@@ -174,6 +174,7 @@ function tick(now: number) {
 
   if (raf !== 0 || idleTimer !== null) return;
 
+  if (!framesAvailable()) return;
   if (syncEntries.size > 0 || normalEntries.size > 0 || intervalEntries.size > 0 || activeTransitions.size > 0) {
     raf = requestAnimationFrame(tick);
   } else if (idleEntries.size > 0) {
@@ -186,6 +187,9 @@ function tick(now: number) {
 
 function ensure() {
   if (paused) return;
+  // No frame source in this environment (see framesAvailable): nothing to
+  // schedule, and a bare `requestAnimationFrame` call would throw.
+  if (raf === 0 && idleTimer === null && !framesAvailable()) return;
   if (syncEntries.size > 0 || normalEntries.size > 0 || intervalEntries.size > 0 || activeTransitions.size > 0) {
     if (idleTimer !== null) {
       clearTimeout(idleTimer);
@@ -206,9 +210,22 @@ function ensure() {
   }
 }
 
+/** Environment guard for the frame scheduler. A pending timer — a
+ *  transition report's own timeout, a bus-ridden interval — can fire AFTER
+ *  the host tore the document down (a test env between files, a WebView
+ *  disposing the page): `requestAnimationFrame` / `cancelAnimationFrame`
+ *  are then gone from the global scope, and an unguarded call throws out of
+ *  a timer callback, where nothing can catch it. The scheduler is a
+ *  best-effort repair channel — if frames cannot be scheduled there is
+ *  nothing to repair, so `halt()` and `ensure()` simply park. Browser
+ *  behaviour is unchanged (both functions always exist there). */
+function framesAvailable(): boolean {
+  return typeof requestAnimationFrame === "function" && typeof cancelAnimationFrame === "function";
+}
+
 function halt() {
   if (raf !== 0) {
-    cancelAnimationFrame(raf);
+    if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(raf);
     raf = 0;
   }
   if (idleTimer !== null) {
@@ -233,7 +250,7 @@ export function setReducedMotion(flag: boolean) {
   paused = flag;
   if (flag) {
     if (raf !== 0) {
-      cancelAnimationFrame(raf);
+      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(raf);
       raf = 0;
     }
     if (idleTimer !== null) {
@@ -279,7 +296,7 @@ export function onFrame(cb: Callback, priority: Priority = "sync"): AnimationHan
 }
 
 function ensureOneShotDrain(): void {
-  if (oneShotRaf !== 0) return;
+  if (oneShotRaf !== 0 || !framesAvailable()) return;
   oneShotRaf = requestAnimationFrame(pumpOneShots);
 }
 

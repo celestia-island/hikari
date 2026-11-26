@@ -101,19 +101,25 @@ type HkTagStop =
  *     shared HkSelectPanel surface — same popup-manager stacking, mobile
  *     bottom sheet, outside-click/Escape closing and ONE SCROLLBAR PER
  *     WINDOW contract as every other picker. It deliberately mounts no
- *     scroll region of its own: the window surface scrolls the search
- *     field and the rows as one. It also does NOT mirror the field's
+ *     scroll region of its own: the window surface scrolls the ROWS, and
+ *     the search field rides its `pinnedHeader` slot outside that region
+ *     (2026-11-27 user direction). It also does NOT mirror the field's
  *     width (`matchAnchorWidth` is off, the HkAffixPicker precedent): the
  *     field is usually a full-width settings column while the catalog is
  *     designed at 13–19rem, so an anchor-wide box would leave a large
  *     empty band and park the surface's scrollbar far from the rows.
- *     Instead the surface is capped through `maxHeight`
+ *     Instead the DESKTOP POPOUT is capped through `maxHeight`
  *     (`min(18rem, 45dvh)`), so a long catalog scrolls inside a panel
  *     that hugs its own measure rather than stretching to the viewport;
- *   - ALL options are listed, each with a check glyph when selected —
- *     unlike HkAffixPicker's multi mode, which hides the selected keys,
- *     "is this tag used or not" must stay visible and togglable in one
- *     pass. Toggling never closes the panel (batch editing);
+ *     the mobile sheet ignores that measure and hugs its content up to
+ *     the family ceiling (HkSelectPanel's `maxHeight` doc);
+ *   - ALL options are listed, each with a check glyph when selected,
+ *     and — unlike HkAffixPicker's TAG layout, which hides the selected
+ *     keys — "is this tag used or not" must stay visible and togglable in
+ *     one pass. (HkAffixPicker's rows layout keeps every option listed
+ *     too, but its selected run is re-ranked to the front; this picker's
+ *     grouping is the host's `modelValue` order, see below.) Toggling
+ *     never closes the panel (batch editing);
  *   - ROWS ARE GROUP-STRICT: the selected options come first, in the
  *     host's `modelValue` order, then the unselected catalog options in
  *     catalog order, and the custom ("Use …") row is last. A query filters

@@ -286,8 +286,8 @@
 }
 
 /* The scroll viewport's dedicated wrapper — the overlay rail's host
- * (positioning context + exact box; see `.hk-select-popout.has-pinned-
- * header` above). Fills whatever the cap leaves under the pinned band. */
+ * (positioning context + exact box; see `&.is-pinned-header` above).
+ * Fills whatever the cap leaves under the pinned band. */
 .hk-select-popout-body-host {
   position: relative;
   flex: 1;

@@ -298,7 +298,9 @@ export default defineComponent({
     }
 
     /** Keep the cursor row inside the surface's ONE scroll region (the
-     *  desktop popout or the sheet's list band), never a region of ours. */
+     *  desktop popout's body or the sheet's list band), never a region of
+     *  ours. The pinned search head sits outside it, so it never scrolls
+     *  away while the cursor walks a long result list. */
     function scrollActiveIntoView(): void {
       if (activeIndex.value < 0) return;
       const root = panelExpose.value?.panelEl();
@@ -451,11 +453,13 @@ export default defineComponent({
             window. Trigger mode turns it off — an icon-button anchor is
             one glyph wide, so the panel carries the family width instead
             and opens bottom-end from its corner anchor. `maxHeight` bounds
-            the surface that scrolls — the popout itself, or the sheet's
-            list band — so the panel keeps exactly ONE scrollbar (the
-            HkAffixPicker / HkTagInput rule). The measure is the family's
+            the DESKTOP POPOUT (its body, when the pinned search sits above
+            it) so the panel keeps exactly ONE scrollbar (the HkAffixPicker
+            / HkTagInput rule); the mobile sheet ignores it and hugs its
+            content up to the family ceiling of 80% of the viewport
+            (HkSelectPanel's `maxHeight` doc). The measure is the family's
             catalog cap with a little more room, because this panel carries
-            a search line AND (multi) a draft footer around the rows.
+            a pinned search line AND (multi) a draft footer around the rows.
           */}
           <HkSelectPanel
             ref={panelExpose}

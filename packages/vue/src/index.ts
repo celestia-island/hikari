@@ -208,6 +208,16 @@ export {
   type HkErrorSource,
   type HkReportedError,
 } from "./errorReporting";
+export {
+  HkServerErrorLandingError as HServerErrorLandingError,
+  parseServerErrorLanding,
+  readServerErrorLanding,
+  reportServerErrorLanding,
+  serializeServerErrorLanding,
+  SERVER_ERROR_LANDING_ID,
+  SERVER_ERROR_LANDING_VERSION,
+  type HkServerErrorLanding as HServerErrorLanding,
+} from "./errorReporting";
 export { default as HDraggableList } from "./components/HkDraggableList";
 export { default as HDraggableGrid } from "./components/HkDraggableGrid";
 export { default as HSelectionGrid } from "./components/HkSelectionGrid";

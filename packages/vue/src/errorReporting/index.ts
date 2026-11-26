@@ -1,6 +1,7 @@
 import { createApp, type App, type Plugin } from "vue";
 
 import { HkErrorReportingOverlay } from "./HkErrorReportingOverlay";
+import { readServerErrorLanding, reportServerErrorLanding } from "./serverLanding";
 import {
   clearErrorReportingState,
   reportError,
@@ -15,6 +16,16 @@ export type {
   HkReportedError,
 } from "./state";
 export { HkErrorReportingOverlay } from "./HkErrorReportingOverlay";
+export {
+  HkServerErrorLandingError,
+  parseServerErrorLanding,
+  readServerErrorLanding,
+  reportServerErrorLanding,
+  serializeServerErrorLanding,
+  SERVER_ERROR_LANDING_ID,
+  SERVER_ERROR_LANDING_VERSION,
+  type HkServerErrorLanding,
+} from "./serverLanding";
 
 /**
  * createErrorReporting — the install-and-forget global error reporting hook.
@@ -40,11 +51,27 @@ export { HkErrorReportingOverlay } from "./HkErrorReportingOverlay";
  * Any pre-existing `app.config.errorHandler` is chained, not discarded.
  * All capture channels are optional; `shouldReport` filters, `onError` is
  * the telemetry hook.
+ *
+ * INSTALL ALSO SETTLES THE SERVER'S VERDICT ON THIS DOCUMENT: when the
+ * server answered the navigation with an error it hands it over through the
+ * `hk-server-error` JSON island in index.html (see `./serverLanding`), and
+ * install raises the landing for it right away — source `server`, the HTTP
+ * status and the raw response on the card. So `app.use(createErrorReporting())`
+ * is the one line that covers BOTH halves of "no bare error ever reaches a
+ * visitor": what crashes after boot, and what the server said before it.
+ * The island is read once and consumed; a host that wants to decide itself
+ * reads it with `readServerErrorLanding()` BEFORE installing.
  */
 export function createErrorReporting(options: HkErrorReportingOptions = {}): Plugin {
   return {
     install(app: App) {
       setErrorReportingOptions(options);
+
+      // The server's handoff outranks the runtime channels: the page was
+      // delivered AS an error, so its landing goes up before the host tree
+      // (which mounts after this install) can draw or redirect anything.
+      const handoff = readServerErrorLanding();
+      if (handoff && reportServerErrorLanding(handoff)) ensureOverlayMounted();
 
       const previous = app.config.errorHandler;
       app.config.errorHandler = (err, instance, info) => {

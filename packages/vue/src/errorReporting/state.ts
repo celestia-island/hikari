@@ -2,8 +2,9 @@ import { ref, type Ref, type VNodeChild } from "vue";
 
 import { reportHkRuntime, type HkRuntimeHandle } from "../runtime/registry";
 
-/** Where a reported error came from. */
-export type HkErrorSource = "vue" | "window" | "rejection" | "manual";
+/** Where a reported error came from. `server` = a handoff the server
+ *  injected into this document (see `./serverLanding`), not a runtime error. */
+export type HkErrorSource = "vue" | "window" | "rejection" | "manual" | "server";
 
 /** A normalized error record carried by the global error landing. */
 export interface HkReportedError {
@@ -14,6 +15,13 @@ export interface HkReportedError {
   stack: string;
   /** Vue's `info` string for errors surfaced through `app.config.errorHandler`. */
   info?: string;
+  /** The HTTP status a SERVER handoff answered with — the `HTTP <n>` chip.
+   *  Absent for runtime errors (nothing to show). */
+  status?: number;
+  /** A structured payload the reporter attached to the error, shown in the
+   *  raw-details pane in place of the stack record: a server handoff's raw
+   *  response body. Absent for runtime errors. */
+  details?: unknown;
 }
 
 export interface HkErrorReportingOptions {
@@ -118,6 +126,17 @@ export function reportError(err: unknown, source: HkErrorSource, info?: string):
     stack: normalized.stack,
     info,
   };
+  // Structured attachments the reported object carries. Duck-typed on
+  // purpose: a host's own Error subclass (or hikari's own server-handoff
+  // class) supplies the same two fields without this module knowing it.
+  // The HTTP status is the landing's status chip; `details` replaces the
+  // stack record in the raw-details pane. A primitive or null carries
+  // nothing — reading a property off it would throw.
+  if (err !== null && typeof err === "object") {
+    const carried = err as { status?: unknown; details?: unknown };
+    if (typeof carried.status === "number") record.status = carried.status;
+    if (carried.details !== undefined) record.details = carried.details;
+  }
   currentError.value = record;
   return record;
 }

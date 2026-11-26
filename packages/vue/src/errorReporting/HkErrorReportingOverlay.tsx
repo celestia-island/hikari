@@ -35,6 +35,12 @@ export const HkErrorReportingOverlay = defineComponent({
     const detailsValue = computed<Record<string, unknown> | undefined>(() => {
       const err = state.value;
       if (!err) return undefined;
+      // A server handoff: what the server answered, not a stack. The raw
+      // body rides under its own key so a tree fold shows the wire error
+      // exactly as sent.
+      if (err.details !== undefined) {
+        return { status: err.status, code: err.name, message: err.message, response: err.details };
+      }
       const record: Record<string, unknown> = {
         name: err.name,
         message: err.message,
@@ -50,7 +56,13 @@ export const HkErrorReportingOverlay = defineComponent({
     const copyText = computed(() => {
       const err = state.value;
       if (!err) return "";
-      const parts = [`${err.name}: ${err.message}`];
+      const parts = [
+        err.status !== undefined ? `HTTP ${err.status} ${err.name}: ${err.message}` : `${err.name}: ${err.message}`,
+      ];
+      if (err.details !== undefined) {
+        parts.push("", JSON.stringify(err.details, null, 2));
+        return parts.join("\n");
+      }
       if (err.stack) parts.push("", err.stack);
       if (err.source) parts.push("", `source: ${err.source}`);
       if (err.info) parts.push("", `info: ${err.info}`);
@@ -98,6 +110,12 @@ export const HkErrorReportingOverlay = defineComponent({
 
       const showHome = Boolean(options.onHome) || options.homeHref !== false;
 
+      // A 4xx is the request's problem (a spent link, a missing page, a
+      // refused sign-in), not a crash of what the visitor is looking at:
+      // the card says so with the warning tone. 5xx — and every runtime
+      // error, which carries no status — keeps the error tone.
+      const tone = err.status !== undefined && err.status < 500 ? "warning" : "error";
+
       return (
         <div class="hk-error-reporting-overlay" role="alertdialog" aria-live="assertive" aria-modal="true">
           {/* The overlay is its OWN app instance (it must survive the host
@@ -115,10 +133,17 @@ export const HkErrorReportingOverlay = defineComponent({
             title={options.title || t("hikari::errors.defaultTitle", "Something went wrong")}
             description={description}
             code={err.name}
+            status={err.status}
+            tone={tone}
             copyText={copyText.value}
           >
             {{
-              default: () => <HkJsonTree value={detailsValue.value} ariaLabel="stack trace" />,
+              default: () => (
+                <HkJsonTree
+                  value={detailsValue.value}
+                  ariaLabel={err.details !== undefined ? "server error details" : "stack trace"}
+                />
+              ),
               actions: () => [
                 ...(showHome
                   ? [(

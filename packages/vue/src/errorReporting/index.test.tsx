@@ -6,7 +6,11 @@ import {
   createErrorReporting,
   reportGlobalError,
   resetErrorReportingForTests,
+  serializeServerErrorLanding,
+  SERVER_ERROR_LANDING_ID,
   type HkErrorReportingOptions,
+  type HkReportedError,
+  type HkServerErrorLanding,
 } from "./index";
 
 const Boom = defineComponent({
@@ -297,5 +301,164 @@ describe("createErrorReporting", () => {
     // The host card still receives the raw accepted record, not a
     // title/describe-shaped one — the overrides never leak in.
     expect(host.querySelector(".host-card")!.getAttribute("data-msg")).toBe("own content");
+  });
+});
+
+describe("server error landing handoff", () => {
+  const OAUTH_502: HkServerErrorLanding = {
+    status: 502,
+    code: "identity_provider_unreachable",
+    message: "identity provider unreachable: identity provider answered 400 Bad Request",
+    raw: { error: "identity provider unreachable: identity provider answered 400 Bad Request" },
+  };
+
+  /** Plant the island exactly as a family server injects it into index.html. */
+  function plant(landing: HkServerErrorLanding | string): void {
+    const island = document.createElement("script");
+    island.id = SERVER_ERROR_LANDING_ID;
+    island.type = "application/json";
+    island.textContent = typeof landing === "string" ? landing : serializeServerErrorLanding(landing);
+    document.head.appendChild(island);
+  }
+
+  function statusChip(): string | null {
+    return overlayHost()?.querySelector(".hk-error-landing__status")?.textContent ?? null;
+  }
+
+  afterEach(() => {
+    document.getElementById(SERVER_ERROR_LANDING_ID)?.remove();
+  });
+
+  it("raises the landing at install — before the host tree mounts", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    plant(OAUTH_502);
+    installPlugin();
+    await nextTick();
+
+    const host = overlayHost();
+    expect(host).not.toBeNull();
+    // The wire facts, as chips and copy: the status the server ANSWERED
+    // with, the wire code, the server's own explanation.
+    expect(statusChip()).toBe("HTTP 502");
+    expect(host!.querySelector(".hk-error-landing__code")!.textContent).toBe("identity_provider_unreachable");
+    expect(host!.querySelector(".hk-error-landing__desc")!.textContent).toBe(OAUTH_502.message);
+    // The raw body the browser would otherwise have shown as bare JSON is
+    // now inside the details pane.
+    expect(host!.querySelector(".s-tool-json-tree")).not.toBeNull();
+    expect(host!.querySelector(".s-tool-json-tree")!.textContent).toContain("response");
+    // The visitor still has the way back and the retry.
+    const labels = Array.from(host!.querySelectorAll("button")).map((b) => b.textContent);
+    expect(labels).toContain("Back to home");
+    expect(labels).toContain("Retry");
+    // Reported through the ordinary channel, under its own source.
+    expect(error).toHaveBeenCalledWith("[hikari:error-reporting:server]", expect.any(Error));
+  });
+
+  it("consumes the island: it is gone after install and a reinstall cannot re-raise it", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    plant(OAUTH_502);
+    installPlugin();
+    await nextTick();
+    expect(document.getElementById(SERVER_ERROR_LANDING_ID)).toBeNull();
+
+    clearGlobalError();
+    expect(overlayHost()).toBeNull();
+    installPlugin();
+    await nextTick();
+    // The visitor dismissed it; a second install on the same document is
+    // not a new server answer.
+    expect(overlayHost()).toBeNull();
+  });
+
+  it("falls back to an http_<status> code chip when the server sent no code", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    plant({ status: 404, code: "", message: "route not found" });
+    installPlugin();
+    await nextTick();
+    expect(statusChip()).toBe("HTTP 404");
+    expect(overlayHost()!.querySelector(".hk-error-landing__code")!.textContent).toBe("http_404");
+    expect(overlayHost()!.querySelector(".hk-error-landing__desc")!.textContent).toBe("route not found");
+  });
+
+  it("paints a 4xx as a warning and a 5xx as an error", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    plant({ status: 410, code: "share_gone", message: "This link was revoked." });
+    installPlugin();
+    await nextTick();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).toContain("is-warning");
+
+    clearGlobalError();
+    plant({ status: 503, code: "starting", message: "Starting up." });
+    installPlugin();
+    await nextTick();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).toContain("is-error");
+  });
+
+  it("ignores a malformed island — nothing is raised", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // Negative control: the same install with the same document, minus a
+    // usable payload. A filter that "always raises" would fail here.
+    plant("{not json");
+    installPlugin();
+    expect(overlayHost()).toBeNull();
+    // A status outside the error classes is not a handoff either.
+    plant({ status: 302, code: "", message: "should be followed, not shown" });
+    installPlugin();
+    expect(overlayHost()).toBeNull();
+  });
+
+  it("lets shouldReport drop a handoff like any other source", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    plant(OAUTH_502);
+    installPlugin({ shouldReport: (_err, source) => source !== "server" });
+    // Consumed even though filtered: the document still carried it.
+    expect(document.getElementById(SERVER_ERROR_LANDING_ID)).toBeNull();
+    expect(overlayHost()).toBeNull();
+  });
+
+  it("hands status and details to a host landing card", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    plant(OAUTH_502);
+    installPlugin({
+      landing: (err) => h("div", { class: "host-card", "data-status": err.status ?? "none" }, [
+        h("span", { class: "host-card__raw" }, JSON.stringify(err.details)),
+      ]),
+    });
+    await nextTick();
+    // A host that owns its card (chest-style) reads the same two fields
+    // the built-in card paints — the handoff is not a built-in-only path.
+    expect(overlayHost()!.querySelector(".host-card")!.getAttribute("data-status")).toBe("502");
+    expect(overlayHost()!.querySelector(".host-card__raw")!.textContent).toBe(JSON.stringify(OAUTH_502.raw));
+    expect(overlayHost()!.querySelector(".hk-error-landing")).toBeNull();
+  });
+
+  it("carries the status line and the raw body on the copy action", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    plant(OAUTH_502);
+    installPlugin();
+    await nextTick();
+
+    const copy = Array.from(overlayHost()!.querySelectorAll<HTMLButtonElement>("button"))
+      .find((b) => b.textContent === "Copy error details")!;
+    copy.click();
+    await nextTick();
+    await nextTick();
+
+    expect(writeText).toHaveBeenCalledTimes(1);
+    const text = writeText.mock.calls[0]![0];
+    expect(text).toContain("HTTP 502 identity_provider_unreachable: " + OAUTH_502.message);
+    expect(text).toContain('"error": "' + OAUTH_502.message + '"');
+  });
+
+  it("shows no status chip for runtime errors — the handoff fields are opt-in", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    installPlugin();
+    reportGlobalError(new TypeError("plain runtime error"));
+    await nextTick();
+    expect(statusChip()).toBeNull();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).not.toContain("is-warning");
+    expect(overlayHost()!.querySelector('[aria-label="stack trace"]')).not.toBeNull();
   });
 });

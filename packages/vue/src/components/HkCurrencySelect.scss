@@ -145,16 +145,26 @@
   min-height: 0;
 }
 
+/* The search field rides HkSelectPanel's `pinnedHeader` band (2026-11-27),
+ * never the scrolling content — so this row is the band's only child and
+ * carries the band's own contract: full width of whatever the surface
+ * gives it (the popout column / the sheet's centered measure), a fixed
+ * block size of its own (it must not grow with the list under it), and no
+ * margin of its own — the band supplies the block rhythm, exactly like the
+ * sibling pickers (HkAffixPicker's `.hk-affix-search`, HkTagInput's
+ * `.hk-tag-input-search`). The margin used to be the row's own because it
+ * sat inside the panel wrapper; inside a band that would double the inset. */
 .hk-currency-select-search-row {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  margin: var(--space-8);
+  width: 100%;
+  box-sizing: border-box;
   padding: var(--space-8) var(--space-12);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
   border-radius: var(--radius-md);
   background: rgb(var(--color-background) / 45%);
-  flex-shrink: 0;
+  flex: none;
 }
 
 .hk-currency-select-search-icon {

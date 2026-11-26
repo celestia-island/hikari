@@ -567,15 +567,30 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     expect(events.open.at(-1)).toBe(true);
   });
 
-  it("draws no divider while nothing (or everything) is checked", async () => {
+  it("draws no divider when nothing is checked — and stays in catalog order when everything is", async () => {
+    // Two different facts. The FIRST is a real boundary case: no selected
+    // run at all, so there is no boundary to draw.
+    //
+    // The "everything checked" half is NOT a divider case and is not claimed
+    // as one: `rowNodes` only inserts at `index === selectedRunLength`, and
+    // an index never reaches `rows.length`, so the `run < rows.length` clause
+    // is unreachable by construction (recorded as S3 in the 2026-11-27 R3
+    // round — kept as belt, not as a covered branch). What this half DOES
+    // pin is the ranking under a full selection: with all four keys selected
+    // the order must still be the catalog's, not selection order.
     const none = mountPicker({ mode: "multi", selected: [] });
     await openPopup(none.container);
     expect(rowLabels()).toEqual(["China", "中华人民共和国", "Japan", "United States"]);
     expect(divider()).toBeNull();
-    const all = mountPicker({ mode: "multi", selected: ["cn", "cn-main", "jp", "us"] });
+    const all = mountPicker({ mode: "multi", selected: ["us", "cn-main", "jp", "cn"] });
     await openPopup(all.container);
-    expect(rowLabels()).toEqual(["China", "中华人民共和国", "Japan", "United States"]);
-    expect(divider()).toBeNull();
+    expect(rowLabels(), "catalog order survives a FULL selection").toEqual([
+      "China",
+      "中华人民共和国",
+      "Japan",
+      "United States",
+    ]);
+    expect(divider(), "no boundary when there is no unselected run").toBeNull();
   });
 
   it("ranks the FILTERED rows: a query matching only unchecked options shows no divider", async () => {

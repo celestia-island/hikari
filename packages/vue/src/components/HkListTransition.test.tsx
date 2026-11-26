@@ -158,14 +158,18 @@ describe("HkListTransition duration props", () => {
   it("the animation-bus report window follows a custom duration (a long choreography is not cut short)", async () => {
     // The bus report is what tells JS choreography that a transition is in
     // flight (a sheet re-measuring after a row leaves, a size morph). The
-    // static REPORT_MS budget (320ms) covers the default 0.3s family, but a
-    // host that slows the choreography down must not have its report end
+    // static REPORT_MS budget (320 ms) covers the default 0.3 s family, but
+    // a host that slows the choreography down must not have its report end
     // early — the window is re-read on every arm.
-    const { reportTransition } = await import("../runtime/animationBus");
-    const spy = vi.spyOn(await import("../runtime/animationBus"), "reportTransition");
-    const { container, warn } = mountDurations("ul", { duration: "2s" });
+    //
+    // ONE instance only, mounted AFTER the spy is in place, and every
+    // recorded arm is asserted: an earlier version mounted an unrelated
+    // `duration: "2s"` host first and read `calls.at(-1)`, so a 320 ms arm
+    // from the survivor could satisfy the assertion — the test passed while
+    // failing to distinguish anything (2026-11-27 R4).
+    const bus = await import("../runtime/animationBus");
+    const spy = vi.spyOn(bus, "reportTransition");
     const keys = ref<string[]>(["a"]);
-    // Re-render with an added row so a real enter batch arms the report.
     const app = createApp({
       render: () =>
         h(
@@ -178,18 +182,18 @@ describe("HkListTransition duration props", () => {
     document.body.appendChild(host);
     app.mount(host);
     mounts.push({ app, container: host });
-    spy.mockClear();
+    // Nothing was armed by the mount itself (no `appear`): every call from
+    // here on belongs to the batch below.
+    expect(spy, "the mount alone arms nothing").not.toHaveBeenCalled();
     keys.value = ["a", "b"];
     await nextTick();
-    expect(spy, "an enter batch was reported").toHaveBeenCalled();
-    // 2s of choreography + the 20ms settle slack — far past the static
-    // 320ms budget, which is exactly what the spy would see if the window
-    // ignored the prop.
-    expect(spy.mock.calls.at(-1)![0]).toBe(2020);
+    expect(spy, "the enter batch armed a report").toHaveBeenCalled();
+    // 2 s of choreography + the 20 ms settle slack, on EVERY arm — a static
+    // 320 ms budget would show up here.
+    for (const call of spy.mock.calls) {
+      expect(call[0], "every armed window follows the custom duration").toBe(2020);
+    }
     spy.mockRestore();
-    warn.mockRestore();
-    void container;
-    void reportTransition;
   });
 
   it("a fragment host refuses the props loudly instead of ignoring them silently", () => {

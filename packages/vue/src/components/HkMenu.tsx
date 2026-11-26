@@ -154,11 +154,14 @@ export default defineComponent({
      */
     matchAnchorWidth: { type: Boolean, default: false },
     /**
-     * Cap for the panel surface of EVERY level, as any CSS length
+     * Cap for the DESKTOP POPOUT of every level, as any CSS length
      * (`min(18rem, 45dvh)`, `24rem`, …): it is forwarded to each
-     * HkSelectPanel this menu renders — the root desktop popout, every
-     * cascade level and each mobile sheet layer (every level is its own
-     * scroll surface, so each one is capped).
+     * HkSelectPanel this menu renders — the root popout and every cascade
+     * level (each level is its own scroll surface, so each one is capped).
+     * The MOBILE SHEET layers never read it: since 2026-11-27 a sheet hugs
+     * its content up to the family ceiling of 80% of the viewport, so the
+     * cap a consumer tuned for the anchored popout cannot squash a sheet
+     * (see HkSelectPanel's `maxHeight`).
      *
      * Undefined (the default) forwards nothing at all, so the shared panel
      * keeps its own ceilings and every existing consumer — theme switchers,

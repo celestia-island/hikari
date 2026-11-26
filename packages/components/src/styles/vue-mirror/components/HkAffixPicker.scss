@@ -255,6 +255,17 @@
   width: 100%;
 }
 
+/* …and the SAME measure reaches the pinned head now that it lives outside
+ * the panel wrapper (HkSelectPanel's `pinnedHeader` slot): without this the
+ * search field spans the viewport-wide sheet while the rows beneath it sit
+ * centered in their 19rem block — the same drift the tag input and the user
+ * picker each pin for their own band. */
+.hk-select-sheet-pinned .hk-affix-head {
+  max-width: min(19rem, 100%);
+  margin-inline: auto;
+  width: 100%;
+}
+
 /* NO max-height / overflow here — ONE SCROLLBAR PER WINDOW (2026-09-08
  * user report: the language sheet showed two nested scrollbars, this
  * list's 17rem cap + the sheet's own). The list grows with its content

@@ -85,7 +85,7 @@ describe("parseServerErrorLanding", () => {
       "null",
       "[]",
       // An array carrying an object that would pass on its own: the island
-      // is one object, never a list of them.
+      // is one object, not a list of them.
       '[{"v":1,"status":502,"code":"","message":""}]',
       '"a string"',
       "42",
@@ -152,7 +152,7 @@ describe("readServerErrorLanding", () => {
   });
 
   it("ignores a same-id element that is not a JSON data block", () => {
-    // An executable script must never be read as a payload, whatever its id.
+    // An executable script is not read as a payload, whatever its id.
     plantIsland(JSON.stringify(VALID), "module");
     expect(readServerErrorLanding()).toBeNull();
     document.getElementById(SERVER_ERROR_LANDING_ID)?.remove();

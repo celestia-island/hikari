@@ -126,13 +126,16 @@ export function reportError(err: unknown, source: HkErrorSource, info?: string):
     stack: normalized.stack,
     info,
   };
-  // Structured attachments the reported object carries. Duck-typed on
-  // purpose: a host's own Error subclass (or hikari's own server-handoff
-  // class) supplies the same two fields without this module knowing it.
+  // Structured attachments, for the SERVER source only. Duck-typed so a
+  // host raising a handoff itself (`reportGlobalError(err, "server")`)
+  // needs no import of hikari's class — but gated on the source so a
+  // runtime error that merely HAS a `status` (HTTP clients' error objects)
+  // or a `details` (validation libraries) field keeps rendering exactly as
+  // before: no status chip, the stack record still in the details pane.
   // The HTTP status is the landing's status chip; `details` replaces the
-  // stack record in the raw-details pane. A primitive or null carries
-  // nothing — reading a property off it would throw.
-  if (err !== null && typeof err === "object") {
+  // stack record in the raw-details pane. Reading a property off a
+  // primitive or null would throw, so only objects are inspected.
+  if (source === "server" && err !== null && typeof err === "object") {
     const carried = err as { status?: unknown; details?: unknown };
     if (typeof carried.status === "number") record.status = carried.status;
     if (carried.details !== undefined) record.details = carried.details;

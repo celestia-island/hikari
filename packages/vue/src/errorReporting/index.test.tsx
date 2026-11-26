@@ -461,4 +461,29 @@ describe("server error landing handoff", () => {
     expect(overlayHost()!.querySelector(".hk-error-landing")!.className).not.toContain("is-warning");
     expect(overlayHost()!.querySelector('[aria-label="stack trace"]')).not.toBeNull();
   });
+
+  it("leaves a runtime error alone even when it happens to carry status/details fields", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    installPlugin();
+    // The shape of an HTTP client's error object (and of validation
+    // libraries' `details`): those fields belong to the host, not to the
+    // handoff — the runtime card must not start painting them.
+    const clientError = Object.assign(new TypeError("Request failed with status code 404"), {
+      status: 404,
+      details: { field: "email" },
+    });
+    reportGlobalError(clientError);
+    await nextTick();
+    expect(statusChip()).toBeNull();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).not.toContain("is-warning");
+    expect(overlayHost()!.querySelector('[aria-label="stack trace"]')).not.toBeNull();
+    expect(overlayHost()!.querySelector(".s-tool-json-tree")!.textContent).not.toContain("response");
+
+    // The same object reported AS a handoff is the host's explicit choice.
+    clearGlobalError();
+    reportGlobalError(clientError, "server");
+    await nextTick();
+    expect(statusChip()).toBe("HTTP 404");
+    expect(overlayHost()!.querySelector(".s-tool-json-tree")!.textContent).toContain("response");
+  });
 });

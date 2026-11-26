@@ -64,9 +64,10 @@ export interface HkServerErrorLanding {
  * The error object a server handoff is reported through — the counterpart
  * of the runtime errors the window hooks catch. `name` is the code chip, so
  * it reads as the wire code when the server sent one and as `http_<status>`
- * when it did not; `status` and `raw` ride the report onto the card
- * (duck-typed in `reportError`, so a host's own subclass can carry the same
- * two fields without importing this one).
+ * when it did not; `status` and `details` ride the report onto the card.
+ * `reportError` copies both off ANY object reported with the `server`
+ * source (duck-typed), so a host's own subclass can carry them without
+ * importing this one; a runtime error is never inspected for them.
  */
 export class HkServerErrorLandingError extends Error {
   readonly status: number;

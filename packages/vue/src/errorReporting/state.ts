@@ -2,8 +2,9 @@ import { ref, type Ref, type VNodeChild } from "vue";
 
 import { reportHkRuntime, type HkRuntimeHandle } from "../runtime/registry";
 
-/** Where a reported error came from. */
-export type HkErrorSource = "vue" | "window" | "rejection" | "manual";
+/** Where a reported error came from. `server` = a handoff the server
+ *  injected into this document (see `./serverLanding`), not a runtime error. */
+export type HkErrorSource = "vue" | "window" | "rejection" | "manual" | "server";
 
 /** A normalized error record carried by the global error landing. */
 export interface HkReportedError {
@@ -14,6 +15,13 @@ export interface HkReportedError {
   stack: string;
   /** Vue's `info` string for errors surfaced through `app.config.errorHandler`. */
   info?: string;
+  /** The HTTP status a SERVER handoff answered with — the `HTTP <n>` chip.
+   *  Absent for runtime errors (nothing to show). */
+  status?: number;
+  /** A structured payload the reporter attached to the error, shown in the
+   *  raw-details pane in place of the stack record: a server handoff's raw
+   *  response body. Absent for runtime errors. */
+  details?: unknown;
 }
 
 export interface HkErrorReportingOptions {
@@ -118,6 +126,20 @@ export function reportError(err: unknown, source: HkErrorSource, info?: string):
     stack: normalized.stack,
     info,
   };
+  // Structured attachments, for the SERVER source only. Duck-typed so a
+  // host raising a handoff itself (`reportGlobalError(err, "server")`)
+  // needs no import of hikari's class — but gated on the source so a
+  // runtime error that merely HAS a `status` (HTTP clients' error objects)
+  // or a `details` (validation libraries) field keeps rendering exactly as
+  // before: no status chip, the stack record still in the details pane.
+  // The HTTP status is the landing's status chip; `details` replaces the
+  // stack record in the raw-details pane. Reading a property off a
+  // primitive or null would throw, so only objects are inspected.
+  if (source === "server" && err !== null && typeof err === "object") {
+    const carried = err as { status?: unknown; details?: unknown };
+    if (typeof carried.status === "number") record.status = carried.status;
+    if (carried.details !== undefined) record.details = carried.details;
+  }
   currentError.value = record;
   return record;
 }

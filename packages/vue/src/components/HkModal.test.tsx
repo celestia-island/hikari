@@ -1115,8 +1115,9 @@ describe("HkModal centered growth (no top-edge anchor)", () => {
       for (const cb of callbacks) cb();
       await nextTick();
       for (let i = 0; i < 6; i++) await nextTick();
-      // MUT:centered-no-anchor (re-arming any useAnchoredTop-style writer
-      // sets the variable and goes red).
+      // MUT:centered-no-anchor: re-arming any useAnchoredTop-style writer
+      // never leaves this green — the stub feeds a written var back into the
+      // painted top, so the next correction reads its own shift.
       expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
     } finally {
       vi.unstubAllGlobals();

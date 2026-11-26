@@ -141,12 +141,13 @@
   // order — center, then ride legs, drag shift included — is
   // unchanged. The ≤767px sheet block neutralizes it alongside its own
   // `transform: none`.)
-  // --hk-modal-anchor-y is the TOP-EDGE anchor (useAnchoredTop): the frame
-  // is centred, so a height morph would otherwise lift the whole window by
-  // half the growth. It composes here rather than on `transform` because the
-  // open/close ride owns that property outright (see the note above).
+  // The translate carries the drag shift ONLY: a height morph moves both
+  // edges symmetrically and the window ends each growth centered for its
+  // new height (2026-11-26 user report — the retired --hk-modal-anchor-y
+  // top-edge pin held the pre-morph top instead, jittering mid-flight and
+  // settling below the viewport center).
   translate: calc(-50% + var(--hk-modal-shift-x, 0px))
-    calc(-50% + var(--hk-modal-shift-y, 0px) + var(--hk-modal-anchor-y, 0px));
+    calc(-50% + var(--hk-modal-shift-y, 0px));
   width: 100%;
   // Reasonable upper bound: a 2734px-wide viewport with width:100% gives
   // a modal frame wider than the content can usefully fill — the body

@@ -1,6 +1,49 @@
-import { defineComponent, type PropType } from "vue";
+import { Comment, Fragment, Text, defineComponent, type PropType } from "vue";
 
 import "./HkCornerText.scss";
+
+/**
+ * Does a slot's returned tree paint NOTHING at all? The lane's dead-space
+ * rule must read the RENDERED nodes, not the slot's existence: Vue hands
+ * back a truthy value for every slot shape a host can write, so the
+ * original `!slotContent` test kept an invisible `.hk-corner-text` box
+ * (with the corner's flex margins) for a slot that renders `[]`, `[null]`,
+ * `false`, `""` or a whitespace-only string.
+ *
+ * The walk mirrors what Vue's own normalizer accepts:
+ * - `null` / `undefined` / booleans paint nothing (they normalize to a
+ *   comment placeholder);
+ * - strings only paint when they carry a non-whitespace character — a
+ *   blank string still mounts a text node, which occupies a flex row in
+ *   the lane;
+ * - numbers always paint (`0` is real content);
+ * - a `Text` vnode paints when its children carry such a string;
+ * - `Fragment` vnodes (what a slot returning an array is wrapped in) and
+ *   plain arrays recurse — they paint only what their children paint;
+ * - `Comment` vnodes never paint;
+ * - every other vnode (element, component, Teleport, Suspense) paints by
+ *   definition.
+ *
+ * A function is NOT invoked here: Vue resolves slot functions, and calling
+ * a host's by hand could run it twice per render.
+ */
+export function slotPaintsNothing(value: unknown): boolean {
+  if (value === null || value === undefined || typeof value === "boolean") return true;
+  if (typeof value === "string") return value.trim().length === 0;
+  if (typeof value === "number") return false;
+  if (Array.isArray(value)) return value.every(slotPaintsNothing);
+  if (typeof value === "object") {
+    const vnode = value as { type?: unknown; children?: unknown };
+    if (vnode.type === Comment) return true;
+    if (vnode.type === Text) return slotPaintsNothing(vnode.children);
+    if (vnode.type === Fragment || Array.isArray(vnode.children)) {
+      return slotPaintsNothing(vnode.children);
+    }
+    return false;
+  }
+  // Symbol / bigint / function — nothing renders as a structural node.
+  return true;
+}
 
 /** One entry of a corner text lane: plain text, or a link when `href`
  *  is set (registry links open in a new tab with `noopener`, the same
@@ -102,7 +145,7 @@ export const HkCornerText = defineComponent({
         ),
       );
       const slotContent = slots.default?.();
-      const empty = entries.length === 0 && !slotContent;
+      const empty = entries.length === 0 && slotPaintsNothing(slotContent);
       if (empty) return null;
       const Tag = props.as;
       return (

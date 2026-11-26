@@ -73,7 +73,16 @@ hikari's `HkCornerText`: one instance = one text lane for one corner.
 - Several rows in one corner (identity line above the filings line) stack
   instances vertically — the fixed 3rem status band holds two text-2xs
   rows.
-- Link entries (compliance filings) use `items` + `as="nav"` + `ariaLabel`;
+- An `items` entry is `{ key, text, href? }`: `key` is the stable identity the
+  list renderer keys on, `text` is the display string (a filing number, a
+  system name, …), and `href` is optional — omit it and the entry renders as a
+  plain `<span>`; set it and it renders as a link.
+- Entry with `href` always opens in a new tab: `target="_blank"` plus
+  `rel="noopener noreferrer"` (the same contract as the filing number — a
+  third-party site must never hold a handle on the login page's window). That
+  is the component's own behaviour: hosts must not wrap entries in their own
+  `<a>`.
+- Link entries use `items` + `as="nav"` + `ariaLabel`;
   free-form content (a status chip) rides the default slot, after `items`.
 
 Hosts must not hand-roll `flex-wrap: nowrap` squeeze lanes or let text

@@ -287,12 +287,30 @@ describe("HkAuthCard SCSS spacing contract", () => {
     expect(scss).not.toMatch(/\.s-auth-form:has\(\+ \.s-auth-methods\)/);
   });
 
-  it("keeps the form's collapsed bottom padding feeding the footer band", () => {
+  it("keeps the form's collapsed bottom padding feeding the footer band (sibling pin)", () => {
     // The form→footer distance is composed (8px form padding-bottom via
     // :has + the footer's own margin); losing the collapse would swap in
-    // the form's default 24px bottom padding instead.
-    const rule = scss.match(/\.s-auth-form:has\(\.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
-    expect(rule, ":has collapse rule must exist").toBeTruthy();
+    // the form's default 32px bottom padding instead.
+    const rule = scss.match(/\.s-auth-form:has\(\+ \.s-auth-footer\)\s*{[^}]*}/)?.[0] ?? "";
+    expect(rule, ":has(+ …) sibling collapse rule must exist").toBeTruthy();
     expect(rule).toContain("padding-bottom: var(--space-8, 0.5rem)");
+
+    // The DOM half — the card's footer IS a direct sibling of the form, so
+    // this is the arm that fires for every card-shaped surface (HkLoginFlow's
+    // swapped body needs the DESCENDANT arm; see HkLoginFlow.test.tsx).
+    // MUT:authcard-footer-shape-drift (nesting the footer inside the form,
+    // or emitting it before it, flips both assertions below).
+    const c = mount(
+      h(HkAuthCard, { title: "T" }, {
+        default: () => h("input", { class: "probe-field" }),
+        footer: () => h("div", { class: "probe-footer" }, "row"),
+      }),
+    );
+    const form = c.querySelector(".s-auth-form");
+    const footer = c.querySelector(".s-auth-footer");
+    expect(form).not.toBeNull();
+    expect(footer).not.toBeNull();
+    expect(footer!.previousElementSibling).toBe(form);
+    expect(form!.contains(footer)).toBe(false);
   });
 });

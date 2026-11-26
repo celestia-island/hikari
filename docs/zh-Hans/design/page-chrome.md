@@ -59,8 +59,14 @@ value 契约，`?tab=` 深链跨断点不受影响。`HkAdaptiveTabs` 是默认�
 - 默认 chrome 弱墨（`text-2xs` + 0.6 不透明度）；`muted: false` 恢复全墨。
 - 一个角落要多行（身份行 + 备案行）就纵向堆叠多个实例——固定 3rem 状态带内
   容得下两行 text-2xs。
-- 链条目（备案链接）用 `items` + `as="nav"` + `ariaLabel`；自由内容（状态芯片）
-  走默认插槽，排在 `items` 之后。
+- `items` 的条目形状是 `{ key, text, href? }`：`key` 是列表渲染的稳定标识，
+  `text` 是显示文本（备案号、系统名……），`href` 可省略——省略渲染成普通的
+  `<span>`，给出则渲染成链接。
+- 带 `href` 的条目一律新标签页打开：`target="_blank"` + `rel="noopener noreferrer"`
+  （与备案号同一契约——外站不得持有登录页窗口的句柄）。这是组件的行为，宿主
+  不要自己再包一层 `<a>`。
+- 链条目用 `items` + `as="nav"` + `ariaLabel`；自由内容（状态芯片）走默认
+  插槽，排在 `items` 之后。
 
 宿主不得再手写 `flex-wrap: nowrap` 的单行挤压道，也不得让文本溢出固定高度带。
 参考实现：`HkCornerText`。

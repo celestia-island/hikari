@@ -79,6 +79,15 @@ texto para una esquina.
 - Varias líneas en una esquina (línea de identidad sobre la línea de
   registros): apilar instancias verticalmente — la banda de estado fija de
   3rem contiene dos líneas text-2xs.
+- Una entrada de `items` es `{ key, text, href? }`: `key` es la identidad estable
+  que usa el renderizador de lista, `text` es el texto visible (un número de
+  registro, un nombre de sistema, …) y `href` es opcional — si se omite, la
+  entrada se dibuja como un `<span>` simple; si se da, como un enlace.
+- La entrada con `href` siempre abre en una pestaña nueva: `target="_blank"` más
+  `rel="noopener noreferrer"` (el mismo contrato que el número de registro — un
+  sitio ajeno nunca debe tener un asa sobre la ventana de la página de acceso).
+  Eso es el comportamiento del componente: el anfitrión no debe envolver las
+  entradas en su propio `<a>`.
 - Las entradas-enlace (registros) usan `items` + `as="nav"` + `ariaLabel`; el
   contenido libre (chip de estado) va por el slot por defecto, tras `items`.
 

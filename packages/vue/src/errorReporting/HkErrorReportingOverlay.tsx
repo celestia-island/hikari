@@ -35,11 +35,17 @@ export const HkErrorReportingOverlay = defineComponent({
     const detailsValue = computed<Record<string, unknown> | undefined>(() => {
       const err = state.value;
       if (!err) return undefined;
-      // A server handoff: what the server answered, not a stack. The raw
+      // A server handoff: what the server answered, never a stack — the
+      // only stack it has names the install call that raised it. The raw
       // body rides under its own key so a tree fold shows the wire error
       // exactly as sent.
-      if (err.details !== undefined) {
-        return { status: err.status, code: err.name, message: err.message, response: err.details };
+      if (err.source === "server") {
+        return {
+          status: err.status,
+          code: err.name,
+          message: err.message,
+          ...(err.details !== undefined ? { response: err.details } : {}),
+        };
       }
       const record: Record<string, unknown> = {
         name: err.name,
@@ -52,17 +58,22 @@ export const HkErrorReportingOverlay = defineComponent({
     });
 
     // Clipboard payload for the landing's built-in copy action: the same
-    // fields the raw-details pane shows, in plain-text form.
+    // fields the raw-details pane shows, in plain-text form. The headline
+    // carries the status line of a server handoff; its body is the response
+    // the server sent.
     const copyText = computed(() => {
       const err = state.value;
       if (!err) return "";
-      const parts = [
-        err.status !== undefined ? `HTTP ${err.status} ${err.name}: ${err.message}` : `${err.name}: ${err.message}`,
-      ];
-      if (err.details !== undefined) {
-        parts.push("", JSON.stringify(err.details, null, 2));
+      const headline =
+        err.status !== undefined
+          ? `HTTP ${err.status} ${err.name}: ${err.message}`
+          : `${err.name}: ${err.message}`;
+      if (err.source === "server") {
+        const parts = [headline];
+        if (err.details !== undefined) parts.push("", JSON.stringify(err.details, null, 2));
         return parts.join("\n");
       }
+      const parts = [headline];
       if (err.stack) parts.push("", err.stack);
       if (err.source) parts.push("", `source: ${err.source}`);
       if (err.info) parts.push("", `info: ${err.info}`);
@@ -141,7 +152,7 @@ export const HkErrorReportingOverlay = defineComponent({
               default: () => (
                 <HkJsonTree
                   value={detailsValue.value}
-                  ariaLabel={err.details !== undefined ? "server error details" : "stack trace"}
+                  ariaLabel={err.source === "server" ? "server error details" : "stack trace"}
                 />
               ),
               actions: () => [

@@ -9,7 +9,6 @@ import {
   serializeServerErrorLanding,
   SERVER_ERROR_LANDING_ID,
   type HkErrorReportingOptions,
-  type HkReportedError,
   type HkServerErrorLanding,
 } from "./index";
 
@@ -375,9 +374,18 @@ describe("server error landing handoff", () => {
     plant({ status: 404, code: "", message: "route not found" });
     installPlugin();
     await nextTick();
+    const host = overlayHost()!;
     expect(statusChip()).toBe("HTTP 404");
-    expect(overlayHost()!.querySelector(".hk-error-landing__code")!.textContent).toBe("http_404");
-    expect(overlayHost()!.querySelector(".hk-error-landing__desc")!.textContent).toBe("route not found");
+    expect(host.querySelector(".hk-error-landing__code")!.textContent).toBe("http_404");
+    expect(host.querySelector(".hk-error-landing__desc")!.textContent).toBe("route not found");
+    // No body came back, so there is no `response` — and what the server
+    // answered is the WHOLE record: the only stack a handoff has names the
+    // install call that raised it, which tells the visitor nothing.
+    expect(host.querySelector('[aria-label="server error details"]')).not.toBeNull();
+    const tree = host.querySelector(".s-tool-json-tree")!.textContent!;
+    expect(tree).toContain("route not found");
+    expect(tree).not.toContain("stack");
+    expect(tree).not.toContain("    at ");
   });
 
   it("paints a 4xx as a warning and a 5xx as an error", async () => {
@@ -448,8 +456,11 @@ describe("server error landing handoff", () => {
 
     expect(writeText).toHaveBeenCalledTimes(1);
     const text = writeText.mock.calls[0]![0];
-    expect(text).toContain("HTTP 502 identity_provider_unreachable: " + OAUTH_502.message);
-    expect(text).toContain('"error": "' + OAUTH_502.message + '"');
+    // The headline, then exactly the body the server sent — nothing else:
+    // no JS stack, no `source:` footer from the runtime record.
+    expect(text).toBe(
+      "HTTP 502 identity_provider_unreachable: " + OAUTH_502.message + "\n\n" + JSON.stringify(OAUTH_502.raw, null, 2),
+    );
   });
 
   it("shows no status chip for runtime errors — the handoff fields are opt-in", async () => {

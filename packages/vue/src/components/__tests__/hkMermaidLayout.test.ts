@@ -79,6 +79,25 @@ describe("subgraph clusters", () => {
     expect(model.edges.some((e) => e.to === "n:G" || e.from === "n:G")).toBe(false);
   });
 
+  it("anchors a cluster-as-SOURCE edge on the frame's border too", async () => {
+    await mermaidReady;
+    // The hub fixture has `G --> B` (cluster as the source). Without the
+    // anchor the arrow leaves the frame's centre, i.e. from behind its own
+    // members — the same reason the target side is anchored.
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  subgraph G["Gateway"]',
+      '    A["a"]',
+      "  end",
+      '  G --> B["b"]',
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const fromFrame = model.edges.filter((e) => e.from === "g:G");
+    expect(fromFrame).toHaveLength(1);
+    expect(fromFrame[0].anchorFrom).toBe("nearest");
+    expect(fromFrame[0].to).toBe("n:B");
+  });
+
   it("nests an outer frame around the inner frame", async () => {
     await mermaidReady;
     const doc = wasmMermaidEngine.parse([

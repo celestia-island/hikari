@@ -204,6 +204,9 @@ fn parse_subgraph(pair: pest::iterators::Pair<Rule>, state: &mut State) {
 fn parse_group_head(raw: &str) -> GroupHead {
     let text = raw.trim();
     let bytes = text.as_bytes();
+    // A leading run of identifier bytes. A digit-led head is only an id when
+    // a shape follows it (`2["Tier"]`); `subgraph 2 Tier` stays a caption,
+    // because an id is only claimed when the head reduces to one.
     let mut id_end = 0;
     while id_end < bytes.len() && (bytes[id_end].is_ascii_alphanumeric() || bytes[id_end] == b'_') {
         id_end += 1;
@@ -491,6 +494,22 @@ mod tests {
     }
 
     #[test]
+    fn an_unclosed_subgraph_still_forms_one_cluster() {
+        // No `end` at all: the keyword must never fall through to `nodedef`
+        // and paint the literal box this feature exists to remove. The block
+        // degrades to "runs to EOF" instead.
+        let doc = parse("flowchart TD\n  subgraph G[\"Gateway\"]\n    A[\"a\"]\n").expect("parse");
+        assert_eq!(
+            doc.nodes.iter().map(|n| n.id.as_str()).collect::<Vec<_>>(),
+            vec!["A"],
+            "no literal `subgraph` node on an unclosed block"
+        );
+        assert_eq!(doc.groups.len(), 1);
+        assert_eq!(doc.groups[0].id, "G");
+        assert_eq!(doc.groups[0].members, vec!["A".to_string()]);
+    }
+
+    #[test]
     fn a_word_that_merely_starts_with_end_stays_a_node() {
         let doc = parse("flowchart TD\n  endpoint --> A\n").expect("parse");
         assert!(doc.nodes.iter().any(|n| n.id == "endpoint"));
@@ -514,6 +533,13 @@ mod tests {
         let g = parse_group_head("[\"Only a title\"]");
         assert_eq!(g.id, None);
         assert_eq!(g.label.as_deref(), Some("Only a title"));
+
+        // Reported as an S3 (numeric cluster ids): `subgraph 2 Tier` must be
+        // read as a caption, not torn into id "2" + caption "Tier" — an id is
+        // only claimed when the head reduces to one.
+        let g = parse_group_head("2 Tier");
+        assert_eq!(g.id, None, "a digit-led multi-word head is a caption");
+        assert_eq!(g.label.as_deref(), Some("2 Tier"));
 
         let g = parse_group_head("G extra words");
         assert_eq!(g.id, None, "a multi-word head is a title, not an id");

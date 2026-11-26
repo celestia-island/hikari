@@ -202,6 +202,10 @@ export interface GraphLayoutInput {
   items: GraphItem[];
   edges: Array<{ from: string; to: string }>;
   direction: MermaidGraphDoc["direction"];
+  /** Cross-axis gap between same-rank siblings, world px. Cluster frames pad
+   *  their members on both sides, so a grouped graph widens this budget
+   *  (`GROUP_CROSS_GAP`) or side-by-side frames would touch and overlap. */
+  crossGap?: number;
 }
 
 export interface GraphLayoutOutput {
@@ -212,7 +216,7 @@ export interface GraphLayoutOutput {
 
 /** Rank + barycenter-order + pixel-place a node-edge graph. */
 export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
-  const { items, edges, direction } = input;
+  const { items, edges, direction, crossGap = GAP_SAME_RANK } = input;
   const horizontal = direction === "LR" || direction === "RL";
   const reversed = direction === "BT" || direction === "RL";
 
@@ -280,7 +284,7 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
   const mainSize = (i: GraphItem): number => (horizontal ? i.w : i.h);
   const crossSize = (i: GraphItem): number => (horizontal ? i.h : i.w);
   const crossSpanOf = (members: GraphItem[]): number =>
-    members.reduce((s, m) => s + crossSize(m), 0) + GAP_SAME_RANK * Math.max(members.length - 1, 0);
+    members.reduce((s, m) => s + crossSize(m), 0) + crossGap * Math.max(members.length - 1, 0);
 
   let totalCross = 0;
   for (const members of rankMembers.values()) totalCross = Math.max(totalCross, crossSpanOf(members));
@@ -299,7 +303,7 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
         ? { x: mainOffset + mainLead, y: cross }
         : { x: cross, y: mainOffset + mainLead };
       positions.set(m.id, { x: Math.round(p.x), y: Math.round(p.y) });
-      cross += crossSize(m) + GAP_SAME_RANK;
+      cross += crossSize(m) + crossGap;
       width = Math.max(width, p.x + m.w);
       height = Math.max(height, p.y + m.h);
     }
@@ -315,6 +319,11 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
 const GROUP_PAD = 18;
 /** Caption band reserved at the top of a cluster frame, world px. */
 const GROUP_HEADER = 26;
+/** Same-rank gap used when the graph has clusters. Two neighbouring frames
+ *  eat `2 × GROUP_PAD` of the gap, so the plain 28px budget would leave them
+ *  exactly 8px INSIDE each other; 48 keeps a visible 12px channel between
+ *  side-by-side clusters (and between a frame and a free neighbour). */
+const GROUP_CROSS_GAP = GROUP_PAD * 2 + 12;
 
 interface Rect { x: number; y: number; w: number; h: number }
 
@@ -383,10 +392,12 @@ function layoutGraphDoc(
     const { w, h } = shapeSize(n.shape, measure(n.label, NODE_FONT), textH);
     return { id: n.id, w, h, order };
   });
+  const groups = doc.groups ?? [];
   const { positions, width, height } = layoutGraph({
     items,
     edges: doc.edges.map((e) => ({ from: e.source, to: e.target })),
     direction: doc.direction,
+    ...(groups.length > 0 ? { crossGap: GROUP_CROSS_GAP } : {}),
   });
 
   const byId = new Map(doc.nodes.map((n) => [n.id, n]));
@@ -404,15 +415,17 @@ function layoutGraphDoc(
     };
   });
 
-  const groups = doc.groups ?? [];
   const frames = layoutGroupFrames(
     groups,
     new Map(memberNodes.map((n) => [n.id, { x: n.x, y: n.y, w: n.w, h: n.h }])),
   );
 
-  // Shift everything right/down when a frame runs off the world origin (a
-  // cluster touching the top row would otherwise start above y = 0 and get
-  // clipped by the board's viewport).
+  // Shift everything right/down when a frame runs off the world origin. What
+  // clips is the edge SVG: the board anchors it at (0,0) with the content
+  // box's width/height, so a negative-coordinate path (or the frame shell
+  // itself) is cut off. A cluster on the top rank starts `GROUP_PAD +
+  // GROUP_HEADER` above its members, which is more than the layout's own
+  // MARGIN.
   let shiftX = 0;
   let shiftY = 0;
   for (const frame of frames.values()) {

@@ -14,8 +14,13 @@ stmt_inner = { subgraph | chain | nodedef | comment }
  * docs use the first two. Post-processing in graph_parser.rs splits an id
  * from a shape/title, which keeps this rule readable and PEG-friendly (a
  * multi-word bare title can never be an id, so it must not be guessed at
- * grammar level). */
-subgraph = { subgraph_kw ~ sp+ ~ group_head ~ sp* ~ nl ~ stmts ~ sp* ~ end_kw }
+ * grammar level).
+ *
+ * A block with no `end` runs to EOF: the alternative is the keyword line
+ * falling through to `nodedef` and painting the literal box this rule exists
+ * to remove. Degrading to "one cluster that swallows the rest" keeps the
+ * diagram readable on malformed input. */
+subgraph = { subgraph_kw ~ sp+ ~ group_head ~ sp* ~ nl ~ stmts ~ (sp* ~ end_kw | &EOI) }
 subgraph_kw = @{ "subgraph" ~ !(ASCII_ALPHANUMERIC | "_") }
 end_kw = @{ "end" ~ !(ASCII_ALPHANUMERIC | "_") }
 group_head = @{ (!nl ~ ANY)+ }

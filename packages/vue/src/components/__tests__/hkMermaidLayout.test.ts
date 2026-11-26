@@ -100,6 +100,64 @@ describe("subgraph clusters", () => {
     expect(inner.y + inner.h).toBeLessThan(outer.y + outer.h);
   });
 
+  it("never lets side-by-side clusters (or a free neighbour) overlap", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  R["root"]',
+      '  subgraph GA["alpha"]',
+      '    A1["a1"]',
+      "  end",
+      '  subgraph GB["beta"]',
+      '    B1["b1"]',
+      "  end",
+      '  R --> A1',
+      '  R --> B1',
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const rects = model.nodes.map((n) => ({ id: n.id, kind: n.kind, x: n.x, y: n.y, w: n.w, h: n.h }));
+    const frames = rects.filter((r) => r.kind === "group");
+    expect(frames).toHaveLength(2);
+    const [ga, gb] = frames;
+    // The frames' horizontal spans must not intersect (the padding on each
+    // side eats the plain same-rank gap).
+    const overlapX = ga.x < gb.x + gb.w && gb.x < ga.x + ga.w;
+    const overlapY = ga.y < gb.y + gb.h && gb.y < ga.y + ga.h;
+    expect(overlapX && overlapY).toBe(false);
+    // A frame must not swallow a node it does not own.
+    const inside = (f: (typeof frames)[number], n: (typeof rects)[number]): boolean =>
+      n.x >= f.x && n.y >= f.y && n.x + n.w <= f.x + f.w && n.y + n.h <= f.y + f.h;
+    for (const frame of frames) {
+      for (const node of rects.filter((r) => r.kind !== "group")) {
+        const owned = frame.id === "g:GA" ? node.id === "n:A1" : node.id === "n:B1";
+        if (!owned) expect(inside(frame, node)).toBe(false);
+      }
+    }
+  });
+
+  it("keeps every frame inside the non-negative world box the board draws", async () => {
+    await mermaidReady;
+    // A cluster on the TOP rank is the case that would start above y = 0.
+    const doc = wasmMermaidEngine.parse([
+      "flowchart TD",
+      '  subgraph G["top cluster"]',
+      '    A["a"]',
+      "  end",
+      '  A --> B["b"]',
+    ].join("\n"))!;
+    const model = buildBoardModel(doc, measure);
+    const frame = model.nodes.find((n) => n.kind === "group")!;
+    expect(frame.x).toBeGreaterThanOrEqual(0);
+    expect(frame.y).toBeGreaterThanOrEqual(0);
+    // The edge SVG is anchored at (0,0) with the content box's size: the
+    // model's width/height must cover the frame or its shell gets cut off.
+    expect(model.width).toBeGreaterThan(frame.x + frame.w);
+    expect(model.height).toBeGreaterThan(frame.y + frame.h);
+    // The component's visible height comes from suggestedHeight; it must be
+    // derived from the framed height, not the pre-frame one.
+    expect(model.suggestedHeight).toBeGreaterThanOrEqual(Math.min(frame.y + frame.h + 24, 540));
+  });
+
   it("plain graphs carry no frames (the field is absent, not empty)", async () => {
     await mermaidReady;
     const doc = wasmMermaidEngine.parse("graph TD\nA --> B")!;

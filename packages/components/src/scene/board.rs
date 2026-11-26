@@ -523,17 +523,18 @@ pub fn board_fit_k_floor(fit_k: f64, min_k: f64) -> f64 {
 /// Fit the whole content bbox into the viewport (centered, padded). A wide
 /// board shrinks as far as needed; a tiny board never blows up past `cap`
 /// (`boardFit`).
+///
+/// The usable span is floored at zero, exactly like `boardFit` in
+/// `packages/vue/src/utils/boardCamera.ts`: a viewport narrower than the
+/// padding is degenerate (a board mounted in a hidden tab, a collapsed flex
+/// item measuring 0 or its 2px border) and an unfloored `(0 - 80) / width`
+/// makes `k` NEGATIVE, which paints the whole world mirrored. Zero is the
+/// honest answer for "no room".
 pub fn board_fit(content: BoardRect, viewport: BoardViewport, pad: f64, cap: f64) -> BoardCamera {
-    let kw = if content.w > 0.0 {
-        (viewport.w - pad * 2.0) / content.w
-    } else {
-        cap
-    };
-    let kh = if content.h > 0.0 {
-        (viewport.h - pad * 2.0) / content.h
-    } else {
-        cap
-    };
+    let avail_w = (viewport.w - pad * 2.0).max(0.0);
+    let avail_h = (viewport.h - pad * 2.0).max(0.0);
+    let kw = if content.w > 0.0 { avail_w / content.w } else { cap };
+    let kh = if content.h > 0.0 { avail_h / content.h } else { cap };
     let k = cap.min(kw.min(kh));
     BoardCamera::new(
         (viewport.w - content.w * k) / 2.0 - content.x * k,
@@ -1745,6 +1746,14 @@ mod tests {
             BOARD_FIT_CAP
         );
         assert_eq!(board_fit(tiny, viewport, BOARD_FIT_PAD, 3.0).k, 3.0);
+        // A degenerate viewport (a hidden tab, a collapsed flex item measuring
+        // its 2px border) answers "no room" with k = 0 — never the NEGATIVE
+        // scale the unfloored span produced (which paints a mirrored board).
+        let wide = BoardRect::new(0.0, 0.0, 1538.0, 266.0);
+        for (vw, vh) in [(0.0, 0.0), (0.0, 304.0), (2.0, 304.0), (40.0, 40.0)] {
+            let degenerate = board_fit(wide, BoardViewport::new(vw, vh), BOARD_FIT_PAD, BOARD_FIT_CAP);
+            assert_eq!(degenerate.k, 0.0, "degenerate viewport {vw}x{vh}");
+        }
         // A fitted framing below minK installs a lower floor so the next clamp
         // does not undo it.
         assert_eq!(board_fit_k_floor(0.1, 0.2), 0.1);

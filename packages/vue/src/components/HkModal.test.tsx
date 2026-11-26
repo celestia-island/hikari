@@ -1044,3 +1044,83 @@ describe("HkModal blur plate", () => {
     }
   });
 });
+
+describe("HkModal centered growth (no top-edge anchor)", () => {
+  // 2026-11-26 user direction: a dialog's expansion must keep the window
+  // vertically centered — the frame grows symmetrically (top edge travels
+  // Δ/2 up in step with the height morph) and lands centered for its new
+  // height. The retired --hk-modal-anchor-y pin held the pre-morph top
+  // instead, so the loop corrected against a still-growing box (mid-flight
+  // stop-and-snap) and left a residual offset at rest. The pin is gone from
+  // both the component wiring and the stylesheet translate; this test
+  // pins the absence so a re-introduction goes red.
+  function mountModal() {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    containers.push(container);
+    const open = ref(true);
+    const Wrapper = defineComponent({
+      setup() {
+        return () =>
+          h(HkModal, { modelValue: open.value, title: "Centered" },
+            { default: () => h("div", "content") });
+      },
+    });
+    const app = createApp(Wrapper);
+    mounts.push(app);
+    app.mount(container);
+    return {
+      container,
+      open,
+      frame: document.querySelector(".hk-modal-content") as HTMLElement,
+    };
+  }
+
+  /** A rect source that reports the frame's own anchor variable as part of
+   *  its painted top (an engine reports the PAINTED box), so a correction
+   *  written into the variable would feed back through the next measure —
+   *  the same stub shape the retired pin's own tests used. */
+  function stubPaintedTop(top: { value: number }): void {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: Element) {
+        const el = this as HTMLElement;
+        const own = el.style?.getPropertyValue("--hk-modal-anchor-y") ?? "";
+        const shift = Number(/(-?[\d.]+)px/.exec(own)?.[1] ?? 0);
+        const rendered = top.value + shift;
+        return {
+          top: rendered, left: 0, bottom: rendered, right: 0,
+          width: 0, height: 0, x: 0, y: rendered, toJSON: () => ({}),
+        } as DOMRect;
+      },
+    );
+  }
+
+  it("never writes the anchor variable, even when a growth moves the top", async () => {
+    const callbacks: Array<() => void> = [];
+    vi.stubGlobal("ResizeObserver", class {
+      constructor(cb: () => void) { callbacks.push(cb); }
+      observe() {}
+      disconnect() {}
+      unobserve() {}
+    });
+    // A centred growth lifted the painted top by 20px — under the retired
+    // pin this measurement is exactly what armed the correction.
+    const top = { value: 200 };
+    stubPaintedTop(top);
+    try {
+      const { frame } = mountModal();
+      for (let i = 0; i < 6; i++) await nextTick();
+      expect(frame).not.toBeNull();
+      top.value = 180;
+      for (const cb of callbacks) cb();
+      await nextTick();
+      for (let i = 0; i < 6; i++) await nextTick();
+      // MUT:centered-no-anchor (re-arming any useAnchoredTop-style writer
+      // sets the variable and goes red).
+      expect(frame.style.getPropertyValue("--hk-modal-anchor-y")).toBe("");
+    } finally {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    }
+  });
+});

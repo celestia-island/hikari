@@ -929,8 +929,21 @@ describe("HkModal Escape precedence", () => {
     owner.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),
     );
-    await nextTick();
-    expect(document.activeElement, "focus wraps back to the first focusable").toBe(first);
+    // `vi.waitFor` + a RE-QUERY of the first control, rather than a single
+    // `nextTick` and the node captured above: the modal re-renders its
+    // content once the windowed/auto-follow setup settles, and a captured
+    // node that got replaced turns this into a stale-reference flake (the
+    // release lane saw exactly one such red on 2026-11-26 while the same
+    // SHA ran green locally and on re-run). The assertion itself is
+    // unchanged: focus must land back on the FIRST focusable.
+    // MUT:modal-tab-wrap (dropping the wrap branch leaves focus on the
+    // last control and this reds).
+    await vi.waitFor(() => {
+      expect(
+        document.activeElement,
+        "focus wraps back to the first focusable",
+      ).toBe(document.body.querySelector(".tab-first"));
+    });
   });
 });
 

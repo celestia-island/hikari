@@ -38,6 +38,11 @@ describe("parseServerErrorLanding", () => {
     });
   });
 
+  it("trims the code so the chip never carries padding", () => {
+    expect(parseServerErrorLanding('{"v":1,"status":403,"code":"  policy_denied  ","message":"x"}')?.code)
+      .toBe("policy_denied");
+  });
+
   it("derives nothing: an absent code is an empty code, an absent message an empty one", () => {
     // The CARD owns the fallbacks (`http_<status>` chip, the generic
     // description) so a host reading the payload sees what the server
@@ -47,6 +52,9 @@ describe("parseServerErrorLanding", () => {
       code: "",
       message: "",
     });
+    // No `raw` key at all — not a `raw: undefined` that a lenient equality
+    // would let through: the card branches on `details !== undefined`.
+    expect(parseServerErrorLanding('{"v":1,"status":404}')).not.toHaveProperty("raw");
     expect(parseServerErrorLanding('{"v":1,"status":404,"raw":null}')?.raw).toBeNull();
   });
 
@@ -71,7 +79,19 @@ describe("parseServerErrorLanding", () => {
   });
 
   it("refuses malformed text and non-object payloads", () => {
-    for (const text of ["", "not json", "null", "[]", '"a string"', "42", "{", undefined as unknown as string]) {
+    for (const text of [
+      "",
+      "not json",
+      "null",
+      "[]",
+      // An array carrying an object that would pass on its own: the island
+      // is one object, never a list of them.
+      '[{"v":1,"status":502,"code":"","message":""}]',
+      '"a string"',
+      "42",
+      "{",
+      undefined as unknown as string,
+    ]) {
       expect(parseServerErrorLanding(text as string), String(text)).toBeNull();
     }
   });

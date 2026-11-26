@@ -386,6 +386,8 @@ describe("server error landing handoff", () => {
     expect(tree).toContain("route not found");
     expect(tree).not.toContain("stack");
     expect(tree).not.toContain("    at ");
+    // No body came back, so there is no `response` key to fold open either.
+    expect(tree).not.toContain("response");
   });
 
   it("paints a 4xx as a warning and a 5xx as an error", async () => {
@@ -394,6 +396,20 @@ describe("server error landing handoff", () => {
     installPlugin();
     await nextTick();
     expect(overlayHost()!.querySelector(".hk-error-landing")!.className).toContain("is-warning");
+
+    clearGlobalError();
+    plant({ status: 499, code: "client_closed", message: "Just under the line." });
+    installPlugin();
+    await nextTick();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).toContain("is-warning");
+
+    // 500 is the server's side of the line, exactly on it.
+    clearGlobalError();
+    plant({ status: 500, code: "", message: "On the line." });
+    installPlugin();
+    await nextTick();
+    expect(overlayHost()!.querySelector(".hk-error-landing")!.className).toContain("is-error");
+    expect(statusChip()).toBe("HTTP 500");
 
     clearGlobalError();
     plant({ status: 503, code: "starting", message: "Starting up." });
@@ -496,5 +512,12 @@ describe("server error landing handoff", () => {
     await nextTick();
     expect(statusChip()).toBe("HTTP 404");
     expect(overlayHost()!.querySelector(".s-tool-json-tree")!.textContent).toContain("response");
+
+    // A status that is not a number is not a status, even on a handoff:
+    // only a real `number` becomes the chip.
+    clearGlobalError();
+    reportGlobalError(Object.assign(new Error("string status"), { status: "502" }), "server");
+    await nextTick();
+    expect(statusChip()).toBeNull();
   });
 });

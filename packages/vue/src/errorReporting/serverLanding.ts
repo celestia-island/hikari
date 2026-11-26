@@ -107,10 +107,16 @@ export function parseServerErrorLanding(text: string): HkServerErrorLanding | nu
   } catch {
     return null;
   }
+  // An array is an object to `typeof` but never an island: the explicit
+  // check is depth behind the `v` lookup (a list has no `v`), kept so the
+  // shape is stated, not inferred.
   if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
   const record = value as Record<string, unknown>;
   if (record.v !== SERVER_ERROR_LANDING_VERSION) return null;
   const status = record.status;
+  // Two guards that overlap on purpose: `typeof` narrows the unknown for
+  // the compiler and stands on its own should the integer check ever be
+  // loosened; `isInteger` refuses fractions and numeric strings outright.
   if (
     typeof status !== "number" ||
     !Number.isInteger(status) ||

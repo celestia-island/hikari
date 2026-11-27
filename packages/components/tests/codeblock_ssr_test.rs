@@ -21,8 +21,8 @@ fn card() -> String {
     }))
 }
 
-/// MUT: emitting the source as an attribute instead of a text child turns the
-/// text assertions red (the empty-`<code>` defect this test exists for).
+/// MUT: emitting the source as an attribute instead of a text child never
+/// passes — the text assertions here catch it (the empty-`<code>` defect).
 #[test]
 fn the_source_renders_as_text_not_an_attribute() {
     let html = card();

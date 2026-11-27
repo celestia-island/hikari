@@ -20,6 +20,7 @@ import type {
   MermaidDoc,
   MermaidEdge,
   MermaidGraphDoc,
+  MermaidDirection,
   MermaidGroup,
   MermaidNodeShape,
 } from "./types";
@@ -52,17 +53,25 @@ export interface LaidOutNode {
   data: Record<string, unknown>;
 }
 
+/** The board anchor modes the mermaid layout asks for (a subset of the
+ *  board's — see utils/boardEdges.ts BoardAnchorMode). */
+export type MermaidAnchorMode = "center" | "nearest" | "top" | "bottom" | "left" | "right";
+
 export interface LaidOutEdge {
   id: string;
   from: string;
   to: string;
   /** Board route style; bezier = mermaid flowchart feel. */
   style: "straight" | "bezier" | "orthogonal";
-  /** Border anchor overrides. An edge into a subgraph cluster lands on the
-   *  frame's border (mermaid attaches there), not on its center — the center
-   *  sits behind the frame's own members. */
-  anchorFrom?: "center" | "nearest" | "top" | "top-left" | "fan";
-  anchorTo?: "center" | "nearest" | "top" | "top-left" | "fan";
+  /** Border anchors. A flow edge leaves through the side its source's rank
+   *  stack grows toward and arrives through the opposite side of its target
+   *  (a top-down flowchart: bottom → top), which is how mermaid.js docks
+   *  them — and what keeps every arrowhead head-on for the border it lands
+   *  on. An edge into a subgraph cluster lands on the frame's border
+   *  (`nearest`), not on its center — the center sits behind the frame's own
+   *  own members. */
+  anchorFrom?: MermaidAnchorMode;
+  anchorTo?: MermaidAnchorMode;
   dashed: boolean;
   arrow: "none" | "solid" | "open";
   label: string | null;
@@ -162,10 +171,100 @@ interface GraphItem {
   order: number;
 }
 
-/** Longest-path ranking (Kahn order; cycle leftovers keep their current
- * rank) — a port of ratatui-markdown `assign_layers` with the same
- * "roots at 0, edge pushes target to max(cur, src+1)" semantics.
- * Self-edges are ignored, duplicate edges counted once. */
+/** A rank member: a real node, or a VIRTUAL one — an invisible "lane" cell
+ *  that an edge skipping ranks occupies in every rank between its ends (the
+ *  dummy-node device dagre, and so mermaid.js, lay out with: the cell takes
+ *  part in the ordering, so the real nodes of the ranks in between step
+ *  aside and the edge runs down a clear lane). */
+interface RankMember {
+  id: string;
+  w: number;
+  h: number;
+  order: number;
+  virtual: null | {
+    /** Index into the `edges` input. */
+    edge: number;
+    /** The lane's neighbours (lower visual rank first), by id and rank. */
+    lower: { id: string; rank: number };
+    upper: { id: string; rank: number };
+  };
+}
+
+/** Cross-axis footprint of a lane cell, world px. */
+const LANE_CROSS = 12;
+/** Cross-axis clearance a lane cell keeps to its rank neighbours — a lane
+ *  is not a box, it only needs the edge's stroke (and the arrowhead's
+ *  width) to clear its neighbours. */
+const LANE_GAP = 16;
+
+interface RankedEdge {
+  index: number;
+  from: string;
+  to: string;
+}
+
+/**
+ * The edges to read AGAINST their direction so the graph becomes a DAG (a
+ * feedback arc set), found by a depth-first search: an edge leading back
+ * to a node still on the search stack closes a cycle. The search starts
+ * from the true sources (fewest incoming edges first), then follows parse
+ * order — a cluster's members are parsed before the node that feeds them,
+ * and starting THERE turns the feeding edge into the "back" one (the
+ * audit corpus 2026-11-27: `A --> B` came out below B).
+ *
+ * WHY (measured on the same corpus): the previous ranking ran Kahn's
+ * algorithm on the raw graph, and Kahn's queue never reaches a node that
+ * sits in or after a cycle — `Start → Is it? → OK → Rethink → Is it?`
+ * ranked Start, OK, Rethink and End all at 0 and drew the decision diamond
+ * BELOW its own outputs. Reading one edge of every cycle backwards is what
+ * dagre (mermaid.js's engine) does; that edge is still DRAWN forwards
+ * afterwards, docked around the side of the stack (see `flowAnchors`).
+ * Returns the indexes of the edges to read backwards.
+ */
+export function feedbackArcSet(items: GraphItem[], edges: RankedEdge[]): Set<number> {
+  const adjacency = new Map<string, RankedEdge[]>(items.map((i) => [i.id, []]));
+  const indegree = new Map<string, number>(items.map((i) => [i.id, 0]));
+  for (const e of edges) {
+    adjacency.get(e.from)?.push(e);
+    indegree.set(e.to, (indegree.get(e.to) ?? 0) + 1);
+  }
+  const WHITE = 0;
+  const GRAY = 1;
+  const BLACK = 2;
+  const color = new Map<string, number>(items.map((i) => [i.id, WHITE]));
+  const back = new Set<number>();
+  const roots = items.slice().sort((a, b) => (indegree.get(a.id) ?? 0) - (indegree.get(b.id) ?? 0) || a.order - b.order);
+  for (const root of roots) {
+    if (color.get(root.id) !== WHITE) continue;
+    const stack: { id: string; next: number }[] = [{ id: root.id, next: 0 }];
+    color.set(root.id, GRAY);
+    while (stack.length > 0) {
+      const top = stack[stack.length - 1];
+      const row = adjacency.get(top.id) ?? [];
+      if (top.next < row.length) {
+        const e = row[top.next];
+        top.next += 1;
+        const c = color.get(e.to);
+        if (c === WHITE) {
+          color.set(e.to, GRAY);
+          stack.push({ id: e.to, next: 0 });
+        } else if (c === GRAY) {
+          back.add(e.index);
+        }
+      } else {
+        color.set(top.id, BLACK);
+        stack.pop();
+      }
+    }
+  }
+  return back;
+}
+
+/** Longest-path ranking over a DAG (Kahn order): roots sit at 0, every
+ *  edge pushes its target to `max(cur, src + 1)`. Same edge/duplicate
+ *  semantics as the ratatui-markdown `assign_layers` it ports — on a graph
+ *  that still has cycles the queue stalls (see `feedbackArcSet`). Self-edges
+ *  and duplicate edges are ignored. */
 function rankNodes(ids: string[], edges: Array<{ from: string; to: string }>): Map<string, number> {
   const rank = new Map<string, number>(ids.map((id) => [id, 0]));
   const indeg = new Map<string, number>(ids.map((id) => [id, 0]));
@@ -201,7 +300,7 @@ export interface GraphLayoutInput {
   /** World-rect size per node id (already includes card chrome). */
   items: GraphItem[];
   edges: Array<{ from: string; to: string }>;
-  direction: MermaidGraphDoc["direction"];
+  direction: MermaidDirection;
   /** Cross-axis gap between same-rank siblings, world px. Cluster frames pad
    *  their members on both sides (and reserve a caption band on the stacked
    *  axis), so a grouped graph widens this budget — `GROUP_CROSS_GAP_H` for
@@ -210,10 +309,26 @@ export interface GraphLayoutInput {
   crossGap?: number;
 }
 
+export interface GraphLane {
+  /** Index into the `edges` input. */
+  edge: number;
+  /** The lane's world centers, from the rank after the lower end to the
+   *  rank before the upper end (visual order). */
+  points: Array<{ x: number; y: number }>;
+}
+
 export interface GraphLayoutOutput {
   positions: Map<string, { x: number; y: number }>;
+  /** FLOW rank per node id — 0 is where the flow starts (the bottom for BT,
+   *  the right for RL). An edge toward a higher flow rank points down the
+   *  stack and docks on the stack-growing sides (see `flowAnchors`). */
+  ranks: Map<string, number>;
   width: number;
   height: number;
+  /** Lane cells, one entry per edge that skips ranks (edges read against
+   *  their direction by the cycle breaker get none — they loop around the
+   *  side instead). */
+  lanes: GraphLane[];
 }
 
 /** Rank + barycenter-order + pixel-place a node-edge graph. */
@@ -222,97 +337,155 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
   const horizontal = direction === "LR" || direction === "RL";
   const reversed = direction === "BT" || direction === "RL";
 
+  const known = new Set(items.map((i) => i.id));
+  const ranked: RankedEdge[] = [];
+  edges.forEach((e, index) => {
+    if (known.has(e.from) && known.has(e.to) && e.from !== e.to) ranked.push({ index, from: e.from, to: e.to });
+  });
+  const back = feedbackArcSet(items, ranked);
   const rank = rankNodes(
     items.map((i) => i.id),
-    edges,
+    ranked.filter((e) => !back.has(e.index)),
   );
   let maxRank = 0;
   for (const r of rank.values()) maxRank = Math.max(maxRank, r);
-  const rankOf = (id: string): number => {
-    const r = rank.get(id) ?? 0;
-    return reversed ? maxRank - r : r;
-  };
+  const visualRank = (id: string): number => (reversed ? maxRank - (rank.get(id) ?? 0) : (rank.get(id) ?? 0));
 
-  // Group into ranks, keep parse order inside each rank.
-  const rankMembers = new Map<number, GraphItem[]>();
-  for (const item of items) {
-    const r = rankOf(item.id);
+  // Lane cells for every edge that skips a rank.
+  const members: RankMember[] = items.map((i) => ({ ...i, virtual: null }));
+  const lanes: GraphLane[] = [];
+  for (const e of ranked) {
+    if (back.has(e.index)) continue;
+    const ra = visualRank(e.from);
+    const rb = visualRank(e.to);
+    const lo = Math.min(ra, rb);
+    const span = Math.abs(rb - ra);
+    if (span <= 1) continue;
+    const chain: Array<{ id: string; rank: number }> = [{ id: ra < rb ? e.from : e.to, rank: lo }];
+    for (let k = 1; k < span; k += 1) chain.push({ id: `v:${e.index}:${k}`, rank: lo + k });
+    chain.push({ id: ra < rb ? e.to : e.from, rank: lo + span });
+    for (let k = 1; k < span; k += 1) {
+      members.push({
+        id: chain[k].id,
+        w: LANE_CROSS,
+        h: LANE_CROSS,
+        order: items.length + e.index,
+        virtual: { edge: e.index, lower: chain[k - 1], upper: chain[k + 1] },
+      });
+    }
+    lanes.push({ edge: e.index, points: [] });
+  }
+  const laneOfEdge = new Map<number, GraphLane>(lanes.map((lane) => [lane.edge, lane]));
+
+  // Group into ranks; keep parse order inside each rank.
+  const rankMembers = new Map<number, RankMember[]>();
+  const rankOfMember = new Map<string, number>();
+  for (const m of members) {
+    const r = m.virtual ? m.virtual.lower.rank + 1 : visualRank(m.id);
+    rankOfMember.set(m.id, r);
     const bucket = rankMembers.get(r) ?? [];
-    bucket.push(item);
+    bucket.push(m);
     rankMembers.set(r, bucket);
   }
-
-  // Barycenter ordering: for every rank ≥ 1 (in rank order), sort members
-  // by the mean cross-position of their rank-1 neighbors (stable on
-  // parse order). Two sweeps would be marginally better; one keeps the
-  // code honest and is enough for report-sized diagrams.
-  const crossPos = new Map<string, number>();
   const orderedRanks = [...rankMembers.keys()].sort((a, b) => a - b);
-  for (const r of orderedRanks) {
-    const members = (rankMembers.get(r) as GraphItem[]).slice().sort((a, b) => a.order - b.order);
-    members.forEach((m, i) => crossPos.set(m.id, i));
-  }
-  const neighborsBelow = (id: string): string[] => {
-    const out: string[] = [];
-    for (const e of edges) {
-      if (e.to === id && e.from !== id) out.push(e.from);
-      if (e.from === id && e.to !== id) out.push(e.to);
-    }
-    return out;
+
+  // Ordering adjacency: an edge ties its two ends (or, when it has a lane,
+  // the cells of its lane, end to end); a member's barycenter is the mean
+  // position of its neighbours in the rank the sweep looks at.
+  const neighbors = new Map<string, string[]>(members.map((m) => [m.id, []]));
+  const link = (a: string, b: string): void => {
+    neighbors.get(a)?.push(b);
+    neighbors.get(b)?.push(a);
   };
-  for (const r of orderedRanks) {
-    if (r === 0) continue;
-    const members = (rankMembers.get(r) as GraphItem[]).slice().sort((a, b) => a.order - b.order);
-    members.forEach((m, i) => crossPos.set(m.id, i));
-    members.sort((a, b) => {
-      const bary = (id: string): number => {
-        const vals = neighborsBelow(id)
-          .filter((nid) => rankOf(nid) === r - 1)
-          .map((nid) => crossPos.get(nid))
-          .filter((v): v is number => v !== undefined);
-        return vals.length === 0 ? Number.MAX_SAFE_INTEGER : vals.reduce((s, v) => s + v, 0) / vals.length;
-      };
-      const ba = bary(a.id);
-      const bb = bary(b.id);
-      if (ba !== bb) return ba - bb;
-      return a.order - b.order;
-    });
-    members.forEach((m, i) => crossPos.set(m.id, i));
-    rankMembers.set(r, members);
+  for (const e of ranked) if (!laneOfEdge.has(e.index)) link(e.from, e.to);
+  for (const m of members) {
+    if (m.virtual) {
+      link(m.id, m.virtual.lower.id);
+      link(m.id, m.virtual.upper.id);
+    }
   }
+  const crossPos = new Map<string, number>();
+  for (const r of orderedRanks) {
+    const list = (rankMembers.get(r) as RankMember[]).sort((a, b) => a.order - b.order);
+    list.forEach((m, i) => crossPos.set(m.id, i));
+  }
+  const bary = (id: string, toward: number): number | null => {
+    const r = rankOfMember.get(id) ?? 0;
+    const vals = (neighbors.get(id) ?? [])
+      .filter((n) => rankOfMember.get(n) === r + toward)
+      .map((n) => crossPos.get(n) ?? 0);
+    return vals.length === 0 ? null : vals.reduce((sum, v) => sum + v, 0) / vals.length;
+  };
+  /** One barycenter sweep. A member with no neighbour on that side holds
+   *  its slot (its current index is its own barycenter). */
+  const sweep = (ranks: number[], toward: number): void => {
+    for (const r of ranks) {
+      const list = rankMembers.get(r) as RankMember[];
+      list.sort((a, b) => {
+        const ba = bary(a.id, toward) ?? crossPos.get(a.id) ?? 0;
+        const bb = bary(b.id, toward) ?? crossPos.get(b.id) ?? 0;
+        if (ba !== bb) return ba - bb;
+        return a.order - b.order;
+      });
+      list.forEach((m, i) => crossPos.set(m.id, i));
+    }
+  };
+  // Down, up, down: the first pass drags every rank under its upper
+  // neighbour, the second pulls roots above their children, the third
+  // settles the lanes straight.
+  sweep(orderedRanks.slice(1), -1);
+  sweep([...orderedRanks.slice(0, -1)].reverse(), 1);
+  sweep(orderedRanks.slice(1), -1);
 
   // Pixel geometry: rank band = max main size + gap; each rank's block
   // centered on the cross axis.
-  const mainSize = (i: GraphItem): number => (horizontal ? i.w : i.h);
-  const crossSize = (i: GraphItem): number => (horizontal ? i.h : i.w);
-  const crossSpanOf = (members: GraphItem[]): number =>
-    members.reduce((s, m) => s + crossSize(m), 0) + crossGap * Math.max(members.length - 1, 0);
+  const mainSize = (m: RankMember): number => (horizontal ? m.w : m.h);
+  const crossSize = (m: RankMember): number => (horizontal ? m.h : m.w);
+  const gapBetween = (a: RankMember, b: RankMember): number => (a.virtual || b.virtual ? Math.min(LANE_GAP, crossGap) : crossGap);
+  const crossSpanOf = (list: RankMember[]): number =>
+    list.reduce((sum, m, i) => sum + crossSize(m) + (i < list.length - 1 ? gapBetween(m, list[i + 1]) : 0), 0);
 
   let totalCross = 0;
-  for (const members of rankMembers.values()) totalCross = Math.max(totalCross, crossSpanOf(members));
+  for (const list of rankMembers.values()) totalCross = Math.max(totalCross, crossSpanOf(list));
 
   const positions = new Map<string, { x: number; y: number }>();
   let mainOffset = MARGIN;
   let width = 0;
   let height = 0;
   for (const r of orderedRanks) {
-    const members = rankMembers.get(r) as GraphItem[];
-    const rankMain = members.reduce((m, i) => Math.max(m, mainSize(i)), 0);
-    let cross = MARGIN + (totalCross - crossSpanOf(members)) / 2;
-    for (const m of members) {
+    const list = rankMembers.get(r) as RankMember[];
+    const rankMain = list.reduce((m, i) => (i.virtual ? m : Math.max(m, mainSize(i))), 0);
+    let cross = MARGIN + (totalCross - crossSpanOf(list)) / 2;
+    for (let i = 0; i < list.length; i += 1) {
+      const m = list[i];
       const mainLead = (rankMain - mainSize(m)) / 2;
       const p = horizontal
         ? { x: mainOffset + mainLead, y: cross }
         : { x: cross, y: mainOffset + mainLead };
-      positions.set(m.id, { x: Math.round(p.x), y: Math.round(p.y) });
-      cross += crossSize(m) + crossGap;
-      width = Math.max(width, p.x + m.w);
-      height = Math.max(height, p.y + m.h);
+      if (m.virtual) {
+        const lane = laneOfEdge.get(m.virtual.edge);
+        if (lane) {
+          // The cell's center on BOTH axes: the main axis at the band's
+          // middle (the cell has no extent there), the cross axis mid-slot.
+          lane.points.push(
+            horizontal
+              ? { x: Math.round(mainOffset + rankMain / 2), y: Math.round(cross + crossSize(m) / 2) }
+              : { x: Math.round(cross + crossSize(m) / 2), y: Math.round(mainOffset + rankMain / 2) },
+          );
+        }
+      } else {
+        positions.set(m.id, { x: Math.round(p.x), y: Math.round(p.y) });
+        width = Math.max(width, p.x + m.w);
+        height = Math.max(height, p.y + m.h);
+      }
+      cross += crossSize(m) + (i < list.length - 1 ? gapBetween(m, list[i + 1]) : 0);
     }
     mainOffset += rankMain + GAP_RANK;
   }
 
-  return { positions, width: width + MARGIN, height: height + MARGIN };
+  const ranks = new Map<string, number>();
+  for (const item of items) ranks.set(item.id, rank.get(item.id) ?? 0);
+  return { positions, ranks, lanes, width: width + MARGIN, height: height + MARGIN };
 }
 
 // ── Subgraph clusters ────────────────────────────────────────────────
@@ -387,7 +560,37 @@ function layoutGroupFrames(
   return frames;
 }
 
-// ── Flowchart / state ────────────────────────────────────────────────
+// ── Flowchart / state ──────────────────────────────────────────────────
+
+/** The side of a node the rank stack grows toward, per flow direction: an
+ *  edge toward a later rank LEAVES through it. */
+const STACK_AHEAD: Record<MermaidDirection, MermaidAnchorMode> = {
+  TD: "bottom",
+  BT: "top",
+  LR: "right",
+  RL: "left",
+};
+/** The side an edge toward a later rank ARRIVES through (the target's side
+ *  facing back up the stack). */
+const STACK_BEHIND: Record<MermaidDirection, MermaidAnchorMode> = {
+  TD: "top",
+  BT: "bottom",
+  LR: "left",
+  RL: "right",
+};
+/** Cross-axis side a back edge (a flow edge toward an earlier rank) loops
+ *  around. */
+const BACK_EDGE_SIDE: Record<MermaidDirection, MermaidAnchorMode> = {
+  TD: "left",
+  BT: "left",
+  LR: "top",
+  RL: "top",
+};
+
+/** How far a self-loop's corners stand off the node border (world px, along
+ *  the border normal) and half the loop's length along the border. */
+const SELF_LOOP_OUT = 26;
+const SELF_LOOP_ALONG = 15;
 
 function layoutGraphDoc(
   doc: MermaidGraphDoc,
@@ -400,14 +603,38 @@ function layoutGraphDoc(
   });
   const groups = doc.groups ?? [];
   const horizontal = doc.direction === "LR" || doc.direction === "RL";
-  const { positions, width, height } = layoutGraph({
+  // Ranking edges: an edge that addresses a cluster stands for an edge to
+  // (or from) every node inside it — `C --> G` orders C before G's members
+  // and `G --> D` after them, which is what a cluster edge means in
+  // mermaid.js. (Fed to the ranker raw, the cluster id matches no node, the
+  // edge vanishes from the ranking, and the node AFTER the cluster climbs
+  // into the top rank — measured on the audit corpus 2026-11-27.)
+  const endpointsOf = (id: string): string[] => {
+    const group = groups.find((g) => g.id === id);
+    return group ? group.members : [id];
+  };
+  const rankEdges: Array<{ from: string; to: string }> = [];
+  /** For each doc edge, the rank edge that carries its lane (the first one
+   *  it expanded to). */
+  const rankEdgeOfDoc: number[] = [];
+  doc.edges.forEach((e, i) => {
+    for (const from of endpointsOf(e.source)) {
+      for (const to of endpointsOf(e.target)) {
+        if (from === to) continue;
+        rankEdgeOfDoc[i] ??= rankEdges.length;
+        rankEdges.push({ from, to });
+      }
+    }
+  });
+  const { positions, ranks, lanes, width, height } = layoutGraph({
     items,
-    edges: doc.edges.map((e) => ({ from: e.source, to: e.target })),
+    edges: rankEdges,
     direction: doc.direction,
     ...(groups.length > 0
       ? { crossGap: horizontal ? GROUP_CROSS_GAP_V : GROUP_CROSS_GAP_H }
       : {}),
   });
+  const laneOfRankEdge = new Map(lanes.map((lane) => [lane.edge, lane]));
 
   const byId = new Map(doc.nodes.map((n) => [n.id, n]));
   const memberNodes: LaidOutNode[] = items.map((item) => {
@@ -448,6 +675,12 @@ function layoutGraphDoc(
       n.x += shiftX;
       n.y += shiftY;
     }
+    for (const lane of lanes) {
+      for (const pt of lane.points) {
+        pt.x += shiftX;
+        pt.y += shiftY;
+      }
+    }
     for (const [id, frame] of frames) {
       frames.set(id, { ...frame, x: frame.x + shiftX, y: frame.y + shiftY });
     }
@@ -472,24 +705,129 @@ function layoutGraphDoc(
       };
     });
 
+  // Invisible junctions the edges route through: the cells of every edge
+  // lane, and the two corners of every self-loop.
+  const junctions: LaidOutNode[] = [];
+  const junction = (id: string, x: number, y: number): string => {
+    junctions.push({ id, x: Math.round(x), y: Math.round(y), w: 0, h: 0, kind: "shape", hidden: true, data: {} });
+    return id;
+  };
+
   const nodes: LaidOutNode[] = [...groupNodes, ...memberNodes];
 
   // An edge may address a cluster (`C --> G`): mermaid paints the arrow onto
   // the frame, so redirect it to the frame's board node.
   const endpoint = (id: string): string => (frames.has(id) ? `g:${id}` : `n:${id}`);
-  const edges: LaidOutEdge[] = doc.edges
-    .filter((e) => e.source !== e.target)
-    .map((e, i) => ({
+  const ahead: MermaidAnchorMode = STACK_AHEAD[doc.direction];
+  const behind: MermaidAnchorMode = STACK_BEHIND[doc.direction];
+  /** Docking for an edge between two plain nodes, from the two ends' FLOW
+   *  ranks (see `flowAnchors`). */
+  const flowAnchors = (source: string, target: string): Pick<LaidOutEdge, "anchorFrom" | "anchorTo"> => {
+    const rs = ranks.get(source);
+    const rt = ranks.get(target);
+    if (rs === undefined || rt === undefined) return {};
+    if (rt > rs) return { anchorFrom: ahead, anchorTo: behind };
+    if (rt < rs) {
+      // A flow edge pointing back UP the stack (a retry loop). Docked on the
+      // stack-growing sides it would run straight through every rank between
+      // the two; docking both ends on the same cross-axis side loops it
+      // around that side instead, the way mermaid.js routes a back edge.
+      return { anchorFrom: BACK_EDGE_SIDE[doc.direction], anchorTo: BACK_EDGE_SIDE[doc.direction] };
+    }
+    // Same rank: leave and arrive on the cross-axis sides that face each other.
+    const a = positions.get(source);
+    const b = positions.get(target);
+    if (!a || !b) return {};
+    return horizontal
+      ? a.y <= b.y
+        ? { anchorFrom: "bottom", anchorTo: "top" }
+        : { anchorFrom: "top", anchorTo: "bottom" }
+      : a.x <= b.x
+        ? { anchorFrom: "right", anchorTo: "left" }
+        : { anchorFrom: "left", anchorTo: "right" };
+  };
+  /** A self-loop (`A --> A`) leaves and re-enters the same border midpoint,
+   *  around two corners standing off it. The route's end tangents are the
+   *  border normal (HkBoard docks them), so both ends stay head-on. */
+  const selfLoop = (i: number, rect: Rect): Pick<LaidOutEdge, "anchorFrom" | "anchorTo" | "via"> => {
+    const side: MermaidAnchorMode = horizontal ? "bottom" : "right";
+    const s = side === "right" ? { x: rect.x + rect.w, y: rect.y + rect.h / 2 } : { x: rect.x + rect.w / 2, y: rect.y + rect.h };
+    const n = side === "right" ? { x: 1, y: 0 } : { x: 0, y: 1 };
+    const t = side === "right" ? { x: 0, y: 1 } : { x: 1, y: 0 };
+    const a = junction(`j:loop:${i}:a`, s.x + n.x * SELF_LOOP_OUT - t.x * SELF_LOOP_ALONG, s.y + n.y * SELF_LOOP_OUT - t.y * SELF_LOOP_ALONG);
+    const b = junction(`j:loop:${i}:b`, s.x + n.x * SELF_LOOP_OUT + t.x * SELF_LOOP_ALONG, s.y + n.y * SELF_LOOP_OUT + t.y * SELF_LOOP_ALONG);
+    return { anchorFrom: side, anchorTo: side, via: [a, b] };
+  };
+  /** True when the edge points back up the flow (target in an earlier
+   *  flow rank than source) — see `flowAnchors`. */
+  const rt_lt = (source: string, target: string): boolean =>
+    (ranks.get(target) ?? 0) < (ranks.get(source) ?? 0);
+  const rectOf = new Map(memberNodes.map((n) => [n.id.slice(2), n]));
+  /** The cross-axis side a back edge loops around: the one its SOURCE has
+   *  free. A node with a same-rank sibling on its left loops right (and
+   *  vice versa), so the loop clears the sibling — `wait` sitting beside
+   *  `run` loops around `wait`'s outside, not through `run` (the audit
+   *  corpus 2026-11-27; mermaid.js routes it the same way). */
+  const backEdgeSide = (source: string): MermaidAnchorMode => {
+    const r = ranks.get(source);
+    const p = positions.get(source);
+    if (r === undefined || !p) return BACK_EDGE_SIDE[doc.direction];
+    let lower = false;
+    let higher = false;
+    for (const [other, q] of positions) {
+      if (other === source || ranks.get(other) !== r) continue;
+      if (horizontal ? q.y < p.y : q.x < p.x) lower = true;
+      else higher = true;
+    }
+    if (horizontal) {
+      if (lower && !higher) return "bottom";
+      if (higher && !lower) return "top";
+      return BACK_EDGE_SIDE[doc.direction];
+    }
+    if (lower && !higher) return "right";
+    if (higher && !lower) return "left";
+    return BACK_EDGE_SIDE[doc.direction];
+  };
+  const edges: LaidOutEdge[] = doc.edges.map((e, i) => {
+    const loop = e.source === e.target && !frames.has(e.source) ? rectOf.get(e.source) : undefined;
+    if (loop) {
+      return {
+        id: `e:${i}`,
+        from: `n:${e.source}`,
+        to: `n:${e.source}`,
+        style: "bezier" as const,
+        ...selfLoop(i, { x: loop.x, y: loop.y, w: loop.w, h: loop.h }),
+        dashed: false,
+        arrow: e.edgeType === "arrow" ? ("solid" as const) : ("none" as const),
+        label: e.label,
+      };
+    }
+    // An edge skipping ranks runs down its lane (the cells the ranker reserved
+    // for it), unless an end is a cluster frame — a frame's `nearest` dock
+    // sits on the frame border, not on the lane's end.
+    const lane = rankEdgeOfDoc[i] === undefined ? undefined : laneOfRankEdge.get(rankEdgeOfDoc[i] as number);
+    const via = lane && !frames.has(e.source) && !frames.has(e.target)
+      ? lane.points.map((pt, k) => junction(`j:e${i}:${k}`, pt.x, pt.y))
+      : undefined;
+    return {
       id: `e:${i}`,
       from: endpoint(e.source),
       to: endpoint(e.target),
       style: "bezier" as const,
+      ...flowAnchors(e.source, e.target),
+      ...(rt_lt(e.source, e.target) && !frames.has(e.source) && !frames.has(e.target)
+        ? { anchorFrom: backEdgeSide(e.source), anchorTo: backEdgeSide(e.source) }
+        : {}),
       ...(frames.has(e.source) ? { anchorFrom: "nearest" as const } : {}),
       ...(frames.has(e.target) ? { anchorTo: "nearest" as const } : {}),
+      ...(via && via.length > 0 ? { via } : {}),
       dashed: false,
       arrow: e.edgeType === "arrow" ? ("solid" as const) : ("none" as const),
       label: e.label,
-    }));
+    };
+  });
+
+  junctions.forEach((j) => nodes.push(j));
 
   // The frames extend past the member bbox the graph pass measured.
   let outWidth = width;
@@ -788,9 +1126,18 @@ function layoutQuadrant(doc: Extract<MermaidDoc, { kind: "quadrant" }>): { nodes
 // ── Entry ────────────────────────────────────────────────────────────
 
 /** Suggested component height: tall enough to read, short enough not to
- * swallow a report (same spirit as the 62–70vh reading panes). */
+ * swallow a report (same spirit as the 62–70vh reading panes).
+ *
+ * The 720px ceiling is a READABILITY floor in disguise: the board fits the
+ * whole diagram into whatever height it is given, and the old 540px cap
+ * parked a ten-node top-down flowchart at 62% — 14px labels drawn at
+ * 8.7px (measured on docs.celestia.world 2026-11-27, against the real
+ * mermaid.js lane rendering the same source at 100%). At 720 the same
+ * diagram fits at 88%; anything shorter is a scroll-or-zoom decision the
+ * reader can still make on the board itself. */
+const SUGGESTED_HEIGHT_MAX = 720;
 function suggestHeight(contentH: number): number {
-  return clampMin(Math.min(contentH + 24, 540), 200);
+  return clampMin(Math.min(contentH + 24, SUGGESTED_HEIGHT_MAX), 200);
 }
 
 export function buildBoardModel(doc: MermaidDoc, measure: MeasureText): MermaidBoardModel {

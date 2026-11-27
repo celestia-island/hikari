@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildBoardModel, heuristicTextWidth, layoutGraph } from "../../mermaid/layout";
+import { buildBoardModel, feedbackArcSet, heuristicTextWidth, layoutGraph } from "../../mermaid/layout";
 import { wasmMermaidEngine, mermaidReady } from "../../mermaid/wasmEngine";
 
 /**
@@ -243,7 +243,19 @@ describe("buildBoardModel", () => {
     const model = buildBoardModel(wasmMermaidEngine.parse("graph TD\nA[Start] -->|go| B{Q}") as never, measure);
     expect(model.nodes.map((n) => n.id)).toEqual(["n:A", "n:B"]);
     expect(model.edges).toEqual([
-      { id: "e:0", from: "n:A", to: "n:B", style: "bezier", dashed: false, arrow: "solid", label: "go" },
+      {
+        id: "e:0",
+        from: "n:A",
+        to: "n:B",
+        style: "bezier",
+        // a flow edge toward a later rank leaves the source's bottom and
+        // enters the target's top (see "flowchart routing" below)
+        anchorFrom: "bottom",
+        anchorTo: "top",
+        dashed: false,
+        arrow: "solid",
+        label: "go",
+      },
     ]);
     expect(model.suggestedHeight).toBeGreaterThanOrEqual(200);
   });
@@ -378,5 +390,142 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(model.suggestedHeight).toBeGreaterThanOrEqual(200);
     const bare = buildBoardModel(wasmMermaidEngine.parse("sequenceDiagram\nparticipant Only") as never, measure);
     expect(bare.suggestedHeight).toBe(200);
+  });
+});
+
+describe("feedbackArcSet", () => {
+  const items = (ids: string[]) => ids.map((id, order) => ({ id, w: 10, h: 10, order }));
+  const withIndex = (edges: Array<{ from: string; to: string }>) => edges.map((e, index) => ({ ...e, index }));
+
+  it("reads exactly one edge of a cycle backwards — the one that closes it", () => {
+    const edges = withIndex([{ from: "A", to: "B" }, { from: "B", to: "C" }, { from: "C", to: "D" }, { from: "D", to: "B" }]);
+    expect([...feedbackArcSet(items(["A", "B", "C", "D"]), edges)]).toEqual([3]);
+  });
+
+  it("starts at the true sources, so a node parsed before its feeder is not made the back edge", () => {
+    // B and C are parsed first, but R is the only indegree-0 node: the
+    // search starts there and the cycle closes on C → A, not on A → B.
+    const edges = withIndex([{ from: "R", to: "A" }, { from: "A", to: "B" }, { from: "B", to: "C" }, { from: "C", to: "A" }]);
+    expect([...feedbackArcSet(items(["B", "C", "A", "R"]), edges)]).toEqual([3]);
+  });
+});
+
+describe("flowchart routing — arrows dock on the border they enter", () => {
+  const DECISION = [
+    "flowchart TD",
+    "  A[Start] --> B{Is it?}",
+    "  B -->|Yes| C[OK]",
+    "  C --> D[Rethink]",
+    "  D --> B",
+    "  B -->|No| E[End]",
+    "  C --> E",
+  ].join("\n");
+  const parse = async (source: string) => {
+    await mermaidReady;
+    return buildBoardModel(wasmMermaidEngine.parse(source) as never, measure);
+  };
+  const nodeY = (model: { nodes: Array<{ id: string; y: number }> }, id: string): number =>
+    model.nodes.find((n) => n.id === `n:${id}`)!.y;
+
+  it("a cycle keeps the decision ABOVE its outputs (only the retry edge is read backwards)", async () => {
+    const model = await parse(DECISION);
+    // Start → Is it? → OK / End → Rethink. The old ranker stalled on the
+    // cycle and drew the diamond BELOW everything that follows it.
+    expect(nodeY(model, "A")).toBeLessThan(nodeY(model, "B"));
+    expect(nodeY(model, "B")).toBeLessThan(nodeY(model, "C"));
+    expect(nodeY(model, "B")).toBeLessThan(nodeY(model, "E"));
+    expect(nodeY(model, "C")).toBeLessThan(nodeY(model, "D"));
+  });
+
+  it("forward edges leave the stack-growing side and arrive on the opposite one", async () => {
+    const model = await parse(DECISION);
+    const edge = (from: string, to: string) => model.edges.find((e) => e.from === `n:${from}` && e.to === `n:${to}`)!;
+    expect(edge("A", "B")).toMatchObject({ anchorFrom: "bottom", anchorTo: "top" });
+    expect(edge("B", "C")).toMatchObject({ anchorFrom: "bottom", anchorTo: "top" });
+    expect(edge("C", "E")).toMatchObject({ anchorFrom: "bottom", anchorTo: "top" });
+    // the retry edge loops around ONE side instead of running through the
+    // ranks between its ends
+    expect(edge("D", "B")).toMatchObject({ anchorFrom: "left", anchorTo: "left" });
+  });
+
+  it("BT mirrors the docking: a forward edge leaves through the TOP", async () => {
+    const model = await parse("flowchart BT\nA --> B");
+    expect(model.edges[0]).toMatchObject({ from: "n:A", to: "n:B", anchorFrom: "top", anchorTo: "bottom" });
+  });
+
+  it("LR: a fan-out leaves the source's right side and arrives on each target's left", async () => {
+    const model = await parse("flowchart LR\nS --> A\nS --> B\nS --> C");
+    for (const e of model.edges) expect(e).toMatchObject({ anchorFrom: "right", anchorTo: "left" });
+    // same rank = one COLUMN in LR: the siblings stack vertically, in parse order
+    const a = model.nodes.find((n) => n.id === "n:A")!;
+    const b = model.nodes.find((n) => n.id === "n:B")!;
+    expect(a.x).toBe(b.x);
+    expect(a.y).toBeLessThan(b.y);
+    expect(overlap(a, b)).toBe(false);
+  });
+
+  it("a back edge loops around the side its source has free", async () => {
+    const model = await parse([
+      "flowchart TD",
+      "  S((start)) --> D{ready?}",
+      "  D -->|yes| R[run]",
+      "  D -->|no| W[wait]",
+      "  W --> D",
+      "  R --> E((end))",
+    ].join("\n"));
+    const loop = model.edges.find((e) => e.from === "n:W" && e.to === "n:D")!;
+    // `run` sits beside `wait` on the left, so the loop goes around the right
+    expect(loop).toMatchObject({ anchorFrom: "right", anchorTo: "right" });
+  });
+
+  it("an edge that skips ranks runs down a lane of its own, clear of the ranks between", async () => {
+    const model = await parse("flowchart TD\nT[top] --> A[rank 1]\nA --> B[rank 2]\nB --> C[rank 3]\nT --> C");
+    const skip = model.edges.find((e) => e.from === "n:T" && e.to === "n:C")!;
+    expect(skip.via?.length).toBe(2);
+    const between = ["n:A", "n:B"].map((id) => model.nodes.find((n) => n.id === id)!);
+    for (const id of skip.via!) {
+      const j = model.nodes.find((n) => n.id === id)!;
+      expect(j.hidden).toBe(true);
+      for (const node of between) {
+        expect(overlap({ x: j.x - 1, y: j.y - 1, w: 2, h: 2 }, node)).toBe(false);
+      }
+    }
+  });
+
+  it("a self-loop is drawn: out of and back into the same border, around two corners", async () => {
+    const model = await parse("flowchart TD\nA[retry] --> A\nA --> B[done]");
+    const loop = model.edges.find((e) => e.from === "n:A" && e.to === "n:A")!;
+    expect(loop).toMatchObject({ anchorFrom: "right", anchorTo: "right", arrow: "solid" });
+    expect(loop.via?.length).toBe(2);
+    const a = model.nodes.find((n) => n.id === "n:A")!;
+    for (const id of loop.via!) {
+      const j = model.nodes.find((n) => n.id === id)!;
+      expect(j.hidden).toBe(true);
+      expect(j.x).toBeGreaterThan(a.x + a.w);
+    }
+  });
+
+  it("an edge into a cluster orders the node before the cluster's members, and out of it after", async () => {
+    const model = await parse([
+      "flowchart TD",
+      "  subgraph outer[Outer]",
+      "    subgraph inner[Inner]",
+      "      B[one] --> C[two]",
+      "    end",
+      "    A[outside inner]",
+      "  end",
+      "  A --> B",
+      "  C --> D[after]",
+      "  D --> outer",
+      "  outer --> E[end]",
+    ].join("\n"));
+    expect(nodeY(model, "A")).toBeLessThan(nodeY(model, "B"));
+    // the node AFTER the cluster and the node the cluster feeds both sit
+    // below every member — beside each other, as mermaid.js draws them
+    for (const id of ["A", "B", "C"]) expect(nodeY(model, id)).toBeLessThan(nodeY(model, "D"));
+    expect(nodeY(model, "E")).toBe(nodeY(model, "D"));
+    // and the cluster edges still land on the frame
+    expect(model.edges[3]).toMatchObject({ from: "n:D", to: "g:outer", anchorTo: "nearest" });
+    expect(model.edges[4]).toMatchObject({ from: "g:outer", to: "n:E", anchorFrom: "nearest" });
   });
 });

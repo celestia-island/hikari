@@ -229,8 +229,8 @@ describe("HkBoard — arrows arrive head-on", () => {
     // The end point is the top-border midpoint of the target.
     expect([ex, ey]).toEqual([50, 120]);
     // The last control point sits straight ABOVE it: the end tangent is
-    // (0, +k) — not zero and not sideways. MUT: reverting the bezier to
-    // horizontal handles puts c2x at 10 and this turns RED.
+    // (0, +k) — never zero, never sideways. MUT: reverting the bezier to
+    // horizontal handles puts c2x at 10 and this pin catches it.
     expect(c2x).toBe(ex);
     expect(c2y).toBeLessThan(ey);
     expect(path.getAttribute("marker-end")).toMatch(/^url\(#hk-board-ah-/);

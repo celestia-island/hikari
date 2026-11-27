@@ -135,12 +135,12 @@ describe("boardEdges — via (empty corner nodes)", () => {
  * An `orient="auto"` arrowhead rotates to the path's END TANGENT. These
  * pins are the contract that every arrow lands head-on: the route leaves
  * and arrives along the border normals the caller names, and the end
- * tangent is not zero (the 2026-11-27 docs-site defect — every top-down
+ * tangent is never zero (the 2026-11-27 docs-site defect — every top-down
  * arrow pointing sideways, half hidden under its target).
  *
  * MUT: revert `cubicLeg` to horizontal handles — "uses the caller's border
  * normals for both handles", "a three-leg via chain…" and the component
- * pins in HkBoard.arrows.test.tsx all turn RED.
+ * pins in HkBoard.arrows.test.tsx all turn red; the scan catches the shape.
  */
 describe("boardEdges — route tangents", () => {
   const rect: BoardNodeRect = { x: 0, y: 0, w: 100, h: 40 };

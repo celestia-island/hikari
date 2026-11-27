@@ -107,8 +107,8 @@ fn the_header_slots_render_through_ssr() {
 /// A host with its own highlighter keeps ITS spans: pre-highlighted markup
 /// wins over the plain-text path, and the card still owns the chrome.
 ///
-/// MUT: preferring `code` over `code_html` (or dropping the branch) renders
-/// the raw source and loses every token span.
+/// MUT: preferring `code` over `code_html` never passes — dropping the branch
+/// renders the raw source and loses every token span, which this catches.
 #[test]
 fn pre_highlighted_markup_wins_over_plain_text() {
     let html = render(CodeHighlight(CodeHighlightProps {

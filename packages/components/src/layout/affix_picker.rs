@@ -775,9 +775,11 @@ impl AffixPickerWiring {
 
     /// Vue's `onSearchEnter`: Enter picks through the pure action table.
     /// The query STRING arrives here and the emptiness predicate is applied
-    /// AT THIS BOUNDARY (2026-11-27 R10): no `!` can sit between
-    /// [`affix_query_present`] and [`affix_enter_action`], so an inverted or
-    /// bypassed capture cannot reinstate the whitespace-only commit.
+    /// AT THIS BOUNDARY (2026-11-27 R10): the signature has no boolean to
+    /// gate, so the capture cannot smuggle a pre-computed value, and the
+    /// derivation line's line-start polarity is pinned (an inserted `!`
+    /// ON that line fails the pin — see the R6 test; a negation elsewhere
+    /// in the function is type-infeasible on the `&str` path).
     fn search_key(
         &self,
         event: KeyboardEvent,

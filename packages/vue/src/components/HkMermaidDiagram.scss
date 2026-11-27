@@ -136,11 +136,14 @@
   }
 
   // The diamond keeps a cap because its label band is inscribed in the
-  // rhombus waist, which IS narrower than the reserved box (`labelWidth *
-  // 1.55 + 24`). Note the arithmetic: at that slope the cap is inert for
-  // labels past ~47px and only bites very short ones, so this is shape
-  // intent rather than a live clip — kept so the band can never spill out
-  // of the waist if the diamond's sizing slope changes.
+  // rhombus waist — but do the arithmetic before claiming it clips
+  // anything: the diamond zeroes its padding/border, so `100%` here IS the
+  // reserved box `labelWidth * 1.55 + 24`, and 0.72 * 1.55 = 1.116 > 1
+  // means the cap band is ALWAYS wider than the label (slack never drops
+  // below ~+21px across the whole range). So this changes nothing today:
+  // it is a guard for a future slope change, not a live constraint, and it
+  // is kept only so a smaller `1.55` cannot let the band spill past the
+  // waist.
   &--diamond &__label {
     max-width: 72%;
   }

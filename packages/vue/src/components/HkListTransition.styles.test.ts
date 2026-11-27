@@ -182,6 +182,30 @@ describe("HkListTransition duration contract", () => {
     }
   });
 
+  it("grow's stagger delay is declared, important, and driven by the leave track", () => {
+    // The one-beat stagger is grow's signature (the entering row waits out
+    // the leave track; the siblings wait the same beat before closing the
+    // gap). Its `transition-delay` must therefore be PRESENT — dropping the
+    // declaration entirely leaves the remaining `transition:` track valid
+    // and the whole 605-file suite green while the beat silently
+    // disappears (2026-11-27 R13) — and `!important` like every track.
+    for (const sel of [".hk-list-grow-enter-active", ".hk-list-grow-move"]) {
+      const body = rule(css, sel)
+        .replace(/\/\*[\s\S]*?\*\//g, "");
+      const delayDecls = body
+        .split(";")
+        .map((d) => d.trim())
+        .filter((d) => /^transition-delay/.test(d));
+      expect(delayDecls.length, `${sel} declares a transition-delay`).toBeGreaterThanOrEqual(1);
+      for (const d of delayDecls) {
+        expect(d, `${sel} → ${d}`).toMatch(/!important\s*$/);
+        expect(d, `${sel} drives the beat from the leave track`).toContain(
+          "var(--hk-list-leave-duration, var(--duration-short, 0.15s))",
+        );
+      }
+    }
+  });
+
   it("surface keeps the window family's own enter/leave timings (the documented exception)", () => {
     expect(rule(css, ".hk-list-surface-enter-active")).toContain("var(--duration-normal, 0.3s)");
     expect(rule(css, ".hk-list-surface-leave-active")).toContain("var(--duration-short, 0.15s)");

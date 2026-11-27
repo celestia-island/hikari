@@ -64,6 +64,11 @@ describe("HkSelectPanel desktop popout — header-bearing shape", () => {
     expect(block("&.is-pinned-header")).toContain("padding: 0");
     expect(block("&.is-pinned-header")).toContain("overflow: hidden");
     expect(block(".hk-select-popout-pinned")).toContain("flex: none");
+    // The wrapper must FILL the leftover column (`flex: 1`): without it the
+    // wrapper sizes to content, the body's `flex: 1; min-height: 0` never
+    // engages, and a long catalog overflows the capped panel instead of
+    // scrolling (2026-11-27 R14 — the deletion survived the whole suite).
+    expect(block(".hk-select-popout-body-host")).toContain("flex: 1");
     expect(block(".hk-select-popout-body-host")).toContain("position: relative");
     const body = block(".hk-select-popout-body");
     expect(body).toContain("overflow-y: auto");

@@ -384,6 +384,21 @@ describe("layout pin tests (mutation survivors)", () => {
     expect(t2.x).toBeGreaterThanOrEqual(t1.x + t1.w);
   });
 
+  it("suggestHeight lets a tall diagram grow to 720px so the fit stays legible", async () => {
+    await mermaidReady;
+    // Ten nodes down one trunk: ~736px of content. The board fits whatever
+    // height it is given, and the old 540px cap parked this diagram at 62%
+    // (14px labels drawn at 8.7px, docs.celestia.world 2026-11-27).
+    const tall = buildBoardModel(
+      wasmMermaidEngine.parse(
+        ["flowchart TD", ...Array.from({ length: 10 }, (_, i) => `N${i}[node ${i}] --> N${i + 1}[node ${i + 1}]`)].join("\n"),
+      ) as never,
+      measure,
+    );
+    expect(tall.height).toBeGreaterThan(700);
+    expect(tall.suggestedHeight).toBe(720);
+  });
+
   it("suggestHeight floors at 200px for tiny content", async () => {
     await mermaidReady;
     const model = buildBoardModel(wasmMermaidEngine.parse("sequenceDiagram\nA ->> B: x") as never, measure);

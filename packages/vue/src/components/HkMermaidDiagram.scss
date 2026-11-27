@@ -119,12 +119,13 @@
     position: relative;
     z-index: 1;
     // The layout sizes a node FROM its label (`labelWidth + 2 * NODE_PAD_X`
-    // in mermaid/layout.ts), so the box is exactly big enough for the text
-    // and a percentage cap can only ever CLIP it. The old 72% hit every
-    // shape: measured on docs.celestia.world 2026-11-27, all 11 labels of a
-    // real diagram ellipsized ("markdown" → "markd…", "HTML" → "HT…"), and
-    // on a phone-width docs page every node read as a fragment. 100% keeps
-    // the ellipsis as a last resort while letting the sized box do its job.
+    // in mermaid/layout.ts), so for rect/rounded/circle the box is exactly
+    // big enough for the text and a percentage cap can only ever CLIP it.
+    // The old 72% hit every shape: measured on docs.celestia.world
+    // 2026-11-27, 10 of 11 labels on a real diagram ellipsized ("markdown"
+    // → "markd…", "HTML" → "HT…"), and lifting the cap at runtime cleaned
+    // all 11. 100% keeps the ellipsis as a last resort while letting the
+    // sized box do its job.
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -134,8 +135,12 @@
     line-height: 1.3;
   }
 
-  // The ONE shape whose label band is narrower than its reserved box: the
-  // rhombus waist. Base labels take 100% (see above).
+  // The diamond keeps a cap because its label band is inscribed in the
+  // rhombus waist, which IS narrower than the reserved box (`labelWidth *
+  // 1.55 + 24`). Note the arithmetic: at that slope the cap is inert for
+  // labels past ~47px and only bites very short ones, so this is shape
+  // intent rather than a live clip — kept so the band can never spill out
+  // of the waist if the diamond's sizing slope changes.
   &--diamond &__label {
     max-width: 72%;
   }

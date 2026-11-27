@@ -100,6 +100,8 @@ vez que el movimiento. El anfitrión personaliza con las props `duration` /
 las dos mitades). `surface` es la única excepción (las filas que son
 ventanas conservan los tiempos de entrada/salida de la familia ventana).
 
+Dos reglas permanentes para el anfitrión: una lista que vive directamente dentro de un viewport de desplazamiento mantiene `move` apagado (el fantasma saliente se fija al ancestro posicionado más cercano, y un scrollport no es la caja visual de la lista); y una fila de lista nunca lleva `transition: all` — las pistas del primitivo se hacen cargo del `transition` de la fila durante la duración de una sola coreografía, y una pista `all` perdería su cara de hover en esa ventana.
+
 Un selector múltiple (`HkAffixPicker` en modo `multi`, `layout="rows"`) no
 construye nada delante de la búsqueda para su selección: las filas marcadas
 llevan la marca de verificación inicial y flotan arriba en orden de catálogo

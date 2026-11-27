@@ -139,6 +139,49 @@ describe("HkListTransition duration contract", () => {
     }
   });
 
+  it("the move opt-out is the LAST transition rule in the compiled sheet (equal weight ⇒ order decides)", () => {
+    // `.hk-list-move-disabled` (move={false} — the DEFAULT) and the `-none`
+    // family (disabled) carry `transition: none !important`, exactly like
+    // the variant tracks. At equal specificity and equal importance the
+    // LAST declaration wins, so the opt-out must sit AFTER every track:
+    // it used to sit right after the first three, and 9 of the 12 move
+    // tracks came back for a default host (2026-11-27 R5).
+    const optOut = css.indexOf(".hk-list-move-disabled");
+    expect(optOut, "the opt-out compiles").toBeGreaterThan(-1);
+    for (const track of [
+      ".hk-list-pop-move", ".hk-list-slide-move", ".hk-list-fade-move",
+      ".hk-list-grow-move", ".hk-list-reveal-move", ".hk-list-surface-move",
+      ".hk-list-pop-enter-active", ".hk-list-pop-leave-active",
+      ".hk-list-slide-enter-active", ".hk-list-slide-leave-active",
+      ".hk-list-fade-enter-active", ".hk-list-fade-leave-active",
+      ".hk-list-grow-enter-active", ".hk-list-grow-leave-active",
+      ".hk-list-reveal-enter-active", ".hk-list-reveal-leave-active",
+      ".hk-list-surface-enter-active", ".hk-list-surface-leave-active",
+    ]) {
+      // The compiled sheet groups selectors into comma lists
+      // (`.a,\n.b {`), so the token's FIRST occurrence is the rule.
+      const at = css.indexOf(track);
+      expect(at, `${track} compiles`).toBeGreaterThan(-1);
+      expect(optOut, `${track} must precede the opt-out`).toBeGreaterThan(at);
+    }
+    // …and the opt-out block itself is !important, like everything it
+    // outranks.
+    const block = rule(css, ".hk-list-move-disabled");
+    expect(block).toMatch(/!important/);
+  });
+
+  it("the disabled/none family is !important too (it must beat a later item sheet)", () => {
+    for (const sel of [".hk-list-none-enter-active", ".hk-list-none-leave-active", ".hk-list-none-move"]) {
+      const decls = rule(css, sel)
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .split(";")
+        .map((d) => d.trim())
+        .filter((d) => /^transition/.test(d));
+      expect(decls.length, `${sel} declares a transition`).toBeGreaterThan(0);
+      for (const d of decls) expect(d, `${sel} → ${d}`).toMatch(/!important\s*$/);
+    }
+  });
+
   it("surface keeps the window family's own enter/leave timings (the documented exception)", () => {
     expect(rule(css, ".hk-list-surface-enter-active")).toContain("var(--duration-normal, 0.3s)");
     expect(rule(css, ".hk-list-surface-leave-active")).toContain("var(--duration-short, 0.15s)");

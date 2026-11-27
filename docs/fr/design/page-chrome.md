@@ -100,6 +100,8 @@ personnalise avec les props `duration` / `enterDuration` / `leaveDuration`
 seule exception (des lignes qui sont des fenêtres gardent les timings
 d'entrée/sortie de la famille fenêtre).
 
+Deux règles permanentes côté hôte : une liste qui vit directement dans un viewport de défilement garde `move` désactivé (le fantôme partant est épinglé à l'ancêtre positionné le plus proche, et un scrollport n'est pas la boîte visuelle de la liste) ; et une ligne de liste ne porte jamais `transition: all` — les pistes du primitif prennent en charge le `transition` de la ligne pendant la durée d'une seule chorégraphie, et une piste `all` y perdrait sa face de survol.
+
 Un sélecteur multiple (`HkAffixPicker` en mode `multi`, `layout="rows"`) ne
 construit rien devant la recherche pour sa sélection : les lignes cochées
 portent la marque de coche de tête et remontent en tête dans l'ordre du

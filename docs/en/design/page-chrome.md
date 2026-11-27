@@ -92,6 +92,8 @@ the move. A host customizes with the `duration` / `enterDuration` /
 `surface` is the one exception (rows that are windows keep the window
 family's entrance/exit timings).
 
+Two standing rules for hosts: a list that lives directly inside a scroll viewport keeps `move` off (the leave ghost is pinned against the nearest positioned ancestor, which in a scrollport is not the visual list box), and a list row never carries `transition: all` — the primitive's tracks take over the row's `transition` for the length of one choreography, and an `all` track would lose its hover face in that window.
+
 A multi picker (`HkAffixPicker` in `multi` mode, `layout="rows"`) builds
 nothing in front of the search for its selection: the checked rows wear the
 leading check mark and float to the top in catalog order behind a divider; a

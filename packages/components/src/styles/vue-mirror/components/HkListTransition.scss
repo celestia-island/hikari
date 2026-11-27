@@ -35,20 +35,21 @@
  * cascade silently: the FLIP transform snapped, the enter/leave never
  * ran — the choreography the host asked for simply did not happen
  * (2026-11-27, found while making this the base container for cards and
- * waterfalls). `.hk-list-move-disabled` already relied on exactly this
- * precedence; now the whole family does. The item's own faces come back
- * the moment the class leaves. */
+ * waterfalls). The whole family carries it now — see the opt-out block at
+ * the bottom for the precedence trap that cost the default FLIP opt-out.
+ * The item's own faces come back the moment the class leaves. */
 
 /* FLIP move: vue applies `${name}-move` (runtime-dom resolves moveClass
- * as `${name}-move`), never a bare `.hk-list-move`. */
+ * as `${name}-move`), never a bare `.hk-list-move`. ORDER IS LOAD-BEARING
+ * (2026-11-27 R5): every track in this file — including the opt-out at the
+ * bottom — carries `!important`, and at equal specificity the LAST rule
+ * wins, so the opt-out MUST come after every variant track. It originally
+ * sat here, ahead of the later variants' tracks, and a default
+ * (`move={false}`) host's FLIP came back for exactly that reason. */
 .hk-list-pop-move,
 .hk-list-slide-move,
 .hk-list-fade-move {
   transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
-}
-
-.hk-list-move-disabled {
-  transition: none !important;
 }
 
 .hk-list-pop-enter-active {
@@ -68,9 +69,13 @@
      already runs `pop` with clickable rows downstream, and gains this
      dead-end for the fade window). The
      primitive's own pin sets `inert` too, but only when layout metrics
-     exist — this is the CSS belt that still dead-ends a tap in a
-     non-layout environment or when the pin skipped (same relationship
-     the surface variant documents below). */
+     exist — this rule is the belt for the ROW ITSELF. Honest scope
+     (2026-11-27 screening): a descendant the HOST re-enables with an
+     explicit `pointer-events: auto` (chest's quick-action pad:
+     `.s-quick-pad > *`) beats this row-level rule at the cascade, so such
+     a host must exclude the leaving ghost from its own re-enable
+     (`.s-quick-pad > *:not(.hk-list-pop-leave-active)`); `inert` covers
+     real browsers, this rule covers the non-layout rest. */
   pointer-events: none;
 }
 
@@ -265,10 +270,16 @@
     transform var(--hk-list-duration, var(--duration-normal, 0.3s)) cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
+/* The opt-outs (`move={false}` → the moveClass, `disabled` → the `none`
+ * name): LAST in the file so they outrank every track above, and
+ * !important like them — an item sheet imported after this primitive
+ * would otherwise bring a row's hover fade back during a choreography the
+ * host asked to skip (bulk hydration, reduced-motion hosts). */
+.hk-list-move-disabled,
 .hk-list-none-enter-active,
 .hk-list-none-leave-active,
 .hk-list-none-move {
-  transition: none;
+  transition: none !important;
 }
 
 /* Reduced motion: no list choreography. The global animation switch

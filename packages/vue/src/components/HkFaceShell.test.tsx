@@ -405,6 +405,18 @@ describe("mobile drawer: the nav panel fills it", () => {
       expect(drawerSidebarParams!.inDrawer).toBe(true);
       expect(drawerSidebarParams!.collapsed).toBe(false);
       expect(stub!.querySelector(".nav-panel")).not.toBeNull();
+      // SECOND, INDEPENDENT guard (R3 review): the runtime assertion above
+      // is the pin's only bite — a future "this looks flaky, loosen it to
+      // toBeDefined()" edit would leave the sentinel satisfying it and
+      // silently disable the whole fix. This source-level read fails for a
+      // DIFFERENT reason: the shell stops passing the prop at all.
+      const shellSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkFaceShell.tsx"), "utf8");
+      // A window slice, not a tag regex: the drawer's props contain `=>`
+      // arrow callbacks, so `/<HDrawer[^>]*>/` stops inside the first one.
+      const drawerAt = shellSrc.indexOf("<HDrawer");
+      expect(drawerAt, "the shell must still render an HDrawer").toBeGreaterThan(-1);
+      const drawerCall = shellSrc.slice(drawerAt, drawerAt + 1600);
+      expect(drawerCall).toMatch(/padding="none"/);
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: originalWidth });
     }

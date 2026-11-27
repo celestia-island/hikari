@@ -774,12 +774,16 @@ impl AffixPickerWiring {
     }
 
     /// Vue's `onSearchEnter`: Enter picks through the pure action table.
+    /// The query STRING arrives here and the emptiness predicate is applied
+    /// AT THIS BOUNDARY (2026-11-27 R10): no `!` can sit between
+    /// [`affix_query_present`] and [`affix_enter_action`], so an inverted or
+    /// bypassed capture cannot reinstate the whitespace-only commit.
     fn search_key(
         &self,
         event: KeyboardEvent,
         rows: &[AffixOption],
         custom_visible: bool,
-        query_present: bool,
+        query: &str,
         selected: &[String],
         rows_layout: bool,
     ) {
@@ -787,7 +791,15 @@ impl AffixPickerWiring {
             return;
         }
         event.prevent_default();
-        match affix_enter_action(rows, custom_visible, query_present, selected, rows_layout) {
+        // LOAD-BEARING LINE: the exact derivation the source pin below
+        // asserts — an inserted `!` or a raw `is_empty` here breaks the pin.
+        match affix_enter_action(
+            rows,
+            custom_visible,
+            affix_query_present(query),
+            selected,
+            rows_layout,
+        ) {
             AffixEnterAction::PickRow(index) => {
                 if let Some(row) = rows.get(index) {
                     self.pick(&row.key, row.disabled);
@@ -1176,9 +1188,7 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
             let key_wiring = wiring.clone();
             let key_rows = rows.clone();
             let key_selected = selected.clone();
-            // Vue trims before judging "empty" (`const q = query.value.trim()`)
-            // — a whitespace-only field must be a no-op too (R8).
-            let key_query_present = affix_query_present(&query);
+            let key_query = query.clone();
             // Vue: `!tagLayout && mode === "multi"` — the only layout whose
             // Enter must skip the selected-first run.
             let key_rows_layout = !tag_layout && mode == AffixMode::Multi;
@@ -1210,7 +1220,7 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
                                 event,
                                 &key_rows,
                                 custom_visible,
-                                key_query_present,
+                                &key_query,
                                 &key_selected,
                                 key_rows_layout,
                             );
@@ -1786,9 +1796,24 @@ mod tests {
             .split("#[cfg(test)]")
             .next()
             .expect("the non-test half exists");
+        // The LOAD-BEARING LINE, asserted at line-start polarity: the
+        // derivation must READ `affix_query_present(query)` — an inserted
+        // `!` (or any prefix) changes the line's first token and fails here,
+        // which a substring check could not see.
+        let derivation = non_test
+            .lines()
+            .find(|l| l.contains("affix_query_present(query)"))
+            .expect("search_key derives emptiness through affix_query_present");
         assert!(
-            non_test.contains("affix_query_present(&query)"),
-            "the capture site must judge emptiness through affix_query_present"
+            derivation
+                .trim_start()
+                .starts_with("affix_query_present(query)"),
+            "no `!` may sit between the predicate and the action (got {derivation:?})"
+        );
+        assert!(
+            !non_test.contains("key_query_present"),
+            "the hoisted boolean capture is retired (R10): the query string \
+             flows to search_key, which applies the predicate itself"
         );
     }
 

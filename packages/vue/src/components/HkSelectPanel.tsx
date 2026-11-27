@@ -474,21 +474,6 @@ export default defineComponent({
       });
     }
 
-    // A retitled open sheet must re-judge its duplicate heading — the
-    // exact-text match lives against the CURRENT title, so the filter
-    // restores a heading that stopped matching (and re-hides one that
-    // started, via the observer's characterData window below).
-    watch(
-      () => props.title,
-      (newTitle) => {
-        // A retitled open panel re-labels its breadcrumb layer.
-        if (handle.value && newTitle) {
-          manager.setTitle(handle.value.id, newTitle);
-        }
-        if (props.open && sheetMode.value) syncDupTitle();
-      },
-    );
-
     // ── sheet duplicate-title filter ───────────────────────────────
     // Composition-slot consumers often open a sheet whose content
     // starts with a heading repeating the panel title (a workspace

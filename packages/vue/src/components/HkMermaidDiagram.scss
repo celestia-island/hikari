@@ -93,8 +93,10 @@
 
   // Diamond: a true rhombus SVG polygon (see the node slot painter) —
   // the layout reserved a wide-short box (horizontal diagonal = width)
-  // so the inscribed label band fits inside the rhombus waist. THIS is the
-  // one shape whose label must stay narrower than its box.
+  // so the inscribed label band fits inside the rhombus waist. Its label
+  // carries a percentage cap as a GUARD, not a live constraint — the
+  // arithmetic in the label block below shows the cap never bites at the
+  // current sizing slope.
   &--diamond {
     position: relative;
     border: none;

@@ -84,6 +84,30 @@ describe("HkListTransition pop variant", () => {
       );
     }
   });
+
+  it("reduced motion collapses EVERY track, the move tracks included (2026-11-27 R15)", () => {
+    // The family's honest scope: a `prefers-reduced-motion` host must lose
+    // the whole choreography, not just the fades. Only `surface` was
+    // asserted here (its window sibling pins surface too), so dropping
+    // `reveal-move` — and the entire move group, five of six selectors —
+    // from this media block left the whole suite green (2026-11-27 R15).
+    // Enumerate all 18 tracks the `!important` sweep knows, so a new
+    // variant cannot join the family without joining the collapse.
+    const media = mediaBlock(css, "@media (prefers-reduced-motion: reduce)");
+    const tracks = [
+      ".hk-list-pop-move", ".hk-list-slide-move", ".hk-list-fade-move", ".hk-list-grow-move",
+      ".hk-list-reveal-move", ".hk-list-surface-move",
+      ".hk-list-pop-enter-active", ".hk-list-pop-leave-active",
+      ".hk-list-slide-enter-active", ".hk-list-slide-leave-active",
+      ".hk-list-fade-enter-active", ".hk-list-fade-leave-active",
+      ".hk-list-grow-enter-active", ".hk-list-grow-leave-active",
+      ".hk-list-reveal-enter-active", ".hk-list-reveal-leave-active",
+      ".hk-list-surface-enter-active", ".hk-list-surface-leave-active",
+    ];
+    for (const track of tracks) {
+      expect(media, `${track} collapses under reduced motion`).toContain(track);
+    }
+  });
 });
 
 /** The family's duration contract (2026-11-27 user direction): one default

@@ -196,6 +196,39 @@ describe("HkListTransition duration props", () => {
     spy.mockRestore();
   });
 
+  it("the report window reads the MILLISECOND spelling as milliseconds (2026-11-27 R15)", async () => {
+    // `cssTimeToMs` documents `0.3s` / `300ms` alike, and the bus window is
+    // the only consumer of its arithmetic. Every other case drives the
+    // SECONDS branch (`2s`, `0.5s`), so the `ms` unit had no pin: reading it
+    // as seconds (300 ms → 0.3 ms) left the entire suite — and the 2026-11-27
+    // R15 mutation actually applied to HkListTransition.tsx — green, while
+    // every `300ms` host got its choreography report cut to a rounding
+    // error. Assert the ARITHMETIC through the bus window (4000, never 2040)
+    // so the unit branch cannot drift back.
+    const bus = await import("../runtime/animationBus");
+    const spy = vi.spyOn(bus, "reportTransition");
+    const keys = ref<string[]>(["a"]);
+    const app = createApp({
+      render: () =>
+        h(
+          HkListTransition,
+          { tag: "ul", variant: "pop", move: true, duration: "4000ms" },
+          { default: () => keys.value.map((k) => h("li", { key: k }, k)) },
+        ),
+    });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    app.mount(host);
+    mounts.push({ app, container: host });
+    keys.value = ["a", "b"];
+    await nextTick();
+    expect(spy, "the enter batch armed a report").toHaveBeenCalled();
+    for (const call of spy.mock.calls) {
+      expect(call[0], "`4000ms` is four seconds, not four milliseconds").toBe(4020);
+    }
+    spy.mockRestore();
+  });
+
   it("a fragment host refuses the props loudly instead of ignoring them silently", () => {
     const { container, warn } = mountDurations("", { duration: "0.5s" });
     expect(container.querySelector("ul")).toBeNull();

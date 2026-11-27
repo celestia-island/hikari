@@ -103,7 +103,6 @@ describe("HkMermaidDiagram", () => {
     // No overlay dock inside the stage: at fit zoom the board's own
     // bottom-right dock covered the last node of every wide diagram.
     const stage = c.querySelector(".hk-mermaid__stage")!;
-    expect(stage.contains(c.querySelector(".hk-board-minimap"))).toBe(false);
     expect(c.querySelector(".hk-board-minimap")).toBeNull();
     expect(c.querySelector(".hk-board")!.closest(".hk-mermaid__stage")).toBe(stage);
     // The bar FOLLOWS the stage in flow — it cannot cover anything.
@@ -141,8 +140,32 @@ describe("HkMermaidDiagram", () => {
     await mermaidReady;
     const c = mount({ source: "flowchart TD\nA --> B" });
     await settle();
-    const markerPath = c.querySelector("marker path")!;
-    expect(markerPath.getAttribute("fill")).toBe("rgb(var(--color-primary) / 62%)");
+    const ink = "rgb(var(--color-primary) / 62%)";
+    expect(c.querySelector("marker path")!.getAttribute("fill")).toBe(ink);
+    const path = c.querySelector<SVGPathElement>(".hk-board-edge")!;
+    expect(path.getAttribute("stroke")).toBe(ink);
+    expect(path.style.stroke).toBe(ink);
+  });
+
+  it("an edge that skips ranks is drawn THROUGH its lane (three legs, not one long curve)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: "flowchart TD\nT[top] --> A[rank 1]\nA --> B[rank 2]\nB --> C[rank 3]\nT --> C" });
+    await settle();
+    const paths = [...c.querySelectorAll<SVGPathElement>(".hk-board-edge")];
+    // the last edge declared (`T --> C`) spans three ranks
+    const skip = paths[paths.length - 1];
+    expect(skip.getAttribute("d")!.match(/C [^C]+/g)).toHaveLength(3);
+    // a direct edge is a single cubic
+    expect(paths[0].getAttribute("d")!.match(/C [^C]+/g)).toHaveLength(1);
+    // and the lane's cells were emitted as hidden board nodes (zero-size)
+    const inputs = (c.querySelector(".hk-board") as unknown as { __vueParentComponent?: { props: { nodes: Array<{ id: string; hidden?: boolean; w: number }> } } }).__vueParentComponent;
+    const lane = (inputs?.props.nodes ?? []).filter((n) => n.id.startsWith("j:e3:"));
+    expect(lane).toHaveLength(2);
+    for (const j of lane) {
+      expect(j.hidden).toBe(true);
+      expect(j.w).toBe(0);
+    }
   });
 
   it("sequence renders participant lanes and message labels", async () => {

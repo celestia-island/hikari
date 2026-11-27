@@ -92,9 +92,11 @@ describe("mermaid graph label width contract", () => {
  * platform map — its final node half hidden). A row of its own cannot
  * cover anything at any viewport size.
  *
- * MUT: `position: absolute` (or `static`) on the bar inside the toolbar
- * row turns the second pin RED — absolute re-docks it over the board's
- * corner, static loses the anchor the slider pop needs.
+ * MUT: the bar's `position` inside the toolbar row is load-bearing and the
+ * second pin reads it directly. `absolute` (with the base rule's corner
+ * insets neutralised to `auto`) would float the bar out of the row and
+ * over the board's corner; `static` would leave the slider pop nothing to
+ * anchor to. Both turn the `position: relative` assertion RED.
  */
 describe("mermaid zoom bar placement contract", () => {
   it("docks the bar in a flow row below the stage, aligned to the end edge", () => {

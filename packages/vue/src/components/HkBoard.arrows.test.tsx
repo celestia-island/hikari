@@ -210,6 +210,59 @@ describe("HkBoard — arrows arrive head-on", () => {
     board.unmount();
   });
 
+  it("an edge ending on a hidden junction (no border normal to read) still travels toward it", async () => {
+    const nodes: BoardNodeInput[] = [
+      { id: "a", x: 0, y: 0, w: 100, h: 40, label: "A" },
+      { id: "j", x: 30, y: 300, w: 0, h: 0, hidden: true },
+    ];
+    const edges: BoardEdgeInput[] = [{ id: "e", from: "a", to: "j", style: "bezier", anchorFrom: "bottom" }];
+    const board = mountBoard({ nodes, edges });
+    await nextTick();
+    const [c2x, c2y, ex, ey] = lastCubic(board.container.querySelector(".hk-board-edge")!);
+    expect([ex, ey]).toEqual([30, 300]);
+    // Falls back to the route's travel axis, in the direction of travel:
+    // the route arrives from ABOVE, heading down.
+    expect(c2x).toBe(ex);
+    expect(c2y).toBeLessThan(ey);
+    board.unmount();
+  });
+
+  it("an edge routed through via junctions keeps a non-zero end tangent", async () => {
+    const nodes: BoardNodeInput[] = [
+      { id: "a", x: 0, y: 0, w: 100, h: 40, label: "A" },
+      { id: "b", x: 0, y: 300, w: 100, h: 40, label: "B" },
+      { id: "v1", x: 40, y: 113, w: 0, h: 0, hidden: true },
+      { id: "v2", x: 40, y: 227, w: 0, h: 0, hidden: true },
+    ];
+    const edges: BoardEdgeInput[] = [
+      { id: "e", from: "a", to: "b", style: "bezier", anchorFrom: "bottom", anchorTo: "top", via: ["v1", "v2"], arrow: "solid", label: "far" },
+    ];
+    const board = mountBoard({ nodes, edges });
+    await nextTick();
+    const path = board.container.querySelector(".hk-board-edge")!;
+    const legs = path.getAttribute("d")!.match(/C [^C]+/g)!;
+    expect(legs).toHaveLength(3);
+    const [c2x, c2y, ex, ey] = lastCubic(path);
+    expect([ex, ey]).toEqual([50, 300]);
+    expect(c2x).toBe(ex);
+    expect(c2y).toBeLessThan(ey);
+    // the middle via is the caption anchor
+    const label = board.container.querySelector(".hk-board-edge-label")!;
+    expect([Number(label.getAttribute("x")), Number(label.getAttribute("y"))]).toEqual([40, 113]);
+    board.unmount();
+  });
+
+  it("keeps the board's own subdued scene ink by default", async () => {
+    const nodes: BoardNodeInput[] = [
+      { id: "a", x: 0, y: 0, w: 100, h: 40, label: "A" },
+      { id: "b", x: 0, y: 120, w: 100, h: 40, label: "B" },
+    ];
+    const board = mountBoard({ nodes, edges: [{ id: "e", from: "a", to: "b" }] });
+    await nextTick();
+    expect(board.container.querySelector(".hk-board-edge")!.getAttribute("stroke")).toBe("rgb(var(--color-primary) / 38%)");
+    board.unmount();
+  });
+
   it("a side-docked edge (right → left) ends along the horizontal border normal", async () => {
     const nodes: BoardNodeInput[] = [
       { id: "a", x: 0, y: 0, w: 100, h: 40, label: "A" },

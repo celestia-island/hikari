@@ -192,6 +192,36 @@ describe("boardEdges — route tangents", () => {
     expect(legs[1][5] - legs[1][3]).toBeGreaterThan(0);
   });
 
+  it("a three-leg via chain: every interior point turns on its neighbours' direction, the last leg still arrives along `to`", () => {
+    // a ──▶ p1      tangents: a leaves along +x, b arrives travelling UP
+    //      │         p1 turns from "toward p2" …
+    //      ▼ p2      … p2 from "away from p1" toward b
+    //      ◀── b
+    const a = { x: 0, y: 0 };
+    const p1 = { x: 100, y: 0 };
+    const p2 = { x: 100, y: 100 };
+    const b = { x: 0, y: 100 };
+    const d = boardViaPath(a, [p1, p2], b, "bezier", { from: { x: 1, y: 0 }, to: { x: 0, y: -1 } });
+    // Handle length is half of each 100px leg. The interior tangents are
+    // (next − previous) per point — (0.707, 0.707) at p1 and (−0.707,
+    // 0.707) at p2 — which is what keeps the chain smooth; the last leg's
+    // second handle sits 50px BELOW b (the route travels up into it).
+    expect(d).toBe(
+      "M 0 0 C 50 0, 64.6 -35.4, 100 0 C 135.4 35.4, 135.4 64.6, 100 100 C 64.6 135.4, 0 150, 0 100",
+    );
+  });
+
+  it("without a caller tangent the fallback follows the route's travel: a drop into a junction ends travelling DOWN", () => {
+    // The end is a zero-size junction, so HkBoard passes no `to` normal:
+    // the axis fallback must be the direction of travel, not its opposite.
+    const d = boardEdgePath({ x: 10, y: 0 }, { x: 30, y: 80 }, "bezier", { from: { x: 0, y: 1 } });
+    const n = d.slice(d.indexOf("C") + 2).replace(/,/g, "").trim().split(/\s+/).map(Number);
+    expect(n[3]).toBeLessThan(n[5]); // control point 2 above the end ⇒ end tangent points down
+    expect(n[2]).toBe(n[4]); // …and straight above it: the travel axis is vertical here
+    expect(n[1]).toBeGreaterThan(0); // the first handle still follows the caller's +y
+    expect(boardEdgePath({ x: 10, y: 0 }, { x: 10, y: 56 }, "bezier")).toBe("M 10 0 C 10 28, 10 28, 10 56");
+  });
+
   it("boardEdgeMidpoint sits on the bezier, and via routes keep the middle junction", () => {
     expect(boardEdgeMidpoint({ x: 0, y: 0 }, [], { x: 0, y: 56 }, "bezier")).toEqual({ x: 0, y: 28 });
     // bottom-exit into a top-entry at another x: opposing normals still

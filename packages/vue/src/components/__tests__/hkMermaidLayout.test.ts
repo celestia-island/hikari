@@ -544,3 +544,116 @@ describe("flowchart routing — arrows dock on the border they enter", () => {
     expect(model.edges[4]).toMatchObject({ from: "g:outer", to: "n:E", anchorFrom: "nearest" });
   });
 });
+
+describe("flowchart routing — review round 2 pins", () => {
+  const parse = async (source: string) => {
+    await mermaidReady;
+    return buildBoardModel(wasmMermaidEngine.parse(source) as never, measure);
+  };
+
+  it("a self-loop stands off the cross-axis side in every flow direction", async () => {
+    // TD/BT loop on the RIGHT border, LR/RL on the BOTTOM border: the side
+    // the outgoing edges do NOT use. The two corners sit SELF_LOOP_OUT
+    // (26px) beyond that border, SELF_LOOP_ALONG (15px) either side of its
+    // midpoint — so the route leaves the anchor along the border normal,
+    // swings around them and comes back head-on.
+    const expectLoop = (dir: "TD" | "BT" | "LR" | "RL", side: "right" | "bottom") => {
+      const model = buildBoardModel(
+        wasmMermaidEngine.parse(`flowchart ${dir}\nA[retry] --> A\nA --> B[done]`) as never,
+        measure,
+      );
+      const a = model.nodes.find((n) => n.id === "n:A")!;
+      const loop = model.edges.find((e) => e.from === "n:A" && e.to === "n:A")!;
+      expect(loop).toMatchObject({ anchorFrom: side, anchorTo: side });
+      const [ja, jb] = loop.via!.map((id) => model.nodes.find((n) => n.id === id)!);
+      if (side === "right") {
+        const midY = a.y + a.h / 2;
+        for (const j of [ja, jb]) expect(j.x).toBe(Math.round(a.x + a.w + 26));
+        expect(ja.y).toBeLessThan(midY);
+        expect(jb.y).toBeGreaterThan(midY);
+        // junction coordinates are rounded to whole world px
+        expect(Math.abs((midY - ja.y) - (jb.y - midY))).toBeLessThanOrEqual(1);
+      } else {
+        const midX = a.x + a.w / 2;
+        for (const j of [ja, jb]) expect(j.y).toBe(Math.round(a.y + a.h + 26));
+        expect(ja.x).toBeLessThan(midX);
+        expect(jb.x).toBeGreaterThan(midX);
+        expect(Math.abs((midX - ja.x) - (jb.x - midX))).toBeLessThanOrEqual(1);
+      }
+    };
+    expectLoop("TD", "right");
+    expectLoop("BT", "right");
+    expectLoop("LR", "bottom");
+    expectLoop("RL", "bottom");
+  });
+
+  it("a back edge is defined by the cycle breaker, not by an accident of parse order", async () => {
+    // The decision loop written with its edges in the OTHER order: B→A,
+    // C→B, D→C, B→D. The cycle is B→D→C→B and the search closes it on
+    // C→B — so C→B is the back edge (it loops around the side) and B→A is
+    // an ordinary forward edge however it is numbered.
+    const items = ["A", "B", "C", "D"].map((id, order) => ({ id, w: 80, h: 40, order }));
+    const out = layoutGraph({
+      items,
+      edges: [{ from: "B", to: "A" }, { from: "C", to: "B" }, { from: "D", to: "C" }, { from: "B", to: "D" }],
+      direction: "TD",
+    });
+    expect(out.backEdges).toEqual([1]);
+    expect(out.ranks.get("B")).toBe(0);
+    expect(out.ranks.get("C")).toBe(2);
+    // every remaining edge spans one rank, so nothing needs a lane
+    expect(out.lanes).toEqual([]);
+
+    // With a rank-skipping forward edge AND a cycle in the same graph, only
+    // the forward edge gets a lane; the back edge loops around the side.
+    const mixed = layoutGraph({
+      items: ["T", "A", "B", "C"].map((id, order) => ({ id, w: 80, h: 40, order })),
+      edges: [{ from: "T", to: "A" }, { from: "A", to: "B" }, { from: "B", to: "C" }, { from: "T", to: "C" }, { from: "C", to: "T" }],
+      direction: "TD",
+    });
+    expect(mixed.backEdges).toEqual([4]);
+    expect(mixed.lanes.map((lane) => lane.edge)).toEqual([3]);
+    expect(mixed.lanes[0].points).toHaveLength(2);
+  });
+
+  it("a back edge with a sibling on the RIGHT loops left; with siblings on both sides or none it takes the default side", async () => {
+    const siblingRight = await parse([
+      "flowchart TD",
+      "  S((start)) --> D{ready?}",
+      "  D -->|no| W[wait]",
+      "  D -->|yes| R[run]",
+      "  W --> D",
+      "  R --> E((end))",
+    ].join("\n"));
+    // `wait` is now the LEFT sibling of `run`, so its loop goes around the left
+    expect(siblingRight.edges.find((e) => e.from === "n:W" && e.to === "n:D")).toMatchObject({
+      anchorFrom: "left",
+      anchorTo: "left",
+    });
+
+    const only = await parse("flowchart TD\nS --> D{again?}\nD -->|no| W[wait]\nW --> D\nD -->|yes| E((end))");
+    // no same-rank sibling: the TD default side is left
+    expect(only.edges.find((e) => e.from === "n:W" && e.to === "n:D")).toMatchObject({ anchorFrom: "left" });
+
+    const both = await parse("flowchart TD\nS --> M[middle]\nS --> L[left]\nS --> R[right]\nM --> M");
+    // a self-loop is not a back edge, but the middle node has siblings on
+    // both sides and must still draw its loop on the default cross side
+    expect(both.edges.find((e) => e.from === "n:M" && e.to === "n:M")).toMatchObject({ anchorFrom: "right" });
+  });
+
+  it("the cycle breaker's choice is a valid feedback arc set: ranking always completes", async () => {
+    // Every node of a pure 5-cycle has indegree 1; nothing is a source.
+    const ring = ["a", "b", "c", "d", "e"];
+    const items = ring.map((id, order) => ({ id, w: 40, h: 40, order }));
+    const edges = ring.map((id, i) => ({ from: id, to: ring[(i + 1) % ring.length] }));
+    const out = layoutGraph({ items, edges, direction: "TD" });
+    expect(out.backEdges.length).toBe(1);
+    for (const id of ring) expect(out.positions.has(id)).toBe(true);
+    // …and removing that one edge leaves a DAG: ranks strictly increase
+    // along every remaining edge.
+    for (const [i, e] of edges.entries()) {
+      if (out.backEdges.includes(i)) continue;
+      expect(out.ranks.get(e.to)!).toBeGreaterThan(out.ranks.get(e.from)!);
+    }
+  });
+});

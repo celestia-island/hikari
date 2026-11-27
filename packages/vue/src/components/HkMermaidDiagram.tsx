@@ -18,7 +18,7 @@
  * the per-kind node content through the board's `node` slot.
  */
 
-import { computed, defineComponent, ref, type CSSProperties, type PropType, type Ref, type VNode } from "vue";
+import { computed, defineComponent, ref, type CSSProperties, type PropType, type VNode } from "vue";
 
 import HkBoard, { type BoardEdgeInput, type BoardNodeInput } from "./HkBoard";
 import HkMinimap from "./HkMinimap";
@@ -38,7 +38,6 @@ const MERMAID_EDGE_INK = "rgb(var(--color-primary) / 62%)";
 
 /** The slice of HkBoard's exposed surface the zoom bar drives. */
 interface BoardHandle {
-  camera: Ref<BoardCamera>;
   zoomIn: () => void;
   zoomOut: () => void;
   zoomToPercent: (percent: number) => void;
@@ -280,7 +279,8 @@ export default defineComponent({
     interactive: { type: Boolean, default: true },
     /** Engineering dot grid (off by default — a diagram is not a map). */
     grid: { type: Boolean, default: false },
-    /** Explicit viewport height in px (default: content-clamped auto). */
+    /** Height of the diagram STAGE in px (default: content-clamped auto).
+     *  The zoom bar row below it adds its own height on top. */
     height: { type: [Number, String] as PropType<number | "auto">, default: "auto" },
     /** Fit-zoom ceiling (HkBoard pass-through). */
     fitCap: { type: Number, default: undefined },

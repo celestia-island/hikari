@@ -314,9 +314,11 @@ export const HkFaceShell = defineComponent({
      *  value (e.g. `"var(--s-footer-height)"`). */
     footerHeight: { type: String, default: undefined },
     navTitle: { type: String, default: undefined },
-    /** Extra class for the mobile nav drawer's panel — lets consumers zero
-     *  nested paddings so drawer nav rows and a `userPanel` footer share
-     *  one left edge. */
+    /** Extra class for the mobile nav drawer's panel — a scoping hook for
+     *  consumer chrome (theme/surface overrides). It is NOT a padding
+     *  lever any more: the shell zeroes the drawer body's padding itself
+     *  so the nav panel fills the drawer (see the HDrawer call below), so
+     *  nav rows and the `userPanel` footer already share one left edge. */
     drawerPanelClass: { type: String, default: undefined },
     /** Content host mode (see the component doc): `document` wraps the
      *  content in the shell's scroll viewport + padding wrapper;

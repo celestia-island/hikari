@@ -18,6 +18,7 @@ use hikari_palette::classes::{ClassesBuilder, CodeHighlightClass};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use wasm_bindgen::prelude::*;
 
+use crate::basic::{IconButton, IconButtonProps, IconButtonSize, IconButtonVariant};
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 use crate::feedback::toast::use_toast;
 use crate::prelude::*;
@@ -179,8 +180,29 @@ impl CodePalette {
 
 #[define_props]
 pub struct CodeHighlightProps {
+    /// Language token shown in the header's LEFT slot (also the
+    /// `language-<lang>` class the highlighter keys off). Ignored when
+    /// [`Self::label`] is set.
     #[default("".to_string())]
     pub language: String,
+
+    /// Custom header label, replacing the uppercased language token
+    /// (`CardHeaders`/`SectionCard` precedent: a `title` that wins over the
+    /// derived value). Hosts use it for a filename, a step name or a
+    /// human-readable language — anything but the raw token.
+    pub label: Option<String>,
+
+    /// Extra marks rendered AFTER the label in the header's left cluster
+    /// (badges, `<kbd>` hints, a copy-of filename chip). The Vue twin is a
+    /// named slot; Rust hosts pass elements.
+    pub label_extra: Option<Element>,
+
+    /// Host controls rendered in the header's RIGHT cluster, BEFORE the
+    /// copy button — the family's other header action docks (`PageHeader`,
+    /// `SectionCard`, `TitleBar` all take an `actions` element this way).
+    /// A "Preview/Source" toggle, a language picker or a "run" button lives
+    /// here instead of forcing the host to re-implement the whole card.
+    pub actions: Option<Element>,
 
     #[default("".to_string())]
     pub code: String,
@@ -190,6 +212,14 @@ pub struct CodeHighlightProps {
 
     #[default(true)]
     pub copyable: bool,
+
+    /// Render the copy control as an `IconButton` (the family's standard
+    /// icon button) instead of the text button. Hosts embedding the card in
+    /// dense chrome want the compact form; the text form stays the default
+    /// because it is the one that reads as "Copy" without an icon
+    /// vocabulary.
+    #[default(false)]
+    pub copy_as_icon: bool,
 
     /// Syntax highlighting palette. See [`CodePalette`].
     #[default(CodePalette::TokyoNight)]
@@ -221,6 +251,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let language_classes = ClassesBuilder::new()
         .add(CodeHighlightClass::Language)
         .build();
+    // The header's left cluster carries its own hook so a host-supplied
+    // label can be styled without touching the language token's rule (the
+    // language class stays on the same element for compatibility).
+    let label_classes = format!("{language_classes} hk-code-highlight-label");
+    let actions_classes = "hk-code-highlight-actions".to_string();
 
     let copy_classes = ClassesBuilder::new()
         .add(CodeHighlightClass::CopyButton)
@@ -254,9 +289,13 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     // HkErrorLanding declares. No copied signal, no flipped classes, no
     // reset timer.
 
-    let button_class = copy_classes;
+    let button_class = copy_classes.clone();
 
     let button_text = t("hikari.code.copy", "Copy");
+    // `label` wins over the raw language token; uppercased like the token
+    // (the sheet's `text-transform` is what actually renders it that way,
+    // this keeps the text node honest for copy/inspection).
+    let label_text = props.label.clone().unwrap_or_else(|| language.clone());
 
     let language_class = format!("language-{}", language);
 
@@ -271,6 +310,76 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         })
         .collect();
 
+    // The copy control is a COMPONENT (the family's IconButton) or a text
+    // button, chosen here rather than inside `rsx!` — the macro takes
+    // component calls as interpolated elements, not as inline blocks.
+    let copy_control: Option<Element> = if !props.copyable {
+        None
+    } else if props.copy_as_icon {
+        let label = button_text.clone();
+        let code_for_icon_copy = code_for_copy.clone();
+        Some(IconButton(IconButtonProps {
+            icon: Some(MdiIcon::ContentCopy),
+            variant: IconButtonVariant::Ghost,
+            size: IconButtonSize::S28,
+            aria_label: Some(label.clone()),
+            title: Some(label),
+            onclick: Some(event_handler(move |_event: MouseEvent| {
+                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                {
+                    let code_for_copy = code_for_icon_copy.clone();
+                    copy_to_clipboard(&code_for_copy, move |ok: bool| {
+                        let store = use_toast();
+                        if ok {
+                            store.success(&t("hikari.code.copyOk", "Copied"));
+                        } else {
+                            store.error(&t("hikari.code.copyFailed", "Copy failed"));
+                        }
+                    });
+                }
+                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                {
+                    let _ = &code_for_icon_copy;
+                }
+            })),
+            ..Default::default()
+        }))
+    } else {
+        let label = button_text.clone();
+        let code_for_text_copy = code_for_copy.clone();
+        Some(rsx! {
+            button {
+                class: copy_classes.clone(),
+                "aria-label": label.clone(),
+                "title": label.clone(),
+                onclick: move |_| {
+                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                    {
+                        // The REAL write result lands in the callback (the
+                        // promise settles after this handler returns); the
+                        // button itself never mutates.
+                        let code_for_copy = code_for_text_copy.clone();
+                        copy_to_clipboard(&code_for_copy, move |ok| {
+                            let store = use_toast();
+                            if ok {
+                                store.success(&t("hikari.code.copyOk", "Copied"));
+                            } else {
+                                store.error(&t("hikari.code.copyFailed", "Copy failed"));
+                            }
+                        });
+                    }
+                    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                    {
+                        // Server renders never fire clicks; keep the branch
+                        // an explicit no-op.
+                        let _ = code_for_text_copy;
+                    }
+                },
+                {label}
+            }
+        })
+    };
+
     rsx! {
         div {
             class: container_classes,
@@ -279,42 +388,26 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
             div {
                 class: header_classes,
 
+                // LEFT cluster: the host's label (or the language token)
+                // plus any extra marks it docked there.
                 div {
-                    class: language_classes,
-                    language
+                    class: label_classes,
+                    {label_text.clone()}
+                    if let Some(extra) = &props.label_extra {
+                        {extra.clone()}
+                    }
                 }
 
-                if props.copyable {
-                    button {
-                        class: button_class,
-                        onclick: {
-                            let code_for_copy = code_for_copy.clone();
-                            move |_| {
-                                #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
-                                {
-                                    // The REAL write result lands in the
-                                    // callback (the promise settles after
-                                    // this handler returns); the button
-                                    // itself never mutates.
-                                    let code_for_copy = code_for_copy.clone();
-                                    copy_to_clipboard(&code_for_copy, move |ok| {
-                                        let store = use_toast();
-                                        if ok {
-                                            store.success(&t("hikari.code.copyOk", "Copied"));
-                                        } else {
-                                            store.error(&t("hikari.code.copyFailed", "Copy failed"));
-                                        }
-                                    });
-                                }
-                                #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
-                                {
-                                    // Server renders never fire clicks; keep
-                                    // the branch an explicit no-op.
-                                    let _ = code_for_copy;
-                                }
-                            }
-                        },
-                        button_text
+                // RIGHT cluster: host actions first, then this card's own
+                // copy control — the family's header-action order (the
+                // card's own control sits closest to the corner).
+                div {
+                    class: actions_classes,
+                    if let Some(actions) = &props.actions {
+                        {actions.clone()}
+                    }
+                    if let Some(copy_control) = &copy_control {
+                        {copy_control.clone()}
                     }
                 }
             }
@@ -400,6 +493,27 @@ impl StyledComponent for CodeHighlightComponent {
    own button is a text button and never swaps its face on copy). */
 .hk-code-highlight-copy-icon {
     display: inline-flex;
+}
+
+/* Header slots (2026-11-28): the RIGHT cluster holds host actions plus this
+   card's own copy control, in that order — so the card's control sits
+   closest to the corner, the family's header-action convention. The LEFT
+   cluster takes a host label plus any extra marks. */
+.hk-code-highlight-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.hk-code-highlight-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .hk-code-highlight-content {

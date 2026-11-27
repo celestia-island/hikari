@@ -823,7 +823,6 @@ export default defineComponent({
                   class={[
                     "hk-select-popout",
                     hasPinnedHeader() ? "is-pinned-header" : "",
-                    ...machine.classesFor("hk-select-popout"),
                   ]}
                   style={surfaceCap.value}
                   aria-label={props.title || undefined}

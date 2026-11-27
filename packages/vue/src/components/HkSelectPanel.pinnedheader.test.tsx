@@ -21,6 +21,9 @@
  * pre-slot DOM (no wrapper, the popout itself scrolls).
  */
 import { afterEach, describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createApp, defineComponent, h, nextTick, ref, type ComponentPublicInstance } from "vue";
 
 import HkSelectPanel from "./HkSelectPanel";
@@ -114,6 +117,29 @@ describe("HkSelectPanel pinnedHeader — desktop popout", () => {
     expect(body!.querySelectorAll(".row"), "rows scroll inside the body").toHaveLength(2);
     expect(pinned!.querySelector(".row"), "no rows in the pinned band").toBeNull();
     expect(body!.querySelector("input.pin"), "the search is NOT in the scrolling body").toBeNull();
+  });
+
+  it("carries the transition classes on the HOST only — the panel stays bare (2026-11-27 R17)", () => {
+    // The popout's transition choreography lives on the fixed HOST
+    // (data-side/transform-origin are host-only, HkSelect.scss), and the
+    // Rust mirror renders the panel bare. A `machine.classesFor` spread
+    // accidentally duplicated the enter/leave classes onto the nested
+    // static panel too — double opacity animation + mirror drift (R17).
+    // Asserted at source: the transient enter/leave classes are
+    // watchdog-stripped in happy-dom, so a DOM read is timing-fragile
+    // here; the class array is the durable artifact.
+    const tsx = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "HkSelectPanel.tsx"),
+      "utf-8",
+    );
+    // The host's spread — load-bearing (the pop motion family).
+    expect(tsx).toContain(
+      'class={["hk-select-popout-host", ...machine.classesFor("hk-select-popout")]}',
+    );
+    // The PANEL must stay bare: exactly ONE spread of that name in the
+    // file, and it is the host's.
+    const occurrences = tsx.split('machine.classesFor("hk-select-popout")').length - 1;
+    expect(occurrences, "exactly one machine-class spread (the host's)").toBe(1);
   });
 
   it("attaches the overlay rail to the body host, not the popout host", async () => {

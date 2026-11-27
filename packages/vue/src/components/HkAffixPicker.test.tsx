@@ -379,18 +379,23 @@ describe("HkAffixPicker", () => {
     custom!.click();
     await nextTick();
     expect(events.custom).toEqual(["gitee.com"]);
-    // The panel leaves: its surface carries the leave-active class for the
-    // transition window. The other row paths were covered — this exit was
-    // not, and a `mode === "single"` test left it open for a host that
-    // asked for close-on-select (2026-11-27 R16 mutation).
-    const surface = document.querySelector(".hk-select-popout, .hk-select-sheet-panel");
+    // The SURFACE leaves: the fixed HOST carries the transition classes
+    // (the panel is a bare static child — 2026-11-27 R17: the duplicated
+    // machine-class spread on the panel is gone), and the leave-active
+    // class marks the transition window. The other row paths were covered —
+    // this exit was not, and a `mode === "single"` test left it open for a
+    // host that asked for close-on-select (2026-11-27 R16 mutation).
+    const surface = document.querySelector(
+      ".hk-select-popout-host, .hk-select-sheet-panel",
+    );
     expect(
       surface?.classList.contains("hk-select-popout-leave-active"),
       "closeOnSelect=true closes the popup on a custom pick in the tag layout",
     ).toBe(true);
   });
 
-  it("tag body click emits select; close-on-select default keeps multi open", async () => {    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
+  it("tag body click emits select; close-on-select default keeps multi open", async () => {
+    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
     await openPopup(container);
     tags()[1].querySelector<HTMLButtonElement>(".hk-affix-tag-body")!.click();
     await nextTick();

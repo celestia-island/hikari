@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   boardAnchor,
+  boardAnchorNormal,
+  boardEdgeMidpoint,
   boardEdgePath,
   boardFanOrdinals,
   boardViaPath,
@@ -17,6 +19,12 @@ describe("boardEdges — anchor modes", () => {
     const a = boardAnchor(rect, "center", rightTarget);
     expect(a.y).toBe(130);
     expect(a.x).toBe(220);
+  });
+
+  it("bottom / left / right pin to those border midpoints", () => {
+    expect(boardAnchor(rect, "bottom", rightTarget)).toEqual({ x: 160, y: 160 });
+    expect(boardAnchor(rect, "left", rightTarget)).toEqual({ x: 100, y: 130 });
+    expect(boardAnchor(rect, "right", rightTarget)).toEqual({ x: 220, y: 130 });
   });
 
   it("top pins to the top-border midpoint, top-left to the corner", () => {
@@ -81,9 +89,13 @@ describe("boardEdges — route styles", () => {
     expect(boardEdgePath(a, b, "straight")).toBe("M 220 130 L 400 260");
   });
 
-  it("bezier is a horizontal-tangent cubic", () => {
-    const d = boardEdgePath(a, b, "bezier");
-    expect(d).toContain("C 310 130, 310 260, 400 260");
+  it("bezier without rect info follows the dominant travel axis", () => {
+    // |dx| > |dy| here, so both tangents are horizontal; the handles sit
+    // half a chord away from each end.
+    expect(boardEdgePath(a, b, "bezier")).toContain("C 331 130, 289 260, 400 260");
+    // A vertical route gets VERTICAL tangents — and a non-zero end tangent
+    // (a zero one hands the arrowhead's orientation to the browser).
+    expect(boardEdgePath({ x: 10, y: 0 }, { x: 10, y: 56 }, "bezier")).toBe("M 10 0 C 10 28, 10 28, 10 56");
   });
 
   it("orthogonal elbows through the mid X", () => {
@@ -116,5 +128,77 @@ describe("boardEdges — via (empty corner nodes)", () => {
     const d = boardViaPath(a, [{ x: 100, y: 300 }, { x: 300, y: 300 }], b, "bezier");
     expect(d.startsWith("M 0 0 C ")).toBe(true);
     expect(d).toContain("400 200");
+  });
+});
+
+/**
+ * An `orient="auto"` arrowhead rotates to the path's END TANGENT. These
+ * pins are the contract that every arrow lands head-on: the route leaves
+ * and arrives along the border normals the caller names, and the end
+ * tangent is never zero (the 2026-11-27 docs-site defect — every top-down
+ * arrow pointing sideways, half hidden under its target).
+ */
+describe("boardEdges — route tangents", () => {
+  const rect: BoardNodeRect = { x: 0, y: 0, w: 100, h: 40 };
+
+  it("uses the caller's border normals for both handles", () => {
+    // a bottom-border exit at x=300 into a top-border entry at x=120:
+    // both control points keep their own end's x
+    const d = boardEdgePath({ x: 300, y: 100 }, { x: 120, y: 200 }, "bezier", { from: { x: 0, y: 1 }, to: { x: 0, y: 1 } });
+    expect(d).toBe("M 300 100 C 300 203, 120 97, 120 200");
+  });
+
+  it("normalizes a non-unit tangent", () => {
+    const d = boardEdgePath({ x: 0, y: 0 }, { x: 0, y: 56 }, "bezier", { from: { x: 0, y: 9 }, to: { x: 0, y: 0.5 } });
+    expect(d).toBe("M 0 0 C 0 28, 0 28, 0 56");
+  });
+
+  it("shrinks the handle with a tiny leg instead of overshooting it", () => {
+    expect(boardEdgePath({ x: 0, y: 0 }, { x: 0, y: 10 }, "bezier")).toBe("M 0 0 C 0 5, 0 5, 0 10");
+  });
+
+  it("boardAnchorNormal names the border an anchor sits on", () => {
+    expect(boardAnchorNormal(rect, { x: 50, y: 0 })).toEqual({ x: 0, y: -1 });
+    expect(boardAnchorNormal(rect, { x: 50, y: 40 })).toEqual({ x: 0, y: 1 });
+    expect(boardAnchorNormal(rect, { x: 0, y: 20 })).toEqual({ x: -1, y: 0 });
+    expect(boardAnchorNormal(rect, { x: 100, y: 20 })).toEqual({ x: 1, y: 0 });
+    // inside the rect, off its border, or a zero-size junction: no normal
+    expect(boardAnchorNormal(rect, { x: 50, y: 20 })).toBeNull();
+    expect(boardAnchorNormal(rect, { x: 50, y: -4 })).toBeNull();
+    expect(boardAnchorNormal({ x: 5, y: 5, w: 0, h: 0 }, { x: 5, y: 5 })).toBeNull();
+  });
+
+  it("boardAnchorNormal breaks a corner tie toward the side the route uses", () => {
+    // arriving at the top-left corner travelling right: it comes in through
+    // the LEFT border (the normal pointing against the travel)
+    expect(boardAnchorNormal(rect, { x: 0, y: 0 }, { x: -1, y: -0.3 })).toEqual({ x: -1, y: 0 });
+    // travelling down: it comes in through the TOP border
+    expect(boardAnchorNormal(rect, { x: 0, y: 0 }, { x: -0.2, y: -1 })).toEqual({ x: 0, y: -1 });
+  });
+
+  it("a via chain keeps a non-zero end tangent (the last handle is never the end point)", () => {
+    const a = { x: 0, y: 0 };
+    const corner = { x: 100, y: 0 };
+    const b = { x: 100, y: 100 };
+    const d = boardViaPath(a, [corner], b, "bezier", { from: { x: 1, y: 0 }, to: { x: 0, y: 1 } });
+    const legs = d.match(/C [^C]+/g)!.map((leg) => leg.slice(2).replace(/,/g, "").trim().split(/\s+/).map(Number));
+    expect(legs).toHaveLength(2);
+    // first leg leaves straight along +x: its first control point shares the start's y
+    expect(legs[0][0]).toBe(50);
+    expect(legs[0][1]).toBe(0);
+    // last leg arrives straight down: its second control point shares the end's x
+    // and sits above it — equal coordinates would zero the tangent
+    expect(legs[1][4] - legs[1][2]).toBe(0);
+    expect(legs[1][5] - legs[1][3]).toBeGreaterThan(0);
+  });
+
+  it("boardEdgeMidpoint sits on the bezier, and via routes keep the middle junction", () => {
+    expect(boardEdgeMidpoint({ x: 0, y: 0 }, [], { x: 0, y: 56 }, "bezier")).toEqual({ x: 0, y: 28 });
+    // bottom-exit into a top-entry at another x: opposing normals still
+    // put the parametric midpoint on the chord's midpoint
+    const s = boardEdgeMidpoint({ x: 0, y: 0 }, [], { x: 80, y: 56 }, "bezier", { from: { x: 0, y: 1 }, to: { x: 0, y: 1 } });
+    expect(s.x).toBe(40);
+    expect(s.y).toBe(28);
+    expect(boardEdgeMidpoint({ x: 0, y: 0 }, [{ x: 40, y: 8 }], { x: 80, y: 0 }, "bezier")).toEqual({ x: 40, y: 8 });
   });
 });

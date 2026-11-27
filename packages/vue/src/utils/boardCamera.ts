@@ -131,19 +131,35 @@ export function boardZoomAt(
 }
 
 /**
+ * What a drag may do with content that is SMALLER than the viewport on an
+ * axis.
+ *  - `"center"` (the board default): re-center — a fitted board is pinned,
+ *    a drag never moves it;
+ *  - `"keep"`: it may be dragged anywhere as long as half of it stays in
+ *    view (the same "never pushed fully out of view" invariant the larger
+ *    than-viewport case already has, applied to small content).
+ */
+export type BoardSmallContentPan = "center" | "keep";
+
+/**
  * Clamp the pan so the content bbox can never be dragged fully out of
  * view: content larger than the viewport keeps half a viewport of slack
- * on each side; content smaller than the viewport re-centers.
+ * on each side; content smaller than the viewport re-centers — unless
+ * `small` is `"keep"` (see BoardSmallContentPan).
  */
 export function boardClampPan(
   cam: BoardCamera,
   content: BoardRect,
   viewport: BoardViewport,
   slack = 0.5,
+  small: BoardSmallContentPan = "center",
 ): BoardCamera {
   const clampAxis = (pan: number, view: number, size: number): number => {
     const drawn = size * cam.k;
-    if (drawn <= view) return (view - drawn) / 2;
+    if (drawn <= view) {
+      if (small === "keep") return Math.min(Math.max(pan, -drawn / 2), view - drawn / 2);
+      return (view - drawn) / 2;
+    }
     const slackPx = view * slack;
     return Math.min(Math.max(pan, view - drawn - slackPx), slackPx);
   };
@@ -208,14 +224,29 @@ export function boardTweenCam(from: BoardCamera, to: BoardCamera, t: number): Bo
   };
 }
 
-/** Union of rects (ignoring empty ones) — the content bbox for clamp/fit. */
-export function boardBBox(rects: BoardRect[]): BoardRect {
+/**
+ * Union of rects (ignoring empty ones) — the content bbox for clamp/fit.
+ * A zero-size rect is a JUNCTION (an invisible node that only routes
+ * edges): by default it does not count, but a board whose picture is made
+ * of them (a sequence diagram's message rows sit on zero-size junctions)
+ * must pass `points: true` or the bbox covers the participants only and
+ * the fit parks the camera on a quarter of the diagram (measured on
+ * docs.celestia.world 2026-11-27: 7 of 9 messages fell outside the card).
+ */
+export function boardBBox(rects: BoardRect[], opts: { points?: boolean } = {}): BoardRect {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
   for (const r of rects) {
-    if (r.w <= 0 || r.h <= 0) continue;
+    if (r.w <= 0 || r.h <= 0) {
+      if (!opts.points) continue;
+      minX = Math.min(minX, r.x);
+      minY = Math.min(minY, r.y);
+      maxX = Math.max(maxX, r.x);
+      maxY = Math.max(maxY, r.y);
+      continue;
+    }
     minX = Math.min(minX, r.x);
     minY = Math.min(minY, r.y);
     maxX = Math.max(maxX, r.x + r.w);

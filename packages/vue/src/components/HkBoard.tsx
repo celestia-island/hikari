@@ -54,11 +54,13 @@ import {
 } from "../utils/boardCamera";
 import {
   boardAnchor,
-  boardEdgePath,
+  boardAnchorNormal,
+  boardEdgeMidpoint,
   boardFanOrdinals,
   boardViaPath,
   type BoardAnchorMode,
   type BoardEdgeStyle,
+  type BoardTangents,
 } from "../utils/boardEdges";
 import "./HkBoard.scss";
 import { drawnScale } from "../composables/layoutGeometry";
@@ -92,6 +94,17 @@ export interface BoardNodeInput {
 /** Below twice the fit padding, `boardFit` has no room left after its own
  * padding: the board is unplaced (k = 0) until its container grows past it. */
 const FIT_FLOOR_PX = BOARD_FIT_PAD * 2;
+
+/** What a drag may do once the whole content is already in view. */
+export type BoardPanMode = "clamp" | "float";
+
+/** Unit vector from `p` toward `q` (the +x axis when the two coincide). */
+function unitToward(p: BoardPoint, q: BoardPoint): BoardPoint {
+  const dx = q.x - p.x;
+  const dy = q.y - p.y;
+  const len = Math.hypot(dx, dy);
+  return len > 1e-9 ? { x: dx / len, y: dy / len } : { x: 1, y: 0 };
+}
 
 /** Per-instance sequence for document-unique marker ids (url(#id)
  * resolves document-wide — two boards must never mint the same id). */
@@ -139,6 +152,11 @@ export default defineComponent({
     grid: { type: Boolean, default: true },
     gridSize: { type: Number, default: 24 },
     minimap: { type: Boolean, default: true },
+    /** `"clamp"` (default): content smaller than the viewport re-centers,
+     *  so a fitted board cannot be dragged. `"float"`: it may be dragged
+     *  while half of it stays in view — a diagram is content a reader
+     *  may want to move aside, not a full-bleed scene. */
+    pan: { type: String as PropType<BoardPanMode>, default: "clamp" },
     minK: { type: Number, default: 0.2 },
     maxK: { type: Number, default: 4 },
     /** Ceiling for the fit zoom (reset button, fitOnMount). The library
@@ -158,9 +176,10 @@ export default defineComponent({
     const viewportRef = ref<HTMLElement | null>(null);
     const viewportSize = ref<BoardViewport>({ w: 800, h: 600 });
 
-    /** Content bbox (world) — nodes plus a small margin. */
+    /** Content bbox (world) — nodes (hidden junctions included: a
+     *  sequence diagram's rows live on them) plus a small margin. */
     const content = computed<BoardRect>(() => {
-      const box = boardBBox(props.nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })));
+      const box = boardBBox(props.nodes.map((n) => ({ x: n.x, y: n.y, w: n.w, h: n.h })), { points: true });
       return { x: box.x - 20, y: box.y - 20, w: box.w + 40, h: box.h + 40 };
     });
 
@@ -171,6 +190,7 @@ export default defineComponent({
       maxK: props.maxK,
       animated: props.animated,
       fitCap: props.fitCap,
+      smallContentPan: props.pan === "float" ? "keep" : "center",
     });
     const camera = cam.camera as Ref<BoardCamera>;
 
@@ -209,15 +229,33 @@ export default defineComponent({
           .map((id) => rects.get(id))
           .filter((r): r is BoardRect => Boolean(r))
           .map((r) => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }));
-        // Label anchor: the chord midpoint, pulled onto the middle via
-        // leg when the route bends through junctions (the sequence
-        // self-loop reads best with the caption beside the jog).
-        const mid = viaCenters.length > 0
-          ? viaCenters[Math.floor((viaCenters.length - 1) / 2)]
-          : { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        // Route tangents: a bezier must LEAVE the source and ARRIVE at the
+        // target along the border normal of the anchor it sits on, because
+        // that end tangent is what an `orient="auto"` arrowhead rotates to
+        // (see the "Route tangents" note in utils/boardEdges.ts — with the
+        // old always-horizontal tangent every top-down arrow pointed
+        // sideways). Only the rect owner can tell which border that is;
+        // a junction (zero-size rect) has none and falls back to the leg's
+        // travel axis.
+        const leave: BoardPoint = unitToward(a, viaCenters[0] ?? b);
+        const arrive: BoardPoint = unitToward(viaCenters[viaCenters.length - 1] ?? a, b);
+        // At the target the border is picked by the normal pointing AGAINST
+        // the travel, and the route's own tangent is that normal's opposite
+        // (it travels inward).
+        const arriveOut = boardAnchorNormal(to, b, { x: -arrive.x, y: -arrive.y });
+        const tangents: BoardTangents = {
+          from: boardAnchorNormal(from, a, leave) ?? undefined,
+          to: arriveOut ? { x: -arriveOut.x, y: -arriveOut.y } : undefined,
+        };
+        const style: BoardEdgeStyle = e.style ?? "orthogonal";
+        // Label anchor: on the bezier itself (its parametric midpoint),
+        // pulled onto the middle via leg when the route bends through
+        // junctions (the sequence self-loop reads best with the caption
+        // beside the jog).
+        const mid = boardEdgeMidpoint(a, viaCenters, b, style, tangents);
         out.push({
           id: e.id,
-          d: boardViaPath(a, viaCenters, b, e.style ?? "orthogonal"),
+          d: boardViaPath(a, viaCenters, b, style, tangents),
           ink: e.ink ?? DEFAULT_INK,
           dashed: Boolean(e.dashed),
           width: e.width ?? 1.5,

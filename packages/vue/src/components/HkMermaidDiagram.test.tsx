@@ -179,6 +179,51 @@ describe("HkMermaidDiagram", () => {
     expect(labels).toContain("response");
   });
 
+  it("paints every grammar shape — none falls back to the plain code block", async () => {
+    // The parser wave (2026-11-28) taught the grammar the shapes mermaid's
+    // reference documents; a shape the painter does not know would still
+    // render (as a rounded box), so this pin asserts the CLASS, not just
+    // that something drew. MUT: dropping a variant from OUTLINE_SHAPES (or
+    // from the TS union) turns the matching entry red.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({
+      source: [
+        "flowchart LR",
+        "A[rect] --> B([stadium])",
+        "B --> C[[subroutine]]",
+        "C --> D[(database)]",
+        "D --> E{{hexagon}}",
+        "E --> F[/para/]",
+        "F --> G(((dc)))",
+        "G --> H>asym]",
+        "H --> I{trap-verbal}",
+        "I --> J((circle))",
+      ].join("\n"),
+    });
+    await settle();
+    expect(c.querySelector(".hk-mermaid-fallback")).toBeNull();
+    const painted = [...c.querySelectorAll(".hk-mmd-node")].map(
+      (el) => [...el.classList].find((k) => k.startsWith("hk-mmd-node--") && k !== "hk-mmd-node--outline") ?? "",
+    );
+    expect(painted).toEqual([
+      "hk-mmd-node--rect",
+      "hk-mmd-node--stadium",
+      "hk-mmd-node--subroutine",
+      "hk-mmd-node--cylinder",
+      "hk-mmd-node--hexagon",
+      "hk-mmd-node--parallelogram",
+      "hk-mmd-node--doublecircle",
+      "hk-mmd-node--asymmetric",
+      "hk-mmd-node--diamond",
+      "hk-mmd-node--circle",
+    ]);
+    // …and the outline family really draws a path, not an empty shell.
+    const outlines = [...c.querySelectorAll(".hk-mmd-node__outline")];
+    expect(outlines).toHaveLength(7);
+    for (const svg of outlines) expect(svg.children.length).toBeGreaterThan(0);
+  });
+
   it("changing the source re-parses (computed pipeline, no stale board)", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;

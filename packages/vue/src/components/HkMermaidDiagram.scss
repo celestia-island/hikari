@@ -87,6 +87,39 @@
   background: rgb(var(--color-primary) / 4%);
   pointer-events: none;
 
+  // Outline shapes: the SVG strip paints the border, so the outer div keeps
+  // no border/background of its own and the label floats on top.
+  &--outline {
+    position: relative;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+
+  &__outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+
+    rect,
+    polygon,
+    ellipse {
+      fill: rgb(var(--color-surface));
+      stroke: rgb(var(--color-primary) / 55%);
+      stroke-width: 1.5;
+    }
+
+    // Interior detail lines (subroutine bars, cylinder lid, inner ring) are
+    // strokes over the fill, never their own boxes.
+    line,
+    path,
+    ellipse[fill="none"] {
+      stroke: rgb(var(--color-primary) / 55%);
+      stroke-width: 1.5;
+    }
+  }
+
   &__label {
     position: absolute;
     top: 5px;

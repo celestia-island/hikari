@@ -154,6 +154,25 @@ function shapeSize(shape: MermaidNodeShape, labelWidth: number, textH: number): 
     case "diamond":
       // The rotated square must contain the label box with margin.
       return { w: clampMin(labelWidth * 1.55 + 24, 72), h: clampMin(textH * 2.3 + 18, 56) };
+    // The capsule/cylinder/hexagon family draws its outline INSIDE the box,
+    // so the label needs extra horizontal slack to clear the slanted ends;
+    // the subroutine's double bar and the asymmetric flag need the same.
+    case "stadium":
+    case "cylinder":
+    case "hexagon":
+    case "doublecircle":
+    case "parallelogram":
+    case "trapezoid":
+      return {
+        w: clampMin(labelWidth + NODE_PAD_X * 3, 76),
+        h: clampMin(textH + NODE_PAD_Y + 6, 44),
+      };
+    case "subroutine":
+    case "asymmetric":
+      return {
+        w: clampMin(labelWidth + NODE_PAD_X * 2.5, 72),
+        h: clampMin(textH + NODE_PAD_Y, 40),
+      };
     case "rounded":
     case "rect":
     default:

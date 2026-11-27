@@ -23,7 +23,22 @@
 export type MermaidDirection = "TD" | "BT" | "LR" | "RL";
 
 /** Node border shape (the four shapes the family grammar supports). */
-export type MermaidNodeShape = "rect" | "rounded" | "diamond" | "circle";
+/** Node border shape. The Rust grammar emits these tokens (see
+ * `packages/wasm/mermaid/src/mermaid/types.rs` NodeShape); every one of them
+ * is painted by HkMermaidDiagram's node slot. */
+export type MermaidNodeShape =
+  | "rect"
+  | "rounded"
+  | "diamond"
+  | "circle"
+  | "stadium"
+  | "subroutine"
+  | "cylinder"
+  | "hexagon"
+  | "parallelogram"
+  | "trapezoid"
+  | "asymmetric"
+  | "doublecircle";
 
 export interface MermaidNode {
   id: string;

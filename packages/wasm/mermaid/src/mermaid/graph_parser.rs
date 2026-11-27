@@ -278,15 +278,25 @@ fn strip_quotes(text: &str) -> String {
 }
 
 fn parse_chain(pair: pest::iterators::Pair<Rule>, state: &mut State) {
-    let mut refs: Vec<String> = Vec::new();
     let mut edge_types: Vec<(EdgeType, Option<String>)> = Vec::new();
 
+    // Each chain position is a GROUP of refs (`A & B --> C & D`); the edges
+    // are the cross product between consecutive groups, which is what
+    // mermaid draws for the shorthand.
+    let mut groups: Vec<Vec<String>> = Vec::new();
     for inner in pair.into_inner() {
         match inner.as_rule() {
-            Rule::nref => {
-                let (id, label, shape) = parse_nref(inner);
-                state.ensure_node(&id, label.as_deref(), shape);
-                refs.push(id);
+            Rule::refs => {
+                let mut group = Vec::new();
+                for nref in inner.into_inner() {
+                    if nref.as_rule() != Rule::nref {
+                        continue;
+                    }
+                    let (id, label, shape) = parse_nref(nref);
+                    state.ensure_node(&id, label.as_deref(), shape);
+                    group.push(id);
+                }
+                groups.push(group);
             }
             Rule::edge => {
                 let (et, lbl) = parse_edge(inner);
@@ -296,15 +306,25 @@ fn parse_chain(pair: pest::iterators::Pair<Rule>, state: &mut State) {
         }
     }
 
-    for i in 0..edge_types.len() {
-        if i + 1 < refs.len() {
-            let (et, lbl) = &edge_types[i];
-            state.edges.push(MermaidEdge {
-                source: refs[i].clone(),
-                target: refs[i + 1].clone(),
-                label: lbl.clone(),
-                edge_type: et.clone(),
-            });
+    for i in 0..edge_types.len().min(groups.len().saturating_sub(1)) {
+        let (et, lbl) = &edge_types[i];
+        for source in &groups[i] {
+            for target in &groups[i + 1] {
+                // A real self-loop (`A --> A`) is meaningful — the layout
+                // draws it as a stub around the node's side — so only the
+                // FAN-OUT cross product drops the identity pairs (they would
+                // be spurious `A --> A` edges from `A & B --> B & C`).
+                let fan_out = groups[i].len() > 1 || groups[i + 1].len() > 1;
+                if fan_out && source == target {
+                    continue;
+                }
+                state.edges.push(MermaidEdge {
+                    source: source.clone(),
+                    target: target.clone(),
+                    label: lbl.clone(),
+                    edge_type: et.clone(),
+                });
+            }
         }
     }
 }
@@ -362,6 +382,14 @@ fn parse_shape(pair: pest::iterators::Pair<Rule>) -> (NodeShape, Option<String>)
             .map(|p| strip_quotes(p.as_str()));
         let text = text.filter(|t| !t.is_empty());
         match inner.as_rule() {
+            Rule::dblcirc => return (NodeShape::DoubleCircle, text),
+            Rule::stadium => return (NodeShape::Stadium, text),
+            Rule::subrt => return (NodeShape::Subroutine, text),
+            Rule::cyl => return (NodeShape::Cylinder, text),
+            Rule::hex => return (NodeShape::Hexagon, text),
+            Rule::para => return (NodeShape::Parallelogram, text),
+            Rule::trap => return (NodeShape::Trapezoid, text),
+            Rule::asym => return (NodeShape::Asymmetric, text),
             Rule::circ => return (NodeShape::Circle, text),
             Rule::rect => return (NodeShape::Rect, text),
             Rule::rnd => return (NodeShape::Rounded, text),
@@ -372,27 +400,44 @@ fn parse_shape(pair: pest::iterators::Pair<Rule>) -> (NodeShape, Option<String>)
     (NodeShape::Rect, None)
 }
 
+/// Pull the `|caption|` (if any) out of an edge rule's children.
+fn edge_label(pair: &pest::iterators::Pair<Rule>) -> Option<String> {
+    for inner in pair.clone().into_inner() {
+        match inner.as_rule() {
+            Rule::lbl => {
+                let text = inner
+                    .into_inner()
+                    .next()
+                    .map(|lp| strip_quotes(lp.as_str()))
+                    .unwrap_or_default();
+                return Some(text).filter(|l| !l.is_empty());
+            }
+            // `-- caption -->`: the caption is the raw run between the dashes.
+            Rule::ltxt_raw => {
+                let text = strip_quotes(inner.as_str());
+                return Some(text).filter(|l| !l.is_empty());
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Classify one link token into (line kind, caption).
+///
+/// The head glyph (`o`, `x`, `<`) is part of the token in mermaid but changes
+/// only the ARROWHEAD, which the renderer reads from the source text; the
+/// line kind (solid / dashed / thick / plain) is what the layout needs, so
+/// that is what this returns.
 fn parse_edge(pair: pest::iterators::Pair<Rule>) -> (EdgeType, Option<String>) {
     for inner in pair.into_inner() {
         match inner.as_rule() {
-            Rule::arr | Rule::arr_lbl => {
-                let label = inner.into_inner().next().map(|p| {
-                    p.into_inner()
-                        .next()
-                        .map(|lp| strip_quotes(lp.as_str()))
-                        .unwrap_or_default()
-                });
-                return (EdgeType::Arrow, label.filter(|l| !l.is_empty()));
+            Rule::arr | Rule::arr_lbl | Rule::arr_text => {
+                return (EdgeType::Arrow, edge_label(&inner))
             }
-            Rule::ln | Rule::ln_lbl => {
-                let label = inner.into_inner().next().map(|p| {
-                    p.into_inner()
-                        .next()
-                        .map(|lp| strip_quotes(lp.as_str()))
-                        .unwrap_or_default()
-                });
-                return (EdgeType::Line, label.filter(|l| !l.is_empty()));
-            }
+            Rule::ln | Rule::ln_lbl | Rule::ln_text => return (EdgeType::Line, edge_label(&inner)),
+            Rule::dotted | Rule::dotted_lbl => return (EdgeType::Dotted, edge_label(&inner)),
+            Rule::thick | Rule::thick_lbl => return (EdgeType::Thick, edge_label(&inner)),
             _ => {}
         }
     }
@@ -402,6 +447,123 @@ fn parse_edge(pair: pest::iterators::Pair<Rule>) -> (EdgeType, Option<String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ── coverage wave (2026-11-28) ──────────────────────────────────
+    //
+    // Each case is a construct the docs hub (or mermaid's own reference)
+    // uses and the grammar used to REJECT, which turned the whole diagram
+    // into a fallback code block — the failure mode that matters here,
+    // because a partial render is better than no render.
+    //
+    // MUT: reverting any shape/link rule below makes the corresponding
+    // assertion fail with a parse error, not a wrong shape.
+
+    #[test]
+    fn every_node_shape_parses_to_its_own_variant() {
+        let doc = parse(
+            "flowchart LR\n\
+             A[rect] --> B(rounded)\n\
+             B --> C([stadium])\n\
+             C --> D[[subroutine]]\n\
+             D --> E[(database)]\n\
+             E --> F((circle))\n\
+             F --> G{diamond}\n\
+             G --> H{{hexagon}}\n\
+             H --> I[/parallelogram/]\n\
+             I --> J>asymmetric]\n\
+             J --> K(((double circle)))\n",
+        )
+        .expect("every documented shape must parse");
+        let shapes: Vec<(String, NodeShape)> = doc
+            .nodes
+            .iter()
+            .map(|n| (n.label.clone(), n.shape.clone()))
+            .collect();
+        assert_eq!(
+            shapes,
+            vec![
+                ("rect".to_string(), NodeShape::Rect),
+                ("rounded".to_string(), NodeShape::Rounded),
+                ("stadium".to_string(), NodeShape::Stadium),
+                ("subroutine".to_string(), NodeShape::Subroutine),
+                ("database".to_string(), NodeShape::Cylinder),
+                ("circle".to_string(), NodeShape::Circle),
+                ("diamond".to_string(), NodeShape::Diamond),
+                ("hexagon".to_string(), NodeShape::Hexagon),
+                ("parallelogram".to_string(), NodeShape::Parallelogram),
+                ("asymmetric".to_string(), NodeShape::Asymmetric),
+                ("double circle".to_string(), NodeShape::DoubleCircle),
+            ]
+        );
+    }
+
+    #[test]
+    fn the_link_family_classifies_its_line_kind_and_keeps_its_caption() {
+        let doc = parse(
+            "flowchart TD\n\
+             A -->|arrow| B\n\
+             B --- C\n\
+             C -.->|dashed| D\n\
+             D ==> E\n\
+             E -- text on line --> F\n\
+             F ---|plain caption| G\n",
+        )
+        .expect("every link form must parse");
+        let by_label = |from: &str| -> (EdgeType, Option<String>) {
+            let e = doc
+                .edges
+                .iter()
+                .find(|e| e.source == from)
+                .unwrap_or_else(|| panic!("no edge from {from}"));
+            (e.edge_type.clone(), e.label.clone())
+        };
+        assert_eq!(by_label("A"), (EdgeType::Arrow, Some("arrow".to_string())));
+        assert_eq!(by_label("B"), (EdgeType::Line, None));
+        assert_eq!(
+            by_label("C"),
+            (EdgeType::Dotted, Some("dashed".to_string()))
+        );
+        assert_eq!(by_label("D"), (EdgeType::Thick, None));
+        assert_eq!(
+            by_label("E"),
+            (EdgeType::Arrow, Some("text on line".to_string()))
+        );
+        assert_eq!(
+            by_label("F"),
+            (EdgeType::Line, Some("plain caption".to_string()))
+        );
+    }
+
+    #[test]
+    fn the_ampersand_shorthand_fans_into_the_cross_product() {
+        // `A --> B & C` is two edges, `A & B --> C & D` is four.
+        let doc = parse("flowchart TD\n  A & B --> C & D\n").expect("fan-out must parse");
+        let mut pairs: Vec<(String, String)> = doc
+            .edges
+            .iter()
+            .map(|e| (e.source.clone(), e.target.clone()))
+            .collect();
+        pairs.sort();
+        assert_eq!(
+            pairs,
+            vec![
+                ("A".to_string(), "C".to_string()),
+                ("A".to_string(), "D".to_string()),
+                ("B".to_string(), "C".to_string()),
+                ("B".to_string(), "D".to_string()),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_captioned_dotted_link_is_not_read_as_a_plain_dash_run() {
+        // The PEG ordering trap: `-.->` must win over `-.-` / `--`, and
+        // `-->` must never be read as `--` + caption.
+        let doc = parse("flowchart TD\n  A -.-> B\n  B -->|cap| C\n").expect("parse");
+        assert_eq!(doc.edges[0].edge_type, EdgeType::Dotted);
+        assert_eq!(doc.edges[1].edge_type, EdgeType::Arrow);
+        assert_eq!(doc.edges[1].label.as_deref(), Some("cap"));
+    }
 
     #[test]
     fn subgraph_becomes_a_group_not_two_nodes() {
@@ -419,10 +581,7 @@ mod tests {
         assert_eq!(g.members, vec!["A".to_string(), "B".to_string()]);
         assert_eq!(g.parent, None);
         // The edge to the cluster id survives; the layout maps it onto the frame.
-        assert!(doc
-            .edges
-            .iter()
-            .any(|e| e.source == "C" && e.target == "G"));
+        assert!(doc.edges.iter().any(|e| e.source == "C" && e.target == "G"));
     }
 
     #[test]
@@ -449,7 +608,8 @@ mod tests {
         // Mermaid's brackets/quotes are syntax: `A["text"]` renders `text`.
         // The docs hub quotes every label, so leaving them in painted a
         // literal "…" around each node.
-        let doc = parse("flowchart TD\n  A[\"text\"] -->|\"edge caption\"| B[\"b\"]\n").expect("parse");
+        let doc =
+            parse("flowchart TD\n  A[\"text\"] -->|\"edge caption\"| B[\"b\"]\n").expect("parse");
         assert_eq!(doc.nodes[0].label, "text");
         assert_eq!(doc.nodes[1].label, "b");
         assert_eq!(doc.edges[0].label.as_deref(), Some("edge caption"));

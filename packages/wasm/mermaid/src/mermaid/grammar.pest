@@ -30,26 +30,61 @@ comment = { "%" ~ (!nl ~ ANY)* }
 /* `end` closes a subgraph: a statement must never swallow it, or the block
  * would run to EOF (and a node named "end" would be painted, which is what
  * the docs site showed before clusters existed). */
-chain = { !end_kw ~ nref ~ sp* ~ edge ~ sp* ~ nref ~ (sp* ~ edge ~ sp* ~ nref)* }
+chain = { !end_kw ~ refs ~ sp* ~ edge ~ sp* ~ refs ~ (sp* ~ edge ~ sp* ~ refs)* }
+/* `A & B --> C & D` fans into the cross product of both sides, which is what
+ * mermaid draws. */
+refs = { nref ~ (sp* ~ "&" ~ sp* ~ nref)* }
 nodedef = { !end_kw ~ nid ~ sp* ~ shape? }
 nref = { nid ~ sp* ~ shape? }
 
 nid = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
-shape = { circ | rect | rnd | diam }
+/* Node shapes, longest openers first: `(((` double-circle, `([` stadium,
+ * `[[` subroutine, `[(` cylinder, `{{` hexagon, `[/` parallelogram,
+ * `[\\` trapezoid, `>` asymmetric. The ORDER is the grammar: PEG tries
+ * alternatives top-down, so a shorter opener placed earlier would swallow a
+ * longer form's first characters and paint the rest as a label. */
+shape = { dblcirc | stadium | subrt | cyl | hex | para | trap | asym | circ | rect | rnd | diam }
+dblcirc = { "(((" ~ stxt ~ ")))" }
+stadium = { "([" ~ stxt ~ "])" }
+subrt = { "[[" ~ stxt ~ "]]" }
+cyl = { "[(" ~ stxt ~ ")]" }
+hex = { "{{" ~ stxt ~ "}}" }
+para = { "[/" ~ ptxt ~ "/]" }
+trap = { "[\\\\" ~ ptxt ~ "\\\\]" }
+asym = { ">" ~ stxt ~ "]" }
 circ = { "((" ~ stxt ~ "))" }
 rect = { "[" ~ stxt ~ "]" }
 rnd = { "(" ~ stxt ~ ")" }
 diam = { "{" ~ stxt ~ "}" }
-stxt = { (!("]" | ")" | "}" | nl) ~ ANY)* }
+stxt = { (!("]" | ")" | "}" | nl | "|") ~ ANY)* }
+/* Slash-delimited shapes (`[/text/]`, `[\\text\\]`) need a body that stops
+ * before the closing delimiter pair, or `stxt` eats it. */
+ptxt = { (!("/]" | "\\\\]") ~ ANY)* }
 
-edge = { arr_lbl | arr | ln_lbl | ln }
+/* Links. Mermaid's link syntax is a family: `-->` arrow, `---`/`--` plain,
+ * `-.->`/`-.-` dotted, `==>`/`===` thick, each optionally captioned — either
+ * as `-->|caption|` or, for the plain forms, as `-- caption -->`. The
+ * `--o` / `--x` / `<-->` heads change only the arrowHEAD (the renderer reads
+ * them off the source); this rule classifies the LINE.
+ *
+ * Tried longest-first, and `arr_text`/`ln_text` come AFTER the plain forms so
+ * `-->` is never read as `--` plus a caption. */
+edge = { dotted_lbl | dotted | thick_lbl | thick | arr_lbl | arr_text | arr | ln_lbl | ln_text | ln }
+dotted_lbl = { "-.->" ~ sp* ~ lbl }
+dotted = { "-.->" | "-.-" }
+thick_lbl = { ("==>" | "===") ~ sp* ~ lbl }
+thick = { "==>" | "===" }
 arr_lbl = { "-->" ~ sp* ~ lbl }
 arr = { "-->" }
 ln_lbl = { "---" ~ sp* ~ lbl }
-ln = { "---" }
+ln = { "---" | "--" ~ !">" ~ !"-" }
+arr_text = { "--" ~ sp+ ~ ltxt_raw ~ sp* ~ "-->" }
+ln_text = { "--" ~ sp+ ~ ltxt_raw ~ sp* ~ "---" }
 lbl = { "|" ~ ltxt ~ "|" }
 ltxt = { (!"|" ~ ANY)* }
+/* The caption of a `-- text -->` link: everything up to the closing dashes. */
+ltxt_raw = @{ (!("-->" | "---") ~ ANY)+ }
 
 sp = _{ " " | "\t" }
 nl = _{ "\r\n" | "\n" }

@@ -161,7 +161,6 @@ const TRACKING_TOLERANCE = 30;
     }
 
     function onPointerDown(event: PointerEvent) {
-      console.log("PROBE_DOWN: client", event.clientX, event.clientY, "disabled", props.disabled, "confirmed", confirmed.value);
       if (props.disabled || confirmed.value) return;
       const box = viewport.value?.getBoundingClientRect();
       if (!box) return;

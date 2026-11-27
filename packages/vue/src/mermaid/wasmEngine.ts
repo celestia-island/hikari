@@ -105,6 +105,37 @@ mermaidReady.catch(() => {
   // handles would be an unhandled rejection.
 });
 
+/**
+ * Rewrite a `stateDiagram` into the flowchart grammar the pest parser speaks.
+ *
+ * Two rewrites carry real semantics:
+ *
+ *  - `[*]` is TWO different pseudostates — the initial marker and the final
+ *    marker. The old blanket replace mapped both to one literal node, so a
+ *    diagram read `… --> STATE_START_END` at the top AND at the bottom and the
+ *    layout merged them into a single labelled box between the two (the audit
+ *    recorded it as "«[*]» start and end collapse into one frame"). They now
+ *    get distinct ids AND a circle shape with an empty label, which is what
+ *    mermaid draws;
+ *  - `A --> B : label` becomes `A -->|label| B` (the flowchart's caption form),
+ *    which is the only shape the grammar can carry.
+ */
+export function normalizeStateDiagram(source: string): string {
+  const START = "__hk_state_start";
+  const END = "__hk_state_end";
+  return source
+    .replace(/^\s*stateDiagram(-v\d+)?/, "graph TD")
+    // `[*] --> X` is the initial marker; `X --> [*]` is the final one. Handle
+    // both directions BEFORE any leftover `[*]` so a line that has one on each
+    // side (`[*] --> [*]`) still yields two distinct pseudostates.
+    .replace(/\[\*\](\s*(?:-->|--)\s*)/g, `${START}((""))$1`)
+    .replace(/((?:-->|--)\s*)\[\*\]/g, `$1${END}((""))`)
+    // Any remaining `[*]` (a node named on its own line) becomes the start.
+    .replace(/\[\*\]/g, `${START}((""))`)
+    // State transition labels: `A --> B : label` → `A -->|label| B`
+    .replace(/^(\s*)(\S+)\s+(-->|--)\s+(\S+)\s*:\s*(.+)$/gm, "$1$2 $3|$5| $4");
+}
+
 /** Check whether the wasm component handles this diagram type. */
 function wasmHandles(source: string): boolean {
   // Second wave: graph/flowchart + pie/gantt/sequence.
@@ -116,13 +147,7 @@ export const wasmMermaidEngine: MermaidParserEngine = {
     if (!surface) throw loadFailure ?? new MermaidNotReadyError();
     // State diagrams parse into the same graph shape; the pest grammar
     // only speaks "graph"/"flowchart", so rewrite the keyword.
-    const normalized = /^\s*stateDiagram/i.test(source)
-      ? source
-          .replace(/^\s*stateDiagram(-v\d+)?/, "graph TD")
-          .replace(/\[\*\]/g, "STATE_START_END")
-          // State transition labels: `A --> B : label` → `A -->|label| B`
-          .replace(/^(\s*)(\S+)\s+(-->|--)\s+(\S+)\s*:\s*(.+)$/gm, "$1$2 $3|$5| $4")
-      : source;
+    const normalized = /^\s*stateDiagram/i.test(source) ? normalizeStateDiagram(source) : source;
     if (wasmHandles(normalized)) {
       // The record (not a result): an absent `json` means "not recognized".
       const result = surface.call<MermaidParseResult | undefined>("parse", normalized);

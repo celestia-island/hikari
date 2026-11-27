@@ -380,7 +380,11 @@ fn parse_shape(pair: pest::iterators::Pair<Rule>) -> (NodeShape, Option<String>)
             .into_inner()
             .next()
             .map(|p| strip_quotes(p.as_str()));
-        let text = text.filter(|t| !t.is_empty());
+        // An EMPTY label is meaningful: `A((\"\"))` (and a state diagram's
+        // pseudostates) draw a bare shape with no text, so the empty string is
+        // carried through instead of falling back to the node id. The old
+        // `filter(|t| !t.is_empty())` made such a node render its id inside the
+        // circle.
         match inner.as_rule() {
             Rule::dblcirc => return (NodeShape::DoubleCircle, text),
             Rule::stadium => return (NodeShape::Stadium, text),

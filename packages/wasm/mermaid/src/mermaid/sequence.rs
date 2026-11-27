@@ -17,6 +17,13 @@ const ARROWS: &[(&str, SeqArrowKind)] = &[
 pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     let mut participants: Vec<String> = Vec::new();
     let mut messages: Vec<SequenceMessage> = Vec::new();
+    // `participant A as Alice` declares the id `A` with the DISPLAY name
+    // `Alice`. The contract carries display names only, so the alias is
+    // resolved here: the id is replaced by its name everywhere (declaration
+    // and every message endpoint), which is what the reader expects to see in
+    // the lane headers — the raw `participant A as Alice` line used to become
+    // one participant literally named "A as Alice".
+    let mut aliases: Vec<(String, String)> = Vec::new();
 
     for line in source.lines() {
         let line = line.trim();
@@ -27,8 +34,22 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
             continue;
         }
         if let Some(p) = line.strip_prefix("participant ") {
-            let name = p.trim().to_string();
-            if !name.is_empty() && !participants.contains(&name) {
+            let raw = p.trim();
+            if raw.is_empty() {
+                continue;
+            }
+            let (id, name) = match raw.split_once(" as ") {
+                Some((id, name)) => (id.trim().to_string(), name.trim().to_string()),
+                None => (raw.to_string(), raw.to_string()),
+            };
+            if id.is_empty() || name.is_empty() {
+                continue;
+            }
+            if id != name {
+                aliases.retain(|(k, _)| k != &id);
+                aliases.push((id, name.clone()));
+            }
+            if !participants.contains(&name) {
                 participants.push(name);
             }
             continue;
@@ -48,6 +69,32 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     // (the TS parser's contract); only completely empty input is None.
     if participants.is_empty() {
         return None;
+    }
+    if !aliases.is_empty() {
+        let resolve = |name: &str| -> String {
+            aliases
+                .iter()
+                .find(|(id, _)| id == name)
+                .map(|(_, name)| name.clone())
+                .unwrap_or_else(|| name.to_string())
+        };
+        for msg in &mut messages {
+            msg.from = resolve(&msg.from);
+            msg.to = resolve(&msg.to);
+        }
+        // The message loop above registered the raw ID of every endpoint
+        // before the alias was known, so drop the IDs the aliases replaced —
+        // otherwise each lane appears twice (once as `A`, once as `Alice`).
+        participants.retain(|p| !aliases.iter().any(|(id, _)| id == p));
+        // An alias may have introduced a name the declaration loop never saw
+        // (a message endpoint that used only the ID).
+        for msg in &messages {
+            for name in [&msg.from, &msg.to] {
+                if !participants.contains(name) {
+                    participants.push(name.clone());
+                }
+            }
+        }
     }
     Some(SequenceDiagram {
         participants,
@@ -76,4 +123,44 @@ fn parse_message(line: &str) -> Option<SequenceMessage> {
         }
     }
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// MUT: dropping the alias resolution leaves the participant named
+    /// "A as Alice" and the message endpoints unresolved — both assertions
+    /// below fail.
+    #[test]
+    fn participant_alias_becomes_the_display_name() {
+        let doc = parse_sequence(
+            "sequenceDiagram\n  participant A as Alice\n  participant B as Bob\n  A->>B: hi\n",
+        )
+        .expect("parse");
+        assert_eq!(
+            doc.participants,
+            vec!["Alice".to_string(), "Bob".to_string()]
+        );
+        assert_eq!(doc.messages[0].from, "Alice");
+        assert_eq!(doc.messages[0].to, "Bob");
+    }
+
+    /// MUT: without the alias pass the endpoints keep the ids and the lane
+    /// headers (which read the participant list) disagree with the arrows.
+    #[test]
+    fn an_alias_used_only_by_a_message_still_resolves() {
+        let doc = parse_sequence("sequenceDiagram\n  participant A as Alice\n  A->>A: think\n")
+            .expect("parse");
+        assert_eq!(doc.messages[0].from, "Alice");
+        assert_eq!(doc.messages[0].to, "Alice");
+        assert_eq!(doc.participants, vec!["Alice".to_string()]);
+    }
+
+    #[test]
+    fn a_participant_without_an_alias_keeps_its_name() {
+        let doc = parse_sequence("sequenceDiagram\n  participant Only\n").expect("parse");
+        assert_eq!(doc.participants, vec!["Only".to_string()]);
+        assert!(doc.messages.is_empty());
+    }
 }

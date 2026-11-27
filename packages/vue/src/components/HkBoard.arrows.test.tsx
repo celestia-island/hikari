@@ -315,7 +315,7 @@ describe("HkBoard — arrows arrive head-on", () => {
   /// (this side).
   ///
   /// MUT: removing the marker definitions or the `marker-start` binding
-  /// leaves the corresponding assertion unable to find its marker.
+  /// never passes — the corresponding assertion cannot find its marker.
   it("draws a ring, a cross and a two-ended arrow", async () => {
     const c = document.createElement("div");
     document.body.appendChild(c);

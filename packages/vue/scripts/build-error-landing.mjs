@@ -386,6 +386,18 @@ export async function buildErrorLandingHtml(options = {}) {
 
   const output = (Array.isArray(result) ? result[0] : result).output;
 
+  // The scan must have collected SOMETHING before the cross-check below
+  // may judge it: the bundled graph genuinely reads hikari::<ns>.
+  // literals (every family component resolves its labels through them).
+  // An empty map means the scan pass stopped running — the cross-check
+  // would then pass vacuously on an unseen graph — so fail loudly.
+  if (Object.keys(nsReads).length === 0) {
+    throw new Error(
+      "error-landing build: the locale-namespace scan collected nothing from the " +
+        "bundled sources — the scan pass did not run; refusing a vacuous cross-check",
+    );
+  }
+
   // The i18n subset cross-check: every namespace the bundled sources read
   // must be covered by LOCALE_KEY_PREFIXES, or the subset would carry no
   // copy for it and every non-English locale would fall back to the

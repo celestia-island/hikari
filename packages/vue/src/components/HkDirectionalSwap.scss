@@ -1,0 +1,116 @@
+// HkDirectionalSwap — state-keyed, direction-aware content exchange.
+//
+// Geometry is HkCrossfade's (one-cell grid, both generations stacked in
+// the SAME cell) so the surface keeps the taller generation's height for
+// the whole exchange and can never collapse mid-swap. What this sheet adds
+// is the TRAVEL: the outgoing copy leaves toward one edge while the
+// incoming copy arrives from the other, each riding its own opacity ramp.
+//
+// Direction is data on the host (`data-direction`), axis too
+// (`data-axis`), and RTL mirrors the horizontal vocabulary — the reader's
+// "forward" is the reading direction's end edge, not the screen's right.
+//
+// Reduced motion keeps the opacity exchange and zeroes the travel: motion
+// is what the preference is about, and the fade already carries the change
+// of state (HkPhaseTransition precedent).
+
+.hk-dswap {
+  display: grid;
+  overflow: clip;
+
+  > .hk-dswap-item {
+    grid-area: 1 / 1;
+    width: 100%;
+    min-width: 0;
+    // The block-axis twin: a grid item refuses to shrink below its content,
+    // which would let whole-pane swaps overflow a constrained host.
+    min-height: 0;
+  }
+}
+
+// ── travel ───────────────────────────────────────────────────────────
+// The entering copy starts offset toward the edge it comes FROM and
+// settles to 0; the leaving copy goes on to the opposite edge. Offsets are
+// CSS custom properties so one rule set serves both axes.
+
+.hk-dswap[data-axis="horizontal"] {
+  --hk-dswap-enter-from: translateX(var(--hk-swap-travel, 24px));
+  --hk-dswap-leave-to: translateX(calc(-1 * var(--hk-swap-travel, 24px)));
+}
+
+.hk-dswap[data-axis="horizontal"][data-direction="back"] {
+  --hk-dswap-enter-from: translateX(calc(-1 * var(--hk-swap-travel, 24px)));
+  --hk-dswap-leave-to: translateX(var(--hk-swap-travel, 24px));
+}
+
+.hk-dswap[data-axis="vertical"] {
+  --hk-dswap-enter-from: translateY(var(--hk-swap-travel, 24px));
+  --hk-dswap-leave-to: translateY(calc(-1 * var(--hk-swap-travel, 24px)));
+}
+
+.hk-dswap[data-axis="vertical"][data-direction="back"] {
+  --hk-dswap-enter-from: translateY(calc(-1 * var(--hk-swap-travel, 24px)));
+  --hk-dswap-leave-to: translateY(var(--hk-swap-travel, 24px));
+}
+
+// RTL mirrors the horizontal vocabulary: "forward" travels the other way on
+// screen because the reading direction does.
+
+
+// RTL mirrors the horizontal vocabulary: "forward" travels the other way on
+// screen because the reading direction does.
+[dir="rtl"] .hk-dswap[data-axis="horizontal"] {
+  --hk-dswap-enter-from: translateX(calc(-1 * var(--hk-swap-travel, 24px)));
+  --hk-dswap-leave-to: translateX(var(--hk-swap-travel, 24px));
+}
+
+[dir="rtl"] .hk-dswap[data-axis="horizontal"][data-direction="back"] {
+  --hk-dswap-enter-from: translateX(var(--hk-swap-travel, 24px));
+  --hk-dswap-leave-to: translateX(calc(-1 * var(--hk-swap-travel, 24px)));
+}
+
+// ── exchange ─────────────────────────────────────────────────────────
+// Both sides run the same duration with an ease-OUT curve: midway through
+// the swap the incoming layer already carries most of the opacity while
+// the outgoing one has shed most of its, so the composite never dips toward
+// the background (the double-exposure artifact of symmetric fades).
+
+.hk-dswap-enter-active {
+  transition:
+    opacity var(--hk-swap-duration, 300ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)),
+    transform var(--hk-swap-duration, 300ms) var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+}
+
+.hk-dswap-leave-active {
+  transition:
+    opacity var(--hk-swap-duration, 300ms) ease-out,
+    transform var(--hk-swap-duration, 300ms) ease-out;
+  // Dead content for the exchange: `inert`/`aria-hidden` (component side)
+  // cover keyboard and the a11y tree; this covers the pointer.
+  pointer-events: none;
+}
+
+.hk-dswap-enter-from {
+  opacity: 0;
+  transform: var(--hk-dswap-enter-from);
+}
+
+.hk-dswap-leave-to {
+  opacity: 0;
+  transform: var(--hk-dswap-leave-to);
+}
+
+// Reduced motion: keep the fade (shortened), drop the travel entirely — the
+// component also zeroes `--hk-swap-travel`, this is the belt to that brace
+// for a host that sets the property itself.
+@media (prefers-reduced-motion: reduce) {
+  .hk-dswap-enter-active,
+  .hk-dswap-leave-active {
+    transition: opacity var(--duration-fast, 0.15s) ease;
+  }
+
+  .hk-dswap-enter-from,
+  .hk-dswap-leave-to {
+    transform: none;
+  }
+}

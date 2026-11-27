@@ -857,6 +857,8 @@ export {
   type HkDebugFloatPersisted,
   type HkDebugFloatSection,
 } from "./components/debugFloat";
+export { default as HkDirectionalSwap, resolveSwapDirection } from "./components/HkDirectionalSwap";
+export type { SwapDirection } from "./components/HkDirectionalSwap";
 export { default as HkTransitionContainer } from "./components/HkTransitionContainer";
 export { default as HkPaneHolder } from "./components/HkPaneHolder";
 export { default as HkWindowControls, isApplePlatform } from "./components/HkWindowControls";

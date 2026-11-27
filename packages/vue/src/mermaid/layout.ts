@@ -329,6 +329,11 @@ export interface GraphLayoutOutput {
    *  their direction by the cycle breaker get none — they loop around the
    *  side instead). */
   lanes: GraphLane[];
+  /** Indexes of the `edges` input the cycle breaker reads AGAINST their
+   *  direction (the feedback arc set). The ranker never sees such an edge,
+   *  so its source always lands in a HIGHER flow rank than its target —
+   *  which is what makes it a back edge for docking. */
+  backEdges: number[];
 }
 
 /** Rank + barycenter-order + pixel-place a node-edge graph. */
@@ -485,7 +490,14 @@ export function layoutGraph(input: GraphLayoutInput): GraphLayoutOutput {
 
   const ranks = new Map<string, number>();
   for (const item of items) ranks.set(item.id, rank.get(item.id) ?? 0);
-  return { positions, ranks, lanes, width: width + MARGIN, height: height + MARGIN };
+  return {
+    positions,
+    ranks,
+    lanes,
+    backEdges: ranked.filter((e) => back.has(e.index)).map((e) => e.index),
+    width: width + MARGIN,
+    height: height + MARGIN,
+  };
 }
 
 // ── Subgraph clusters ────────────────────────────────────────────────
@@ -578,8 +590,8 @@ const STACK_BEHIND: Record<MermaidDirection, MermaidAnchorMode> = {
   LR: "left",
   RL: "right",
 };
-/** Cross-axis side a back edge (a flow edge toward an earlier rank) loops
- *  around. */
+/** Cross-axis side a back edge loops around when its source has no free
+ *  side to prefer (see `backEdgeSide`). */
 const BACK_EDGE_SIDE: Record<MermaidDirection, MermaidAnchorMode> = {
   TD: "left",
   BT: "left",
@@ -626,7 +638,7 @@ function layoutGraphDoc(
       }
     }
   });
-  const { positions, ranks, lanes, width, height } = layoutGraph({
+  const { positions, ranks, lanes, backEdges, width, height } = layoutGraph({
     items,
     edges: rankEdges,
     direction: doc.direction,
@@ -720,20 +732,27 @@ function layoutGraphDoc(
   const endpoint = (id: string): string => (frames.has(id) ? `g:${id}` : `n:${id}`);
   const ahead: MermaidAnchorMode = STACK_AHEAD[doc.direction];
   const behind: MermaidAnchorMode = STACK_BEHIND[doc.direction];
+  const readBackwards = new Set(backEdges);
+  /** Is doc edge `i` a BACK edge — one the cycle breaker reads against its
+   *  direction? Docked on the stack-growing sides it would run straight
+   *  through every rank between its ends, so it loops around the side
+   *  instead (`backEdgeSide`), the way mermaid.js routes a retry. Membership
+   *  in the feedback arc set IS the definition; "target in an earlier flow
+   *  rank" is only the fallback for an edge that expanded to no rank edge. */
+  const isBackEdge = (i: number, source: string, target: string): boolean => {
+    const rankEdge = rankEdgeOfDoc[i];
+    if (rankEdge !== undefined) return readBackwards.has(rankEdge);
+    return (ranks.get(target) ?? 0) < (ranks.get(source) ?? 0);
+  };
   /** Docking for an edge between two plain nodes, from the two ends' FLOW
-   *  ranks (see `flowAnchors`). */
+   *  ranks. A back edge gets no stack docking — `backEdgeSide` picks its
+   *  side. */
   const flowAnchors = (source: string, target: string): Pick<LaidOutEdge, "anchorFrom" | "anchorTo"> => {
     const rs = ranks.get(source);
     const rt = ranks.get(target);
     if (rs === undefined || rt === undefined) return {};
     if (rt > rs) return { anchorFrom: ahead, anchorTo: behind };
-    if (rt < rs) {
-      // A flow edge pointing back UP the stack (a retry loop). Docked on the
-      // stack-growing sides it would run straight through every rank between
-      // the two; docking both ends on the same cross-axis side loops it
-      // around that side instead, the way mermaid.js routes a back edge.
-      return { anchorFrom: BACK_EDGE_SIDE[doc.direction], anchorTo: BACK_EDGE_SIDE[doc.direction] };
-    }
+    if (rt < rs) return {};
     // Same rank: leave and arrive on the cross-axis sides that face each other.
     const a = positions.get(source);
     const b = positions.get(target);
@@ -758,10 +777,6 @@ function layoutGraphDoc(
     const b = junction(`j:loop:${i}:b`, s.x + n.x * SELF_LOOP_OUT + t.x * SELF_LOOP_ALONG, s.y + n.y * SELF_LOOP_OUT + t.y * SELF_LOOP_ALONG);
     return { anchorFrom: side, anchorTo: side, via: [a, b] };
   };
-  /** True when the edge points back up the flow (target in an earlier
-   *  flow rank than source) — see `flowAnchors`. */
-  const rt_lt = (source: string, target: string): boolean =>
-    (ranks.get(target) ?? 0) < (ranks.get(source) ?? 0);
   const rectOf = new Map(memberNodes.map((n) => [n.id.slice(2), n]));
   /** The cross-axis side a back edge loops around: the one its SOURCE has
    *  free. A node with a same-rank sibling on its left loops right (and
@@ -789,6 +804,7 @@ function layoutGraphDoc(
     return BACK_EDGE_SIDE[doc.direction];
   };
   const edges: LaidOutEdge[] = doc.edges.map((e, i) => {
+    const back = isBackEdge(i, e.source, e.target);
     const loop = e.source === e.target && !frames.has(e.source) ? rectOf.get(e.source) : undefined;
     if (loop) {
       return {
@@ -804,8 +820,10 @@ function layoutGraphDoc(
     }
     // An edge skipping ranks runs down its lane (the cells the ranker reserved
     // for it), unless an end is a cluster frame — a frame's `nearest` dock
-    // sits on the frame border, not on the lane's end.
-    const lane = rankEdgeOfDoc[i] === undefined ? undefined : laneOfRankEdge.get(rankEdgeOfDoc[i] as number);
+    // sits on the frame border, not on the lane's end. A back edge has no
+    // lane: the ranker never saw it.
+    const rankEdge = rankEdgeOfDoc[i];
+    const lane = rankEdge === undefined ? undefined : laneOfRankEdge.get(rankEdge);
     const via = lane && !frames.has(e.source) && !frames.has(e.target)
       ? lane.points.map((pt, k) => junction(`j:e${i}:${k}`, pt.x, pt.y))
       : undefined;
@@ -815,7 +833,7 @@ function layoutGraphDoc(
       to: endpoint(e.target),
       style: "bezier" as const,
       ...flowAnchors(e.source, e.target),
-      ...(rt_lt(e.source, e.target) && !frames.has(e.source) && !frames.has(e.target)
+      ...(back && !frames.has(e.source) && !frames.has(e.target)
         ? { anchorFrom: backEdgeSide(e.source), anchorTo: backEdgeSide(e.source) }
         : {}),
       ...(frames.has(e.source) ? { anchorFrom: "nearest" as const } : {}),
@@ -1130,11 +1148,11 @@ function layoutQuadrant(doc: Extract<MermaidDoc, { kind: "quadrant" }>): { nodes
  *
  * The 720px ceiling is a READABILITY floor in disguise: the board fits the
  * whole diagram into whatever height it is given, and the old 540px cap
- * parked a ten-node top-down flowchart at 62% — 14px labels drawn at
- * 8.7px (measured on docs.celestia.world 2026-11-27, against the real
- * mermaid.js lane rendering the same source at 100%). At 720 the same
- * diagram fits at 88%; anything shorter is a scroll-or-zoom decision the
- * reader can still make on the board itself. */
+ * parked the ten-node top-down flowchart of docs.celestia.world at 62% —
+ * its 14px labels drawn at 8.7px, next to the real mermaid.js lane
+ * rendering the same source at 100% (measured 2026-11-27, 786px card).
+ * 720px lifts that card to 80% (11.2px labels); anything taller is a
+ * scroll-or-zoom decision the reader can still make on the board itself. */
 const SUGGESTED_HEIGHT_MAX = 720;
 function suggestHeight(contentH: number): number {
   return clampMin(Math.min(contentH + 24, SUGGESTED_HEIGHT_MAX), 200);

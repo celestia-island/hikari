@@ -207,9 +207,10 @@ export function boardAxisTangent(a: BoardPoint, b: BoardPoint): BoardPoint {
 }
 
 /**
- * Outward unit normal of the border `point` sits on, or `null` when the
- * point is on none of the rect's borders (inside, outside, or a degenerate
- * junction rect — every border of a zero-size rect is the same dot).
+ * Outward unit normal of the border `point` sits on, or `null` when no
+ * border is within `tol` of it (the point sits inside the rect, or farther
+ * than `tol` outside it) or the rect is a degenerate junction — every
+ * border of a zero-size rect is the same dot, so it names no side.
  *
  * `outward` breaks a corner tie: at a corner two borders qualify, and the
  * one whose normal points most along `outward` is the side the route is

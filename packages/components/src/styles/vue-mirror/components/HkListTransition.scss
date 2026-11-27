@@ -139,7 +139,11 @@
 /* grow keeps its ONE-BEAT STAGGER (the entering row waits out the leave
  * track before it scales in, and the siblings wait the same beat before
  * closing the gap) — that sequence is this variant's signature, not a
- * duration; the beats themselves follow the family's leave track. */
+ * duration; the beats themselves follow the family's leave track. The
+ * delay rides `!important` like every track, so a HOST collapse switch
+ * must carry at least (0,1,1) + important (hikari's canonical
+ * `html[data-css-animations="0"] *` does; a plain `html.reduce-motion *`
+ * does not — 2026-11-27 R6, cosmetic, downstream-only). */
 .hk-list-grow-enter-active {
   transition:
     transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),

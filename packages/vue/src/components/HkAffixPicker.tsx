@@ -379,8 +379,31 @@ export const HkAffixPicker = defineComponent({
       else query.value = "";
     }
 
+    /** Enter in the pinned search commits the top match — with the SAME
+     *  blind-keystroke guard HkTagInput.commitQuery carries (2026-11-27 R6):
+     *  the rows layout ranks CHECKED rows first, so a naive `rows[0]` pick
+     *  turns Enter into an unconfirmed REMOVE — with an empty query it
+     *  would toggle off the very option the user is looking at. Rules:
+     *    - an EMPTY query is a no-op (Enter on a blank field must not act
+     *      on the catalog at all — the tag editor's documented rule);
+     *    - otherwise Enter picks the first row the query can still ADD
+     *      (an unchecked match — in the rows layout the checked run sorts
+     *      first, so the first addable row may sit behind it);
+     *    - a non-disabled top match still commits in single mode and the
+     *      tag layout (their rows are never selected-first). */
     function onSearchEnter() {
       const rows = filteredRows.value;
+      const q = query.value.trim();
+      if (!q) return;
+      if (!tagLayout.value && props.mode === "multi") {
+        const addable = rows.find((option) => !option.disabled && !isSelected(option.key));
+        if (addable) {
+          pick(addable);
+          return;
+        }
+        if (customVisible.value) useCustom();
+        return;
+      }
       if (rows.length > 0 && !rows[0].disabled) {
         pick(rows[0]);
         return;

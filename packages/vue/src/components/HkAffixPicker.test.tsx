@@ -606,6 +606,60 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     expect(divider()).toBeTruthy();
   });
 
+  it("Enter in the pinned search never becomes a blind REMOVE (2026-11-27 R6)", async () => {
+    // The rows layout ranks checked rows FIRST, so `filteredRows[0]` with
+    // an empty query IS a checked row — a naive top-match pick turned
+    // Enter into an unconfirmed remove (HkTagInput fixed the same hazard
+    // when its selected rows moved to the front; same rule here).
+    const selected = ref<string[]>(["jp"]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const events = { select: [] as string[], remove: [] as string[] };
+    const app = createApp({
+      render: () =>
+        h(HkAffixPicker, {
+          options: OPTIONS,
+          mode: "multi",
+          selected: selected.value,
+          allowCustom: true,
+          onSelect: (k: string) => { selected.value = [...selected.value, k]; events.select.push(k); },
+          onRemove: (k: string) => { selected.value = selected.value.filter((x) => x !== k); events.remove.push(k); },
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await openPopup(container);
+    async function pressEnter() {
+      const input = searchInput();
+      input.focus();
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      );
+      await nextTick();
+    }
+    // EMPTY query: a no-op — nothing is picked, nothing is removed.
+    await pressEnter();
+    expect(events.select).toEqual([]);
+    expect(events.remove).toEqual([]);
+    // NON-empty query matching an already-selected option: Enter adds the
+    // first row the query can still ADD (the unchecked China), never
+    // un-checks the row the user is looking at.
+    await typeQuery("8");
+    await pressEnter();
+    expect(events.remove).toEqual([]);
+    expect(events.select).toEqual(["cn"]);
+    // The selection advanced through the ADD path.
+    expect(selected.value).toEqual(["jp", "cn"]);
+    // A query matching ONLY selected options: nothing addable → no-op
+    // (the custom row is hidden by the exact match, so Enter does nothing).
+    selected.value = ["cn", "jp", "us"];
+    events.select.length = 0;
+    await typeQuery("united");
+    await pressEnter();
+    expect(events.remove).toEqual([]);
+    expect(events.select).toEqual([]);
+  });
+
   it("runs the rows through HkListTransition with the move track on (FLIP, never a remount)", async () => {
     // A host that really stores the selection (the event-recording rig
     // keeps `selected` static, so nothing would re-rank).

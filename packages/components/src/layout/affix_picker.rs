@@ -257,8 +257,10 @@ impl AffixSide {
 /// What the search field's Enter resolved to (Vue: `onSearchEnter`).
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum AffixEnterAction {
-    /// Pick the first visible row (the keyboard flow's default).
-    PickFirstRow,
+    /// Pick the row at this index of the rendered (already ranked) rows —
+    /// `0` for the plain top match, a later index when the rows layout
+    /// skips past its selected-first run (2026-11-27 R6 guard).
+    PickRow(usize),
     /// Fire the custom row with the typed query.
     UseCustom,
     /// Nothing to pick — the key is consumed without an effect.
@@ -537,13 +539,40 @@ pub fn affix_tag_value(tag_values: Option<&HashMap<String, String>>, key: &str) 
         .unwrap_or_default()
 }
 
-/// Vue's `onSearchEnter`: the first visible row wins (unless disabled), then the
-/// custom row, else nothing.
-pub fn affix_enter_action(rows: &[AffixOption], custom_visible: bool) -> AffixEnterAction {
-    if let Some(first) = rows.first()
-        && !first.disabled
-    {
-        return AffixEnterAction::PickFirstRow;
+/// Vue's `onSearchEnter` (post-2026-11-27-R6): Enter is an ADD gesture,
+/// never a blind toggle. An EMPTY query is a no-op — with the rows layout
+/// ranking checked rows first, a naive top match would make a bare Enter
+/// un-check (i.e. REMOVE, unconfirmed) the very row the user is looking at
+/// (the same hazard `HkTagInput.commitQuery` guards). With a query, the
+/// rows layout commits the first row the query can still ADD (skipping the
+/// selected run); single mode and the tag layout keep the plain top match
+/// (their rows are never selected-first). The custom row is the exit when
+/// nothing is addable and the typed text is not an exact catalog label.
+pub fn affix_enter_action(
+    rows: &[AffixOption],
+    custom_visible: bool,
+    query_present: bool,
+    selected: &[String],
+    rows_layout: bool,
+) -> AffixEnterAction {
+    if !query_present {
+        return AffixEnterAction::None;
+    }
+    if rows_layout {
+        if let Some(index) = rows
+            .iter()
+            .position(|o| !o.disabled && !selected.iter().any(|key| key == &o.key))
+        {
+            return AffixEnterAction::PickRow(index);
+        }
+        return if custom_visible {
+            AffixEnterAction::UseCustom
+        } else {
+            AffixEnterAction::None
+        };
+    }
+    if let Some(index) = rows.iter().position(|o| !o.disabled) {
+        return AffixEnterAction::PickRow(index);
     }
     if custom_visible {
         return AffixEnterAction::UseCustom;
@@ -733,15 +762,23 @@ impl AffixPickerWiring {
     }
 
     /// Vue's `onSearchEnter`: Enter picks through the pure action table.
-    fn search_key(&self, event: KeyboardEvent, rows: &[AffixOption], custom_visible: bool) {
+    fn search_key(
+        &self,
+        event: KeyboardEvent,
+        rows: &[AffixOption],
+        custom_visible: bool,
+        query_present: bool,
+        selected: &[String],
+        rows_layout: bool,
+    ) {
         if event.key.as_str() != "Enter" {
             return;
         }
         event.prevent_default();
-        match affix_enter_action(rows, custom_visible) {
-            AffixEnterAction::PickFirstRow => {
-                if let Some(first) = rows.first() {
-                    self.pick(&first.key, first.disabled);
+        match affix_enter_action(rows, custom_visible, query_present, selected, rows_layout) {
+            AffixEnterAction::PickRow(index) => {
+                if let Some(row) = rows.get(index) {
+                    self.pick(&row.key, row.disabled);
                 }
             }
             AffixEnterAction::UseCustom => self.use_custom(),
@@ -1126,6 +1163,11 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
             let oninput_wiring = wiring.clone();
             let key_wiring = wiring.clone();
             let key_rows = rows.clone();
+            let key_selected = selected.clone();
+            let key_query_present = !query.is_empty();
+            // Vue: `!tagLayout && mode === "multi"` — the only layout whose
+            // Enter must skip the selected-first run.
+            let key_rows_layout = !tag_layout && mode == AffixMode::Multi;
             let placeholder = search_placeholder.clone();
             Some(rsx! {
                 div {
@@ -1150,7 +1192,14 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
                             oninput_wiring.set_query(value);
                         })),
                         onkeydown: Some(event_handler(move |event: KeyboardEvent| {
-                            key_wiring.search_key(event, &key_rows, custom_visible);
+                            key_wiring.search_key(
+                                event,
+                                &key_rows,
+                                custom_visible,
+                                key_query_present,
+                                &key_selected,
+                                key_rows_layout,
+                            );
                         })),
                     }
                 }
@@ -1619,15 +1668,76 @@ mod tests {
     fn affix_enter_takes_the_first_row_then_the_custom_row() {
         let rows = affix_filter_rows(&catalog(), &[], AffixMode::Single, "japan");
         assert_eq!(
-            affix_enter_action(&rows, true),
-            AffixEnterAction::PickFirstRow
+            affix_enter_action(&rows, true, true, &[], false),
+            AffixEnterAction::PickRow(0)
         );
         // A disabled first row falls through to the custom row.
         let rows = affix_filter_rows(&catalog(), &[], AffixMode::Single, "reserved");
-        assert_eq!(affix_enter_action(&rows, true), AffixEnterAction::UseCustom);
+        assert_eq!(
+            affix_enter_action(&rows, true, true, &[], false),
+            AffixEnterAction::UseCustom
+        );
         // Nothing to pick and no custom row: the key is consumed with no effect.
-        assert_eq!(affix_enter_action(&rows, false), AffixEnterAction::None);
-        assert_eq!(affix_enter_action(&[], false), AffixEnterAction::None);
+        assert_eq!(
+            affix_enter_action(&rows, false, true, &[], false),
+            AffixEnterAction::None
+        );
+        assert_eq!(
+            affix_enter_action(&[], false, true, &[], false),
+            AffixEnterAction::None
+        );
+        // An EMPTY query is a no-op in every layout — the R6 blind-remove guard.
+        assert_eq!(
+            affix_enter_action(&rows, true, false, &[], false),
+            AffixEnterAction::None
+        );
+        assert_eq!(
+            affix_enter_action(&rows, true, false, &[], true),
+            AffixEnterAction::None
+        );
+    }
+
+    #[test]
+    fn affix_enter_in_the_rows_layout_is_an_add_gesture_never_a_blind_remove() {
+        // The 2026-11-27-R6 guard, Rust side: the rows layout ranks CHECKED
+        // rows first, so a naive top match made a bare Enter un-check (=
+        // unconfirmed REMOVE) the very row the user was looking at.
+        let catalog = catalog();
+        // "8" matches the +86 rows (cn, cn-main) and +81 (jp); jp is checked,
+        // so the ranked order opens with the checked jp.
+        let selected = vec!["jp".to_string()];
+        let rows = affix_filter_rows_for(
+            &catalog,
+            &selected,
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            "8",
+        );
+        assert_eq!(rows[0].key, "jp", "the checked row sorts first");
+        let action = affix_enter_action(&rows, false, true, &selected, true);
+        let index = match action {
+            AffixEnterAction::PickRow(index) => index,
+            other => panic!("expected a pick, got {other:?}"),
+        };
+        assert_ne!(rows[index].key, "jp", "never the checked row");
+        assert_eq!(
+            rows[index].key, "cn",
+            "the first ADDABLE match in ranked order"
+        );
+        // A query matching ONLY checked rows: nothing addable, no custom row
+        // (exact match) → the key is consumed with no effect.
+        let selected_all = vec!["cn".to_string(), "cn-main".to_string()];
+        let rows = affix_filter_rows_for(
+            &catalog,
+            &selected_all,
+            AffixMode::Multi,
+            AffixLayout::Rows,
+            "86",
+        );
+        assert_eq!(
+            affix_enter_action(&rows, false, true, &selected_all, true),
+            AffixEnterAction::None
+        );
     }
 
     #[test]

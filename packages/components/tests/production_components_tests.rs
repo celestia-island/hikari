@@ -226,7 +226,7 @@ mod tests {
     /// stays nearest the corner).
     ///
     /// MUT: dropping any of the three from the render (or swapping the
-    /// action/copy order) turns the corresponding assertion red.
+    /// action/copy order) never passes — each named assertion catches it.
     #[test]
     fn test_code_highlight_header_slots() {
         let raw = include_str!(concat!(

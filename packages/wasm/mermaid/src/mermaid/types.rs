@@ -213,6 +213,15 @@ pub struct ClassRelationship {
     pub label: Option<String>,
     #[serde(rename = "arrowAt")]
     pub arrow_at: String,
+    /// Multiplicity at the FROM end (`Student "1" --> "*" School : attends`
+    /// carries `1` here). The endpoint itself is the CLASS NAME — the quoted
+    /// multiplicity is decoration, and leaving it in the name invented classes
+    /// called `Student "1"`.
+    #[serde(rename = "fromCardinality", skip_serializing_if = "Option::is_none")]
+    pub from_cardinality: Option<String>,
+    /// Multiplicity at the TO end.
+    #[serde(rename = "toCardinality", skip_serializing_if = "Option::is_none")]
+    pub to_cardinality: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

@@ -539,6 +539,18 @@ pub fn affix_tag_value(tag_values: Option<&HashMap<String, String>>, key: &str) 
         .unwrap_or_default()
 }
 
+/// Whether the search query carries a real (non-whitespace) filter — Vue:
+/// `const q = query.value.trim(); if (!q) return;` (`onSearchEnter`). A
+/// WHITESPACE-ONLY field is a no-op, exactly like an empty one (2026-11-27
+/// R8: the raw `!query.is_empty()` let a blank Enter commit a row).
+/// Extracted as a named predicate so the tests assert its BEHAVIOR — a
+/// bare substring pin had no polarity (an inverted capture kept the
+/// substring and passed) and a literal denylist could not see equivalent
+/// spellings (R9).
+pub fn affix_query_present(query: &str) -> bool {
+    !query.trim().is_empty()
+}
+
 /// Vue's `onSearchEnter` (post-2026-11-27-R6): Enter is an ADD gesture,
 /// never a blind toggle. An EMPTY query is a no-op — with the rows layout
 /// ranking checked rows first, a naive top match would make a bare Enter
@@ -1166,7 +1178,7 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
             let key_selected = selected.clone();
             // Vue trims before judging "empty" (`const q = query.value.trim()`)
             // — a whitespace-only field must be a no-op too (R8).
-            let key_query_present = !query.trim().is_empty();
+            let key_query_present = affix_query_present(&query);
             // Vue: `!tagLayout && mode === "multi"` — the only layout whose
             // Enter must skip the selected-first run.
             let key_rows_layout = !tag_layout && mode == AffixMode::Multi;
@@ -1740,35 +1752,43 @@ mod tests {
             affix_enter_action(&rows, false, true, &selected_all, true),
             AffixEnterAction::None
         );
-        // A WHITESPACE-ONLY query must be a no-op too. The pure helper only
-        // sees the boolean — the TRIM lives at the capture site, so it is
-        // pinned at the source: the caller must judge emptiness on the
-        // trimmed query (`!query.trim().is_empty()`, R8) — the raw
-        // untrimmed emptiness check that let a blank Enter commit a row
-        // must not survive anywhere in this file.
+        // A WHITESPACE-ONLY query must be a no-op too (R8). The emptiness
+        // rule lives in the named predicate, so these assert its BEHAVIOR:
+        // polarity-checked, spelling-independent — a substring pin had no
+        // polarity (an inverted capture kept the substring and passed) and
+        // a literal denylist could not see equivalent spellings (R9).
+        assert!(!affix_query_present(""), "empty → absent");
+        assert!(!affix_query_present("   "), "whitespace-only → absent");
+        assert!(affix_query_present("8"), "a real filter → present");
+        assert!(affix_query_present("  8  "), "padded filter → present");
+        // And the ENTER path consumes it: an absent filter is a no-op.
         assert_eq!(
-            affix_enter_action(&rows, false, false, &selected_all, true),
+            affix_enter_action(
+                &rows,
+                false,
+                affix_query_present("   "),
+                &selected_all,
+                true
+            ),
             AffixEnterAction::None
         );
-        // Read only the non-test half: the negative pin must not match its
-        // own assertions.
+        // Defense-in-depth (documentary, not load-bearing — the behavior
+        // asserts above are that): the capture site must route through the
+        // predicate. Read only the non-test half so the pin cannot match
+        // its own file's test body.
         use std::fs::read_to_string;
         let source = read_to_string(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/src/layout/affix_picker.rs"
         ))
         .expect("read the mirror source");
-        let caller = source
+        let non_test = source
             .split("#[cfg(test)]")
             .next()
             .expect("the non-test half exists");
         assert!(
-            caller.contains("!query.trim().is_empty()"),
-            "the capture site must trim before judging emptiness (R8)"
-        );
-        assert!(
-            !caller.contains("!query.is_empty()"),
-            "the raw emptiness check must not survive next to the trim rule"
+            non_test.contains("affix_query_present(&query)"),
+            "the capture site must judge emptiness through affix_query_present"
         );
     }
 

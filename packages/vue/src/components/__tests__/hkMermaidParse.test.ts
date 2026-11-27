@@ -121,6 +121,37 @@ describe("stateDiagram", () => {
   /// single labelled box with every edge pointing at it.
   /// MUT: collapsing either rewrite back to one id never passes — the two
   /// circle assertions below catch it.
+  /// A composite state is a CLUSTER with its own initial/final markers: the
+  /// frame must exist, its members must be listed, and the nested `[*]` must
+  /// NOT merge with the top-level one (that merge is the defect the flat
+  /// rewrite removed, and a global id would reintroduce it one level down).
+  ///
+  /// MUT: dropping the scope suffix from the pseudostate ids merges the four
+  /// circles into two — the distinct-id assertion catches it.
+  it("renders a composite state as a cluster with its own pseudostates", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse(
+      "stateDiagram-v2\n  [*] --> Idle\n  state Working {\n    [*] --> Busy\n    Busy --> Done\n    Done --> [*]\n  }\n  Idle --> Working\n  Working --> [*]",
+    );
+    expect(doc).not.toBeNull();
+    const g = doc as unknown as {
+      nodes: Array<{ id: string; shape: string }>;
+      groups: Array<{ id: string; members: string[] }>;
+      edges: Array<{ source: string; target: string }>;
+    };
+    // The frame exists and holds the composite's own states.
+    expect(g.groups.map((x) => x.id)).toEqual(["Working"]);
+    expect(g.groups[0].members).toContain("Busy");
+    expect(g.groups[0].members).toContain("Done");
+    // Four DISTINCT circles: the outer pair and the composite's pair.
+    const circles = g.nodes.filter((n) => n.shape === "circle");
+    expect(circles.length).toBe(4);
+    expect(new Set(circles.map((n) => n.id)).size).toBe(4);
+    // The outer flow still runs Idle → Working, and the composite is a node
+    // edges can target (it is a container, not a plain box).
+    expect(g.edges.some((e) => e.source === "Idle" && e.target === "Working")).toBe(true);
+  });
+
   it("keeps the initial and final pseudostates apart, as circles", async () => {
     await mermaidReady;
     const doc = wasmMermaidEngine.parse("stateDiagram-v2\n  [*] --> Idle\n  Idle --> Running\n  Running --> [*]");

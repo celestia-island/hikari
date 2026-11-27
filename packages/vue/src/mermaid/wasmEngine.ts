@@ -121,19 +121,46 @@ mermaidReady.catch(() => {
  *    which is the only shape the grammar can carry.
  */
 export function normalizeStateDiagram(source: string): string {
-  const START = "__hk_state_start";
-  const END = "__hk_state_end";
-  return source
-    .replace(/^\s*stateDiagram(-v\d+)?/, "graph TD")
-    // `[*] --> X` is the initial marker; `X --> [*]` is the final one. Handle
-    // both directions BEFORE any leftover `[*]` so a line that has one on each
-    // side (`[*] --> [*]`) still yields two distinct pseudostates.
-    .replace(/\[\*\](\s*(?:-->|--)\s*)/g, `${START}((""))$1`)
-    .replace(/((?:-->|--)\s*)\[\*\]/g, `$1${END}((""))`)
-    // Any remaining `[*]` (a node named on its own line) becomes the start.
-    .replace(/\[\*\]/g, `${START}((""))`)
-    // State transition labels: `A --> B : label` → `A -->|label| B`
-    .replace(/^(\s*)(\S+)\s+(-->|--)\s+(\S+)\s*:\s*(.+)$/gm, "$1$2 $3|$5| $4");
+  const out: string[] = [];
+  // Scope depth is what gives each pseudostate its OWN node: `[*]` is the
+  // initial marker of ITS container, so a composite's `[*]` must not merge
+  // with the top-level one (merging is the defect this rewrite exists to
+  // remove, and it reappears one level down if the id is global).
+  let depth = 0;
+  for (const raw of source.split("\n")) {
+    const line = raw.replace(/^\s*stateDiagram(-v\d+)?/, "graph TD");
+
+    // Composite state header → a cluster: `state Working {` becomes
+    // `subgraph Working["Working"]`, so the frame is drawn and edges into the
+    // composite land on it.
+    const composite = /^(\s*)state\s+([A-Za-z0-9_]+)\s*\{\s*$/.exec(line);
+    if (composite) {
+      depth += 1;
+      out.push(`${composite[1]}subgraph ${composite[2]}["${composite[2]}"]`);
+      continue;
+    }
+    // A statement-level `}` closes the composite (or the diagram body).
+    if (/^\s*\}\s*$/.test(line)) {
+      depth = Math.max(0, depth - 1);
+      out.push(line.replace("}", "end"));
+      continue;
+    }
+
+    const scope = depth > 0 ? `_${depth}` : "";
+    const START = `__hk_state_start${scope}`;
+    const END = `__hk_state_end${scope}`;
+    const rewritten = line
+      // `[*] --> X` is the initial marker; `X --> [*]` is the final one.
+      // Both directions are handled before any leftover `[*]` so a line with
+      // one on each side still yields two distinct pseudostates.
+      .replace(/\[\*\](\s*(?:-->|--)\s*)/g, `${START}((""))$1`)
+      .replace(/((?:-->|--)\s*)\[\*\]/g, `$1${END}((""))`)
+      .replace(/\[\*\]/g, `${START}((""))`)
+      // State transition labels: `A --> B : label` → `A -->|label| B`
+      .replace(/^(\s*)(\S+)\s+(-->|--)\s+(\S+)\s*:\s*(.+)$/, "$1$2 $3|$5| $4");
+    out.push(rewritten);
+  }
+  return out.join("\n");
 }
 
 /** Check whether the wasm component handles this diagram type. */

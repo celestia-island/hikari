@@ -143,6 +143,12 @@ export interface ClassRelationship {
    * `<|--`/`*--`/`o--`/`<--` put it at the FROM class, `-->`/`..|>`/`..>`
    * at TO, plain `--`/`..` nowhere. */
   arrowAt: "from" | "to" | "none";
+  /** Multiplicity at the FROM end (`Student "1" --> "*" School` carries
+   *  `1` here). Rust parity: `ClassRelationship::from_cardinality`, omitted
+   *  from the JSON when absent. */
+  fromCardinality?: string;
+  /** Multiplicity at the TO end. */
+  toCardinality?: string;
 }
 
 export interface MermaidClassDoc {

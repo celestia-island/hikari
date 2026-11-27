@@ -85,6 +85,38 @@ fn parse_member(line: &str) -> Option<ClassMember> {
     }
 }
 
+/// Split a relationship endpoint into `(class name, multiplicity)`.
+///
+/// Mermaid writes multiplicity as a QUOTED token on either side of the class
+/// name: `Student "1"` (cardinality first) and `"*" School` (cardinality
+/// second). Both forms are decoration — the endpoint is the class — so the
+/// quoted run is lifted out instead of being glued onto the name, which is
+/// what produced classes called `Student "1"`.
+fn split_cardinality(text: &str) -> (String, Option<String>) {
+    let t = text.trim();
+    // `"1" School` — leading quoted cardinality.
+    if t.starts_with('"')
+        && let Some(close) = t[1..].find('"')
+    {
+        let card = t[1..1 + close].trim();
+        let rest = t[2 + close..].trim();
+        if !rest.is_empty() {
+            return (rest.to_string(), Some(card.to_string()).filter(|c| !c.is_empty()));
+        }
+    }
+    // `Student "1"` — trailing quoted cardinality.
+    if t.ends_with('"')
+        && let Some(open) = t[..t.len() - 1].rfind('"')
+    {
+        let card = t[open + 1..t.len() - 1].trim();
+        let rest = t[..open].trim();
+        if !rest.is_empty() {
+            return (rest.to_string(), Some(card.to_string()).filter(|c| !c.is_empty()));
+        }
+    }
+    (t.to_string(), None)
+}
+
 fn parse_relationship(line: &str) -> Option<ClassRelationship> {
     if line.is_empty() || line.starts_with('%') {
         return None;
@@ -104,12 +136,21 @@ fn parse_relationship(line: &str) -> Option<ClassRelationship> {
             if from.is_empty() || to.is_empty() {
                 return None;
             }
+            let (from_name, from_cardinality) = split_cardinality(from);
+            let (to_name, to_cardinality) = split_cardinality(&to);
+            let from_name = strip_edge_quotes(&from_name);
+            let to_name = strip_edge_quotes(&to_name);
+            if from_name.is_empty() || to_name.is_empty() {
+                return None;
+            }
             return Some(ClassRelationship {
-                from: strip_edge_quotes(from),
-                to: strip_edge_quotes(&to),
+                from: from_name,
+                to: to_name,
                 rel_type: rel_type.to_string(),
                 label: label.filter(|l| !l.is_empty()),
                 arrow_at: arrow_at.to_string(),
+                from_cardinality,
+                to_cardinality,
             });
         }
     }
@@ -185,6 +226,21 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
             continue;
         }
 
+        // `class Student` (no body) is a declaration: mermaid lets a class
+        // exist only as the endpoint of a relationship, and the bare form is
+        // how a diagram names one without attributes.
+        if let Some(rest) = line.strip_prefix("class ") {
+            let name = strip_edge_quotes(rest.split(['{', ' ']).next().unwrap_or("").trim());
+            if !name.is_empty() && !classes.iter().any(|c| c.name == name) {
+                classes.push(ClassDefinition {
+                    name,
+                    attributes: Vec::new(),
+                    methods: Vec::new(),
+                });
+                continue;
+            }
+        }
+
         if let Some(rel) = parse_relationship(line) {
             relationships.push(rel);
         }
@@ -204,4 +260,54 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
         classes,
         relationships,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Mermaid writes multiplicity as a QUOTED token beside the class:
+    /// `Student "1" --> "*" School : attends`. The endpoint is the CLASS —
+    /// the old parser glued the quoted token onto the name, so the diagram
+    /// grew classes called `Student "1"` and `1" School`.
+    ///
+    /// MUT: dropping `split_cardinality` brings those invented names back.
+    #[test]
+    fn multiplicities_are_lifted_off_the_class_names() {
+        let doc = parse_class_diagram(
+            "classDiagram\n  class Student\n  class School\n  Student \"1\" --> \"*\" School : attends\n",
+        )
+        .expect("parse");
+        let rel = &doc.relationships[0];
+        assert_eq!(rel.from, "Student");
+        assert_eq!(rel.to, "School");
+        assert_eq!(rel.from_cardinality.as_deref(), Some("1"));
+        assert_eq!(rel.to_cardinality.as_deref(), Some("*"));
+        assert_eq!(rel.label.as_deref(), Some("attends"));
+        // The class list carries the real names only.
+        let names: Vec<&str> = doc.classes.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["Student", "School"]);
+    }
+
+    /// The opposite quoting order (`"*" School`) is the same decoration.
+    #[test]
+    fn a_bare_class_declaration_registers_the_class() {
+        let doc = parse_class_diagram("classDiagram\n  class Only\n").expect("parse");
+        assert_eq!(doc.classes.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), vec!["Only"]);
+        assert!(doc.relationships.is_empty());
+    }
+
+    /// A relationship with no multiplicity keeps its endpoints untouched.
+    #[test]
+    fn plain_relationships_are_unchanged() {
+        let doc = parse_class_diagram(
+            "classDiagram\n  class A\n  class B\n  A <|-- B : extends\n",
+        )
+        .expect("parse");
+        let rel = &doc.relationships[0];
+        assert_eq!((rel.from.as_str(), rel.to.as_str()), ("A", "B"));
+        assert_eq!(rel.rel_type, "inheritance");
+        assert_eq!(rel.arrow_at, "from");
+        assert!(rel.from_cardinality.is_none() && rel.to_cardinality.is_none());
+    }
 }

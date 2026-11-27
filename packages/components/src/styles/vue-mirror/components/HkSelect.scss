@@ -557,16 +557,17 @@
  * a clear gap above the first row). */
 .hk-select-sheet-pinned {
   flex: none;
-  /* A COLUMN FLEX CONTAINER, not a block (2026-11-27 R22): the band is a
-   * `flex: none` child, so its height comes from `flex-basis: auto` — and
-   * a BLOCK's auto height is its in-flow content. A consumer whose band
-   * content is itself a flex container (HkAffixPicker's `.hk-affix-head`,
-   * the tag layout's tag list + search) has no content-derived height
-   * (root-level flex containers are blockified), so the band collapsed to
-   * its padding while the head still painted and hit-tested on top of the
-   * first option rows — invisible-but-clickable. Making the band a column
-   * flex container gives it the child's flex base size instead. The popout
-   * band below sits in an already-column parent and never had the hazard. */
+  /* A COLUMN FLEX CONTAINER, matching the popout band's parent — a
+   * CONSISTENCY choice, not a fix for an observed collapse. R22 reported
+   * that a block band resolved to its padding when a consumer's band child
+   * was itself a flex container; R23 re-measured in real Chromium across
+   * two engine builds and four reconstruction variants and found a block
+   * band sized identically to a flex band for every consumer's band child
+   * (155 / 68.59 / 70.59 / 53 px, unchanged), with `flex-basis: auto`
+   * correctly taking a rigid item's content height. The flex declaration is
+   * kept because it makes the two bands' box models the same and costs
+   * nothing; the earlier "the band collapsed to padding" mechanism does NOT
+   * hold and must not be cited (2026-11-27 R23). */
   display: flex;
   flex-direction: column;
   padding: var(--space-4) var(--space-16) var(--space-10);

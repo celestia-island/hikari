@@ -31,7 +31,19 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
         props.modelValue
           ? ((drawerState.padding = props.padding),
             h("div", { class: ["drawer-stub", props.panelClass] }, [
-              h("div", { class: "drawer-stub-body" }, slots.default?.()),
+              h(
+                "div",
+                {
+                  class: "drawer-stub-body",
+                  // The real HDrawer maps `padding` onto `--hk-pad` on the
+                  // panel (runtime/containerPad) and the body consumes it.
+                  // The stub renders that token on the body so the shell's
+                  // obligation ("this drawer ends up unpadded") is observable
+                  // without a CSS engine.
+                  style: drawerState.padding === "none" ? { "--hk-pad": "0" } : undefined,
+                },
+                slots.default?.(),
+              ),
               slots.footer
                 ? h("div", { class: "drawer-stub-footer" }, slots.footer())
                 : null,
@@ -405,25 +417,18 @@ describe("mobile drawer: the nav panel fills it", () => {
       expect(drawerSidebarParams!.inDrawer).toBe(true);
       expect(drawerSidebarParams!.collapsed).toBe(false);
       expect(stub!.querySelector(".nav-panel")).not.toBeNull();
-      // SECOND, INDEPENDENT guard (R3 review): the runtime assertion above
-      // is the pin's only bite — a future "this looks flaky, loosen it to
-      // toBeDefined()" edit would leave the sentinel satisfying it and
-      // silently disable the whole fix. This source-level read fails for a
-      // DIFFERENT reason: the shell stops passing the prop at all.
-      const shellSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkFaceShell.tsx"), "utf8");
-      // The drawer's opening tag, anchored on BOTH ends. A tag regex cannot
-      // be used (the props carry `=>` callbacks, so `[^>]*` stops inside the
-      // first one) and a fixed-size window is not enough either: R4 showed a
-      // regression sails through if any `padding="none"` lands within the
-      // window (an unrelated `<HkCard padding="none">` 1038 chars later). So
-      // scan to the tag terminator — a `>` alone on its own line — and pin
-      // the props INSIDE it.
-      const drawerAt = shellSrc.indexOf("<HDrawer");
-      expect(drawerAt, "the shell must still render an HDrawer").toBeGreaterThan(-1);
-      const tagEnd = shellSrc.indexOf("\n            >", drawerAt);
-      expect(tagEnd, "the drawer's opening tag must terminate").toBeGreaterThan(drawerAt);
-      const drawerProps = shellSrc.slice(drawerAt, tagEnd);
-      expect(drawerProps).toMatch(/padding="none"/);
+      // SECOND, INDEPENDENT guard: the DRAWER BODY must end up with no
+      // padding, asserted through the container-padding TOKEN the stub
+      // renders — not through the source text. Two earlier forms were
+      // rejected by review for the right reasons: a fixed window was passed
+      // by an unrelated `padding="none"` 1000+ chars away, and an anchored
+      // source slice could be satisfied by a COMMENT (`/* padding="none"
+      // retired above */`) while the prop was gone. Reading the rendered
+      // token has neither hole, and it is refactor-proof: a props-constant
+      // spread that still passes the prop keeps the token at 0.
+      const stubBody = stub!.querySelector<HTMLElement>(".drawer-stub-body");
+      expect(stubBody, "the drawer body renders").not.toBeNull();
+      expect(stubBody!.style.getPropertyValue("--hk-pad").trim()).toBe("0");
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: originalWidth });
     }

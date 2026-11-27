@@ -278,7 +278,7 @@ fn strip_quotes(text: &str) -> String {
 }
 
 fn parse_chain(pair: pest::iterators::Pair<Rule>, state: &mut State) {
-    let mut edge_types: Vec<(EdgeType, Option<String>)> = Vec::new();
+    let mut edge_types: Vec<ParsedEdge> = Vec::new();
 
     // Each chain position is a GROUP of refs (`A & B --> C & D`); the edges
     // are the cross product between consecutive groups, which is what
@@ -299,15 +299,14 @@ fn parse_chain(pair: pest::iterators::Pair<Rule>, state: &mut State) {
                 groups.push(group);
             }
             Rule::edge => {
-                let (et, lbl) = parse_edge(inner);
-                edge_types.push((et, lbl));
+                edge_types.push(parse_edge(inner));
             }
             _ => {}
         }
     }
 
     for i in 0..edge_types.len().min(groups.len().saturating_sub(1)) {
-        let (et, lbl) = &edge_types[i];
+        let (et, lbl, head_end, head_start) = &edge_types[i];
         for source in &groups[i] {
             for target in &groups[i + 1] {
                 // A real self-loop (`A --> A`) is meaningful — the layout
@@ -323,6 +322,8 @@ fn parse_chain(pair: pest::iterators::Pair<Rule>, state: &mut State) {
                     target: target.clone(),
                     label: lbl.clone(),
                     edge_type: et.clone(),
+                    head_end: *head_end,
+                    head_start: *head_start,
                 });
             }
         }
@@ -433,24 +434,55 @@ fn edge_label(pair: &pest::iterators::Pair<Rule>) -> Option<String> {
 /// only the ARROWHEAD, which the renderer reads from the source text; the
 /// line kind (solid / dashed / thick / plain) is what the layout needs, so
 /// that is what this returns.
-fn parse_edge(pair: pest::iterators::Pair<Rule>) -> (EdgeType, Option<String>) {
+/// One link token: its line kind, its caption, and the two head adornments.
+type ParsedEdge = (EdgeType, Option<String>, Option<EdgeHead>, Option<EdgeHead>);
+
+fn parse_edge(pair: pest::iterators::Pair<Rule>) -> ParsedEdge {
     for inner in pair.into_inner() {
         match inner.as_rule() {
             Rule::arr | Rule::arr_lbl | Rule::arr_text => {
-                return (EdgeType::Arrow, edge_label(&inner))
+                return (EdgeType::Arrow, edge_label(&inner), None, None)
             }
-            Rule::ln | Rule::ln_lbl | Rule::ln_text => return (EdgeType::Line, edge_label(&inner)),
-            // Head-adorned links keep their LINE kind; the glyph rides the
-            // source text and the painter reads it there. `<-->` is an arrow
-            // drawn at both ends, so it is an Arrow edge, not a Line.
-            Rule::bi_arr => return (EdgeType::Arrow, edge_label(&inner)),
-            Rule::o_head | Rule::x_head => return (EdgeType::Line, edge_label(&inner)),
-            Rule::dotted | Rule::dotted_lbl => return (EdgeType::Dotted, edge_label(&inner)),
-            Rule::thick | Rule::thick_lbl => return (EdgeType::Thick, edge_label(&inner)),
+            Rule::ln | Rule::ln_lbl | Rule::ln_text => {
+                return (EdgeType::Line, edge_label(&inner), None, None)
+            }
+            // Head-adorned links keep their LINE kind and carry the glyph in
+            // the contract (`headEnd`/`headStart`) so the painter can draw it.
+            // `<-->` is an arrow drawn at both ends.
+            Rule::bi_arr => {
+                return (
+                    EdgeType::Arrow,
+                    edge_label(&inner),
+                    None,
+                    Some(EdgeHead::Arrow),
+                );
+            }
+            Rule::o_head => {
+                return (
+                    EdgeType::Line,
+                    edge_label(&inner),
+                    Some(EdgeHead::Circle),
+                    None,
+                )
+            }
+            Rule::x_head => {
+                return (
+                    EdgeType::Line,
+                    edge_label(&inner),
+                    Some(EdgeHead::Cross),
+                    None,
+                )
+            }
+            Rule::dotted | Rule::dotted_lbl => {
+                return (EdgeType::Dotted, edge_label(&inner), None, None)
+            }
+            Rule::thick | Rule::thick_lbl => {
+                return (EdgeType::Thick, edge_label(&inner), None, None)
+            }
             _ => {}
         }
     }
-    (EdgeType::Arrow, None)
+    (EdgeType::Arrow, None, None, None)
 }
 
 #[cfg(test)]

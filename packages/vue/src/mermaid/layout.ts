@@ -74,6 +74,10 @@ export interface LaidOutEdge {
   anchorTo?: MermaidAnchorMode;
   dashed: boolean;
   arrow: "none" | "solid" | "open";
+  /** Non-arrow adornment at the target end (`--o` ring, `--x` cross). */
+  headEnd?: "circle" | "cross";
+  /** Non-arrow adornment at the SOURCE end (`<-->` draws an arrowhead). */
+  headStart?: "arrow";
   label: string | null;
   via?: string[];
 }
@@ -851,6 +855,8 @@ function layoutGraphDoc(
         ...selfLoop(i, { x: loop.x, y: loop.y, w: loop.w, h: loop.h }),
         dashed: false,
         arrow: e.edgeType === "arrow" ? ("solid" as const) : ("none" as const),
+        headEnd: e.headEnd === "circle" || e.headEnd === "cross" ? e.headEnd : undefined,
+        headStart: e.headStart === "arrow" ? ("arrow" as const) : undefined,
         label: e.label,
       };
     }
@@ -878,6 +884,8 @@ function layoutGraphDoc(
       ...(via && via.length > 0 ? { via } : {}),
       dashed: false,
       arrow: e.edgeType === "arrow" ? ("solid" as const) : ("none" as const),
+    headEnd: e.headEnd === "circle" || e.headEnd === "cross" ? e.headEnd : undefined,
+    headStart: e.headStart === "arrow" ? ("arrow" as const) : undefined,
       label: e.label,
     };
   });

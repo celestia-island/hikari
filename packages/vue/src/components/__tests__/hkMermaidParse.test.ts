@@ -108,6 +108,31 @@ describe("parseQuadrant", () => {
   });
 });
 
+describe("link head adornments", () => {
+  /// `--o` / `--x` / `<-->` carry a head GLYPH. The grammar used to read the
+  /// letter as a node id (inventing a box and detaching the real target);
+  /// now the glyph rides the contract so the painter can draw it.
+  /// MUT: dropping the head fields leaves every assertion here undefined.
+  it("carries ring, cross and both-ends arrows through to the contract", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse(
+      "flowchart LR\n  A --o B\n  B --x C\n  C <--> D\n  D --> E\n",
+    );
+    expect(doc).not.toBeNull();
+    const edges = (doc as unknown as {
+      edges: Array<{ source: string; target: string; headEnd?: string; headStart?: string }>;
+    }).edges;
+    const byFrom = (src: string) => edges.find((e) => e.source === src)!;
+    expect(byFrom("A").headEnd).toBe("circle");
+    expect(byFrom("A").target).toBe("B");
+    expect(byFrom("B").headEnd).toBe("cross");
+    expect(byFrom("C").headStart).toBe("arrow");
+    // An ordinary link carries neither.
+    expect(byFrom("D").headEnd).toBeUndefined();
+    expect(byFrom("D").headStart).toBeUndefined();
+  });
+});
+
 describe("stateDiagram", () => {
   it("parses state transitions as graph", async () => {
     await mermaidReady;

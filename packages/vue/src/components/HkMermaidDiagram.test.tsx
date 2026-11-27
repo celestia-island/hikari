@@ -224,6 +224,30 @@ describe("HkMermaidDiagram", () => {
     for (const svg of outlines) expect(svg.children.length).toBeGreaterThan(0);
   });
 
+  it("paints the ring/cross a link's head glyph asks for, end to end", async () => {
+    // The layout→board hand-off is what a component-level prop test cannot
+    // see: the parser puts `headEnd` on the edge, `buildBoardModel` must carry
+    // it into the board edge, and the board must draw it. Only the full
+    // mermaid render exercises all three.
+    // MUT: dropping `headEnd` from the layout's edge projection (or from the
+    // board's own projection) turns this red while a prop-level test stays
+    // green — which is exactly how this pin came to exist.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: "flowchart LR\n  A --o B\n  B --x C\n  C <--> D\n" });
+    await settle();
+    expect(c.querySelector(".hk-mermaid-fallback")).toBeNull();
+    const markers = [...c.querySelectorAll("marker")];
+    expect(markers.some((m) => m.querySelector("circle") !== null), "a ring marker").toBe(true);
+    expect(
+      markers.some((m) => (m.querySelector("path")?.getAttribute("d") ?? "").includes("M1.5,1.5")),
+      "a cross marker",
+    ).toBe(true);
+    const paths = [...c.querySelectorAll<SVGPathElement>(".hk-board-edge")];
+    expect(paths.length, "three edges").toBe(3);
+    expect(paths.some((p) => p.getAttribute("marker-start")?.includes("hk-board-ah-")), "a two-ended arrow").toBe(true);
+  });
+
   it("changing the source re-parses (computed pipeline, no stale board)", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;

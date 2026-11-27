@@ -308,4 +308,52 @@ describe("HkBoard — arrows arrive head-on", () => {
     expect(c2x).toBeLessThan(ex);
     board.unmount();
   });
+
+  /// `--o` / `--x` / `<-->`: a ring or a cross is DRAWN at the named end, and
+  /// `<-->` puts an arrowhead at BOTH ends. The glyph must not become a node
+  /// name (the parser side pins that) and must not be silently dropped here
+  /// (this side).
+  ///
+  /// MUT: removing the marker definitions or the `marker-start` binding
+  /// never passes — the corresponding assertion cannot find its marker.
+  it("draws a ring, a cross and a two-ended arrow", async () => {
+    const c = document.createElement("div");
+    document.body.appendChild(c);
+    createApp({
+      render: () => (
+        <HkBoard
+          nodes={[
+            { id: "a", x: 0, y: 0, w: 80, h: 40, label: "A" },
+            { id: "b", x: 0, y: 200, w: 80, h: 40, label: "B" },
+            { id: "c", x: 0, y: 400, w: 80, h: 40, label: "C" },
+          ]}
+          edges={[
+            { id: "e1", from: "a", to: "b", headEnd: "circle" },
+            { id: "e2", from: "b", to: "c", headEnd: "cross" },
+            { id: "e3", from: "c", to: "a", arrow: "solid", headStart: "arrow" },
+          ]}
+        />
+      ),
+    }).mount(c);
+    await new Promise((r) => setTimeout(r, 60));
+    // A ring marker exists and is CIRCULAR (a marker whose child is a circle).
+    const markers = [...c.querySelectorAll("marker")];
+    const ring = markers.find((m) => m.querySelector("circle") !== null);
+    expect(ring, "a ring marker").toBeTruthy();
+    // A cross marker exists: two strokes crossing.
+    const cross = markers.find((m) => (m.querySelector("path")?.getAttribute("d") ?? "").includes("M1.5,1.5"));
+    expect(cross, "a cross marker").toBeTruthy();
+    // The ring is centred ON the line end (a trailing ring reads as a dot).
+    expect(ring!.getAttribute("refX")).toBe("5");
+    const paths = [...c.querySelectorAll<SVGPathElement>(".hk-board-edge")];
+    expect(paths.length).toBe(3);
+    // The two adornments landed on their edges…
+    expect(paths[0].getAttribute("marker-end")).toContain(ring!.id);
+    expect(paths[1].getAttribute("marker-end")).toContain(cross!.id);
+    // …and the bidirectional edge has a head at BOTH ends.
+    expect(paths[2].getAttribute("marker-end")).toBeTruthy();
+    expect(paths[2].getAttribute("marker-start")).toContain("hk-board-ah-");
+    expect(paths[0].getAttribute("marker-start")).toBeNull();
+    c.remove();
+  });
 });

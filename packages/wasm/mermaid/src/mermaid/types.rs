@@ -63,6 +63,28 @@ pub struct MermaidEdge {
     pub label: Option<String>,
     #[serde(rename = "edgeType")]
     pub edge_type: EdgeType,
+    /// Head glyph at the TARGET end beyond the plain arrow: `circle` (`--o`)
+    /// or `cross` (`--x`). Absent for every ordinary link. The renderer draws
+    /// it at the end of the line — the grammar used to read the glyph as a
+    /// NODE ID, which invented a box and detached the real target.
+    #[serde(rename = "headEnd", skip_serializing_if = "Option::is_none")]
+    pub head_end: Option<EdgeHead>,
+    /// Head glyph at the SOURCE end — only `<-->` sets it (an arrow at both
+    /// ends).
+    #[serde(rename = "headStart", skip_serializing_if = "Option::is_none")]
+    pub head_start: Option<EdgeHead>,
+}
+
+/// A link-end adornment that is not the plain arrowhead.
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EdgeHead {
+    /// `--o` — a small ring.
+    Circle,
+    /// `--x` — a cross.
+    Cross,
+    /// `<-->`'s source end: an ordinary arrow.
+    Arrow,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

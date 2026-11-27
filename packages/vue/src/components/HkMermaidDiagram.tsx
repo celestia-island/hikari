@@ -411,6 +411,11 @@ export default defineComponent({
         anchorTo: e.anchorTo,
         dashed: e.dashed,
         arrow: e.arrow,
+        // The link's head glyph rides through every projection: parser →
+        // layout → this hand-off → board. Dropping it here is invisible to a
+        // board-level prop test and leaves the ring/cross unpainted.
+        headEnd: e.headEnd,
+        headStart: e.headStart,
         ink: MERMAID_EDGE_INK,
         label: e.label ?? undefined,
         via: e.via,

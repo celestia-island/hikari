@@ -49,11 +49,19 @@ export interface MermaidNode {
 /** `-->` (arrow) or `---` (plain line). */
 export type MermaidEdgeType = "arrow" | "line";
 
+/** A link-end adornment that is not the plain arrowhead. Rust parity:
+ *  `MermaidEdge::head_end` / `head_start` (`EdgeHead`), omitted when absent. */
+export type MermaidEdgeHead = "circle" | "cross" | "arrow";
+
 export interface MermaidEdge {
   source: string;
   target: string;
   label: string | null;
   edgeType: MermaidEdgeType;
+  /** `--o` (circle) or `--x` (cross) at the target end. */
+  headEnd?: MermaidEdgeHead;
+  /** `<-->` sets this to `arrow`: an arrowhead at the SOURCE end too. */
+  headStart?: MermaidEdgeHead;
 }
 
 /**

@@ -129,6 +129,12 @@ export interface BoardEdgeInput {
   /** Arrowhead at the `to` end: solid triangle, open chevron, or none
    * (the default — plain path, current behavior). */
   arrow?: "none" | "solid" | "open";
+  /** Non-arrow adornment at the `to` end — mermaid's `--o` ring / `--x`
+   *  cross. Drawn INSTEAD of the plain arrowhead when set. */
+  headEnd?: "circle" | "cross";
+  /** Adornment at the `from` end. Only `"arrow"` today: mermaid's `<-->`
+   *  draws an arrowhead at both ends. */
+  headStart?: "arrow";
   /** Caption painted at the path midpoint (mermaid edge labels, sequence
    * message text). Plain text — no markup, SVG <text> with a surface
    * halo so it stays legible over the path it names. */
@@ -213,6 +219,8 @@ export default defineComponent({
         dashed: boolean;
         width: number;
         arrow: "none" | "solid" | "open";
+        headEnd?: "circle" | "cross";
+        headStart?: "arrow";
         label: string | null;
         labelAt: { x: number; y: number };
       }[] = [];
@@ -260,6 +268,8 @@ export default defineComponent({
           dashed: Boolean(e.dashed),
           width: e.width ?? 1.5,
           arrow: e.arrow ?? "none",
+          headEnd: e.headEnd,
+          headStart: e.headStart,
           label: e.label && e.label !== "" ? e.label : null,
           labelAt: mid,
         });
@@ -274,23 +284,37 @@ export default defineComponent({
      * sequence: `url(#id)` resolves document-wide, and two mounted boards
      * minting `hk-board-ah-0` each would cross-wire their arrowheads. */
     const boardSeq = boardInstanceSeq();
+    // Every adornment an edge can carry at an end: the two arrowheads plus
+    // mermaid's ring (`--o`) and cross (`--x`). They share one <defs> pool
+    // keyed by (kind, ink) so a diagram with many such edges emits each
+    // marker once.
+    type MarkerKind = "solid" | "open" | "circle" | "cross";
     const edgeMarkers = computed(() => {
       const index = new Map<string, number>();
-      for (const e of edgePaths.value) {
-        if (e.arrow === "none") continue;
-        const key = `${e.arrow}\u0000${e.ink}`;
+      const add = (kind: MarkerKind, ink: string): void => {
+        const key = `${kind}\u0000${ink}`;
         if (!index.has(key)) index.set(key, index.size);
+      };
+      for (const e of edgePaths.value) {
+        if (e.arrow !== "none") add(e.arrow, e.ink);
+        if (e.headEnd) add(e.headEnd, e.ink);
+        // `<-->` draws an ordinary arrow at the source end too.
+        if (e.headStart) add("solid", e.ink);
       }
       return [...index.entries()].map(([key, i]) => {
         const [kind, ink] = key.split("\u0000");
-        return { id: `hk-board-ah-${boardSeq}-${i}`, kind: kind as "solid" | "open", ink };
+        return { id: `hk-board-ah-${boardSeq}-${i}`, kind: kind as MarkerKind, ink };
       });
     });
 
-    const markerOf = (kind: "none" | "solid" | "open", ink: string): string | undefined => {
-      if (kind === "none") return undefined;
+    const markerRef = (kind: MarkerKind, ink: string): string | undefined => {
       const idx = edgeMarkers.value.findIndex((m) => m.kind === kind && m.ink === ink);
       return idx >= 0 ? `url(#hk-board-ah-${boardSeq}-${idx})` : undefined;
+    };
+
+    const markerOf = (kind: "none" | "solid" | "open", ink: string): string | undefined => {
+      if (kind === "none") return undefined;
+      return markerRef(kind, ink);
     };
 
     const contentBounds = computed(() => content.value);
@@ -579,23 +603,79 @@ export default defineComponent({
         <div class="hk-board-world" style={worldStyle.value}>
           <svg class="hk-board-edges" width={contentBounds.value.w} height={contentBounds.value.h}>
             <defs>
-              {edgeMarkers.value.map((m) => (
-                <marker
-                  key={m.id}
-                  id={m.id}
-                  viewBox="0 0 10 8"
-                  refX={9}
-                  refY={4}
-                  markerWidth={10}
-                  markerHeight={8}
-                  markerUnits="userSpaceOnUse"
-                  orient="auto"
-                >
-                  {m.kind === "solid"
-                    ? <path d="M0,0 L10,4 L0,8 Z" fill={m.ink} />
-                    : <path d="M0,0 L10,4 L0,8" fill="none" stroke={m.ink} stroke-width={1.5} stroke-linecap="round" />}
-                </marker>
-              ))}
+              {edgeMarkers.value.map((m) => {
+                // The arrowheads keep the family's 10×8 box pinned at the line
+                // end; the ring and the cross are centred ON that end (a ring
+                // that trailed the line would read as a separate dot).
+                if (m.kind === "circle") {
+                  return (
+                    <marker
+                      key={m.id}
+                      id={m.id}
+                      viewBox="0 0 10 10"
+                      refX={5}
+                      refY={5}
+                      markerWidth={10}
+                      markerHeight={10}
+                      markerUnits="userSpaceOnUse"
+                      orient="auto"
+                    >
+                      <circle
+                        cx={5}
+                        cy={5}
+                        r={3.6}
+                        // `var()` in a PRESENTATION ATTRIBUTE is not
+                        // substituted on every engine (the family rule this
+                        // file's ink notes spell out) — the halo fill rides an
+                        // inline style like every other token here.
+                        style={{ fill: "rgb(var(--color-surface, 255 255 255))" }}
+                        stroke={m.ink}
+                        stroke-width={1.5}
+                      />
+                    </marker>
+                  );
+                }
+                if (m.kind === "cross") {
+                  return (
+                    <marker
+                      key={m.id}
+                      id={m.id}
+                      viewBox="0 0 10 10"
+                      refX={5}
+                      refY={5}
+                      markerWidth={10}
+                      markerHeight={10}
+                      markerUnits="userSpaceOnUse"
+                      orient="auto"
+                    >
+                      <path
+                        d="M1.5,1.5 L8.5,8.5 M8.5,1.5 L1.5,8.5"
+                        fill="none"
+                        stroke={m.ink}
+                        stroke-width={1.5}
+                        stroke-linecap="round"
+                      />
+                    </marker>
+                  );
+                }
+                return (
+                  <marker
+                    key={m.id}
+                    id={m.id}
+                    viewBox="0 0 10 8"
+                    refX={9}
+                    refY={4}
+                    markerWidth={10}
+                    markerHeight={8}
+                    markerUnits="userSpaceOnUse"
+                    orient="auto"
+                  >
+                    {m.kind === "solid"
+                      ? <path d="M0,0 L10,4 L0,8 Z" fill={m.ink} />
+                      : <path d="M0,0 L10,4 L0,8" fill="none" stroke={m.ink} stroke-width={1.5} stroke-linecap="round" />}
+                  </marker>
+                );
+              })}
             </defs>
             {edgePaths.value.map((e) => (
               <g key={e.id}>
@@ -608,7 +688,8 @@ export default defineComponent({
                   stroke-dasharray={e.dashed ? "6 5" : undefined}
                   fill="none"
                   stroke-linecap="round"
-                  marker-end={markerOf(e.arrow, e.ink)}
+                  marker-end={e.headEnd ? markerRef(e.headEnd, e.ink) : markerOf(e.arrow, e.ink)}
+                  marker-start={e.headStart ? markerRef("solid", e.ink) : undefined}
                 />
                 {e.label !== null && (
                   <text

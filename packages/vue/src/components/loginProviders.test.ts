@@ -226,7 +226,9 @@ describe("build-central-auth-mark.py", () => {
       encoding: "utf8",
       cwd: VUE_DIR,
     });
-    // A repainted logo must be confirmed, never silently adopted.
+    // MUT:mark-source-sha-pin — swapping the pinned sha for an impostor
+    // (a repainted logo) must be refused, never silently adopted: dropping
+    // the pin check reddens THIS test while the generator still runs.
     expect(run.status).not.toBe(0);
     expect(run.stderr).toContain("sha256 mismatch");
     expect(existsSync(out)).toBe(false);

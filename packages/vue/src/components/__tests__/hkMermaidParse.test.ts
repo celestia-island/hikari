@@ -119,7 +119,8 @@ describe("stateDiagram", () => {
   /// `[*]` is two DIFFERENT pseudostates (initial and final). The old blanket
   /// replace mapped both to one literal node, so the layout merged them into a
   /// single labelled box with every edge pointing at it.
-  /// MUT: collapsing either rewrite back to one id turns this red.
+  /// MUT: collapsing either rewrite back to one id never passes — the two
+  /// circle assertions below catch it.
   it("keeps the initial and final pseudostates apart, as circles", async () => {
     await mermaidReady;
     const doc = wasmMermaidEngine.parse("stateDiagram-v2\n  [*] --> Idle\n  Idle --> Running\n  Running --> [*]");

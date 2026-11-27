@@ -278,7 +278,13 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     };
 
     let code_for_copy = props.code.clone();
-    let code = props.code.clone();
+    // NOT `code`: the rsx macro reads a BARE identifier child as an ATTRIBUTE,
+    // so a variable sharing the element's tag name rendered
+    // `<code code="…"></code>` — an empty element with the whole source in an
+    // attribute. That is the SSR defect consumers hit (lagrange hand-wrote
+    // this markup to avoid it). A distinct name plus an explicit text node
+    // keeps the source where it belongs.
+    let code_text = props.code.clone();
     let language = props.language.clone();
 
     // The copy control's face is CONSTANT (user direction 2026-11-11: a
@@ -426,8 +432,8 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                 pre {
                     class: code_classes,
                     code {
-                        class: language_class,
-                        code
+                        class: language_class.clone(),
+                        {code_text.clone()}
                     }
                 }
             }

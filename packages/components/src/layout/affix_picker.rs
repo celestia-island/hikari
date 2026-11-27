@@ -1164,7 +1164,9 @@ pub fn AffixPicker(props: AffixPickerProps) -> Element {
             let key_wiring = wiring.clone();
             let key_rows = rows.clone();
             let key_selected = selected.clone();
-            let key_query_present = !query.is_empty();
+            // Vue trims before judging "empty" (`const q = query.value.trim()`)
+            // — a whitespace-only field must be a no-op too (R8).
+            let key_query_present = !query.trim().is_empty();
             // Vue: `!tagLayout && mode === "multi"` — the only layout whose
             // Enter must skip the selected-first run.
             let key_rows_layout = !tag_layout && mode == AffixMode::Multi;
@@ -1737,6 +1739,36 @@ mod tests {
         assert_eq!(
             affix_enter_action(&rows, false, true, &selected_all, true),
             AffixEnterAction::None
+        );
+        // A WHITESPACE-ONLY query must be a no-op too. The pure helper only
+        // sees the boolean — the TRIM lives at the capture site, so it is
+        // pinned at the source: the caller must judge emptiness on the
+        // trimmed query (`!query.trim().is_empty()`, R8) — the raw
+        // untrimmed emptiness check that let a blank Enter commit a row
+        // must not survive anywhere in this file.
+        assert_eq!(
+            affix_enter_action(&rows, false, false, &selected_all, true),
+            AffixEnterAction::None
+        );
+        // Read only the non-test half: the negative pin must not match its
+        // own assertions.
+        use std::fs::read_to_string;
+        let source = read_to_string(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/layout/affix_picker.rs"
+        ))
+        .expect("read the mirror source");
+        let caller = source
+            .split("#[cfg(test)]")
+            .next()
+            .expect("the non-test half exists");
+        assert!(
+            caller.contains("!query.trim().is_empty()"),
+            "the capture site must trim before judging emptiness (R8)"
+        );
+        assert!(
+            !caller.contains("!query.is_empty()"),
+            "the raw emptiness check must not survive next to the trim rule"
         );
     }
 

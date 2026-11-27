@@ -112,4 +112,31 @@ describe("mermaid zoom bar placement contract", () => {
     expect(bar).toMatch(/position:\s*relative/);
     expect(bar).toMatch(/inset:\s*auto/);
   });
+
+  /// The shape sample's labels ellipsized inside boxes that were BIG ENOUGH:
+  /// the node is a flex row, and a `flex-shrink: 1` label shrank to a third of
+  /// the box (measured 2026-11-28: stadium's label box 31px inside a 104px
+  /// node). Seven of eleven shapes clipped. The layout already sizes the box
+  /// from the label, so the label must take its content width and stop at the
+  /// box — never shrink below it.
+  ///
+  /// MUT: dropping `flex: 0 0 auto` / `width: max-content` brings every
+  /// ellipsis back while the box stays correct, which no width assertion sees.
+  it("the outline label takes its content width instead of shrinking", () => {
+    // The compiled sheet names the descendant rule, so the needle is the
+    // outline node class plus the label — unique among the sheet's rules.
+    const css = compiled("HkMermaidDiagram.scss");
+    // The label rule sits in the NODE block, so its compiled selector is the
+    // bare class — the outline node already scopes it (a node is either an
+    // outline or not, never both shapes at once).
+    const body = ruleFor(css, ".hk-mmd-node__label {");
+    // …and the outline's absolute strip really is absolute: an unscoped SVG
+    // spends flex space and squeezes the label (the actual clipping cause).
+    expect(ruleFor(css, ".hk-mmd-node__outline {")).toMatch(/position:\s*absolute/);
+    expect(ruleFor(css, ".hk-mmd-node--outline {")).toMatch(/border:\s*none/);
+    expect(body).toMatch(/flex:\s*0 0 auto/);
+    expect(body).toMatch(/width:\s*max-content/);
+    // The percentage cap stays: a genuinely longer label still ellipsizes.
+    expect(body).toMatch(/max-width:\s*100%/);
+  });
 });

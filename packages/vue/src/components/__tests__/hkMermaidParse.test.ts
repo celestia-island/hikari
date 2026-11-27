@@ -133,6 +133,34 @@ describe("link head adornments", () => {
   });
 });
 
+describe("state notes", () => {
+  /// `note right of X : text` is an ANNOTATION, and an unrecognised statement
+  /// in a state diagram fails the WHOLE parse — the card falls back to a plain
+  /// code block. A composite-state sample carrying one note did exactly that
+  /// (found by the two-lane audit harness, not by any unit test here).
+  ///
+  /// MUT: dropping the note branch makes the parse return null again.
+  it("a note never costs the whole diagram", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse(
+      "stateDiagram-v2\n    [*] --> Outer\n    state Outer {\n        [*] --> InnerA\n        InnerA --> InnerB : go\n        InnerB --> [*]\n    }\n    Outer --> Done : finish\n    note right of Done : terminal\n    Done --> [*]",
+    );
+    expect(doc, "the note must not fail the parse").not.toBeNull();
+    const g = doc as unknown as {
+      nodes: Array<{ id: string; label: string; shape: string }>;
+      groups: Array<{ id: string; members: string[] }>;
+    };
+    // The note is its own small node carrying its text…
+    const note = g.nodes.find((n) => n.id.startsWith("__hk_note_"));
+    expect(note, "a note node").toBeTruthy();
+    expect(note!.label).toBe("terminal");
+    // …and the composite still closed correctly around its members.
+    expect(g.groups.map((x) => x.id)).toEqual(["Outer"]);
+    expect(g.groups[0].members).toContain("InnerA");
+    expect(g.groups[0].members).toContain("InnerB");
+  });
+});
+
 describe("stateDiagram", () => {
   it("parses state transitions as graph", async () => {
     await mermaidReady;

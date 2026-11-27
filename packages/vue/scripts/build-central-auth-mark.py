@@ -167,7 +167,7 @@ def render_module(choice: EncodeChoice) -> str:
     width, height = choice.rendered
     payload_b64 = base64.b64encode(choice.payload).decode("ascii")
     # ONE string literal, deliberately unwrapped. Adjacent-literal wrapping
-    # reads better in an editor, but Vite 8 transforms this file with esbuild
+    # reads better in an editor, but Vite 8 transforms this file with oxc
     # WITHOUT `minifyWhitespace`, which glues only the first continuation onto
     # the declaration and drops the other lines' values — measured: the
     # runtime payload came back as the first 96 characters, a 72-byte image.
@@ -194,7 +194,7 @@ def render_module(choice: EncodeChoice) -> str:
 // precedence rules behind it.
 //
 // The payload below is ONE string literal on ONE line on purpose: adjacent
-// wrapped literals survive `node` but not Vite's non-minifying esbuild pass
+// wrapped literals survive `node` but not Vite's non-minifying oxc pass
 // (see the generator's `render_module`).
 """
     return f"""{header}

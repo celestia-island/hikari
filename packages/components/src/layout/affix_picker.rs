@@ -757,7 +757,12 @@ impl AffixPickerWiring {
     }
 
     /// Vue's `useCustom()`: emit the trimmed query, close a single picker and
-    /// clear the query in multi mode.
+    /// clear the query in multi mode. The exit follows Vue's
+    /// `resolvedCloseOnSelect` — NOT the raw mode: the tag layout is a value
+    /// editor, but a host that passes `closeOnSelect={true}` with it (the
+    /// localized input does) still wants the popup gone after the value is
+    /// taken (2026-11-27 R16; both sides closed on `mode === "single"`
+    /// alone, which left that exit open).
     fn use_custom(&self) {
         let query = self.query.trim().to_string();
         if query.is_empty() {
@@ -766,7 +771,7 @@ impl AffixPickerWiring {
         if let Some(handler) = self.on_custom.as_ref() {
             handler.call(query);
         }
-        if self.mode == AffixMode::Single {
+        if self.close_on_select {
             self.request_open(false);
         } else {
             self.set_query(String::new());
@@ -2458,6 +2463,65 @@ mod tests {
         wiring.request_remove("cn");
         assert_eq!(requested.get(), 1, "the request edge must fire");
         assert_eq!(removed.get(), 0, "and still nothing may be deleted");
+    }
+
+    #[test]
+    fn affix_use_custom_closes_on_close_on_select_not_on_the_mode() {
+        // The tag layout's custom row is reachable, and its exit follows the
+        // RESOLVED close-on-select, not `mode == Single` (2026-11-27 R16):
+        // a host that asks for close-on-select with `layout: Tags` must get
+        // the popup closed after the value is taken.
+        let opens = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let queries = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let customs = std::rc::Rc::new(std::cell::Cell::new(0usize));
+        let (o, q, c) = (
+            std::rc::Rc::clone(&opens),
+            std::rc::Rc::clone(&queries),
+            std::rc::Rc::clone(&customs),
+        );
+        let mut wiring = AffixPickerWiring {
+            confirm_remove: true,
+            mode: AffixMode::Multi,
+            layout: AffixLayout::Tags,
+            disabled: false,
+            open: true,
+            query: "gitee.com".to_string(),
+            selected: Vec::new(),
+            close_on_select: true,
+            on_open_change: Some(EventHandler::new(move |_open: bool| {
+                o.set(o.get() + 1);
+            })),
+            on_query_change: Some(EventHandler::new(move |_query: String| {
+                q.set(q.get() + 1);
+            })),
+            on_select: None,
+            on_remove: None,
+            on_remove_request: None,
+            on_custom: Some(EventHandler::new(move |_v: String| {
+                c.set(c.get() + 1);
+            })),
+        };
+        wiring.use_custom();
+        assert_eq!(customs.get(), 1, "the trimmed query is emitted");
+        assert_eq!(opens.get(), 1, "close-on-select closes the popup");
+        assert_eq!(queries.get(), 0, "closing does not also clear the query");
+
+        // Multi WITHOUT close-on-select keeps the value editor's behaviour:
+        // stay open and clear the query.
+        wiring.close_on_select = false;
+        opens.set(0);
+        queries.set(0);
+        wiring.use_custom();
+        assert_eq!(opens.get(), 0, "no close request without close-on-select");
+        assert_eq!(queries.get(), 1, "the query is cleared for the next pick");
+
+        // An empty query stays a no-op on every edge.
+        wiring.query = "   ".to_string();
+        customs.set(0);
+        opens.set(0);
+        queries.set(0);
+        wiring.use_custom();
+        assert_eq!((customs.get(), opens.get(), queries.get()), (0, 0, 0));
     }
 
     #[test]

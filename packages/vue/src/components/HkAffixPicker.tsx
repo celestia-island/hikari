@@ -375,7 +375,7 @@ export const HkAffixPicker = defineComponent({
       const q = query.value.trim();
       if (!q) return;
       emit("custom", q);
-      if (props.mode === "single") open.value = false;
+      if (resolvedCloseOnSelect.value) open.value = false;
       else query.value = "";
     }
 

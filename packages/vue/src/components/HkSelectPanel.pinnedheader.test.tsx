@@ -153,6 +153,40 @@ describe("HkSelectPanel pinnedHeader — desktop popout", () => {
     await nextTick();
     expect(open.value).toBe(true);
   });
+
+  it("detaches the body-host rail on close — it never outlives the panel (2026-11-27 R16)", async () => {
+    // The pinned-header popout mounts a rail whose HOST wrapper is a child
+    // of the panel: when the panel dies the wrapper goes with it, so a
+    // leaked rail would be STRANDED. `handleCloseRequest` calls
+    // detachPanelScrollbar() for exactly this; every other assertion here
+    // only ever reads the OPEN shape, so dropping that call left the whole
+    // suite green (2026-11-27 R16 mutation).
+    //
+    // The observation window: the surface machine keeps the Teleport
+    // mounted through its leave (`popoutHostRef` carries
+    // `hk-select-popout-leave-active`), so the ideal instant to look is
+    // while the panel is still in the DOM but already closing.
+    const { container, open } = mountPanel();
+    await openPanel(container);
+    expect(
+      document.body.querySelector(".hk-select-popout-body-host > .hk-scrollbar-track"),
+      "rail attached while open",
+    ).toBeTruthy();
+
+    open.value = false;
+    await nextTick();
+    await nextTick();
+
+    // Still mounted (the leave owns the frame) — so absence of the rail is
+    // the detach, not a teardown.
+    const host = document.body.querySelector<HTMLElement>(".hk-select-popout-host");
+    expect(host, "the panel is still mounted for its leave").toBeTruthy();
+    expect(host!.className, "the host is in the leave phase").not.toContain("hk-select-popout-enter");
+    expect(
+      document.body.querySelector(".hk-select-popout-body-host > .hk-scrollbar-track"),
+      "no rail left behind on the closing panel",
+    ).toBeNull();
+  });
 });
 
 describe("HkSelectPanel pinnedHeader — mobile sheet", () => {
@@ -171,6 +205,36 @@ describe("HkSelectPanel pinnedHeader — mobile sheet", () => {
     expect(list.querySelector("input.pin"), "the search is NOT inside the scrolling list").toBeNull();
     // No popout-shaped wrapper leaks into the sheet.
     expect(sheet.querySelector(".hk-select-popout-body")).toBeNull();
+  });
+
+  it("the dup-title filter never scans the pinned band (2026-11-27 R16)", async () => {
+    // The filter hides a leading in-content heading that merely repeats the
+    // sheet title — but the BAND is chrome the consumer deliberately put
+    // there (a "Filters" label above a filter field). The scan is anchored
+    // on `sheetListRef`, and its band-anchored form was unpinned: widening
+    // it to the panel would hide the band's own label (2026-11-27 R16).
+    setViewport(375);
+    const { container } = mountPanel();
+    await openPanel(container);
+    // Same text in BOTH places: the list's heading hides, the band's stays.
+    const band = document.querySelector<HTMLElement>(".hk-select-sheet-pinned")!;
+    band.insertAdjacentHTML("beforeend", '<div class="band-label">Filters</div>');
+    const list = document.querySelector<HTMLElement>(".hk-select-sheet-list")!;
+    list.insertAdjacentHTML("beforeend", '<div class="list-label">Filters</div>');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await nextTick();
+    // Band FIRST: a widened scan returns the band's label before it ever
+    // reaches the list, so asserting the list first would report a diff
+    // misread (the list's own heading is fine) instead of the actual
+    // regression.
+    expect(
+      band.querySelector<HTMLElement>(".band-label")!.classList.contains("hk-sheet-dup-title"),
+      "the pinned band's label is never judged",
+    ).toBe(false);
+    expect(
+      list.querySelector<HTMLElement>(".list-label")!.classList.contains("hk-sheet-dup-title"),
+      "the scrolling list's duplicate heading is still filtered",
+    ).toBe(true);
   });
 
   it("never publishes the popout cap on the sheet — neither band nor panel", async () => {

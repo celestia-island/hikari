@@ -357,8 +357,40 @@ describe("HkAffixPicker", () => {
     ).toContain(fragment);
   }
 
-  it("tag body click emits select; close-on-select default keeps multi open", async () => {
-    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
+  it("tag layout still offers the custom row, and its pick honours closeOnSelect (2026-11-27 R16)", async () => {
+    // The tag layout is a VALUE EDITOR: its rows ADD and the popup stays
+    // open for the next language — unless the host asked for the opposite.
+    // `HkLocalizedInput` passes `closeOnSelect={true}` with
+    // `layout="tags"`, and the custom row is reachable there (nothing
+    // matches a hostname), so that exit MUST follow the host's flag. Only
+    // the custom row was unpinned — the row paths were covered
+    // (2026-11-27 R16 mutation).
+    const { events, container } = mountPicker({
+      mode: "multi",
+      layout: "tags",
+      allowCustom: true,
+      closeOnSelect: true,
+      selected: ["cn"],
+    });
+    await openPopup(container);
+    await typeQuery("gitee.com");
+    const custom = document.querySelector<HTMLButtonElement>('.hk-affix-row[data-custom="true"]');
+    expect(custom, "the custom row is offered in the tag layout too").toBeTruthy();
+    custom!.click();
+    await nextTick();
+    expect(events.custom).toEqual(["gitee.com"]);
+    // The panel leaves: its surface carries the leave-active class for the
+    // transition window. The other row paths were covered — this exit was
+    // not, and a `mode === "single"` test left it open for a host that
+    // asked for close-on-select (2026-11-27 R16 mutation).
+    const surface = document.querySelector(".hk-select-popout, .hk-select-sheet-panel");
+    expect(
+      surface?.classList.contains("hk-select-popout-leave-active"),
+      "closeOnSelect=true closes the popup on a custom pick in the tag layout",
+    ).toBe(true);
+  });
+
+  it("tag body click emits select; close-on-select default keeps multi open", async () => {    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
     await openPopup(container);
     tags()[1].querySelector<HTMLButtonElement>(".hk-affix-tag-body")!.click();
     await nextTick();

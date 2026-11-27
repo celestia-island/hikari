@@ -229,6 +229,40 @@ describe("HkListTransition duration props", () => {
     spy.mockRestore();
   });
 
+  it("the report window reads the enter / leave OVERRIDES too, not just a lone duration (2026-11-27 R16)", async () => {
+    // The window is `max(duration, enterDuration, leaveDuration)`, but every
+    // other case in this describe drives a single prop, so the two
+    // OVERRIDE terms had no pin: reading only `duration` left the whole
+    // suite green (2026-11-27 R16 mutation) while a host that passes only
+    // `enterDuration="2s"` got its 2 s choreography reported for 320 ms —
+    // cut short, the exact failure the window exists to prevent.
+    const bus = await import("../runtime/animationBus");
+    const spy = vi.spyOn(bus, "reportTransition");
+    const keys = ref<string[]>(["a"]);
+    const app = createApp({
+      render: () =>
+        h(
+          HkListTransition,
+          { tag: "ul", variant: "pop", move: true, enterDuration: "2s" },
+          { default: () => keys.value.map((k) => h("li", { key: k }, k)) },
+        ),
+    });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    app.mount(host);
+    mounts.push({ app, container: host });
+    keys.value = ["a", "b"];
+    await nextTick();
+    expect(spy, "the enter batch armed a report").toHaveBeenCalled();
+    for (const call of spy.mock.calls) {
+      expect(
+        call[0],
+        "a lone enterDuration widens the window (a duration-only read gives 320)",
+      ).toBe(2020);
+    }
+    spy.mockRestore();
+  });
+
   it("a fragment host refuses the props loudly instead of ignoring them silently", () => {
     const { container, warn } = mountDurations("", { duration: "0.5s" });
     expect(container.querySelector("ul")).toBeNull();

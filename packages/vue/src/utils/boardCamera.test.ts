@@ -202,6 +202,13 @@ describe("boardCamera — content bbox", () => {
     const box = boardBBox([{ x: 10, y: 10, w: 100, h: 50 }, { x: 260, y: 400, w: 0, h: 0 }], { points: true });
     expect(box).toEqual({ x: 10, y: 10, w: 250, h: 390 });
   });
+
+  it("a junction without a finite position is a placeholder, not content", () => {
+    // One NaN would poison every min/max, and the isFinite fallback below
+    // could no longer tell — the fit would compute k = NaN (a blank board).
+    const box = boardBBox([{ x: 10, y: 10, w: 100, h: 50 }, { x: Number.NaN, y: 400, w: 0, h: 0 }], { points: true });
+    expect(box).toEqual({ x: 10, y: 10, w: 100, h: 50 });
+  });
 });
 
 describe("boardCamera — content smaller than the viewport", () => {

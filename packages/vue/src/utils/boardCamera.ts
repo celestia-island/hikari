@@ -240,7 +240,10 @@ export function boardBBox(rects: BoardRect[], opts: { points?: boolean } = {}): 
   let maxY = -Infinity;
   for (const r of rects) {
     if (r.w <= 0 || r.h <= 0) {
-      if (!opts.points) continue;
+      // A junction with no finite position is a placeholder, not content:
+      // one NaN here would poison every min/max below and the `isFinite`
+      // fallback at the end can no longer tell.
+      if (!opts.points || !Number.isFinite(r.x) || !Number.isFinite(r.y)) continue;
       minX = Math.min(minX, r.x);
       minY = Math.min(minY, r.y);
       maxX = Math.max(maxX, r.x);

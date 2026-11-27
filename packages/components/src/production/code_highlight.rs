@@ -207,7 +207,8 @@ pub struct CodeHighlightProps {
     #[default("".to_string())]
     pub code: String,
 
-    /// ALREADY-HIGHLIGHTED source markup, which wins over [`Self::code`].
+    /// ALREADY-HIGHLIGHTED source markup, which wins over [`Self::code`] —
+    /// the card never discards a host's token spans.
     ///
     /// A host that highlights on the SERVER (lagrange's docs renderer owns a
     /// syntect pipeline) cannot hand this card plain text — doing so would

@@ -235,6 +235,8 @@ Z 层级遵循**单一注册上下文**模型：每个层级家族独占一个�
   --z-tooltip: 10000;  /* 气泡提示 */
   /* --z-fatal: 10001    致命页（消费方定义） */
   /* --z-titlebar: 100001 原生标题栏（Tauri） */
+  /* --z-top-layer: 100002 标题条之上层（hikari 的 #hk-top-root 专用，
+   *   见 8.2；其余 100002 用途如面包屑由消费方定义） */
   /* --z-breadcrumb: 100002 模态栈面包屑（消费方定义） */
 }
 ```
@@ -268,6 +270,35 @@ modal 遮罩（含 blur plate）的顶端从此让位到标题条之下，完全
 事故背景（2026-11-12）：chest 设置窗口与「屏幕与显示」托盘窗口打开时，整条
 拖拽区被 modal 遮罩压暗、拖动与窗控全部失灵——宿主标题条从未认领过标题条层，
 且 chest 的 `#app` 堆叠上下文使纯 z 方案失效，几何腿由此而来。
+
+#### 8.2 标题条之上层（caption attachments，2026-11-17 用户裁决）
+
+标题条是**页面**的最高主（任何 modal 遮罩都让位给它），但它自己的按钮打开的
+**井**必须画在它之上——否则通知中心、账号菜单、工作区切换会被挂靠的那一行
+压住。同理，被显式允许压在标题条上的 tooltip 也要画在它之上；而这份抬升是
+**按触发器、只在显示期间动态授予**的。
+
+落地 = `overlay/topRoot.ts` 的 `#hk-top-root`：与 overlay root 同构的
+`isolation: isolate` fence，文档层 elevation `--hk-z-top-layer: 100002`
+（位于 `--hk-z-titlebar: 100001` 之上，其余层级表不变）。
+
+| 面 | 开关 |
+|---|---|
+| `HkPopover` / `HkSelectPanel` / `HkMenu` / `HkSelect` | `aboveChrome`（默认 false；宿主按 `isNative()` 传） |
+| `HkNotificationBell` | `aboveChrome`（透传给面板） |
+| `HkAdminHeader` 的 chrome 模式 | 内部头像菜单自动接 `aboveChrome` |
+| `HkTooltip` / 文档级 tooltip 桥 | `allowBandOverlap` / `data-hk-tooltip-band-overlap`（动态；可挂在单个触发器上，也可**挂在整条 band 上一次**、子元素继承——最近的标记生效，显式 `false` 可向下豁免） |
+
+落位语义：opt-in 的面板/气泡在 `#hk-top-root` 内仍按 popup manager 的序位
+叠放，并改按**原始窗口**定位（跳过 popupBounds 的标题条下限），因此可以贴着
+/压过标题条；未 opt-in 的浮层保持原契约（默认永不覆盖标题条）。两个根之间
+互不结算 z：异根的层在 outside-click 判定里一律视为「页面」，不会因为数字大小
+而互相豁免。
+
+**嵌套继承**（2026-11-17 首轮验证发现）：锚点已经落在 `#hk-top-root` 里的
+浮层/气泡自动继承该根（`HkPopover` / `HkSelectPanel` / `HkTooltip` /
+文档级 tooltip 桥都按锚点就近判定），宿主不必给子级再传开关——否则子级会被
+自己的父面板压住，父面板的异根 outside-click 还会把它一起关掉。
 
 ## 主题切换
 

@@ -65,6 +65,12 @@ const popoverScss = readFileSync(join(here, "HkPopover.scss"), "utf8");
 const titleBarTsx = readFileSync(join(here, "HkTitleBar.tsx"), "utf8");
 const tooltipBridge = readFileSync(join(here, "..", "runtime", "tooltipBridge.ts"), "utf8");
 const popupBounds = readFileSync(join(here, "..", "runtime", "popupBounds.ts"), "utf8");
+const popoverTsx = readFileSync(join(here, "HkPopover.tsx"), "utf8");
+const selectPanelTsx = readFileSync(join(here, "HkSelectPanel.tsx"), "utf8");
+const bellTsx = readFileSync(join(here, "HkNotificationBell.tsx"), "utf8");
+const tooltipTsx = readFileSync(join(here, "HkTooltip.tsx"), "utf8");
+const filterTriggerTsx = readFileSync(join(here, "HkFilterTrigger.tsx"), "utf8");
+const topRootTs = readFileSync(join(here, "..", "overlay", "topRoot.ts"), "utf8");
 
 /** The numeric value a root z-token declaration carries, or null. */
 function rootTokenZ(source: string, token: string): number | null {
@@ -117,18 +123,78 @@ function allRuleDeclarations(
 }
 
 describe("chrome-band layer contract (the host caption stayed under the veil)", () => {
-  it("orders the layer ladder: overlay-root < error < titlebar", () => {
+  it("orders the layer ladder: overlay-root < error < titlebar < top-layer", () => {
     // The band claim only works while the titlebar layer stays above
     // every floating band the library ships. If a value moves, this is
     // the pin that forces the ladder decision to be conscious.
     const overlayRoot = rootTokenZ(scale, "--hk-z-overlay-root");
     const error = rootTokenZ(scale, "--hk-z-error");
     const titlebar = rootTokenZ(scale, "--hk-z-titlebar");
+    const topLayer = rootTokenZ(scale, "--hk-z-top-layer");
     expect(overlayRoot, "overlay root must declare a z").not.toBeNull();
     expect(error, "error landing must declare a z").not.toBeNull();
     expect(titlebar, "titlebar must declare a z").not.toBeNull();
+    expect(topLayer, "the caption-attachment band must declare a z").not.toBeNull();
     expect(titlebar!).toBeGreaterThan(error!);
     expect(error!).toBeGreaterThan(overlayRoot!);
+    // The ONE band above the titlebar: the caption band's own
+    // attachments (2026-11-17 user direction) — see the next pin.
+    expect(topLayer!).toBeGreaterThan(titlebar!);
+  });
+
+  it("keeps caption-band attachments ABOVE the band through #hk-top-root", () => {
+    // User design (2026-11-17): the titlebar is the page's top owner —
+    // even a window created below never covers it — but the wells ITS
+    // buttons open are exceptions and must paint above it. The
+    // above-titlebar root is that exception's home; every caption
+    // attachment opts in with `aboveChrome` and teleports there.
+    expect(topRootTs).toContain("--hk-z-top-layer");
+    expect(popoverTsx).toMatch(/aboveChrome:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/);
+    expect(popoverTsx).toContain("ensureTopRoot()");
+    expect(popoverTsx).toMatch(
+      /popupViewportRect\(window,\s*\{\s*rawWindow:\s*aboveChrome\.value\s*\}\)/,
+    );
+    expect(selectPanelTsx).toMatch(/aboveChrome:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/);
+    expect(selectPanelTsx).toContain("aboveChrome.value ? ensureTopRoot() : ensureOverlayRoot()");
+    // Nested surfaces inherit the layer from their anchor (round-1
+    // verification finding): a popover/panel opened from INSIDE a caption
+    // attachment joins that root instead of being painted under its own
+    // parent.
+    expect(popoverTsx).toContain("closest?.(TOP_ROOT_SELECTOR) != null");
+    expect(selectPanelTsx).toContain("anchor.closest(TOP_ROOT_SELECTOR) != null");
+    expect(tooltipBridge).toContain("el.closest(TOP_ROOT_SELECTOR) != null");
+    expect(bellTsx).toContain("aboveChrome={props.aboveChrome}");
+    // The page action bar (search / filter / settings row) sits on the
+    // band too: its filter trigger is a caption attachment and forwards
+    // the same opt-in to its panel.
+    expect(filterTriggerTsx).toMatch(/aboveChrome:\s*\{\s*type:\s*Boolean,\s*default:\s*false\s*\}/);
+    expect(filterTriggerTsx).toContain("aboveChrome={props.aboveChrome}");
+    // The console face's caption IS the header in chrome mode, so its
+    // avatar menu rides the same opt-in automatically.
+    expect(adminHeader).toContain("aboveChrome={props.chrome}");
+    // The caption row declares the tooltip exemption ONCE (the band-level
+    // marker; 2026-11-17): every button inside inherits it, so their
+    // bubbles both pin over the strip and paint above it.
+    expect(adminHeader).toContain(
+      'data-hk-tooltip-band-overlap={props.chrome ? "true" : undefined}',
+    );
+  });
+
+  it("gives the tooltip band-overlap exemption the same elevation, dynamically", () => {
+    // A bubble allowed to PIN over the strip must paint over it too —
+    // but only while it shows: the component teleports by its prop, and
+    // the document bridge relocates the shared popup per show (the
+    // per-trigger marker is checked dynamically).
+    expect(tooltipTsx).toContain("aboveTitlebar.value ? ensureTopRoot() : ensureOverlayRoot()");
+    // The component speaks the same band-marker language as the bridge
+    // (the nearest marked ancestor grants the exemption), and it joins
+    // the above-titlebar root when its trigger already lives there.
+    expect(tooltipTsx).toContain('closest?.("[data-hk-tooltip-band-overlap]")');
+    expect(tooltipTsx).toContain("host?.closest?.(TOP_ROOT_SELECTOR) != null");
+    expect(tooltipBridge).toContain("ensureTopRoot");
+    expect(tooltipBridge).toMatch(
+      /const home = allowBandOverlap \? ensureTopRoot\(\) \?\? ensureOverlayRoot\(\) : ensureOverlayRoot\(\);/,
+    );
   });
 
   it("keeps HkTitleBar on the titlebar layer (the reference caption)", () => {
@@ -226,7 +292,11 @@ describe("chrome-band layer contract (the host caption stayed under the veil)", 
     expect(popupBounds).toMatch(/bandInset > 0 \? bandInset \+ POPUP_BAND_GAP_PX : 0/);
     expect(popupBounds).toContain("POPUP_BAND_GAP_PX = 4");
     expect(tooltipBridge).toContain('data-hk-tooltip-band-overlap');
-    expect(tooltipBridge).toMatch(/el\.hasAttribute\(\"data-hk-tooltip-band-overlap\"\)/);
+    // The bridge reads the trigger's OWN marker first, then the nearest
+    // marked ANCESTOR (a host band may declare the exemption once for its
+    // whole subtree — 2026-11-17), and the marker still wins both ways.
+    expect(tooltipBridge).toMatch(/const ownMarker = el\.getAttribute\("data-hk-tooltip-band-overlap"\);/);
+    expect(tooltipBridge).toContain('el.closest("[data-hk-tooltip-band-overlap]")');
     // Every caption-row button of the reference title bar opts in —
     // custom actions, minimize, maximize/restore, close.
     const markers = (titleBarTsx.match(/data-hk-tooltip-band-overlap="true"/g) ?? []).length;

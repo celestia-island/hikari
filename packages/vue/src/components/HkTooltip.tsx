@@ -4,6 +4,7 @@ import { applyTooltipPosition, type TooltipPlacement } from "../runtime/tooltipP
 import { armTouchHint } from "../runtime/touchHint";
 import "./HkTooltip.scss";
 import { ensureOverlayRoot } from "../overlay/overlayRoot";
+import { TOP_ROOT_SELECTOR, ensureTopRoot } from "../overlay/topRoot";
 
 /**
  * The default-slot payload, handed to every render of the trigger. An
@@ -95,6 +96,10 @@ export default defineComponent({
      * host caption strip (popupBounds floors the popup frame at the
      * chrome-band inset); true lets the bubble pin over the strip, for
      * triggers that live ON the caption (the title bar's own buttons).
+     * Since 2026-11-17 the nearest `data-hk-tooltip-band-overlap` ANCESTOR
+     * (a host-drawn band row) grants the same exemption to its triggers —
+     * explicit "false" on a trigger still opts out — and an exempted
+     * bubble paints above the band through the above-titlebar root.
      */
     allowBandOverlap: { type: Boolean, default: false },
   },
@@ -105,6 +110,17 @@ export default defineComponent({
   }>,
   setup(props, { slots }) {
     const visible = ref(false);
+    /** The trigger's host-band exemption, read at show time (2026-11-17):
+     *  a band that declares `data-hk-tooltip-band-overlap="true"` once
+     *  grants it to every trigger inside it — the document bridge has
+     *  resolved the nearest marked ancestor since this wave, and the
+     *  component must speak the same language (explicit "false" still
+     *  opts a trigger back out). */
+    const hostBandExempt = ref(false);
+    /** The trigger lives INSIDE an above-titlebar layer (a tooltip on a
+     *  notification-panel row): its bubble must join that root, or it
+     *  would be painted under its own parent surface. */
+    const hostInTopRoot = ref(false);
     const clickMode = computed(() => props.trigger === "click");
     // Stable id for the aria-describedby link from the trigger wrapper to
     // the popup (set while the popup is visible, mirroring the tooltip
@@ -178,7 +194,7 @@ export default defineComponent({
       // cap, shift) instead of spilling off-screen or shrinking to the
       // containing block's leftover space.
       applyTooltipPosition(popup, rect, props.placement, props.maxWidth, {
-        allowBandOverlap: props.allowBandOverlap,
+        allowBandOverlap: allowBandOverlap.value,
       });
       observeGeometry();
     }
@@ -324,6 +340,12 @@ export default defineComponent({
       clearShowTimer();
       ensureEngaged();
       showTimer = setTimeout(() => {
+        const host = wrapperRef.value;
+        const marker = host?.closest?.("[data-hk-tooltip-band-overlap]") ?? null;
+        hostBandExempt.value = marker
+          ? marker.getAttribute("data-hk-tooltip-band-overlap") !== "false"
+          : false;
+        hostInTopRoot.value = host?.closest?.(TOP_ROOT_SELECTOR) != null;
         visible.value = true;
         beginPositionTracking();
       }, props.delay);
@@ -496,6 +518,17 @@ export default defineComponent({
       visible.value ? "hk-tooltip-visible" : "",
     ]);
 
+    /** The explicit prop OR the host band's declaration (2026-11-17). */
+    const allowBandOverlap = computed(
+      () => props.allowBandOverlap || hostBandExempt.value,
+    );
+    /** The bubble's home: the above-titlebar root when it may pin over
+     *  the band or its trigger already lives in that layer; the overlay
+     *  root otherwise. */
+    const aboveTitlebar = computed(
+      () => allowBandOverlap.value || hostInTopRoot.value,
+    );
+
     // Only the popup-manager z rides the vnode; the geometry is written
     // straight onto the element by applyTooltipPosition (same as the
     // tooltip bridge) so a re-render can never clobber a clamp shift.
@@ -554,7 +587,13 @@ export default defineComponent({
         <span class="hk-tooltip-trigger">
           {slots.default?.({ popupId, visible: visible.value })}
         </span>
-        <Teleport to={ensureOverlayRoot()}>
+        {/* The explicit band-overlap exemption (allowBandOverlap) is the
+            one tooltip mode allowed to pin OVER the caption strip; it must
+            also PAINT over it, so that bubble teleports to the
+            above-titlebar root (overlay/topRoot.ts). Default tooltips keep
+            the overlay root — every non-exempt bubble is floored below the
+            band by popupBounds and never needs the elevation. */}
+        <Teleport to={aboveTitlebar.value ? ensureTopRoot() : ensureOverlayRoot()}>
           {everShown.value && (
             <div
               ref={popupRef}

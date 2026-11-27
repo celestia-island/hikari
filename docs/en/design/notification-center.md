@@ -45,6 +45,14 @@ The trigger is `HkIconButton` on the chrome size ladder; the surface is
 `HkPopover` with `sheetOnMobile` — an anchored flyout on wide screens,
 a bottom sheet on phones, safe to cross the breakpoint live.
 
+**Layering** (user direction 2026-11-17): a host whose header IS the window
+caption band (the chrome band) mounts the bell with
+`<HkNotificationBell aboveChrome={isNative()} />` — the panel then paints
+in the above-titlebar layer (`#hk-top-root` / `--hk-z-top-layer`, see
+design/layer1 §8.2). The titlebar stays the PAGE's top owner (a modal veil
+never dims it), but the well its own bell opens must stay visible over the
+row it hangs from instead of being buried under it.
+
 ## Motion
 
 Row add and remove are choreographed by `HkListTransition` — the

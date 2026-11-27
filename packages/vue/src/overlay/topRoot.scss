@@ -1,0 +1,31 @@
+/**
+ * Above-titlebar root styles — the isolated stacking context for the
+ * window caption band's OWN attachments (see overlay/topRoot.ts).
+ *
+ * These values are the root's DOCUMENT-space elevation plus the fence;
+ * the ordinal bands inside are the popup manager's (unchanged from the
+ * overlay root, because an opted-in surface registers exactly as it
+ * would there).
+ */
+#hk-top-root {
+  /* Fences the root's z-index space from the global stacking order. */
+  isolation: isolate;
+
+  /* Document-space elevation — one step ABOVE the window titlebar
+   * (--hk-z-titlebar, 100001): the band stays the page's top owner,
+   * while the wells it opens (notification center, caption menus) and
+   * its explicitly overlapping tooltips stay visible over it. The
+   * fallback must match topRoot.ts's TOP_ROOT_DOCUMENT_Z. */
+  z-index: var(--hk-z-top-layer, 100002);
+
+  /* The root itself doesn't intercept pointer events; each teleported
+   * child restores its own pointer-events. */
+  pointer-events: none;
+
+  /* Children are position: fixed overlays — the root itself is a
+   * zero-size anchor, not a visible surface. */
+  position: relative;
+  width: 0;
+  height: 0;
+  overflow: visible;
+}

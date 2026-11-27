@@ -85,3 +85,14 @@ Une `HkAuthChannelListEntry` — et une `HkLoginSsoChannel` qui la transmet — 
 - En mode relay, ne pas monter `HkLoginFlow` — monter `HkAuthHandoff`.
 - Ne passer que des chemins de même origine comme adresse de retour ; utiliser `hkIsSameOriginPath` ou votre propre liste d'autorisation.
 - Les `href` des lignes doivent aussi être des chemins de même origine (le document est validé côté serveur) ; hikari ne les vérifie pas.
+
+## La ligne intégrée du fournisseur d'identité central
+
+Le fournisseur d'identité central (`provider: "erp"` dans le document de politique de connexion) n'a, sur le fil, ni nom ni icône : chaque hôte inventait donc les siens — un `erp` brut dans la ligne, ou un « Celestia ID » tapé à la main sans icône. hikari fournit désormais ces deux valeurs par défaut :
+
+- **Le nom** — `hkCentralAuthName()`, ou le `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)` que vous écririez vous-même (`hikari::loginFlow.providerCelestiaAuth`, présent dans les 11 langues). Préférez `hkCentralAuthName()` : elle lit le contexte de langue de hikari, donc le nom reste traduit même dans un hôte dont le catalogue i18n ne fusionne pas les clés `hikari::`. Appelez-la dans un rendu ou un `computed`, jamais au niveau du module.
+- **L'icône** — `hkCentralAuthMarkSrc`, une data URI WebP de 64×64 intégrée. Affichez-la en 16×16 ; la source porte la marge qui lui donne la même taille optique que les glyphes voisins.
+
+Les réglages de l'opérateur restent prioritaires : un `label` ou une `icon` de fournisseur défini dans la configuration du déploiement n'est jamais remplacé. Le nom intégré ne sert que lorsque le label est retombé sur l'id (`hkProviderLabelIsId`), l'icône intégrée que lorsque le serveur n'en a fourni aucune. Un déploiement qui ne configure pas ce fournisseur ne change pas — l'auto-hébergement par défaut reste l'identifiant et le mot de passe locaux.
+
+Une règle d'affichage découle du hand-off : un canal de redirection (sso) n'a normalement pas de seconde étape, donc `step="verify"` y affiche le corps du compte par sécurité. Un hôte qui a reçu une liste de facteurs via le hand-off OAuth transmet `verifyFactors`, et le canal sso rend alors l'étape de vérification comme un canal par identifiants — sinon un déploiement « SSO seul » avec MFA resterait bloqué.

@@ -85,3 +85,14 @@ An `HkAuthChannelListEntry` — and an `HkLoginSsoChannel` that forwards it — 
 - In relay mode, do not mount `HkLoginFlow` — mount `HkAuthHandoff`.
 - Only pass same-origin paths as return addresses; use `hkIsSameOriginPath` or your own allow-list.
 - Row `href` values are same-origin paths too (the document is validated on the server); hikari does not check them.
+
+## The built-in central identity provider row
+
+The central identity provider (`provider: "erp"` in the login-policy document) has no name or icon of its own on the wire, so every host used to invent one — a bare `erp` in the row, or a hand-typed "Celestia ID" with no mark. hikari ships both defaults:
+
+- **Name** — `hkCentralAuthName()`, or the `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)` you would write by hand (`hikari::loginFlow.providerCelestiaAuth`, shipped in all 11 locales). Prefer `hkCentralAuthName()`: it reads hikari's own locale context, so it stays translated even in a host whose i18n catalog does not merge the `hikari::` keys. Call it in a render or a `computed`, not at module scope.
+- **Icon** — `hkCentralAuthMarkSrc`, a 64×64 inline WebP data URI. Render it at 16×16; the source carries the margin that keeps it the same optical size as the surrounding glyphs.
+
+Operators still win: a provider `label` or `icon` set in the deployment's own configuration is never replaced. The built-in name is used only when the label has degenerated to the id (`hkProviderLabelIsId`), and the built-in icon only when the server supplied none. A deployment that does not configure this provider is unchanged — the self-hosted default is still local username/password.
+
+One rendering rule follows from the hand-off: a redirect (sso) channel normally has no second step, so `step="verify"` on it shows the account body as a fail-safe. A host that received an MFA ladder through the OAuth hand-off passes `verifyFactors`, and the sso channel then renders the step-up like a credentials channel — otherwise an SSO-only deployment with MFA would dead-end.

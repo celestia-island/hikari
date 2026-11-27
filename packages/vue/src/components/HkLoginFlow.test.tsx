@@ -28,6 +28,17 @@ afterEach(() => {
   }
 });
 
+/** The crossfade generation with `key` (see HkTransitionContainer's
+ *  `enteringItem`): during a swap both generations are in the DOM, so a
+ *  whole-tree query reads whichever one renders first. */
+function within(container: HTMLElement, key: string): HTMLElement {
+  const item = Array.from(
+    container.querySelectorAll<HTMLElement>(".hk-crossfade-item"),
+  ).find((el) => el.dataset.crossfadeKey === key);
+  expect(item, `no crossfade generation keyed ${key}`).toBeTruthy();
+  return item!;
+}
+
 const cloudChannel: HkLoginChannel = {
   key: "cloud",
   mode: "credentials",
@@ -251,22 +262,114 @@ describe("HkLoginFlow — sso channel", () => {
     expect(b.hasAttribute("href")).toBe(false);
   });
 
-  it("does not enter the verify step on an sso channel (fail-safe)", () => {
+  it("keeps the account body on an sso channel when no factor table is announced (fail-safe)", () => {
+    // MUT:flow-sso-verify-unguarded (deriving `verifying` from
+    // `step === "verify"` alone — or from `verifyFactors` without the
+    // credentials arm — turns this into a dead MFA card on every sso
+    // flow that has no second step).
     const c = mount(
       h(HkLoginFlow, {
         channels: [orgChannel],
         modelValue: "org",
         step: "verify",
-        verifyFactors: ["totp"],
+        verifyFactors: [],
       }),
     );
-    // A redirect flow has no second step by construction; the panel
-    // keeps showing the account card instead of a dead MFA card.
+    // No announced ladder = no second step to take: the panel keeps
+    // showing the account card instead of a dead MFA card.
     expect(c.querySelector(".hk-auth-channel-row")).not.toBeNull();
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBe(0);
   });
 });
 
 describe("HkLoginFlow — verify step", () => {
+  it("renders the step-up on an sso channel once the host announces factors (OAuth hand-off)", async () => {
+    // The hand-off case: the OAuth callback returns with `mfa_pending` /
+    // `mfa_factors`, and on an SSO-only deployment the sso channel is the
+    // only channel there is. Without this arm every MFA account that
+    // signs in through SSO dead-ends on a card with no second step.
+    const step = ref<"account" | "verify">("account");
+    const factors = ref<readonly string[]>([]);
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [orgChannel],
+          modelValue: "org",
+          step: step.value,
+          verifyFactors: factors.value,
+        }),
+    });
+    const c = mount(h(Host));
+    await nextTick();
+    // The redirect row is on stage; no step-up yet.
+    expect(c.querySelector(".hk-auth-channel-row")).not.toBeNull();
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBe(0);
+
+    // The hand-off lands: step flips AND the ladder is announced.
+    factors.value = ["totp"];
+    step.value = "verify";
+    for (let i = 0; i < 12; i++) await nextTick();
+    // MUT:flow-sso-verify-credentials-only (reverting `verifying` to
+    // `channel.mode === "credentials"` leaves the account body on stage
+    // and this goes red — that is the dead-end bug).
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBeGreaterThan(0);
+    // The header speaks the step-up vocabulary, not the sign-in title.
+    // Scope it to the ENTERING generation: the leaving account body
+    // lingers until the swap settles (jsdom fires no transitionend), and
+    // a whole-tree querySelector would read its title instead.
+    expect(
+      within(c, "verify").querySelector(".s-auth-title")?.textContent,
+    ).toBe("Verify account");
+  });
+
+  it("keeps the credentials channel's verify step working unchanged", async () => {
+    const c = mount(
+      h(HkLoginFlow, {
+        channels: [cloudChannel],
+        modelValue: "cloud",
+        step: "verify",
+        verifyFactors: ["totp"],
+      }),
+    );
+    await nextTick();
+    // MUT:flow-verify-credentials-arm-dropped (a fix that gates verify on
+    // `verifyFactors` alone regresses this: a credentials step-up with an
+    // empty ladder would fall back to the password form).
+    expect(c.querySelectorAll(".hk-otp-cell").length).toBeGreaterThan(0);
+    expect(
+      within(c, "verify").querySelector(".s-auth-title")?.textContent,
+    ).toBe("Verify account");
+  });
+
+  it("re-emits verify-back from the sso channel's step-up so the host can clear the step", async () => {
+    const onBack = vi.fn();
+    const step = ref<"account" | "verify">("verify");
+    const Host = defineComponent({
+      setup: () => () =>
+        h(HkLoginFlow, {
+          channels: [orgChannel],
+          modelValue: "org",
+          step: step.value,
+          verifyFactors: ["totp"],
+          onVerifyBack: () => {
+            onBack();
+            step.value = "account";
+          },
+        }),
+    });
+    const c = mount(h(Host));
+    await nextTick();
+    const back = Array.from(c.querySelectorAll("button")).find((b) =>
+      b.textContent?.toLowerCase().includes("back"));
+    expect(back).toBeTruthy();
+    back!.click();
+    await nextTick();
+    expect(onBack).toHaveBeenCalledTimes(1);
+    // The host cleared its step state; the sso row is reachable again.
+    for (let i = 0; i < 12; i++) await nextTick();
+    expect(c.querySelector(".hk-auth-channel-row")).not.toBeNull();
+  });
+
   it("slides to the MFA card and forwards the verify event with the composed proof", async () => {
     const onVerify = vi.fn();
     const c = mount(

@@ -1166,6 +1166,19 @@ export {
   type HkLoginPlan as HkLoginPlan,
   type HkLoginPlanCopy as HkLoginPlanCopy,
 } from "./components/loginDiscovery";
+// The central identity provider's built-in row (name + mark): one name and
+// one 16×16 icon for chest, 0721 and every later front end, applied only when
+// the operator left the provider unnamed/uniconed. `hkCentralAuthName()` reads
+// hikari's own locale context — the spelling that works for hosts whose i18n
+// catalog does not merge the `hikari::` keys.
+export {
+  HK_CENTRAL_AUTH_NAME_EN as HK_CENTRAL_AUTH_NAME_EN,
+  HK_CENTRAL_AUTH_NAME_KEY as HK_CENTRAL_AUTH_NAME_KEY,
+  HK_CENTRAL_AUTH_PROVIDER_ID as HK_CENTRAL_AUTH_PROVIDER_ID,
+  hkCentralAuthMarkSrc as hkCentralAuthMarkSrc,
+  hkCentralAuthName as hkCentralAuthName,
+  hkProviderLabelIsId as hkProviderLabelIsId,
+} from "./components/loginProviders";
 export { HkLocalePicker as HkLocalePicker } from "./components/HkLocalePicker";
 export { HkAdminTablePage as HkAdminTablePage } from "./components/HkAdminTablePage";
 // The roster+detail twin of the table page (2026-11-23): one standard

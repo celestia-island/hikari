@@ -408,6 +408,7 @@
   "hikari::loginFlow.channelOrg": "組織登入",
   "hikari::loginFlow.signInTitle": "登入",
   "hikari::loginFlow.signInSubtitle": "歡迎回來",
+  "hikari::loginFlow.providerCelestiaAuth": "Celestia 統一認證平台",
   "hikari::mdEditor.bold": "粗體",
   "hikari::mdEditor.italic": "斜體",
   "hikari::mdEditor.strikethrough": "刪除線",

@@ -404,6 +404,7 @@
   "hikari::loginFlow.channelOrg": "組織ログイン",
   "hikari::loginFlow.signInTitle": "ログイン",
   "hikari::loginFlow.signInSubtitle": "おかえりなさい",
+  "hikari::loginFlow.providerCelestiaAuth": "Celestia 統一認証プラットフォーム",
   "hikari::mdEditor.bold": "太字",
   "hikari::mdEditor.italic": "斜体",
   "hikari::mdEditor.strikethrough": "取り消し線",

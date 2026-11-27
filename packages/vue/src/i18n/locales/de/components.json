@@ -404,6 +404,7 @@
   "hikari::loginFlow.channelOrg": "Organisations-Anmeldung",
   "hikari::loginFlow.signInTitle": "Anmelden",
   "hikari::loginFlow.signInSubtitle": "Willkommen zurück",
+  "hikari::loginFlow.providerCelestiaAuth": "Celestia Plattform für einheitliche Authentifizierung",
   "hikari::mdEditor.bold": "Fett",
   "hikari::mdEditor.italic": "Kursiv",
   "hikari::mdEditor.strikethrough": "Durchgestrichen",

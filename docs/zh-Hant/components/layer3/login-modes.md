@@ -85,3 +85,14 @@ const channel = ref(plan.defaultChannel ?? "");
 - relay 模式下不要掛載 `HkLoginFlow`——掛載 `HkAuthHandoff`。
 - 只傳同源路徑作為返回位址；可使用 `hkIsSameOriginPath` 或你自己的白名單。
 - 列的 `href` 同樣必須是同源路徑（文件在伺服器端驗證）；hikari 不做檢查。
+
+## 內建中央身分提供者列的預設呈現
+
+中央身分提供者（登入原則文件裡的 `provider: "erp"`）在線上協議中沒有自己的名稱與圖示，於是每個宿主各寫各的——列上一個裸 `erp`，或手寫一個「Celestia ID」卻沒有圖示。hikari 把這兩項預設值一併提供：
+
+- **名稱** —— `hkCentralAuthName()`，或你手寫的那句 `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)`（`hikari::loginFlow.providerCelestiaAuth`，11 種語言均已提供）。請優先使用 `hkCentralAuthName()`：它讀取 hikari 自己的語言內容，即使宿主的 i18n 目錄未合併 `hikari::` 鍵也仍會顯示本地語言。請在渲染函式或 `computed` 中呼叫，不要在模組頂層取值。
+- **圖示** —— `hkCentralAuthMarkSrc`，一條 64×64 的內嵌 WebP data URI。按 16×16 呈現；來源圖自帶邊距，確保與周圍圖示的視覺大小一致。
+
+營運者的自設永遠優先：部署設定中給出的 provider `label` 或 `icon` 不會被替換。只有在 label 退化為 id 時才使用內建名稱（以 `hkProviderLabelIsId` 判斷），只有伺服器未提供 icon 時才使用內建圖示。未設定該 provider 的部署毫無變化——自架預設仍是本地帳密登入。
+
+另有一條呈現規則源自 hand-off：重新導向（sso）通道本來沒有第二步，因此對它傳入 `step="verify"` 會作為保險機制呈現帳號主體。宿主若從 OAuth 回呼收到二次驗證因子表並傳入 `verifyFactors`，該 sso 通道便會像帳密通道一樣呈現驗證步驟——否則「僅 SSO + 啟用 MFA」的部署會走進死路。

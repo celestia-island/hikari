@@ -626,14 +626,18 @@ function layoutGraphDoc(
     return group ? group.members : [id];
   };
   const rankEdges: Array<{ from: string; to: string }> = [];
-  /** For each doc edge, the rank edge that carries its lane (the first one
-   *  it expanded to). */
+  /** For each doc edge, the rank edges it expanded to (one per member pair;
+   *  a plain edge expands to exactly one). */
+  const expansionsOfDoc: Array<Array<{ from: string; to: string }>> = [];
+  /** For each doc edge, the index of its FIRST rank edge. */
   const rankEdgeOfDoc: number[] = [];
   doc.edges.forEach((e, i) => {
+    expansionsOfDoc[i] = [];
     for (const from of endpointsOf(e.source)) {
       for (const to of endpointsOf(e.target)) {
         if (from === to) continue;
         rankEdgeOfDoc[i] ??= rankEdges.length;
+        expansionsOfDoc[i].push({ from, to });
         rankEdges.push({ from, to });
       }
     }
@@ -733,15 +737,28 @@ function layoutGraphDoc(
   const ahead: MermaidAnchorMode = STACK_AHEAD[doc.direction];
   const behind: MermaidAnchorMode = STACK_BEHIND[doc.direction];
   const readBackwards = new Set(backEdges);
-  /** Is doc edge `i` a BACK edge — one the cycle breaker reads against its
-   *  direction? Docked on the stack-growing sides it would run straight
+  /** Which doc edges the cycle breaker read AGAINST their direction? A doc
+   *  edge that addresses a cluster expands to one rank edge per member, so
+   *  the doc edge is a back edge only when an expansion BETWEEN its own
+   *  endpoints' members was read backwards — a member-to-member loop — not
+   *  when an unrelated member pair (e.g. `N1 → T`'s target colliding into
+   *  the expansion set) closed a cycle. For a plain edge the doc edge and
+   *  its single expansion coincide, which is the ordinary retry case.
+   *  Docked on the stack-growing sides a back edge would run straight
    *  through every rank between its ends, so it loops around the side
-   *  instead (`backEdgeSide`), the way mermaid.js routes a retry. Membership
-   *  in the feedback arc set IS the definition; "target in an earlier flow
-   *  rank" is only the fallback for an edge that expanded to no rank edge. */
+   *  instead (`backEdgeSide`), the way mermaid.js routes a retry. "Target
+   *  in an earlier flow rank" stays the fallback for an edge that expanded
+   *  to no rank edge. */
   const isBackEdge = (i: number, source: string, target: string): boolean => {
-    const rankEdge = rankEdgeOfDoc[i];
-    if (rankEdge !== undefined) return readBackwards.has(rankEdge);
+    // A back edge = the cycle breaker read one of THIS edge's own
+    // member-pair expansions backwards (a plain edge's single expansion is
+    // the ordinary retry; a cluster edge only loops when a member→member
+    // leg inside it closed a cycle, never because an unrelated pair did).
+    const expansions = expansionsOfDoc[i] ?? [];
+    for (let k = 0; k < expansions.length; k += 1) {
+      const first = rankEdgeOfDoc[i] as number;
+      if (readBackwards.has(first + k)) return true;
+    }
     return (ranks.get(target) ?? 0) < (ranks.get(source) ?? 0);
   };
   /** Docking for an edge between two plain nodes, from the two ends' FLOW
@@ -821,9 +838,10 @@ function layoutGraphDoc(
     // An edge skipping ranks runs down its lane (the cells the ranker reserved
     // for it), unless an end is a cluster frame — a frame's `nearest` dock
     // sits on the frame border, not on the lane's end. A back edge has no
-    // lane: the ranker never saw it.
+    // lane: the ranker never saw it (a back-marked expansion's lane slot
+    // stays empty by construction).
     const rankEdge = rankEdgeOfDoc[i];
-    const lane = rankEdge === undefined ? undefined : laneOfRankEdge.get(rankEdge);
+    const lane = back || rankEdge === undefined ? undefined : laneOfRankEdge.get(rankEdge);
     const via = lane && !frames.has(e.source) && !frames.has(e.target)
       ? lane.points.map((pt, k) => junction(`j:e${i}:${k}`, pt.x, pt.y))
       : undefined;

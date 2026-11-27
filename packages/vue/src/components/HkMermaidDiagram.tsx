@@ -31,9 +31,9 @@ import "./HkMermaidDiagram.scss";
 
 /** Edge (and arrowhead) ink for a diagram. The board default is a subdued
  *  `primary / 38%` meant for scene wiring behind chrome; a diagram's edges
- *  ARE its content — 62% keeps them as legible as the node borders they
- *  connect (`primary / 55%` in the node sheet), which is also how
- *  mermaid.js weights them. */
+ *  ARE its content, and 62% puts them in the same legibility band as the
+ *  node borders they connect (`primary / 55%` in the node sheet) — still
+ *  quieter than the border so the boxes lead. */
 const MERMAID_EDGE_INK = "rgb(var(--color-primary) / 62%)";
 
 /** The slice of HkBoard's exposed surface the zoom bar drives. */
@@ -403,8 +403,12 @@ export default defineComponent({
                 viewportHeight={0}
                 contentBounds={{ x: 0, y: 0, w: 0, h: 0 }}
                 zoomPercent={zoomPercent.value}
-                canZoomIn={cam.value.k < BOARD_K_MAX}
-                canZoomOut={cam.value.k > BOARD_K_MIN}
+                // The board quantizes onto its own ladder, whose ceiling is
+                // the board's `maxK` (default BOARD_K_MAX) — mirror the same
+                // bounds here so the buttons disable exactly when the camera
+                // has nothing left to reach.
+                canZoomIn={cam.value.k < BOARD_K_MAX - 1e-9}
+                canZoomOut={cam.value.k > BOARD_K_MIN + 1e-9}
                 zoomStepPercent={5}
                 minZoomPercent={Math.round(BOARD_K_MIN * 100)}
                 maxZoomPercent={Math.round(BOARD_K_MAX * 100)}

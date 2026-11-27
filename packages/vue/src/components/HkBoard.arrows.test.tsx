@@ -185,6 +185,36 @@ describe("HkBoard — pan mode", () => {
   });
 });
 
+describe("HkBoard — a sequence-shaped board frames its message rows", () => {
+  it("the fit reaches the junctions BELOW the last visible box (points: true)", async () => {
+    // The mermaid sequence lane hands HkBoard message rows as zero-size
+    // junctions far below the participant headers; the content bbox must
+    // count them or the fit frames the headers alone and 7 of 9 messages
+    // fall outside the card (docs.celestia.world 2026-11-27).
+    const nodes: BoardNodeInput[] = [
+      { id: "pa", x: 0, y: 0, w: 96, h: 40, label: "A" },
+      { id: "pb", x: 240, y: 0, w: 96, h: 40, label: "B" },
+      ...Array.from({ length: 9 }, (_, i) => ({
+        id: `j:${i}`,
+        x: 168,
+        y: 96 + i * 44,
+        w: 0,
+        h: 0,
+        hidden: true,
+      })),
+    ];
+    const board = mountBoard({ nodes, edges: [] });
+    await settleFit();
+    const { k, ty } = board.cam();
+    // Content = headers + rows (down to y=448) + margins: ~530px world.
+    // Framing the two boxes alone would cap at k = 1.25.
+    expect(k).toBeLessThan(1.1);
+    const lastRowScreenY = ty + 448 * k;
+    expect(lastRowScreenY).toBeLessThanOrEqual(VIEW_H);
+    board.unmount();
+  });
+});
+
 describe("HkBoard — arrows arrive head-on", () => {
   it("an arrow between stacked nodes ends along the vertical border normal", async () => {
     const nodes: BoardNodeInput[] = [

@@ -28,11 +28,15 @@ export interface ErrorLandingBuildResult {
 /**
  * Build the artifact bytes in memory (writes nothing). Deterministic for
  * the same tree; the provenance sha comes from `options.sha`, then
- * `HIKARI_ERROR_LANDING_SHA8`, then the `<dev>` placeholder.
+ * `HIKARI_ERROR_LANDING_SHA8`, then the `<dev>` placeholder. `nsProbe`
+ * injects one virtual module into the graph — the drift test's red-proof
+ * channel for the locale-namespace cross-check; production callers pass
+ * nothing.
  */
 export declare function buildErrorLandingHtml(options?: {
   version?: string;
   sha?: string;
+  nsProbe?: { name: string; source: string };
 }): Promise<ErrorLandingBuildResult>;
 
 /** `<meta name="hk-error-landing" content="v1 <version> <sha>">`. */
@@ -43,3 +47,6 @@ export declare function buildLocaleSubset(): {
   modules: Record<string, { default: Record<string, string> }>;
   locales: string[];
 };
+
+/** Every locale namespace a bundled source reads (quoted `hikari::<ns>.`). */
+export declare function findLocaleNamespaces(source: string): string[];

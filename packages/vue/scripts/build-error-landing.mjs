@@ -42,8 +42,13 @@
 // errors / errorBoundary / toast / jsonTree / clipboard namespaces, 28
 // keys), so a transform narrows `import.meta.glob` in context.ts to that
 // subset at build time — the module's own merge/fallback logic is untouched
-// and runs on the narrowed table. If the glob call ever moves or changes
-// shape the transform fails loudly instead of shipping an empty table.
+// and runs on the narrowed table. Two loud guards protect the narrowing,
+// because a silent miss would render English copy on every non-English
+// locale: (1) if the glob call moves or changes shape, the transform
+// throws instead of shipping an empty table; (2) after the build, every
+// `hikari::<ns>.` literal found in the bundled sources must belong to
+// LOCALE_KEY_PREFIXES — a component gaining a new namespace without
+// extending the subset fails the build, naming it.
 
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -52,6 +57,7 @@ import { gzipSync } from "node:zlib";
 
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
+import ts from "typescript";
 import { build } from "vite";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -94,6 +100,47 @@ export const LOCALE_KEY_PREFIXES = Object.freeze([
   "hikari::jsonTree.",
   "hikari::clipboard.",
 ]);
+
+/** Namespaces covered by {@link LOCALE_KEY_PREFIXES} (`errors`, `toast`, …). */
+const ALLOWED_LOCALE_NAMESPACES = new Set(
+  LOCALE_KEY_PREFIXES.map((prefix) => prefix.slice("hikari::".length, -1)),
+);
+
+/**
+ * Quoted `hikari::<ns>.` literals — the shape every `t("hikari::…")`
+ * call has. Applied to STRING-LITERAL text only (see {@link
+ * findLocaleNamespaces}), never to raw source: a doc comment that merely
+ * quotes an example key must read as nothing.
+ */
+const LOCALE_NS_RE = /hikari::([A-Za-z0-9_-]+)\./g;
+
+/**
+ * Every locale namespace the STRING LITERALS of `code` read
+ * (`t("hikari::errors.x")` → `errors`). The literals come from a
+ * TypeScript AST walk, so a doc comment quoting an example key
+ * (`context.ts` carries one for the flat-key style) reads as nothing —
+ * a raw regex over the file would false-positive on exactly that.
+ * Pure, so the drift test can drive the same scan the build runs.
+ */
+export function findLocaleNamespaces(code) {
+  const found = new Set();
+  const source = ts.createSourceFile("ns-scan.ts", code, ts.ScriptTarget.ES2020, true, ts.ScriptKind.TS);
+  const visit = (node) => {
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node)
+    ) {
+      for (const match of node.text.matchAll(LOCALE_NS_RE)) found.add(match[1]);
+    } else if (ts.isTemplateExpression(node)) {
+      for (const part of [node.head, ...node.templateSpans.map((span) => span.literal)]) {
+        for (const match of part.text.matchAll(LOCALE_NS_RE)) found.add(match[1]);
+      }
+    }
+    node.forEachChild(visit);
+  };
+  visit(source);
+  return [...found];
+}
 
 /** The family modules the built page MUST be built from (import identity). */
 export const IDENTITY_MODULES = Object.freeze({
@@ -182,8 +229,15 @@ function localeSubsetPlugin() {
  * boot.tsx that swaps its card import for a hand-rolled copy would keep
  * the real file "in the graph" while the page renders the copy. Edges
  * are recorded as `${importer} -> ${resolved}` strings.
+ *
+ * The same pass collects every locale namespace the bundled sources READ
+ * (quoted `hikari::<ns>.` literals); after the build, {@link
+ * buildErrorLandingHtml} refuses the artifact when one falls outside
+ * {@link LOCALE_KEY_PREFIXES} — that is the cross-check keeping the i18n
+ * subset honest: a component gaining a new namespace without extending
+ * the subset would render English copy on every other locale, silently.
  */
-function importIdentityPlugin(recorded) {
+function importIdentityPlugin(recorded, nsReads) {
   return {
     name: "hk-error-landing-import-identity",
     enforce: "pre",
@@ -193,6 +247,14 @@ function importIdentityPlugin(recorded) {
         if (resolved && !resolved.external) {
           recorded.add(`${importer.split("?")[0]} -> ${resolved.id.split("?")[0]}`);
         }
+      }
+      return null;
+    },
+    transform(code, id) {
+      const plain = id.split("?")[0];
+      if (plain.includes("node_modules") || /\.(scss|css)\b/.test(plain)) return null;
+      for (const ns of findLocaleNamespaces(code)) {
+        (nsReads[ns] ??= new Set()).add(plain);
       }
       return null;
     },
@@ -236,7 +298,12 @@ function assertSelfContained(html) {
  * compares. Returns the html, its gzipped size and the recorded module
  * graph for import-identity assertions.
  *
- * @param {{ version?: string, sha?: string }} [options]
+ * @param {{ version?: string, sha?: string, nsProbe?: { name: string, source: string } }} [options]
+ *   `nsProbe` injects one extra virtual module into the graph — the
+ *   red-proof channel of the drift test, which needs to run a build that
+ *   FAILS on an out-of-subset namespace without touching tracked files.
+ *   The probe module passes through the same namespace scan as every
+ *   real bundled source; production callers pass nothing.
  * @returns {Promise<{ html: string, gzipBytes: number, recorded: string[] }>}
  */
 export async function buildErrorLandingHtml(options = {}) {
@@ -245,6 +312,30 @@ export async function buildErrorLandingHtml(options = {}) {
     options.sha ?? process.env.HIKARI_ERROR_LANDING_SHA8 ?? DEV_SHA_PLACEHOLDER;
   const sha = rawSha === DEV_SHA_PLACEHOLDER ? rawSha : rawSha.slice(0, 8);
   const recorded = new Set();
+  const nsReads = {};
+
+  const plugins = [localeSubsetPlugin(), importIdentityPlugin(recorded, nsReads), vue(), vueJsx()];
+  if (options.nsProbe) {
+    const probe = options.nsProbe;
+    plugins.push({
+      name: "hk-error-landing-ns-probe",
+      enforce: "pre",
+      resolveId(source) {
+        return source === probe.name ? `\0hk-error-landing-ns-probe` : null;
+      },
+      load(id) {
+        return id === "\0hk-error-landing-ns-probe" ? probe.source : null;
+      },
+      // The probe must be REACHABLE or rolldown fetches it — and the
+      // scan — never. A side-effect import off the entry does that.
+      transform(code, id) {
+        if (id.split("?")[0] === resolve(ENTRY_DIR, "main.ts")) {
+          return `${code}\nimport "${probe.name}";\n`;
+        }
+        return null;
+      },
+    });
+  }
 
   const result = await build({
     root: VUE_DIR,
@@ -253,7 +344,7 @@ export async function buildErrorLandingHtml(options = {}) {
     configFile: false,
     logLevel: "warn",
     publicDir: false,
-    plugins: [localeSubsetPlugin(), importIdentityPlugin(recorded), vue(), vueJsx()],
+    plugins,
     // Runtime-only Vue: no component in this graph carries a template
     // (every family piece is a tsx/ts render function), so the template
     // compiler would be dead weight in a page measured in kilobytes.
@@ -294,6 +385,25 @@ export async function buildErrorLandingHtml(options = {}) {
   });
 
   const output = (Array.isArray(result) ? result[0] : result).output;
+
+  // The i18n subset cross-check: every namespace the bundled sources read
+  // must be covered by LOCALE_KEY_PREFIXES, or the subset would carry no
+  // copy for it and every non-English locale would fall back to the
+  // English literal at runtime. Fail naming the namespace and the files.
+  const unknownNamespaces = Object.keys(nsReads).filter(
+    (ns) => !ALLOWED_LOCALE_NAMESPACES.has(ns),
+  );
+  if (unknownNamespaces.length > 0) {
+    const detail = unknownNamespaces
+      .map((ns) => `${ns} (read by ${[...nsReads[ns]].map((f) => f.replace(VUE_DIR + "/", "")).join(", ")})`)
+      .join("; ");
+    throw new Error(
+      "error-landing build: bundled sources read locale namespaces outside the " +
+        `narrowed subset — extend LOCALE_KEY_PREFIXES in scripts/build-error-landing.mjs ` +
+        `so their copy ships: ${detail}`,
+    );
+  }
+
   const chunks = output.filter((item) => item.type === "chunk");
   const styles = output.filter((item) => item.type === "asset" && item.fileName.endsWith(".css"));
   const htmlAsset = output.find((item) => item.type === "asset" && item.fileName.endsWith(".html"));
@@ -358,16 +468,22 @@ const invokedDirectly =
   import.meta.url === new URL(`file://${resolve(process.argv[1])}`).href;
 
 if (invokedDirectly) {
+  // `HIKARI_ERROR_LANDING_NS_PROBE` (JSON `{name, source}`) injects one
+  // virtual module into the graph — the red-proof channel of the drift
+  // test's out-of-subset namespace case, which needs a build that fails
+  // without touching tracked files. Absent in every real run.
+  const probeEnv = process.env.HIKARI_ERROR_LANDING_NS_PROBE;
+  const nsProbe = probeEnv ? JSON.parse(probeEnv) : undefined;
   // `--json`: print the build result (html + size + module graph) to
   // stdout without writing anything — the machine-readable channel the
   // drift test consumes. The build runs in this fresh process because
   // vite's sass importer breaks inside vitest worker threads (async dart
   // bindings lose their URL context there); a child process is immune.
   if (process.argv.includes("--json")) {
-    const result = await buildErrorLandingHtml();
+    const result = await buildErrorLandingHtml({ nsProbe });
     process.stdout.write(JSON.stringify(result));
   } else {
-    const { html, gzipBytes } = await buildErrorLandingHtml();
+    const { html, gzipBytes } = await buildErrorLandingHtml({ nsProbe });
     const { writeFileSync } = await import("node:fs");
     writeFileSync(OUTPUT_PATH, html, "utf8");
     const kib = (bytes) => `${(bytes / 1024).toFixed(1)} KiB`;

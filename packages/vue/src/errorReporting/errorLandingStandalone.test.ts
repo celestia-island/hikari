@@ -196,6 +196,32 @@ describe("standalone error-landing artifact: import identity", () => {
     expect(boot).toContain('from "../errorReporting/serverLanding"');
     expect(boot).toContain('readServerErrorLanding');
   });
+
+  it("fails the build, naming the namespace, when a bundled source reads copy outside the subset", async () => {
+    // MUT:hk-error-landing-ns-cross-check — the i18n subset is the page's
+    // size-bearing wall: a component that starts reading a namespace the
+    // subset does not carry renders English copy on every other locale,
+    // silently. The build refuses that, naming the namespace. The probe
+    // rides the builder's env seam (`HIKARI_ERROR_LANDING_NS_PROBE`, a
+    // virtual module through the SAME scan as real sources) so this red
+    // proof exercises the real build path without touching tracked files.
+    // Negative control: the suite's drift test — the current tree, with
+    // nothing outside the subset — builds green on every run.
+    const run = spawnSync(process.execPath, [BUILDER_PATH, "--json"], {
+      cwd: VUE_DIR,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HIKARI_ERROR_LANDING_NS_PROBE: JSON.stringify({
+          name: "virtual:hk-ns-probe",
+          source: 'export const probeTitle = "hikari::probeNamespace.title";',
+        }),
+      },
+    });
+    expect(run.status, "the out-of-subset namespace fails the build").not.toBe(0);
+    expect(run.stderr ?? "").toMatch(/probeNamespace/);
+    expect(run.stderr ?? "").toMatch(/LOCALE_KEY_PREFIXES/);
+  }, 240_000);
 });
 
 describe("standalone boot logic (the behavior the artifact ships)", () => {

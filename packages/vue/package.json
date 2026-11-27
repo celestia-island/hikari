@@ -73,6 +73,7 @@
     "lint": "vue-tsc --noEmit",
     "gen:boot-landing-css": "node scripts/gen-boot-landing-css.ts",
     "gen:res-scripts": "node scripts/emit-res-scripts.mjs",
+    "gen:error-landing": "node scripts/build-error-landing.mjs",
     "prepublishOnly": "python3 ../wasm/check_npm_pack.py && npm run build:types",
     "build:types": "vue-tsc --project tsconfig.build.json"
   },

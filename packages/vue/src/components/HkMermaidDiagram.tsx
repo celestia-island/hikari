@@ -1,8 +1,7 @@
 /**
  * HkMermaidDiagram — the mermaid rendering business component, a peer of
  * the rich-text family (HkMarkdownRenderer renders prose, this renders
- * diagrams), built on the HkBoard 画板 (world camera, grid, minimap,
- * pan/zoom chrome).
+ * diagrams), built on the HkBoard 画板 (world camera, pan/zoom).
  *
  * Contract (user direction 2026-11-16):
  *  - the PARSER is never bundled here: hosts register an engine on
@@ -10,23 +9,41 @@
  *    gives syntax highlighting). No engine, or a parse failure, or an
  *    unsupported diagram type → the source falls back to a plain code
  *    block — never a broken surface.
- *  - the caller decides the chrome: `minimap` hides the bottom-right
- *    minimap, `interactive` gates canvas dragging/zoom (HkBoard props,
- *    passed straight through).
+ *  - the caller decides the chrome: `minimap` turns the zoom bar off,
+ *    `interactive` gates canvas dragging/zoom (an HkBoard prop, passed
+ *    straight through).
  *
  * Layout lives in ../mermaid/layout.ts (pure, deterministic); this file
  * only adapts the laid-out model into HkBoard nodes/edges and paints
  * the per-kind node content through the board's `node` slot.
  */
 
-import { computed, defineComponent, ref, type CSSProperties, type PropType, type VNode } from "vue";
+import { computed, defineComponent, ref, type CSSProperties, type PropType, type Ref, type VNode } from "vue";
 
 import HkBoard, { type BoardEdgeInput, type BoardNodeInput } from "./HkBoard";
+import HkMinimap from "./HkMinimap";
 import { buildBoardModel, createCanvasMeasureText, type LaidOutNode, type MeasureText } from "../mermaid/layout";
 import { getMermaidEngine } from "../mermaid/engine";
 import { mermaidReady } from "../mermaid/wasmEngine";
 import type { ClassDefinition, ClassVisibility, MermaidDoc, MermaidNodeShape } from "../mermaid/types";
+import { BOARD_K_MAX, BOARD_K_MIN, type BoardCamera } from "../utils/boardCamera";
 import "./HkMermaidDiagram.scss";
+
+/** Edge (and arrowhead) ink for a diagram. The board default is a subdued
+ *  `primary / 38%` meant for scene wiring behind chrome; a diagram's edges
+ *  ARE its content — 62% keeps them as legible as the node borders they
+ *  connect (`primary / 55%` in the node sheet), which is also how
+ *  mermaid.js weights them. */
+const MERMAID_EDGE_INK = "rgb(var(--color-primary) / 62%)";
+
+/** The slice of HkBoard's exposed surface the zoom bar drives. */
+interface BoardHandle {
+  camera: Ref<BoardCamera>;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  zoomToPercent: (percent: number) => void;
+  reset: () => void;
+}
 
 const VISIBILITY_SIGN: Record<ClassVisibility, string> = {
   public: "+",
@@ -252,7 +269,11 @@ export default defineComponent({
   props: {
     /** Raw mermaid source. */
     source: { type: String, required: true },
-    /** Show the bottom-right minimap (HkBoard pass-through). */
+    /** Show the zoom bar under the diagram (`−` `NN%` `+` reset; the `%`
+     *  label opens a slider). It sits in its own row BELOW the board — the
+     *  board's own bottom-right dock is an overlay, and at fit zoom it
+     *  covered the last node of every wide diagram (measured on
+     *  docs.celestia.world 2026-11-27). */
     minimap: { type: Boolean, default: true },
     /** Allow dragging / wheel-zooming the canvas (HkBoard pass-through;
      * node taps keep working either way). */
@@ -317,6 +338,7 @@ export default defineComponent({
         anchorTo: e.anchorTo,
         dashed: e.dashed,
         arrow: e.arrow,
+        ink: MERMAID_EDGE_INK,
         label: e.label ?? undefined,
         via: e.via,
       })),
@@ -326,6 +348,12 @@ export default defineComponent({
       const h = props.height === "auto" ? (model.value?.suggestedHeight ?? 240) : props.height;
       return { height: typeof h === "number" ? `${h}px` : h };
     });
+
+    const boardRef = ref<BoardHandle | null>(null);
+    /** Last camera the board reported (it emits on every change, tween
+     *  frames included). */
+    const cam = ref<BoardCamera>({ x: 0, y: 0, k: 1 });
+    const zoomPercent = computed(() => Math.round(cam.value.k * 100));
 
     return () => {
       if (!model.value) {
@@ -340,23 +368,59 @@ export default defineComponent({
       return (
         <div
           class="hk-mermaid"
-          style={viewportStyle.value}
           data-mermaid-kind={kind}
           role="img"
           aria-label={`mermaid ${kind} diagram: ${headLine.trim().slice(0, 80)}`}
         >
-          <HkBoard
-            nodes={boardNodes.value}
-            edges={boardEdges.value}
-            minimap={props.minimap}
-            interactive={props.interactive}
-            grid={props.grid}
-            fitOnMount
-            fitCap={props.fitCap}
-            v-slots={{
-              node: (slotProps: { node: BoardNodeInput }) => <MermaidNodeBody node={slotProps.node} />,
-            }}
-          />
+          <div class="hk-mermaid__stage" style={viewportStyle.value}>
+            <HkBoard
+              ref={boardRef}
+              nodes={boardNodes.value}
+              edges={boardEdges.value}
+              minimap={false}
+              pan="float"
+              interactive={props.interactive}
+              grid={props.grid}
+              fitOnMount
+              fitCap={props.fitCap}
+              onViewportChange={(c: BoardCamera) => {
+                cam.value = c;
+              }}
+              v-slots={{
+                node: (slotProps: { node: BoardNodeInput }) => <MermaidNodeBody node={slotProps.node} />,
+              }}
+            />
+          </div>
+          {props.minimap && (
+            <div class="hk-mermaid__toolbar">
+              <HkMinimap
+                toolbarOnly
+                boxes={[]}
+                zoom={cam.value.k}
+                panX={cam.value.x}
+                panY={cam.value.y}
+                viewportWidth={0}
+                viewportHeight={0}
+                contentBounds={{ x: 0, y: 0, w: 0, h: 0 }}
+                zoomPercent={zoomPercent.value}
+                canZoomIn={cam.value.k < BOARD_K_MAX}
+                canZoomOut={cam.value.k > BOARD_K_MIN}
+                zoomStepPercent={5}
+                minZoomPercent={Math.round(BOARD_K_MIN * 100)}
+                maxZoomPercent={Math.round(BOARD_K_MAX * 100)}
+                showReset
+                // The ± buttons are one-rung steps from wherever the camera
+                // is (the board's own ladder logic); the slider is an
+                // absolute target.
+                onZoomTo={(percent: number, source?: "slider" | "step") => {
+                  if (source === "slider") boardRef.value?.zoomToPercent(percent);
+                  else if (percent > zoomPercent.value) boardRef.value?.zoomIn();
+                  else boardRef.value?.zoomOut();
+                }}
+                onReset={() => boardRef.value?.reset()}
+              />
+            </div>
+          )}
         </div>
       );
     };

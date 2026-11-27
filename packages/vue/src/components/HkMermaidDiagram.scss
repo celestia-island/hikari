@@ -1,15 +1,56 @@
 // HkMermaidDiagram — chrome for the mermaid board embed and the per-kind
 // node painters. Colors ride the theme vars (--color-*) so dark/light
 // follow the host theme for free; the board itself (grid, camera,
-// minimap) is styled by HkBoard.scss.
+// pan/zoom) is styled by HkBoard.scss.
+
+@use "../styles/polyfill" as *;
 
 .hk-mermaid {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   border-radius: var(--radius-md, 8px);
   border: 1px solid rgb(var(--color-text) / 10%);
   overflow: hidden;
   background: rgb(var(--color-surface));
+}
+
+// The board fills the stage box (auto height = the layout's suggestion).
+.hk-mermaid__stage {
+  position: relative;
+  flex: none;
+  min-height: 0;
+}
+
+// Zoom bar docked in its OWN ROW under the board. The bar used to be the
+// board's bottom-right OVERLAY: at fit zoom the content fills the board
+// edge to edge, so the dock sat on top of the last node of every wide
+// diagram (docs.celestia.world 2026-11-27, the LR platform map). A row of
+// its own can never cover anything, at any viewport size.
+.hk-mermaid__toolbar {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+  padding: var(--space-4, 4px) var(--space-8, 8px);
+  border-top: 1px solid rgb(var(--color-text) / 8%);
+
+  // The bar keeps its own card's internals (the slider pop anchors to
+  // it) but stops self-docking: this row owns the placement.
+  > .hk-minimap {
+    position: relative;
+    inset: auto;
+    width: auto;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    cursor: default;
+    @include backdrop-filter(none);
+  }
+
+  .hk-mm-zoom-bar {
+    border-top: 0;
+  }
 }
 
 // ── Fallback (no engine / parse failure) ──────────────────────────────

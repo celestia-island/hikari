@@ -411,12 +411,19 @@ describe("mobile drawer: the nav panel fills it", () => {
       // silently disable the whole fix. This source-level read fails for a
       // DIFFERENT reason: the shell stops passing the prop at all.
       const shellSrc = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "HkFaceShell.tsx"), "utf8");
-      // A window slice, not a tag regex: the drawer's props contain `=>`
-      // arrow callbacks, so `/<HDrawer[^>]*>/` stops inside the first one.
+      // The drawer's opening tag, anchored on BOTH ends. A tag regex cannot
+      // be used (the props carry `=>` callbacks, so `[^>]*` stops inside the
+      // first one) and a fixed-size window is not enough either: R4 showed a
+      // regression sails through if any `padding="none"` lands within the
+      // window (an unrelated `<HkCard padding="none">` 1038 chars later). So
+      // scan to the tag terminator — a `>` alone on its own line — and pin
+      // the props INSIDE it.
       const drawerAt = shellSrc.indexOf("<HDrawer");
       expect(drawerAt, "the shell must still render an HDrawer").toBeGreaterThan(-1);
-      const drawerCall = shellSrc.slice(drawerAt, drawerAt + 1600);
-      expect(drawerCall).toMatch(/padding="none"/);
+      const tagEnd = shellSrc.indexOf("\n            >", drawerAt);
+      expect(tagEnd, "the drawer's opening tag must terminate").toBeGreaterThan(drawerAt);
+      const drawerProps = shellSrc.slice(drawerAt, tagEnd);
+      expect(drawerProps).toMatch(/padding="none"/);
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: originalWidth });
     }

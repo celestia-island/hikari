@@ -55,6 +55,14 @@ describe("HkSelectPanel mobile sheet height contract", () => {
     const pinned = block(".hk-select-sheet-pinned");
     expect(pinned).toContain("flex: none");
     expect(pinned).toContain("var(--space-16)");
+    // A column FLEX container, not a block: the band's height is its
+    // `flex-basis: auto`, and a block's auto height comes only from
+    // in-flow content — a consumer whose band child is itself a flex
+    // container (the affix picker's tag list) has none, so the band
+    // collapsed to padding while the child still painted and hit-tested
+    // over the first rows (2026-11-27 R22).
+    expect(pinned).toContain("display: flex");
+    expect(pinned).toContain("flex-direction: column");
     expect(pinned).not.toMatch(/overflow|flex:\s*1/);
   });
 });

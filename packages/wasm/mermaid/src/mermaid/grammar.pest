@@ -70,7 +70,18 @@ ptxt = { (!("/]" | "\\\\]") ~ ANY)* }
  *
  * Tried longest-first, and `arr_text`/`ln_text` come AFTER the plain forms so
  * `-->` is never read as `--` plus a caption. */
-edge = { dotted_lbl | dotted | thick_lbl | thick | arr_lbl | arr_text | arr | ln_lbl | ln_text | ln }
+/* Head-adorned links and the bidirectional arrow.
+ *
+ * `A --o B` / `A --x B` put a circle or a cross at the TARGET end, and
+ * `A <--> B` draws an arrow at BOTH ends. The head glyph is not a node: a
+ * grammar that knows only the bare `--` reads the `o`/`x` as the target and
+ * silently rewires the edge (`A --o B` became an edge to a node named "o"),
+ * which is worse than a parse error because the diagram still renders — with
+ * an invented box. They are classified as their line kind here. */
+edge = { bi_arr | o_head | x_head | dotted_lbl | dotted | thick_lbl | thick | arr_lbl | arr_text | arr | ln_lbl | ln_text | ln }
+bi_arr = { "<-->" ~ sp* ~ lbl? }
+o_head = { "--o" ~ sp* ~ lbl? }
+x_head = { "--x" ~ sp* ~ lbl? }
 dotted_lbl = { "-.->" ~ sp* ~ lbl }
 dotted = { "-.->" | "-.-" }
 thick_lbl = { ("==>" | "===") ~ sp* ~ lbl }

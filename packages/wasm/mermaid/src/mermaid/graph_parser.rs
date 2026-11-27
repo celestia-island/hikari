@@ -440,6 +440,11 @@ fn parse_edge(pair: pest::iterators::Pair<Rule>) -> (EdgeType, Option<String>) {
                 return (EdgeType::Arrow, edge_label(&inner))
             }
             Rule::ln | Rule::ln_lbl | Rule::ln_text => return (EdgeType::Line, edge_label(&inner)),
+            // Head-adorned links keep their LINE kind; the glyph rides the
+            // source text and the painter reads it there. `<-->` is an arrow
+            // drawn at both ends, so it is an Arrow edge, not a Line.
+            Rule::bi_arr => return (EdgeType::Arrow, edge_label(&inner)),
+            Rule::o_head | Rule::x_head => return (EdgeType::Line, edge_label(&inner)),
             Rule::dotted | Rule::dotted_lbl => return (EdgeType::Dotted, edge_label(&inner)),
             Rule::thick | Rule::thick_lbl => return (EdgeType::Thick, edge_label(&inner)),
             _ => {}
@@ -557,6 +562,48 @@ mod tests {
                 ("B".to_string(), "D".to_string()),
             ]
         );
+    }
+
+    /// `--o` / `--x` / `<-->`: the HEAD glyph is syntax, never a node.
+    ///
+    /// MUT: dropping these rules from the grammar reads the `o`/`x` as the
+    /// TARGET node (`A --o B` → an edge to a node named "o") and rejects
+    /// `<-->` outright — both assertions below fail.
+    #[test]
+    fn head_adorned_links_reach_the_real_target() {
+        let doc = parse("flowchart TD\n  A --o B\n  B --x C\n  C <--> D\n  D --o|cap| E\n")
+            .expect("every head form must parse");
+        let pairs: Vec<(String, String, EdgeType, Option<String>)> = doc
+            .edges
+            .iter()
+            .map(|e| {
+                (
+                    e.source.clone(),
+                    e.target.clone(),
+                    e.edge_type.clone(),
+                    e.label.clone(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            pairs,
+            vec![
+                ("A".to_string(), "B".to_string(), EdgeType::Line, None),
+                ("B".to_string(), "C".to_string(), EdgeType::Line, None),
+                // `<-->` is an arrow drawn at BOTH ends, so it classifies as
+                // an arrow (not a plain line).
+                ("C".to_string(), "D".to_string(), EdgeType::Arrow, None),
+                (
+                    "D".to_string(),
+                    "E".to_string(),
+                    EdgeType::Line,
+                    Some("cap".to_string())
+                ),
+            ]
+        );
+        // No invented nodes: the glyphs never became ids.
+        let ids: Vec<&str> = doc.nodes.iter().map(|n| n.id.as_str()).collect();
+        assert_eq!(ids, vec!["A", "B", "C", "D", "E"]);
     }
 
     #[test]

@@ -1,6 +1,17 @@
 import { defineComponent, type PropType } from "vue";
 import { Check } from "lucide-vue-next";
+import HkListTransition from "./HkListTransition";
 import "./HkSelectionWaterfall.scss";
+
+/** HkSelectionWaterfall — the selectable chip waterfall (a group of
+ *  pickable tiles with the leading check). Its items are a KEYED list on
+ *  the library's base list container (HkListTransition, 2026-11-27 user
+ *  direction: every list-shaped surface runs its add / remove / reorder
+ *  through that one primitive): a tile added, removed or re-ranked GLIDES
+ *  into place with the family's default choreography (move 0.3s, enter /
+ *  leave 0.15s, concurrent) instead of snapping — the same motion the
+ *  affix picker's rows, the tag editor's catalog and the report
+ *  waterfall share. */
 
 export interface WaterfallItem {
   id: string;
@@ -35,7 +46,12 @@ export default defineComponent({
           {props.groupTitle && (
             <h4 class="hk-selection-waterfall-title">{props.groupTitle}</h4>
           )}
-          <div class="hk-selection-waterfall-flow">
+          <HkListTransition
+            tag="div"
+            class="hk-selection-waterfall-flow"
+            variant="fade"
+            move
+          >
             {props.items.map((item) => {
               const isSelected = props.multi
                 ? props.selectedIds.includes(item.id)
@@ -82,7 +98,7 @@ export default defineComponent({
                 </div>
               );
             })}
-          </div>
+          </HkListTransition>
         </div>
       );
     };

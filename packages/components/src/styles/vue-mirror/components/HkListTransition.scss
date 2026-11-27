@@ -8,29 +8,60 @@
 // Drift guard: packages/components/tests/vue_mirror_drift_tests.rs
 // VENDORED MIRROR — do not hand-edit here.
 
+/* ── The family's duration contract (user direction 2026-11-27) ──────────
+ * ONE default for every list-shaped surface, customizable per host:
+ *   --hk-list-duration         the move (FLIP) track — the normal token, 0.3s
+ *   --hk-list-enter-duration   the enter track — the short token, 0.15s
+ *   --hk-list-leave-duration   the leave track — the short token, 0.15s
+ * Enter/leave start AT THE SAME TIME as the move (no phase waits): the
+ * old row shrinks away while its neighbours glide, the new one grows in
+ * where they make room. HkListTransition's `duration` / `enterDuration` /
+ * `leaveDuration` props publish the three properties inline (a lone
+ * `duration` also derives the two halves); a fragment host (`tag=""`)
+ * sets the properties on an ancestor — they inherit. Written as plain
+ * `var()` fallbacks on purpose: this sheet is mirrored into the Rust
+ * crate and recompiled by grass, which has no `calc()` inside a
+ * `var()` fallback. The `surface` variant is the documented exception
+ * (rows are windows; entrance and exit keep the window family's own
+ * timings, only its move follows). */
+
+/* WHY EVERY TRACK BELOW IS `!important`: the transition classes are
+ * transient state classes the group stamps for the length of one
+ * choreography, and they must own the element's `transition` for that
+ * window — but every real row carries its OWN transition (the menu-item
+ * grammar's 0.12s hover faces, a card's border fade), at the same (0,1,0)
+ * weight and almost always LATER in the bundle (the item sheet imports
+ * this primitive before its own). A non-important track lost that
+ * cascade silently: the FLIP transform snapped, the enter/leave never
+ * ran — the choreography the host asked for simply did not happen
+ * (2026-11-27, found while making this the base container for cards and
+ * waterfalls). The whole family carries it now — see the opt-out block at
+ * the bottom for the precedence trap that cost the default FLIP opt-out.
+ * The item's own faces come back the moment the class leaves. */
+
 /* FLIP move: vue applies `${name}-move` (runtime-dom resolves moveClass
- * as `${name}-move`), never a bare `.hk-list-move`. pop/slide/fade share
- * the normal duration; grow/reveal define their staggered bases below. */
+ * as `${name}-move`), never a bare `.hk-list-move`. ORDER IS LOAD-BEARING
+ * (2026-11-27 R5): every track in this file — including the opt-out at the
+ * bottom — carries `!important`, and at equal specificity the LAST rule
+ * wins, so the opt-out MUST come after every variant track. It originally
+ * sat here, ahead of the later variants' tracks, and a default
+ * (`move={false}`) host's FLIP came back for exactly that reason. */
 .hk-list-pop-move,
 .hk-list-slide-move,
 .hk-list-fade-move {
-  transition: transform var(--duration-normal, 0.3s) ease;
-}
-
-.hk-list-move-disabled {
-  transition: none !important;
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
 }
 
 .hk-list-pop-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-pop-leave-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease-in,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.5, 0, 0.75, 0);
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in,
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0) !important;
   position: absolute;
   /* A dying row must not take clicks (or a drag) while it fades: the
      bell's rows carry copy / dismiss / restore buttons — the first
@@ -38,9 +69,13 @@
      already runs `pop` with clickable rows downstream, and gains this
      dead-end for the fade window). The
      primitive's own pin sets `inert` too, but only when layout metrics
-     exist — this is the CSS belt that still dead-ends a tap in a
-     non-layout environment or when the pin skipped (same relationship
-     the surface variant documents below). */
+     exist — this rule is the belt for the ROW ITSELF. Honest scope
+     (2026-11-27 screening): a descendant the HOST re-enables with an
+     explicit `pointer-events: auto` (chest's quick-action pad:
+     `.s-quick-pad > *`) beats this row-level rule at the cascade, so such
+     a host must exclude the leaving ghost from its own re-enable
+     (`.s-quick-pad > *:not(.hk-list-pop-leave-active)`); `inert` covers
+     real browsers, this rule covers the non-layout rest. */
   pointer-events: none;
 }
 
@@ -56,14 +91,14 @@
 
 .hk-list-slide-enter-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease,
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) ease,
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-slide-leave-active {
   transition:
-    opacity var(--duration-normal, 0.3s) ease-in,
-    transform var(--duration-normal, 0.3s) ease-in;
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in,
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   position: absolute;
 }
 
@@ -88,11 +123,11 @@
 }
 
 .hk-list-fade-enter-active {
-  transition: opacity var(--duration-normal, 0.3s) ease;
+  transition: opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) ease !important;
 }
 
 .hk-list-fade-leave-active {
-  transition: opacity var(--duration-normal, 0.3s) ease-in;
+  transition: opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   position: absolute;
 }
 
@@ -101,11 +136,19 @@
   opacity: 0;
 }
 
+/* grow keeps its ONE-BEAT STAGGER (the entering row waits out the leave
+ * track before it scales in, and the siblings wait the same beat before
+ * closing the gap) — that sequence is this variant's signature, not a
+ * duration; the beats themselves follow the family's leave track. The
+ * delay rides `!important` like every track, so a HOST collapse switch
+ * must carry at least (0,1,1) + important (hikari's canonical
+ * `html[data-css-animations="0"] *` does; a plain `html.reduce-motion *`
+ * does not — 2026-11-27 R6, cosmetic, downstream-only). */
 .hk-list-grow-enter-active {
   transition:
-    transform var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--duration-fast, 0.15s);
+    transform var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition-delay: var(--hk-list-leave-duration, var(--duration-short, 0.15s)) !important;
   pointer-events: none;
 }
 
@@ -122,8 +165,8 @@
  * defect class). */
 .hk-list-grow-leave-active {
   transition:
-    transform var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--duration-fast, 0.15s) ease-in;
+    transform var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
   pointer-events: none;
   position: absolute;
 }
@@ -134,16 +177,16 @@
 }
 
 .hk-list-grow-move {
-  transition: transform var(--duration-fast, 0.15s) ease;
-  transition-delay: var(--duration-fast, 0.15s);
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
+  transition-delay: var(--hk-list-leave-duration, var(--duration-short, 0.15s)) !important;
 }
 
 .hk-list-reveal-enter-active {
   interpolate-size: allow-keywords;
   overflow: hidden;
   transition:
-    height var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1),
-    opacity var(--duration-fast, 0.15s) cubic-bezier(0.16, 1, 0.3, 1);
+    height var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1),
+    opacity var(--hk-list-enter-duration, var(--duration-short, 0.15s)) cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .hk-list-reveal-leave-active {
@@ -153,8 +196,8 @@
    * activating the body of a just-erased row would resurrect it. */
   pointer-events: none;
   transition:
-    height var(--duration-fast, 0.15s) cubic-bezier(0.5, 0, 0.75, 0),
-    opacity var(--duration-fast, 0.15s) ease-in;
+    height var(--hk-list-leave-duration, var(--duration-short, 0.15s)) cubic-bezier(0.5, 0, 0.75, 0),
+    opacity var(--hk-list-leave-duration, var(--duration-short, 0.15s)) ease-in !important;
 }
 
 .hk-list-reveal-enter-from,
@@ -168,7 +211,7 @@
 }
 
 .hk-list-reveal-move {
-  transition: transform var(--duration-fast, 0.15s) ease;
+  transition: transform var(--hk-list-duration, var(--duration-normal, 0.3s)) ease !important;
 }
 
 /* surface — the window choreography (HkModal's whole-window entrance,
@@ -183,13 +226,13 @@
 .hk-list-surface-enter-active {
   transition:
     opacity var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
 .hk-list-surface-leave-active {
   transition:
     opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
-    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1);
+    transform var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1) !important;
   position: absolute;
   pointer-events: none;
 }
@@ -217,6 +260,8 @@
 }
 
 .hk-list-surface-move {
+  /* The exception's one shared track: the glide follows the family's
+     move duration; the enter/leave above stay the window family's. */
   /* opacity rides along on purpose: if a multi-row batch ever classifies
      a leaving ghost as moved (its FLIP delta measured before the
      correction pass lands), the stamped move transition would REPLACE
@@ -226,13 +271,19 @@
      moved rows the property goes 1→1 and is inert. */
   transition:
     opacity var(--duration-short, 0.15s) cubic-bezier(0.45, 0, 0.55, 1),
-    transform var(--duration-normal, 0.3s) cubic-bezier(0.33, 1, 0.68, 1);
+    transform var(--hk-list-duration, var(--duration-normal, 0.3s)) cubic-bezier(0.33, 1, 0.68, 1) !important;
 }
 
+/* The opt-outs (`move={false}` → the moveClass, `disabled` → the `none`
+ * name): LAST in the file so they outrank every track above, and
+ * !important like them — an item sheet imported after this primitive
+ * would otherwise bring a row's hover fade back during a choreography the
+ * host asked to skip (bulk hydration, reduced-motion hosts). */
+.hk-list-move-disabled,
 .hk-list-none-enter-active,
 .hk-list-none-leave-active,
 .hk-list-none-move {
-  transition: none;
+  transition: none !important;
 }
 
 /* Reduced motion: no list choreography. The global animation switch

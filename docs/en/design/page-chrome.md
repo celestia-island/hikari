@@ -58,6 +58,49 @@ breakpoint. `HkAdaptiveTabs` is the default implementation; dynamic
 project-list switchers with bespoke rows (the platform switcher) are
 the exempt special case, not the pattern to copy.
 
+## Picker sheets and the pinned search
+
+A dropdown surface (`HkSelectPanel`, under `HkSelect` / `HkMenu` / the chip
+pickers) has two content bands, and which band a thing belongs in is not
+negotiable:
+
+- **`default` scrolls.** Rows, cards, catalogs — anything that can outgrow
+  the surface.
+- **`pinnedHeader` does not.** Chrome that must stay reachable while the
+  list scrolls: a live-filter search field, first of all. It renders
+  outside the scroll region on both form factors — a band under the
+  sheet's title row on the phone, the head of the popout column on the
+  desktop (whose body then hosts the single scrollbar). A search field
+  inside the scrolling content scrolls away with the first swipe and is a
+  defect, not a style choice (2026-11-27).
+
+Phone sheets of the picker/menu family hug their content up to **80% of the
+viewport**; longer content scrolls inside. A cap tuned for the desktop popout
+(`maxHeight`, e.g. `min(18rem, 45dvh)`) never reaches the sheet. The sheet
+also stops scroll chaining: a swipe on the grabber, the title row or the
+pinned band never drags the page behind it.
+
+## List motion
+
+Whenever list items change — added, removed, re-ranked — the move runs
+through hikari's `HkListTransition` (a keyed `TransitionGroup` whose FLIP is
+reported to the runtime animation bus), never a hand-rolled tween. One
+default for every list-shaped surface (rows, cards, waterfalls): the move
+track is 0.3s, enter and leave are 0.15s each and start at the same time as
+the move. A host customizes with the `duration` / `enterDuration` /
+`leaveDuration` props (CSS times; a lone `duration` derives the halves).
+`surface` is the one exception (rows that are windows keep the window
+family's entrance/exit timings).
+
+Two standing rules for hosts: a list that lives directly inside a scroll viewport keeps `move` off (the leave ghost is pinned against the nearest positioned ancestor, which in a scrollport is not the visual list box), and a list row never carries `transition: all` — the primitive's tracks take over the row's `transition` for the length of one choreography, and an `all` track would lose its hover face in that window.
+
+A multi picker (`HkAffixPicker` in `multi` mode, `layout="rows"`) builds
+nothing in front of the search for its selection: the checked rows wear the
+leading check mark and float to the top in catalog order behind a divider; a
+tap toggles the row and it glides to or from its slot. `layout="tags"` is the
+value-editor shape (a typed value shown per entry) and keeps the tag list
+above the search.
+
 ## Footer corner text
 
 Text in any of the six header/footer corners (left/center/right ×2) rides

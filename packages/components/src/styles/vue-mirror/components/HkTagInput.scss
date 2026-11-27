@@ -231,13 +231,24 @@
   margin-inline: auto;
 }
 
+/* The pinned search head rides OUTSIDE the panel wrapper (HkSelectPanel's
+ * `pinnedHeader` slot), so the sheet-context centering the panel gets
+ * above must reach it on its own — otherwise the field would span the
+ * viewport-wide sheet while the rows sit centered in their 19rem block. */
+.hk-select-sheet-pinned .hk-tag-input-search {
+  width: 100%;
+  max-width: min(19rem, 100%);
+  margin-inline: auto;
+}
+
 .hk-tag-input-search {
-  /* Same spellings as the mirrored HkAffixPicker popup head. */
+  /* Same spellings as the mirrored HkAffixPicker popup head. Lives in
+   * the panel's PINNED band (never scrolls) since 2026-11-27. */
   padding: var(--space-8, 8px) var(--space-10, 10px) var(--space-6, 6px);
 }
 
-/* NOT a scroll region: the window surface (popout / sheet) owns THE one
- * scrollbar and scrolls the search field with the rows. */
+/* NOT a scroll region: the window surface (popout body / sheet list)
+ * owns THE one scrollbar and scrolls the rows under the pinned search. */
 .hk-tag-input-list {
   display: flex;
   flex-direction: column;

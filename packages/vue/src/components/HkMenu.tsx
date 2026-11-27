@@ -48,6 +48,18 @@ import "./HkMenu.scss";
  * Data-driven mode (`items`) and composition mode (default slot) are
  * mutually exclusive per instance: when a default slot is provided its
  * content replaces the item model entirely (no cascade).
+ *
+ * Two head slots on the root level (popup variant):
+ *   - `header` — a scrolling band ABOVE the rows, inside the panel's scroll
+ *     region (section labels, identity cards): it travels with the list.
+ *   - `pinnedHeader` — PINNED chrome that must not travel: a live-filter
+ *     search field, first of all. Forwarded to HkSelectPanel's own
+ *     `pinnedHeader` slot, which renders it outside the scroll region on
+ *     both form factors (a band under the sheet's title row / the
+ *     non-shrinking head of the popout column). Composition pickers
+ *     (HkAffixPicker) put their search here so a long catalog scrolls
+ *     under the field instead of taking it along (2026-11-27 user report).
+ * Cascade levels and mobile sub-sheets carry neither.
  */
 
 export interface HkMenuItem {
@@ -142,11 +154,14 @@ export default defineComponent({
      */
     matchAnchorWidth: { type: Boolean, default: false },
     /**
-     * Cap for the panel surface of EVERY level, as any CSS length
+     * Cap for the DESKTOP POPOUT of every level, as any CSS length
      * (`min(18rem, 45dvh)`, `24rem`, …): it is forwarded to each
-     * HkSelectPanel this menu renders — the root desktop popout, every
-     * cascade level and each mobile sheet layer (every level is its own
-     * scroll surface, so each one is capped).
+     * HkSelectPanel this menu renders — the root popout and every cascade
+     * level (each level is its own scroll surface, so each one is capped).
+     * The MOBILE SHEET layers never read it: since 2026-11-27 a sheet hugs
+     * its content up to the family ceiling of 80% of the viewport, so the
+     * cap a consumer tuned for the anchored popout cannot squash a sheet
+     * (see HkSelectPanel's `maxHeight`).
      *
      * Undefined (the default) forwards nothing at all, so the shared panel
      * keeps its own ceilings and every existing consumer — theme switchers,
@@ -688,6 +703,20 @@ export default defineComponent({
       );
     }
 
+    /** Slots for the ROOT panel (desktop popout and mobile sheet alike):
+     *  the level's surface in the scrolling default slot, plus the
+     *  consumer's `pinnedHeader` — forwarded only when the consumer passed
+     *  one, so every other menu renders the exact pre-slot panel DOM. The
+     *  band is root-only: cascade levels and mobile sub-sheets never see
+     *  the host's filter field. */
+    function rootLevelSlots() {
+      const pinned = slots.pinnedHeader;
+      return {
+        default: () => levelSurface(0, props.items),
+        ...(pinned ? { pinnedHeader: () => pinned() } : {}),
+      };
+    }
+
     // ── desktop popouts ──────────────────────────────────────────────
     function renderPanels(): VNode[] {
       const cfg = rootPanelConfig.value;
@@ -709,7 +738,7 @@ export default defineComponent({
             panelInsts.value[0] = inst as PanelInstance | null;
           }}
         >
-          {levelSurface(0, props.items)}
+          {rootLevelSlots()}
         </HkSelectPanel>,
       ];
       if (!slots.default) {
@@ -761,7 +790,7 @@ export default defineComponent({
             panelInsts.value[0] = inst as PanelInstance | null;
           }}
         >
-          {levelSurface(0, props.items)}
+          {rootLevelSlots()}
         </HkSelectPanel>,
       ];
       mobileStack.value.forEach((entry, i) => {

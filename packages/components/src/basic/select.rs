@@ -17,7 +17,7 @@
 //         [data-error] [data-disabled] [data-state=open|closed]
 //       span.hk-select-value                      (label || placeholder)
 //       div.hk-icon.hk-select-arrow               (MdiIcon::ChevronDown)
-//     ── desktop popout branch ──
+//   ── desktop popout branch ──
 //     div.hk-select-popout-host [data-side] [data-align]   (style: geometry)
 //       div.hk-select-popout [aria-label]              (style: height cap)
 //         div.hk-select-option
@@ -30,9 +30,25 @@
 //       div.hk-select-sheet-header
 //         div.hk-select-sheet-title {title}
 //         button.hk-window-close.hk-select-sheet-close (✕ icon, aria-label)
-//       div.hk-select-sheet-body > div.hk-select-sheet-list (style: height cap)
+//       div.hk-select-sheet-body > div.hk-select-sheet-list  (NO cap style)
 //         div.hk-select-sheet-content > the option rows
 //     p.hk-select-error                                (error)
+//
+// `maxHeight` IS A DESKTOP POPOUT MEASURE (2026-11-27 user direction, Vue's
+// HkSelectPanel `maxHeight` doc): the panel here passes it down as
+// `SelectPanelProps::max_height` and Vue publishes
+// `--hk-select-panel-max-height` on the popout only. The sheet's list band
+// used to carry the same hook as its own height cap — a desktop measure like
+// `min(18rem, 45dvh)` then squashed every picker sheet to under half the
+// phone — and now publishes NO inline style: the sheet panel hugs its content
+// up to the stylesheet's family ceiling (80% of the viewport).
+//
+// NO PINNED HEADER: Vue's `HkSelectPanel` also takes a `pinnedHeader` slot
+// (pinned chrome above the scroll region). `HkSelect` itself never listens for
+// it, and neither does this field — its surface carries option rows only, so
+// both render the header-less shape. The band exists in the panel mirror
+// (`SelectPanelProps::pinned_header`) for the composition pickers that DO pin
+// a search field.
 //
 // State contract (the tairitsu 0.5.22 limit this wave works under): the Vue
 // component keeps `isOpen` / `highlightedIndex` in local `ref`s. tairitsu has
@@ -311,8 +327,9 @@ pub struct SelectProps {
     /// sheet's fixed default position (Vue without `anchorRef`).
     pub anchor: Option<SelectAnchorRect>,
 
-    /// Cap for the scrolling surface, as any CSS length (Vue panel
-    /// `maxHeight`, published through `--hk-select-panel-max-height`).
+    /// Cap for the DESKTOP POPOUT, as any CSS length (Vue panel `maxHeight`,
+    /// published through `--hk-select-panel-max-height` on the popout only).
+    /// The mobile sheet ignores it.
     pub max_height: Option<String>,
 
     #[default]
@@ -473,8 +490,9 @@ pub fn Select(props: SelectProps) -> Element {
         wrapper_classes.push_str(&props.class);
     }
 
-    // Surface cap: Vue writes the same custom property on whichever element
-    // scrolls (the popout, or the sheet's list band).
+    // Surface cap: Vue publishes the custom property on the DESKTOP POPOUT
+    // only — the sheet's list band never reads it (a cap there used to squash
+    // every picker sheet with a popout-tuned measure).
     let cap_style = match &props.max_height {
         Some(max_height) => format!("--hk-select-panel-max-height:{max_height}"),
         None => String::new(),
@@ -545,7 +563,6 @@ pub fn Select(props: SelectProps) -> Element {
                 move |event: KeyboardEvent| key_wiring.panel_key(event, &key_options);
             let title = surface_title.clone();
             let aria_label = surface_aria_label.clone();
-            let list_cap = cap_style.clone();
             let sheet_rows = VNode::Fragment(build_rows());
             rsx! {
                 div {
@@ -584,7 +601,6 @@ pub fn Select(props: SelectProps) -> Element {
                         class: "hk-select-sheet-body",
                         div {
                             class: "hk-select-sheet-list",
-                            style: list_cap,
                             div { class: "hk-select-sheet-content",
                                 {sheet_rows}
                             }

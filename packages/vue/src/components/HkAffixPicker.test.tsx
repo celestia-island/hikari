@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { createApp, h, nextTick } from "vue";
+import { createApp, h, nextTick, ref } from "vue";
 import { dirname, join } from "node:path";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -25,6 +25,7 @@ const mounts: Array<{ app: ReturnType<typeof createApp>; container: HTMLElement 
 
 interface MountOptions {
   mode?: "single" | "multi";
+  layout?: "rows" | "tags";
   selected?: string | string[];
   activeKey?: string;
   allowCustom?: boolean;
@@ -50,6 +51,7 @@ function mountPicker(opts: MountOptions = {}) {
       h(HkAffixPicker, {
         options: opts.options ?? OPTIONS,
         mode: opts.mode ?? "single",
+        layout: opts.layout,
         selected: opts.selected ?? "",
         activeKey: opts.activeKey,
         allowCustom: opts.allowCustom ?? false,
@@ -107,6 +109,23 @@ async function typeQuery(value: string) {
   input.dispatchEvent(new Event("input", { bubbles: true }));
   await nextTick();
   await nextTick();
+  // The rows ride HkListTransition: a filtered-out row LEAVES (ghost in
+  // the DOM for the transition window) rather than vanishing on the
+  // patch — wait the ghosts out so `rows()` reads the settled list.
+  await untilSettled(() => document.querySelectorAll(".hk-affix-row.hk-list-pop-leave-active").length);
+}
+
+/** Rows that are actually staying (not mid-leave ghosts). */
+function liveRows(): HTMLButtonElement[] {
+  return rows().filter((r) => !r.classList.contains("hk-list-pop-leave-active"));
+}
+
+function divider(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(".hk-affix-divider");
+}
+
+function rowLabels(): string[] {
+  return liveRows().map((r) => r.querySelector(".hk-affix-row-label")?.textContent ?? "");
 }
 
 async function untilSettled(check: () => number): Promise<void> {
@@ -245,8 +264,8 @@ describe("HkAffixPicker", () => {
     ]);
   });
 
-  it("multi mode renders selected tags and offers only the remaining rows", async () => {
-    const { container } = mountPicker({ mode: "multi", selected: ["cn", "jp"], activeKey: "cn" });
+  it("tag layout renders selected tags and offers only the remaining rows", async () => {
+    const { container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"], activeKey: "cn" });
     await openPopup(container);
     expect(tags().map((t) => t.querySelector(".hk-affix-tag-text")?.textContent)).toEqual([
       "China",
@@ -262,8 +281,8 @@ describe("HkAffixPicker", () => {
     ]);
   });
 
-  it("multi mode keeps the popup open when a row is picked", async () => {
-    const { events, container } = mountPicker({ mode: "multi", selected: ["cn"] });
+  it("tag layout keeps the popup open when a row is picked", async () => {
+    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn"] });
     await openPopup(container);
     // With cn selected, the remaining rows are [cn-main, jp, us]; pick jp.
     rows()[1].click();
@@ -273,7 +292,7 @@ describe("HkAffixPicker", () => {
   });
 
   it("tag × opens a confirm dialog: Cancel keeps the tag, Confirm fires remove", async () => {
-    const { events, container } = mountPicker({ mode: "multi", selected: ["cn", "jp"] });
+    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
     await openPopup(container);
     // One tap never erases: the dialog names the entry instead.
     tags()[0].querySelector<HTMLButtonElement>(".hk-affix-tag-x")!.click();
@@ -305,6 +324,7 @@ describe("HkAffixPicker", () => {
   it("confirmRemove=false lets the × fire remove immediately, no dialog", async () => {
     const { events, container } = mountPicker({
       mode: "multi",
+      layout: "tags",
       selected: ["cn"],
       confirmRemove: false,
     });
@@ -337,8 +357,45 @@ describe("HkAffixPicker", () => {
     ).toContain(fragment);
   }
 
+  it("tag layout still offers the custom row, and its pick honours closeOnSelect (2026-11-27 R16)", async () => {
+    // The tag layout is a VALUE EDITOR: its rows ADD and the popup stays
+    // open for the next language — unless the host asked for the opposite.
+    // `HkLocalizedInput` passes `closeOnSelect={true}` with
+    // `layout="tags"`, and the custom row is reachable there (nothing
+    // matches a hostname), so that exit MUST follow the host's flag. Only
+    // the custom row was unpinned — the row paths were covered
+    // (2026-11-27 R16 mutation).
+    const { events, container } = mountPicker({
+      mode: "multi",
+      layout: "tags",
+      allowCustom: true,
+      closeOnSelect: true,
+      selected: ["cn"],
+    });
+    await openPopup(container);
+    await typeQuery("gitee.com");
+    const custom = document.querySelector<HTMLButtonElement>('.hk-affix-row[data-custom="true"]');
+    expect(custom, "the custom row is offered in the tag layout too").toBeTruthy();
+    custom!.click();
+    await nextTick();
+    expect(events.custom).toEqual(["gitee.com"]);
+    // The SURFACE leaves: the fixed HOST carries the transition classes
+    // (the panel is a bare static child — 2026-11-27 R17: the duplicated
+    // machine-class spread on the panel is gone), and the leave-active
+    // class marks the transition window. The other row paths were covered —
+    // this exit was not, and a `mode === "single"` test left it open for a
+    // host that asked for close-on-select (2026-11-27 R16 mutation).
+    const surface = document.querySelector(
+      ".hk-select-popout-host, .hk-select-sheet-panel",
+    );
+    expect(
+      surface?.classList.contains("hk-select-popout-leave-active"),
+      "closeOnSelect=true closes the popup on a custom pick in the tag layout",
+    ).toBe(true);
+  });
+
   it("tag body click emits select; close-on-select default keeps multi open", async () => {
-    const { events, container } = mountPicker({ mode: "multi", selected: ["cn", "jp"] });
+    const { events, container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn", "jp"] });
     await openPopup(container);
     tags()[1].querySelector<HTMLButtonElement>(".hk-affix-tag-body")!.click();
     await nextTick();
@@ -390,6 +447,7 @@ describe("HkAffixPicker", () => {
   it("tagValues swaps the tag primary text to each key's value", async () => {
     const { container } = mountPicker({
       mode: "multi",
+      layout: "tags",
       selected: ["cn", "jp"],
       tagValues: { cn: "China's stored text", jp: "  " },
     });
@@ -417,6 +475,7 @@ describe("HkAffixPicker", () => {
   it("a tagValues key missing from the map renders the unset placeholder", async () => {
     const { container } = mountPicker({
       mode: "multi",
+      layout: "tags",
       selected: ["us"],
       tagValues: {},
     });
@@ -427,7 +486,7 @@ describe("HkAffixPicker", () => {
   });
 
   it("without tagValues the tags keep the autonym labels (no unset state)", async () => {
-    const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+    const { container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn"] });
     await openPopup(container);
     const text = tags()[0].querySelector(".hk-affix-tag-text")!;
     expect(text.textContent).toBe("China");
@@ -476,6 +535,268 @@ describe("HkAffixPicker", () => {
     expect(content, "the content wrapper renders").toBeTruthy();
     expect(content!.hasAttribute("style"), "no inline style on the content").toBe(false);
     expect(document.querySelector(".hk-affix-list .hk-scrollbar-track")).toBeNull();
+  });
+});
+
+/** The rows layout (2026-11-27 user direction): a multi picker builds
+ *  NOTHING in front of the search field for its selection — the checked
+ *  rows wear the leading check and float to the top in catalog order
+ *  behind a divider, and a tap toggles. */
+describe("HkAffixPicker rows layout (multi default)", () => {
+  it("is the default multi layout: every option stays a row, no tags", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["jp"] });
+    await openPopup(container);
+    expect(tags()).toHaveLength(0);
+    expect(rowLabels()).toEqual(["Japan", "China", "中华人民共和国", "United States"]);
+  });
+
+  it("floats checked rows to the top in CATALOG order behind a divider", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["us", "cn"] });
+    await openPopup(container);
+    // Catalog order cn < jp < us: the selected run keeps it (cn, us), the
+    // rest keeps it too (cn-main, jp) — not selection order.
+    // MUT:affix-rank-selection-order
+    expect(rowLabels()).toEqual(["China", "United States", "中华人民共和国", "Japan"]);
+    const d = divider();
+    expect(d, "the boundary divider renders").toBeTruthy();
+    expect(d!.getAttribute("role")).toBe("separator");
+    // …between the last checked row and the first unchecked one, as a
+    // direct child of the keyed list host.
+    const kids = [...document.querySelector(".hk-affix-list")!.children];
+    expect(kids.map((k) => k.classList.contains("hk-affix-divider") ? "|" : (k.querySelector(".hk-affix-row-label")?.textContent ?? "?")))
+      .toEqual(["China", "United States", "|", "中华人民共和国", "Japan"]);
+  });
+
+  it("wears the leading check only on checked rows (aria-pressed toggle buttons)", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["jp"] });
+    await openPopup(container);
+    const checked = liveRows().filter((r) => r.hasAttribute("data-checked"));
+    expect(checked).toHaveLength(1);
+    expect(checked[0].textContent).toContain("Japan");
+    expect(checked[0].getAttribute("aria-pressed")).toBe("true");
+    expect(checked[0].querySelector(".hk-affix-check svg")).toBeTruthy();
+    const unchecked = liveRows().filter((r) => !r.hasAttribute("data-checked"));
+    for (const r of unchecked) {
+      expect(r.getAttribute("aria-pressed")).toBe("false");
+      // The cell is RESERVED on every row (labels align), empty when off.
+      expect(r.querySelector(".hk-affix-check")).toBeTruthy();
+      expect(r.querySelector(".hk-affix-check svg")).toBeNull();
+    }
+    // The check cell leads: it precedes the flag/badge/label inside the row.
+    const first = liveRows()[0];
+    expect(first.firstElementChild?.classList.contains("hk-affix-check")).toBe(true);
+  });
+
+  it("a tap toggles: unchecked → select, checked → remove (no confirm dialog)", async () => {
+    const { events, container } = mountPicker({ mode: "multi", selected: ["cn"], confirmRemove: true });
+    await openPopup(container);
+    liveRows().find((r) => r.textContent?.includes("Japan"))!.click();
+    await nextTick();
+    expect(events.select).toEqual(["jp"]);
+    expect(events.remove).toEqual([]);
+    // Unchecking the already-selected China fires remove directly — the
+    // confirm gate guards erasing a typed VALUE in the tag layout, not a
+    // one-tap reversible check.
+    liveRows().find((r) => r.textContent?.includes("China"))!.click();
+    await nextTick();
+    expect(events.remove).toEqual(["cn"]);
+    expect(document.body.querySelector(".hk-message-box-text")).toBeNull();
+    // Multi stays open on both edges.
+    expect(events.open.at(-1)).toBe(true);
+  });
+
+  it("draws no divider when nothing is checked — and stays in catalog order when everything is", async () => {
+    // Two different facts. The FIRST is a real boundary case: no selected
+    // run at all, so there is no boundary to draw.
+    //
+    // The "everything checked" half is not a divider case and is not claimed
+    // as one: `rowNodes` only inserts at `index === selectedRunLength`, and an
+    // index cannot reach `rows.length`, so the `run < rows.length` clause is
+    // unreachable by construction (recorded as S3 in the 2026-11-27 R3 round —
+    // kept as belt, not as a covered branch). What this half DOES
+    // MUT:affix-divider-guard
+    // pin is the ranking under a full selection: with all four keys selected
+    // the order must still be the catalog's, not selection order.
+    const none = mountPicker({ mode: "multi", selected: [] });
+    await openPopup(none.container);
+    expect(rowLabels()).toEqual(["China", "中华人民共和国", "Japan", "United States"]);
+    expect(divider()).toBeNull();
+    const all = mountPicker({ mode: "multi", selected: ["us", "cn-main", "jp", "cn"] });
+    await openPopup(all.container);
+    expect(rowLabels(), "catalog order survives a FULL selection").toEqual([
+      "China",
+      "中华人民共和国",
+      "Japan",
+      "United States",
+    ]);
+    expect(divider(), "no boundary when there is no unselected run").toBeNull();
+  });
+
+  it("ranks the FILTERED rows: a query matching only unchecked options shows no divider", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+    await openPopup(container);
+    await typeQuery("sta");
+    expect(rowLabels()).toEqual(["United States"]);
+    expect(divider()).toBeNull();
+    // A query spanning both groups keeps the ranking and the boundary:
+    // "8" matches +86 (China, checked) and +86/+81 (the other two).
+    await typeQuery("8");
+    expect(rowLabels()).toEqual(["China", "中华人民共和国", "Japan"]);
+    expect(divider()).toBeTruthy();
+  });
+
+  it("Enter in the pinned search never becomes a blind REMOVE (2026-11-27 R6)", async () => {
+    // The rows layout ranks checked rows FIRST, so `filteredRows[0]` with
+    // an empty query IS a checked row — a naive top-match pick turned
+    // Enter into an unconfirmed remove (HkTagInput fixed the same hazard
+    // when its selected rows moved to the front; same rule here).
+    const selected = ref<string[]>(["jp"]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const events = { select: [] as string[], remove: [] as string[] };
+    const app = createApp({
+      render: () =>
+        h(HkAffixPicker, {
+          options: OPTIONS,
+          mode: "multi",
+          selected: selected.value,
+          allowCustom: true,
+          onSelect: (k: string) => { selected.value = [...selected.value, k]; events.select.push(k); },
+          onRemove: (k: string) => { selected.value = selected.value.filter((x) => x !== k); events.remove.push(k); },
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await openPopup(container);
+    async function pressEnter() {
+      const input = searchInput();
+      input.focus();
+      input.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
+      );
+      await nextTick();
+    }
+    // EMPTY query: a no-op — nothing is picked, nothing is removed.
+    await pressEnter();
+    expect(events.select).toEqual([]);
+    expect(events.remove).toEqual([]);
+    // A WHITESPACE-ONLY query is the same no-op: Vue judges emptiness on
+    // the TRIMMED query (`const q = query.value.trim()`), so a blank-feeling
+    // field must not commit the checked row sitting at the top of the
+    // ranked list (2026-11-27 R12 — the mirror pins the same rule through
+    // `affix_query_present`).
+    const input2 = searchInput();
+    input2.value = "   ";
+    input2.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    await pressEnter();
+    expect(events.select).toEqual([]);
+    expect(events.remove).toEqual([]);
+    // NON-empty query matching an already-selected option: Enter adds the
+    // first row the query can still ADD (the unchecked China) rather than
+    // un-checking the row the user is looking at. MUT:affix-enter-addable
+    await typeQuery("8");
+    await pressEnter();
+    expect(events.remove).toEqual([]);
+    expect(events.select).toEqual(["cn"]);
+    // The selection advanced through the ADD path.
+    expect(selected.value).toEqual(["jp", "cn"]);
+    // A query matching only selected options: nothing addable → no-op (the
+    // custom row is hidden by the exact match). MUT:affix-enter-addable
+    selected.value = ["cn", "jp", "us"];
+    events.select.length = 0;
+    await typeQuery("united");
+    await pressEnter();
+    expect(events.remove).toEqual([]);
+    expect(events.select).toEqual([]);
+  });
+
+  it("runs the rows through HkListTransition with the move track on (FLIP, never a remount)", async () => {
+    // A host that really stores the selection (the event-recording rig
+    // keeps `selected` static, so nothing would re-rank).
+    const selected = ref<string[]>([]);
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const app = createApp({
+      render: () =>
+        h(HkAffixPicker, {
+          options: OPTIONS,
+          mode: "multi",
+          selected: selected.value,
+          onSelect: (k: string) => { selected.value = [...selected.value, k]; },
+          onRemove: (k: string) => { selected.value = selected.value.filter((x) => x !== k); },
+        }),
+    });
+    app.mount(container);
+    mounts.push({ app, container });
+    await openPopup(container);
+    const list = document.querySelector<HTMLElement>(".hk-affix-list");
+    expect(list, "the list host renders").toBeTruthy();
+    const jp = liveRows().find((r) => r.textContent?.includes("Japan"))!;
+    jp.click();
+    await nextTick();
+    // The same DOM node moved to the head of the list (keyed, not rebuilt).
+    const after = liveRows();
+    expect(after[0]).toBe(jp);
+    expect(after[0].textContent).toContain("Japan");
+    expect(after[0].hasAttribute("data-checked")).toBe(true);
+    expect(document.querySelector(".hk-affix-list.hk-list-move-disabled"), "move track is NOT disabled").toBeNull();
+  });
+});
+
+/** The PINNED search head (2026-11-27 user direction): the filter field is
+ *  chrome outside the scroll region on both form factors, so a long
+ *  catalog scrolls under it instead of taking it along. */
+describe("HkAffixPicker pinned search head", () => {
+  it("desktop popout: the search sits in the pinned band, the rows in the scrolling body", async () => {
+    const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+    await openPopup(container);
+    const popout = document.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.classList.contains("is-pinned-header")).toBe(true);
+    const pinned = document.querySelector(".hk-select-popout-pinned");
+    const body = document.querySelector(".hk-select-popout-body");
+    expect(pinned, "pinned band renders").toBeTruthy();
+    expect(body, "body renders").toBeTruthy();
+    expect(pinned!.querySelector(".hk-affix-search input"), "search is in the pinned band").toBeTruthy();
+    expect(body!.querySelector(".hk-affix-search"), "search is NOT in the scrolling body").toBeNull();
+    expect(body!.querySelector(".hk-affix-list"), "rows are in the scrolling body").toBeTruthy();
+    expect(body!.closest(".hk-select-popout-body-host"), "the rail host wraps the body").toBeTruthy();
+    // Single mode pins the search exactly the same way.
+    const single = mountPicker();
+    await openPopup(single.container);
+    expect(document.querySelector(".hk-select-popout-pinned .hk-affix-search")).toBeTruthy();
+  });
+
+  it("mobile sheet: the search sits between the title row and the list band", async () => {
+    window.innerWidth = 390;
+    window.dispatchEvent(new Event("resize"));
+    try {
+      const { container } = mountPicker({ mode: "multi", selected: ["cn"] });
+      await openPopup(container);
+      const band = document.querySelector(".hk-select-sheet-pinned");
+      const list = document.querySelector(".hk-select-sheet-list");
+      expect(band, "pinned band renders").toBeTruthy();
+      expect(band!.querySelector(".hk-affix-search input"), "search is in the pinned band").toBeTruthy();
+      expect(list!.querySelector(".hk-affix-search"), "search is NOT inside the scrolling list").toBeNull();
+      expect(list!.querySelector(".hk-affix-row"), "rows are inside the scrolling list").toBeTruthy();
+      // Band order inside the panel: header → pinned → body.
+      const panel = document.querySelector(".hk-select-sheet-panel")!;
+      const order = [...panel.children].map((c) => c.className);
+      expect(order.indexOf("hk-select-sheet-header")).toBeLessThan(order.indexOf("hk-select-sheet-pinned"));
+      expect(order.indexOf("hk-select-sheet-pinned")).toBeLessThan(order.indexOf("hk-select-sheet-body"));
+    } finally {
+      window.innerWidth = 1200;
+      window.dispatchEvent(new Event("resize"));
+    }
+  });
+
+  it("tag layout pins the tag list together with the search (the whole head)", async () => {
+    const { container } = mountPicker({ mode: "multi", layout: "tags", selected: ["cn"] });
+    await openPopup(container);
+    const pinned = document.querySelector(".hk-select-popout-pinned")!;
+    expect(pinned.querySelector(".hk-affix-tags")).toBeTruthy();
+    expect(pinned.querySelector(".hk-affix-search")).toBeTruthy();
+    expect(document.querySelector(".hk-select-popout-body .hk-affix-tags"), "tags are not in the scrolling body").toBeNull();
   });
 });
 
@@ -535,10 +856,11 @@ describe("HkAffixPicker badge capsule", () => {
     ).toBe(true);
   });
 
-  it("multi mode keeps the badge on selected tags and remaining rows alike", async () => {
+  it("tag layout keeps the badge on selected tags and remaining rows alike", async () => {
     const { container } = mountPicker({
       options: BADGED,
       mode: "multi",
+      layout: "tags",
       selected: ["deepseek"],
     });
     await openPopup(container);
@@ -553,13 +875,14 @@ describe("HkAffixPicker badge capsule", () => {
   });
 
   it("options without a badge render no badge nodes", async () => {
-    // MULTI mode on purpose (R2: single mode never renders tags, so a
-    // `.hk-affix-tag-badge` assertion there is vacuous): both surfaces
-    // — remaining rows AND selected tags — must stay badge-free for a
-    // badge-less option.
+    // MULTI + tag layout on purpose (R2: single mode and the rows layout
+    // render no tags, so a `.hk-affix-tag-badge` assertion there is vacuous):
+    // both surfaces — remaining rows AND selected tags — must stay badge-free
+    // for a badge-less option. MUT:affix-badge-capsule
     const { container } = mountPicker({
       options: BADGED,
       mode: "multi",
+      layout: "tags",
       selected: ["bare"],
     });
     await openPopup(container);

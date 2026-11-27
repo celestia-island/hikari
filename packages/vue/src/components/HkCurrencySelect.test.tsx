@@ -165,6 +165,40 @@ describe("HkCurrencySelect trigger", () => {
 });
 
 describe("HkCurrencySelect opened surface", () => {
+  it("the pinned search row carries the band contract (full width, fixed block, no own margin)", () => {
+    // The row moved OUT of the panel wrapper into HkSelectPanel's
+    // `pinnedHeader` band (2026-11-27): inside a band the wrapper's margin
+    // would double the inset, and a row that could grow would fight the
+    // scrolling list under it. Pinned at the source level because happy-dom
+    // has no layout engine to measure.
+    const scss = readFileSync(join(here, "HkCurrencySelect.scss"), "utf-8");
+    const at = scss.indexOf(".hk-currency-select-search-row {");
+    expect(at, "the row's rule exists").toBeGreaterThanOrEqual(0);
+    const block = scss.slice(at, scss.indexOf("}", at));
+    expect(block).toContain("width: 100%");
+    expect(block).toContain("flex: none");
+    expect(block).not.toMatch(/margin:/);
+  });
+
+  it("pins the search head outside the scrolling region; searchable=false forwards no band", async () => {
+    setViewportWidth(1280);
+    const harness = mount();
+    await openPanel(harness);
+    const popout = document.body.querySelector<HTMLElement>(".hk-select-popout")!;
+    expect(popout.classList.contains("is-pinned-header")).toBe(true);
+    expect(popout.querySelector(":scope > .hk-select-popout-pinned .hk-currency-select-search")).toBeTruthy();
+    expect(popout.querySelector(".hk-select-popout-body .hk-currency-select-search")).toBeNull();
+    expect(popout.querySelector(".hk-select-popout-body .hk-currency-select-list")).toBeTruthy();
+    // No search → no pinned band at all (not an empty padded one): the
+    // header-less popout shape, exactly as before the slot existed.
+    const bare = mount({ searchable: false });
+    await openPanel(bare);
+    const popouts = document.body.querySelectorAll<HTMLElement>(".hk-select-popout");
+    const barePopout = popouts[popouts.length - 1]!;
+    expect(barePopout.classList.contains("is-pinned-header")).toBe(false);
+    expect(barePopout.querySelector(".hk-select-popout-pinned")).toBeNull();
+  });
+
   it("uses HkSelectPanel's desktop popout on wide viewports", async () => {
     setViewportWidth(1280);
     const harness = mount();

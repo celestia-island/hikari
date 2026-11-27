@@ -64,6 +64,52 @@ par défaut ; les commutateurs de listes de projets dynamiques avec des lignes
 propres (le sélecteur de plateforme) sont le cas particulier exempté,
 pas le modèle à copier.
 
+## Feuilles de sélecteur et recherche épinglée
+
+Une surface déroulante (`HkSelectPanel`, sous `HkSelect` / `HkMenu` / les
+sélecteurs à pastille) a deux bandes de contenu, et la bande à laquelle
+appartient un élément ne se négocie pas :
+
+- **`default` défile.** Lignes, cartes, catalogues — tout ce qui peut
+  dépasser la surface.
+- **`pinnedHeader` ne défile pas.** Le chrome qui doit rester atteignable
+  pendant que la liste défile : d'abord le champ de filtrage en direct. Il
+  se rend hors de la zone de défilement sur les deux formes — une bande sous
+  la ligne de titre de la feuille sur téléphone, la tête de la colonne du
+  popout sur ordinateur (dont le corps porte alors l'unique barre de
+  défilement). Un champ de recherche dans le contenu défilant part au premier
+  geste ; c'est un défaut, pas un choix de style (2026-11-27).
+
+Les feuilles téléphone de la famille sélecteur/menu épousent leur contenu
+jusqu'à **80 % de la vue** ; au-delà, le contenu défile à l'intérieur. Un plafond
+réglé pour le popout d'ordinateur (`maxHeight`, p. ex. `min(18rem, 45dvh)`)
+n'atteint jamais la feuille. La feuille coupe aussi l'enchaînement du
+défilement : un geste sur la poignée, la ligne de titre ou la bande épinglée ne
+traîne jamais la page derrière elle.
+
+## Mouvement des listes
+
+Chaque fois que des éléments de liste changent — ajout, retrait, reclassement —
+le déplacement passe par `HkListTransition` de hikari (un `TransitionGroup`
+clé dont le FLIP est signalé au bus d'animation du runtime), jamais un tween
+écrit à la main. Un seul défaut pour toute surface en forme de liste (lignes,
+cartes, cascades) : la piste de déplacement dure 0,3 s, l'entrée et la sortie
+0,15 s chacune et commencent en même temps que le déplacement. L'hôte
+personnalise avec les props `duration` / `enterDuration` / `leaveDuration`
+(temps CSS ; un `duration` seul dérive les deux moitiés). `surface` est la
+seule exception (des lignes qui sont des fenêtres gardent les timings
+d'entrée/sortie de la famille fenêtre).
+
+Deux règles permanentes côté hôte : une liste qui vit directement dans un viewport de défilement garde `move` désactivé (le fantôme partant est épinglé à l'ancêtre positionné le plus proche, et un scrollport n'est pas la boîte visuelle de la liste) ; et une ligne de liste ne porte jamais `transition: all` — les pistes du primitif prennent en charge le `transition` de la ligne pendant la durée d'une seule chorégraphie, et une piste `all` y perdrait sa face de survol.
+
+Un sélecteur multiple (`HkAffixPicker` en mode `multi`, `layout="rows"`) ne
+construit rien devant la recherche pour sa sélection : les lignes cochées
+portent la marque de coche de tête et remontent en tête dans l'ordre du
+catalogue derrière un séparateur ; un toucher bascule la ligne et elle glisse
+vers ou depuis son emplacement. `layout="tags"` est la forme éditeur de valeur
+(une valeur saisie affichée par entrée) et garde la liste de pastilles
+au-dessus de la recherche.
+
 ## Texte des coins de pied de page
 
 Le texte dans l'un des six coins d'en-tête/pied de page (gauche/centre/droite

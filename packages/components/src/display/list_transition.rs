@@ -64,17 +64,26 @@ use crate::styled::StyledComponent;
 pub struct ListTransitionComponent;
 
 /// Vue: `REPORT_MS` — the enter/leave animation-bus window. The slowest
-/// variant (`pop`/`slide`/`fade`) runs `--duration-normal`; the fast ones run
-/// their own 150ms plus a 150ms stagger, so both finish inside this budget.
+/// variant (`pop`/`slide`/`fade`) runs `--duration-normal` on its enter and
+/// leave tracks; the fast ones run their own 150ms plus a 150ms stagger, so
+/// both finish inside this budget. Vue widens the window when a host passes the
+/// `duration` / `enterDuration` / `leaveDuration` props (`custom + 20`); the
+/// mirror has no per-instance track override (the durations are the sheet's
+/// custom properties), so the constant stays the whole story here.
 pub const LIST_TRANSITION_REPORT_MS: f64 = 320.0;
 
-/// The `--duration-normal` default the three standard variants run (ms).
+/// The `--hk-list-duration` move (FLIP) track default the three standard
+/// variants run (ms) — the `--duration-normal` token value the sheet falls back
+/// to (`var(--hk-list-duration, var(--duration-normal, 0.3s))`).
 pub const LIST_TRANSITION_NORMAL_DURATION_MS: f64 = 300.0;
 
-/// The `--duration-fast` default the fast variants run (ms).
+/// The `--hk-list-enter-duration` / `--hk-list-leave-duration` default the fast
+/// variants run (ms) — the `--duration-short` token value the sheet falls back
+/// to (`var(--hk-list-enter-duration, var(--duration-short, 0.15s))`).
 pub const LIST_TRANSITION_FAST_DURATION_MS: f64 = 150.0;
 
-/// The one-beat stagger `grow`/`reveal` add on the enter side (ms).
+/// The one-beat stagger `grow` adds on the enter side (ms) — it is
+/// `--hk-list-leave-duration`, not a duration of its own.
 pub const LIST_TRANSITION_FAST_STAGGER_MS: f64 = 150.0;
 
 /// The five animation variants (Vue default `pop`).
@@ -146,9 +155,11 @@ pub fn list_transition_name(variant: ListTransitionVariant, disabled: bool) -> S
     }
 }
 
-/// The enter budget a variant needs (ms): `pop`/`slide`/`fade` run
-/// `--duration-normal`, while `grow`/`reveal` run `--duration-fast` PLUS the
-/// one-beat stagger delay the sheet declares. Every variant stays inside
+/// The enter budget a variant needs (ms): `pop`/`slide`/`fade` run the move
+/// track's default (`--hk-list-duration`, the normal token), while
+/// `grow`/`reveal` run the enter track's default (`--hk-list-enter-duration`,
+/// the short token) PLUS the one-beat stagger delay the sheet declares (the
+/// leave track's, same short token). Every variant stays inside
 /// [`LIST_TRANSITION_REPORT_MS`] — that is exactly what Vue's report window
 /// promises the animation bus, so a host can arm its own listener for this
 /// long instead of guessing per variant.
@@ -404,7 +415,8 @@ mod tests {
 
     #[test]
     fn list_transition_enter_budget_stays_inside_the_report_window() {
-        // The standard variants run --duration-normal ...
+        // The standard variants run the move track's fallback
+        // (--hk-list-duration → --duration-normal) ...
         for variant in [
             ListTransitionVariant::Pop,
             ListTransitionVariant::Slide,
@@ -412,7 +424,9 @@ mod tests {
         ] {
             assert_eq!(list_transition_enter_ms(variant), 300.0);
         }
-        // ... the fast ones run --duration-fast plus the stagger beat.
+        // ... the fast ones run the enter track's fallback
+        // (--hk-list-enter-duration → --duration-short) plus the stagger beat
+        // (the leave track's, same short token).
         assert_eq!(list_transition_enter_ms(ListTransitionVariant::Grow), 300.0);
         assert_eq!(
             list_transition_enter_ms(ListTransitionVariant::Reveal),

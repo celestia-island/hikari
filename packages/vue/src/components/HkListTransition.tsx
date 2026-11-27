@@ -13,6 +13,15 @@ type ListAnimVariant = "pop" | "slide" | "fade" | "grow" | "reveal" | "surface";
  *  plus a 150ms stagger delay — both finish inside this budget. */
 const REPORT_MS = 320;
 
+/** A CSS time (`0.3s`, `300ms`) in milliseconds, or 0 when unparseable. */
+function cssTimeToMs(value: string | undefined): number {
+  if (!value) return 0;
+  const m = /^\s*(\d*\.?\d+)\s*(ms|s)\s*$/i.exec(value);
+  if (!m) return 0;
+  const n = Number.parseFloat(m[1]);
+  return m[2].toLowerCase() === "s" ? n * 1000 : n;
+}
+
 /**
  * HkListTransition — keyed list enter/enter/exit choreography.
  *
@@ -43,6 +52,23 @@ const REPORT_MS = 320;
  * mount (open surfaces get the same gentle entrance as later updates);
  * reduced motion / the global animation switch (`html[data-css-animations
  * ="0"]`) disable the motion in scss.
+ *
+ * THE base container for "list items changed" (user direction 2026-11-27):
+ * every list-shaped surface in the library and its hosts — rows, cards,
+ * waterfalls — runs its add / remove / reorder through this component
+ * instead of a hand-rolled tween, so the choreography, the bus reporting
+ * and the reduced-motion collapse are written once. Durations are
+ * CUSTOMIZABLE with one default for the whole family: the move (FLIP)
+ * track runs `--hk-list-duration` (0.3s), the enter and leave tracks run
+ * half of it (0.15s) and start AT THE SAME TIME as the move — an old row
+ * shrinks away / a new one grows in while its neighbours glide into
+ * place, nothing waits for anything. A host overrides per instance with
+ * the `duration` / `enterDuration` / `leaveDuration` props (CSS times),
+ * or sets the three custom properties on any ancestor (fragment hosts —
+ * `tag=""` — have no element of their own to carry them, and custom
+ * properties inherit). The `surface` variant is the one exception: its
+ * rows ARE windows and keep the window family's own entrance/exit
+ * timings; only its move track follows `--hk-list-duration`.
  */
 export default defineComponent({
   name: "HkListTransition",
@@ -55,9 +81,63 @@ export default defineComponent({
      *  usually want their rows to appear silently. */
     appear: { type: Boolean, default: false },
     disabled: { type: Boolean, default: false },
+    /** Move (FLIP) duration as a CSS time. Default = the normal motion
+     *  token (0.3s). Published as `--hk-list-duration` on the host
+     *  element; the enter/leave tracks default to half of it. */
+    duration: { type: String, default: undefined },
+    /** Enter-track override (CSS time); default = half the move. */
+    enterDuration: { type: String, default: undefined },
+    /** Leave-track override (CSS time); default = half the move. */
+    leaveDuration: { type: String, default: undefined },
   },
   setup(props, { slots }) {
-    const report = useReportedTransition(REPORT_MS);
+    // The report window follows the slowest CUSTOM track so a host that
+    // lengthens the choreography is not cut short by the default budget.
+    const report = useReportedTransition(() => {
+      const custom = Math.max(
+        cssTimeToMs(props.duration),
+        cssTimeToMs(props.enterDuration),
+        cssTimeToMs(props.leaveDuration),
+      );
+      return custom > 0 ? custom + 20 : REPORT_MS;
+    });
+    /** The duration custom properties for this instance, or undefined
+     *  when the host passed none (the stylesheet defaults apply). A lone
+     *  `duration` also derives the two halves (`calc(d / 2)`) — the
+     *  stylesheet's plain fallbacks cannot, since the mirrored sheet is
+     *  recompiled by grass, which has no `calc()` inside a `var()`. Fragment
+     *  hosts (`tag=""`) have no element to carry inline custom properties —
+     *  a duration passed there cannot take effect, so it is refused
+     *  loudly instead of silently ignored; the host sets the property on
+     *  an ancestor (custom properties inherit). */
+    let warnedFragmentHost = false;
+    const durationStyle = (): Record<string, string> | undefined => {
+      const style: Record<string, string> = {};
+      if (props.duration) style["--hk-list-duration"] = props.duration;
+      if (props.enterDuration) style["--hk-list-enter-duration"] = props.enterDuration;
+      if (props.leaveDuration) style["--hk-list-leave-duration"] = props.leaveDuration;
+      // The halves follow a lone move duration (one `calc` per track,
+      // inline — never inside the grass-compiled sheet).
+      if (props.duration && !props.enterDuration) {
+        style["--hk-list-enter-duration"] = `calc(${props.duration} / 2)`;
+      }
+      if (props.duration && !props.leaveDuration) {
+        style["--hk-list-leave-duration"] = `calc(${props.duration} / 2)`;
+      }
+      if (Object.keys(style).length === 0) return undefined;
+      if (!props.tag) {
+        // Once per instance — the render runs on every patch.
+        if (!warnedFragmentHost) {
+          warnedFragmentHost = true;
+          console.warn(
+          "[hikari] HkListTransition: duration props need an element host; " +
+            "with an empty tag, set --hk-list-duration on an ancestor instead.",
+          );
+        }
+        return undefined;
+      }
+      return style;
+    };
     // TransitionGroup forwards the enter/leave hooks to EVERY child, so
     // a batch of N rows arms N reports on the shared track. Refcount
     // them: each child's settle cancels only its own claim, and the
@@ -231,6 +311,11 @@ export default defineComponent({
 
     return () => {
       const name = props.disabled ? "hk-list-none" : `hk-list-${props.variant}`;
+      // Spread only when there IS a style: a `style: undefined` attr on a
+      // fragment host is Vue's "extraneous attribute" warning, and the
+      // fragment case already has its own, more useful one.
+      const ds = durationStyle();
+      const hostAttrs = ds ? { style: ds } : {};
       return (
         <TransitionGroup
           ref={hostRef}
@@ -250,6 +335,10 @@ export default defineComponent({
             settle();
             unpinLeaving(el);
           }}
+          // The duration custom properties ride the host element as a
+          // plain attr (TransitionGroup's declared props have no `style`;
+          // Vue still falls it through to the rendered tag).
+          {...hostAttrs}
         >
           {slots.default?.()}
         </TransitionGroup>

@@ -24,4 +24,15 @@ describe("HkAffixPicker mobile sheet measure contract", () => {
     expect(block).toContain("max-width: min(19rem, 100%)");
     expect(block).toContain("margin-inline: auto");
   });
+
+  it("caps and centers the PINNED head by the same measure (2026-11-27)", () => {
+    // The head moved out of the panel wrapper into the sheet's pinned band,
+    // so the wrapper's centering no longer reaches it: without its own rule
+    // the search field would span the sheet while the rows sit centered.
+    const block =
+      src.match(/\.hk-select-sheet-pinned \.hk-affix-head\s*{[^}]*}/)?.[0] ?? "";
+    expect(block, "the pinned head's sheet rule exists").not.toBe("");
+    expect(block).toContain("max-width: min(19rem, 100%)");
+    expect(block).toContain("margin-inline: auto");
+  });
 });

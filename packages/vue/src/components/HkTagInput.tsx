@@ -101,19 +101,25 @@ type HkTagStop =
  *     shared HkSelectPanel surface — same popup-manager stacking, mobile
  *     bottom sheet, outside-click/Escape closing and ONE SCROLLBAR PER
  *     WINDOW contract as every other picker. It deliberately mounts no
- *     scroll region of its own: the window surface scrolls the search
- *     field and the rows as one. It also does NOT mirror the field's
+ *     scroll region of its own: the window surface scrolls the ROWS, and
+ *     the search field rides its `pinnedHeader` slot outside that region
+ *     (2026-11-27 user direction). It also does NOT mirror the field's
  *     width (`matchAnchorWidth` is off, the HkAffixPicker precedent): the
  *     field is usually a full-width settings column while the catalog is
  *     designed at 13–19rem, so an anchor-wide box would leave a large
  *     empty band and park the surface's scrollbar far from the rows.
- *     Instead the surface is capped through `maxHeight`
+ *     Instead the DESKTOP POPOUT is capped through `maxHeight`
  *     (`min(18rem, 45dvh)`), so a long catalog scrolls inside a panel
  *     that hugs its own measure rather than stretching to the viewport;
- *   - ALL options are listed, each with a check glyph when selected —
- *     unlike HkAffixPicker's multi mode, which hides the selected keys,
- *     "is this tag used or not" must stay visible and togglable in one
- *     pass. Toggling never closes the panel (batch editing);
+ *     the mobile sheet ignores that measure and hugs its content up to
+ *     the family ceiling (HkSelectPanel's `maxHeight` doc);
+ *   - ALL options are listed, each with a check glyph when selected,
+ *     and — unlike HkAffixPicker's TAG layout, which hides the selected
+ *     keys — "is this tag used or not" must stay visible and togglable in
+ *     one pass. (HkAffixPicker's rows layout keeps every option listed
+ *     too, but its selected run is re-ranked to the front; this picker's
+ *     grouping is the host's `modelValue` order, see below.) Toggling
+ *     never closes the panel (batch editing);
  *   - ROWS ARE GROUP-STRICT: the selected options come first, in the
  *     host's `modelValue` order, then the unselected catalog options in
  *     catalog order, and the custom ("Use …") row is last. A query filters
@@ -675,9 +681,14 @@ export const HkTagInput = defineComponent({
       // already owns THE scrollbar (never a region of this component's
       // own). Resolved per drag, because the form factor is decided by the
       // viewport at open time.
+      // The pinned search head sits OUTSIDE the scroll region, so on
+      // the desktop popout the scrolling box is the panel's BODY (its
+      // `is-pinned-header` shape), not the popout itself; the sheet's
+      // list band is unchanged. (A header-less popout — any other host
+      // of these rows — still scrolls as `.hk-select-popout`.)
       scrollContainer: () =>
         panelRef.value?.closest<HTMLElement>(
-          ".hk-select-popout, .hk-select-sheet-list",
+          ".hk-select-popout-body, .hk-select-popout, .hk-select-sheet-list",
         ) ?? null,
       onDrop: reorderSelectedRows,
     });
@@ -982,33 +993,39 @@ export const HkTagInput = defineComponent({
             onKeydown={onPanelKeydown}
           >
             {{
+              /* PINNED search head (2026-11-27 user direction): the filter
+               * field is chrome, not content — it rides HkSelectPanel's
+               * `pinnedHeader` slot, outside the scroll region on both
+               * form factors, so a long catalog scrolls under it. */
+              pinnedHeader: () => (
+                <div class="hk-tag-input-search" role="search">
+                  <HkInput
+                    modelValue={query.value}
+                    onUpdate:modelValue={(v: string) => {
+                      query.value = v;
+                    }}
+                    size="sm"
+                    placeholder={searchPlaceholder}
+                    aria-label={searchPlaceholder}
+                    // The search field is the second combobox surface:
+                    // arrows pressed here move the SAME cursor, and the
+                    // row is published the same way.
+                    aria-activedescendant={activeId}
+                    autocomplete="off"
+                    onKeydown={onSearchKeydown}
+                  >
+                    {{
+                      prefixIcon: () => <Search size={13} aria-hidden="true" />,
+                    }}
+                  </HkInput>
+                </div>
+              ),
               default: () => (
                 /* Width container only — the window surface (HkSelectPanel
-                 * popout / sheet) owns THE single scrollbar and scrolls the
-                 * search field with the rows; no inner max-height/overflow
-                 * here, ever. */
+                 * popout body / sheet list) owns THE single scrollbar and
+                 * scrolls the rows under the pinned search; no inner
+                 * max-height/overflow here, ever. */
                 <div class="hk-tag-input-panel" ref={panelRef}>
-                  <div class="hk-tag-input-search" role="search">
-                    <HkInput
-                      modelValue={query.value}
-                      onUpdate:modelValue={(v: string) => {
-                        query.value = v;
-                      }}
-                      size="sm"
-                      placeholder={searchPlaceholder}
-                      aria-label={searchPlaceholder}
-                      // The search field is the second combobox surface:
-                      // arrows pressed here move the SAME cursor, and the
-                      // row is published the same way.
-                      aria-activedescendant={activeId}
-                      autocomplete="off"
-                      onKeydown={onSearchKeydown}
-                    >
-                      {{
-                        prefixIcon: () => <Search size={13} aria-hidden="true" />,
-                      }}
-                    </HkInput>
-                  </div>
                   {/* The listbox element exists for as long as the panel is
                     * open — including when the filter matches nothing — so
                     * the input's `aria-controls` always resolves; the empty

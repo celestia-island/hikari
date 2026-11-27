@@ -6,9 +6,12 @@
 // --radius-*, rgb(var(--color-*)), --hi-color-*).
 //
 // ONE SCROLLBAR: the panel content mounts NO scroll region of its own —
-// the surface owns THE scrollbar and scrolls the search field together
-// with the rows as one band (the HkAffixPicker / HkTagInput contract).
-// Every rule below is geometry for that single content column.
+// the surface owns THE scrollbar and scrolls the ROWS; the search field
+// rides the panel's pinned band (`.hk-select-popout-pinned` /
+// `.hk-select-sheet-pinned`), outside that scroll region, so a long
+// result list scrolls under it (2026-11-27 user direction — the
+// HkAffixPicker / HkTagInput contract). Every rule below is geometry for
+// that single content column.
 
 @use "./menu-item" as mi;
 
@@ -118,7 +121,12 @@
 /* Off a one-glyph anchor the popout cannot inherit a useful width
  * (matchAnchorWidth is off in trigger mode) — the panel carries a catalog
  * width and lets the surface's own viewport clamp absorb overflow. */
-.hk-user-picker-panel.is-trigger-anchor {
+.hk-user-picker-panel.is-trigger-anchor,
+/* Same measure on the PINNED search head, which lives outside the panel
+ * wrapper (HkSelectPanel's `pinnedHeader` slot): both bands are flex
+ * children of the popout column, so they agree on width when both carry
+ * the class. */
+.hk-user-picker-search.is-trigger-anchor {
   width: min(24rem, 80vw);
 }
 
@@ -127,7 +135,12 @@
  * measure becomes a centered cap instead of a left-glued clamp — the
  * trigger panel reads as one designed block inside the viewport-wide
  * sheet rather than hugging its left edge. */
-.hk-select-sheet-panel .hk-user-picker-panel.is-trigger-anchor {
+.hk-select-sheet-panel .hk-user-picker-panel.is-trigger-anchor,
+/* The pinned search head (HkSelectPanel's `pinnedHeader` slot) sits
+ * outside the panel wrapper, so the same sheet-context centering must
+ * reach it on its own — or the field spans the viewport-wide sheet while
+ * the rows sit centered in their 24rem block. */
+.hk-select-sheet-pinned .hk-user-picker-search.is-trigger-anchor {
   width: 100%;
   max-width: min(24rem, 100%);
   margin-inline: auto;

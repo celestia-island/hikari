@@ -261,6 +261,55 @@
   &::-webkit-scrollbar {
     display: none;
   }
+
+  /* With a pinned header (HkSelectPanel's `pinnedHeader` slot) the panel
+     stops being the scroll box: it becomes a closed flex column — the
+     pinned band on top, the scrolling BODY below (see the two rules after
+     this block). The panel's own inset moves onto those two children so
+     the rows keep exactly the 8px they always had, and the body wrapper
+     (inset-free) is the exact box the overlay rail's host contract needs
+     (attachOverlayScrollbars): the rail hugs the popout's edge here just
+     like on every header-less popout. `overflow: hidden` closes the box so
+     the body clips at the panel's rounded corners. */
+  &.is-pinned-header {
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
+/* Pinned chrome head of a header-bearing popout: the live-filter search
+ * field. Non-shrinking; carries the panel inset on three sides (the
+ * column gap stands in for the fourth). */
+.hk-select-popout-pinned {
+  flex: none;
+  padding: var(--space-8) var(--space-8) 0;
+}
+
+/* The scroll viewport's dedicated wrapper — the overlay rail's host
+ * (positioning context + exact box; see `&.is-pinned-header` above).
+ * Fills whatever the cap leaves under the pinned band. */
+.hk-select-popout-body-host {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* THE scroll region of a header-bearing popout: the rows. Same inset as
+ * the header-less panel (rows see one 8px inset either way); the native
+ * bar is hidden in favour of the shared overlay rail on the wrapper. */
+.hk-select-popout-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--space-8) var(--space-8);
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* Unified menu-item spec (see ./_menu-item.scss) — options, menu rows
@@ -348,8 +397,19 @@
   contain: layout style;
   transition: clip-path var(--duration-fast, 0.15s)
     var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  /* FAMILY CEILING = 80% of the viewport (2026-11-27 user direction).
+   * A sheet hugs its content until it reaches this line, then the list
+   * band scrolls inside it — content shorter than 80% keeps its natural
+   * height, content longer stops exactly here. The ceiling was lower
+   * before, and the real squashing came from elsewhere: consumers' popout measures
+   * (`--hk-select-panel-max-height`, e.g. `min(18rem, 45dvh)`) used to
+   * land on the sheet's LIST band too, capping every picker sheet under
+   * half the phone. That hook is now popout-only (HkSelectPanel's
+   * `maxHeight` doc) and this cap is the one ceiling a sheet has. The
+   * inset term still keeps the sheet clear of the host's caption band.
+   * (The previous ceiling was roughly seven-tenths of the viewport.) */
   max-height: min(
-    72vh,
+    80vh,
     calc(
       100vh - var(--hk-sheet-top-inset, 4.25rem) -
         var(--hk-sheet-bottom-gap, 0px)
@@ -359,12 +419,18 @@
    * vh cap so a maxed sheet cannot extend under the URL bar on
    * dynamic-toolbar browsers. */
   max-height: min(
-    72vh,
+    80dvh,
     calc(
       100dvh - var(--hk-sheet-top-inset, 4.25rem) -
         var(--hk-sheet-bottom-gap, 0px)
     )
   );
+  /* Scroll chaining stops at the sheet (user direction 2026-11-27): a
+   * swipe that lands on a NON-scrolling band of the sheet — the grabber,
+   * the title row, the pinned search band — must not drag the page (or
+   * the modal) behind it. The list band carries its own `contain` below
+   * for the in-list case; this covers the rest of the panel. */
+  overscroll-behavior: contain;
   background: rgb(var(--color-surface));
   border-radius: var(--hk-modal-radius, var(--radius-lg, 12px))
                  var(--hk-modal-radius, var(--radius-lg, 12px))
@@ -452,17 +518,16 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* The same consumer-tunable cap the popout reads, applied to the band
-     that actually scrolls: the sheet header keeps its place and the
-     catalog scrolls inside it. `none` (the fallback) is exactly today's
-     behaviour, so an untouched consumer's sheet is unchanged.
-     DELIBERATELY not wrapped in the popout's `@supports (height: 1dvh)`
-     guard: this band's fallback already IS the property's initial value,
-     so a value the engine cannot use resolves to the same `none` the
-     guard would produce — the asymmetry is a no-op, not an oversight.
-     The sheet PANEL above keeps its own plain-vh/dvh family cap either
-     way, so a hidden cap can never leave the sheet unbounded. */
-  max-height: var(--hk-select-panel-max-height, none);
+  /* NO cap of its own. The sheet PANEL above carries the family ceiling
+     (80% of the viewport) and this band simply fills what is left under
+     the grabber, the title row and the pinned band — a second cap here
+     would only make the list scroll inside a shorter sheet. The
+     consumer-tunable `--hk-select-panel-max-height` hook used to land
+     here as this band's own height cap, which is exactly how a desktop
+     popout measure like `min(18rem, 45dvh)` squashed every picker sheet
+     to under half the phone (2026-11-27 user report); the hook is
+     popout-only now — see HkSelectPanel's `maxHeight` doc and
+     `.hk-select-popout` below. */
   /* Side insets so the option blocks (full-row hover pills) read as
      cards inside the sheet instead of an edge-to-edge strip glued to
      both screen sides — matching the popover family's breathing room.
@@ -479,6 +544,33 @@
   &::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Pinned chrome band (HkSelectPanel's `pinnedHeader` slot): the live-
+ * filter search field of a picker sheet, sitting between the title row
+ * and the scrolling list. A non-shrinking flex sibling of the list —
+ * never inside it — so the catalog scrolls under the field instead of
+ * taking it along (2026-11-27 user report: the first swipe down scrolled
+ * the provider search off the sheet). Same side inset as the list band so
+ * the field's box lines up with the rows' content edge; the block rhythm
+ * is bottom-heavy like the section-caption grammar (tight under the title,
+ * a clear gap above the first row). */
+.hk-select-sheet-pinned {
+  flex: none;
+  /* A COLUMN FLEX CONTAINER, matching the popout band's parent — a
+   * CONSISTENCY choice, not a fix for an observed collapse. R22 reported
+   * that a block band resolved to its padding when a consumer's band child
+   * was itself a flex container; R23 re-measured in real Chromium across
+   * two engine builds and four reconstruction variants and found a block
+   * band sized identically to a flex band for every consumer's band child
+   * (155 / 68.59 / 70.59 / 53 px, unchanged), with `flex-basis: auto`
+   * correctly taking a rigid item's content height. The flex declaration is
+   * kept because it makes the two bands' box models the same and costs
+   * nothing; the earlier "the band collapsed to padding" mechanism does NOT
+   * hold and must not be cited (2026-11-27 R23). */
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-4) var(--space-16) var(--space-10);
 }
 
 /* Leading in-content heading hidden by the sheet duplicate-title

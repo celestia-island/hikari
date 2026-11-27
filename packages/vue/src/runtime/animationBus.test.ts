@@ -1,6 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { onFrame, isAnimationParked, setReducedMotion, type AnimationHandle } from "./animationBus";
+import {
+  onFrame,
+  isAnimationParked,
+  onceFrame,
+  reportTransition,
+  scheduleFrame,
+  setReducedMotion,
+  type AnimationHandle,
+} from "./animationBus";
 
 // ── Fake-RAF harness ──────────────────────────────────────────────────
 // The bus arms the next frame by calling requestAnimationFrame(tick); the
@@ -124,6 +132,41 @@ describe("isAnimationParked", () => {
       expect(isAnimationParked()).toBe(false);
     } finally {
       setReducedMotion(original);
+    }
+  });
+});
+
+/** A pending bus timer can fire AFTER the host tore the environment down
+ *  (a test env between files, a WebView disposing the page): the frame
+ *  functions are gone from the global scope, and an unguarded call throws
+ *  out of a tick callback where nothing can catch it. `halt()` used to call
+ *  `cancelAnimationFrame` bare, so a transition report's own timeout threw
+ *  `ReferenceError: cancelAnimationFrame is not defined` (2026-11-27, seen
+ *  MUT:frameless-halt-guard
+ *  as an unhandled exception in a full-suite run). */
+describe("animationBus without a frame source", () => {
+  it("a report timeout that lands after rAF disappeared does not throw", () => {
+    const savedRaf = globalThis.requestAnimationFrame;
+    const savedCancel = globalThis.cancelAnimationFrame;
+    try {
+      const handle = reportTransition(0);
+      // Tear the frame source out from under the pending timer.
+      // @ts-expect-error — simulating a disposed environment.
+      delete globalThis.requestAnimationFrame;
+      // @ts-expect-error — simulating a disposed environment.
+      delete globalThis.cancelAnimationFrame;
+      vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+      expect(() => vi.advanceTimersByTime(10)).not.toThrow();
+      expect(() => handle.disconnect()).not.toThrow();
+      vi.useRealTimers();
+      // Scheduling onto the parked bus must not throw on the next call.
+      expect(() => onFrame(() => {}, "sync").disconnect()).not.toThrow();
+      expect(() => onceFrame(() => {})).not.toThrow();
+      expect(() => scheduleFrame(() => {})).not.toThrow();
+    } finally {
+      globalThis.requestAnimationFrame = savedRaf;
+      globalThis.cancelAnimationFrame = savedCancel;
+      vi.useRealTimers();
     }
   });
 });

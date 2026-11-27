@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createApp, defineComponent, nextTick, ref } from "vue";
+import { createApp, defineComponent, nextTick, ref, type App } from "vue";
 
 import HkContextMenuProvider from "./HkContextMenuProvider";
 import HkTagDotRow from "./HkTagDotRow";
@@ -10,10 +10,19 @@ import {
 
 /** Mount into a detached div appended to the body (the menu panels
  *  teleport; assertions see them through document.querySelectorAll). */
+/** Every app mounted here, unmounted in afterEach: a mounted app left
+ *  alive outlives the file's happy-dom environment, and a timer-driven
+ *  re-render after teardown (HkMenu's leave `linger` unmounting its panel)
+ *  throws "document is not defined" from a component's unmount hook — an
+ *  unhandled rejection that fails the whole run. */
+const mountedApps: App[] = [];
+
 function mountToDom(component: ReturnType<typeof defineComponent>): HTMLElement {
   const el = document.createElement("div");
   document.body.appendChild(el);
-  createApp(component).mount(el);
+  const app = createApp(component);
+  app.mount(el);
+  mountedApps.push(app);
   return el;
 }
 
@@ -50,6 +59,7 @@ function makeHost(): { Component: ReturnType<typeof defineComponent>; api: () =>
 }
 
 afterEach(() => {
+  for (const app of mountedApps.splice(0)) app.unmount();
   document
     .querySelectorAll(
       ".hk-select-popout, .hk-select-sheet-panel, .hk-select-sheet-scrim, .open-btn",

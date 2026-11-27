@@ -85,3 +85,14 @@ Una `HkAuthChannelListEntry` — y una `HkLoginSsoChannel` que la reenvía — p
 - En modo relay, no montar `HkLoginFlow` — montar `HkAuthHandoff`.
 - Pasar solo rutas del mismo origen como dirección de retorno; usar `hkIsSameOriginPath` o su propia lista de permitidos.
 - Los `href` de las filas también deben ser rutas del mismo origen (el documento se valida en el servidor); hikari no los comprueba.
+
+## La fila integrada del proveedor de identidad central
+
+El proveedor de identidad central (`provider: "erp"` en el documento de política de inicio de sesión) no tiene nombre ni icono propios en el protocolo, así que cada host inventaba los suyos: un `erp` desnudo en la fila, o un «Celestia ID» escrito a mano y sin icono. hikari ofrece ahora ambos valores por defecto:
+
+- **El nombre** — `hkCentralAuthName()`, o el `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)` que escribirías a mano (`hikari::loginFlow.providerCelestiaAuth`, presente en los 11 idiomas). Prefiere `hkCentralAuthName()`: lee el contexto de idioma de hikari, así que sigue traducido incluso en un host cuyo catálogo i18n no fusiona las claves `hikari::`. Llámala dentro de un render o de un `computed`, nunca al nivel del módulo.
+- **El icono** — `hkCentralAuthMarkSrc`, una data URI WebP de 64×64 incrustada. Represéntala a 16×16; el origen lleva el margen que le da el mismo tamaño óptico que los glifos vecinos.
+
+La configuración del operador siempre gana: un `label` o un `icon` de proveedor definidos en la configuración del despliegue nunca se sustituyen. El nombre integrado se usa solo cuando la etiqueta ha degenerado al id (`hkProviderLabelIsId`), y el icono integrado solo cuando el servidor no envió ninguno. Un despliegue que no configura este proveedor no cambia: el valor predeterminado autoalojado sigue siendo usuario y contraseña locales.
+
+Una regla de representación se deriva del hand-off: un canal de redirección (sso) normalmente no tiene segunda etapa, así que `step="verify"` en él muestra el cuerpo de la cuenta como salvaguarda. Si el host recibió una lista de factores por el hand-off de OAuth y pasa `verifyFactors`, ese canal sso representa la etapa de verificación igual que un canal de credenciales; de lo contrario, un despliegue «solo SSO» con MFA quedaría sin salida.

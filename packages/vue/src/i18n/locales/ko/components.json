@@ -404,6 +404,7 @@
   "hikari::loginFlow.channelOrg": "조직 로그인",
   "hikari::loginFlow.signInTitle": "로그인",
   "hikari::loginFlow.signInSubtitle": "다시 오신 것을 환영합니다",
+  "hikari::loginFlow.providerCelestiaAuth": "Celestia 통합 인증 플랫폼",
   "hikari::mdEditor.bold": "굵게",
   "hikari::mdEditor.italic": "기울임꼴",
   "hikari::mdEditor.strikethrough": "취소선",

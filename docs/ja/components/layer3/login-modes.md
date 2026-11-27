@@ -85,3 +85,14 @@ const channel = ref(plan.defaultChannel ?? "");
 - relay モードでは `HkLoginFlow` をマウントせず、`HkAuthHandoff` をマウントする。
 - 戻り先として渡すのは同一オリジンのパスのみ。`hkIsSameOriginPath` か独自の許可リストを使う。
 - 行の `href` も同一オリジンのパスでなければなりません（文書はサーバー側で検証されます）。hikari は検査しません。
+
+## 内蔵の中央 ID プロバイダー行の既定表示
+
+中央 ID プロバイダー（ログインポリシー文書の `provider: "erp"`）はワイヤ上に自前の名前もアイコンも持たないため、これまで各ホストが独自に用意していた——行に裸の `erp` を出すか、「Celestia ID」と手書きしてアイコンを付けないか。hikari はその両方の既定値を提供する:
+
+- **名前** —— `hkCentralAuthName()`、または手書きする `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)`（`hikari::loginFlow.providerCelestiaAuth`、11 言語すべてに収録）。`hkCentralAuthName()` を推奨する。hikari 自身のロケール文脈から読むため、`hikari::` キーをマージしていないホストの i18n カタログでも翻訳されたままになる。レンダー関数または `computed` 内で呼び、モジュール先頭で値を持たないこと。
+- **アイコン** —— `hkCentralAuthMarkSrc`、64×64 のインライン WebP data URI。16×16 で描画する。元画像は周囲のグリフと同じ光学サイズになるよう余白を持たせてある。
+
+運用者の設定が常に優先される: デプロイ設定で与えた provider の `label` や `icon` を置き換えることはない。内蔵名を使うのは label が id に退化しているときだけ（`hkProviderLabelIsId` で判定）、内蔵アイコンを使うのはサーバーが icon を渡さなかったときだけ。この provider を設定していないデプロイは一切変わらない——セルフホストの既定は従来どおりローカルのユーザー名／パスワード。
+
+さらにもう一つ、ハンドオフに由来する描画規則がある: リダイレクト（sso）チャネルは本来二段目を持たないため、`step="verify"` を渡すとフェイルセーフとしてアカウント本文を表示する。OAuth のハンドオフで二段階認証の因子表を受け取ったホストが `verifyFactors` を渡した場合、その sso チャネルは資格情報チャネルと同じく検証ステップを描画する——さもなければ「SSO のみ＋MFA」のデプロイは行き止まりになる。

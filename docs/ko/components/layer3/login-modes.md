@@ -85,3 +85,14 @@ const channel = ref(plan.defaultChannel ?? "");
 - relay 모드에서는 `HkLoginFlow`를 마운트하지 않고 `HkAuthHandoff`를 마운트한다.
 - 돌아갈 주소로는 같은 출처 경로만 전달한다. `hkIsSameOriginPath` 또는 자체 허용 목록을 사용한다.
 - 행의 `href`도 같은 출처 경로여야 한다(문서는 서버에서 검증된다). hikari는 이를 검사하지 않는다.
+
+## 내장 중앙 신원 제공자 행의 기본 표시
+
+중앙 신원 제공자(로그인 정책 문서의 `provider: "erp"`)는 프로토콜상 자체 이름도 아이콘도 없어서, 지금까지 각 호스트가 알아서 만들었다—행에 `erp`만 노출하거나, "Celestia ID"를 직접 적고 아이콘은 두지 않았다. hikari가 그 두 가지 기본값을 함께 제공한다:
+
+- **이름** — `hkCentralAuthName()`, 또는 직접 쓰던 `t(HK_CENTRAL_AUTH_NAME_KEY, HK_CENTRAL_AUTH_NAME_EN)`(`hikari::loginFlow.providerCelestiaAuth`, 11개 언어 모두 제공). `hkCentralAuthName()`을 권장한다. hikari 자체의 로케일 컨텍스트를 읽으므로, `hikari::` 키를 병합하지 않은 호스트의 i18n 카탈로그에서도 번역된 이름이 유지된다. 렌더 함수나 `computed` 안에서 호출하고, 모듈 최상위에서 값을 고정하지 말 것.
+- **아이콘** — `hkCentralAuthMarkSrc`, 64×64 인라인 WebP data URI. 16×16으로 렌더링한다. 원본에는 주변 글리프와 같은 광학 크기가 되도록 여백이 들어 있다.
+
+운영자 설정이 언제나 우선한다: 배포 설정에서 지정한 provider `label`이나 `icon`은 절대 덮어쓰지 않는다. 내장 이름은 label이 id로 퇴화했을 때만(`hkProviderLabelIsId`로 판정), 내장 아이콘은 서버가 icon을 주지 않았을 때만 쓴다. 이 provider를 설정하지 않은 배포는 아무것도 달라지지 않는다—셀프 호스팅 기본값은 여전히 로컬 사용자 이름/비밀번호다.
+
+핸드오프에서 나오는 표시 규칙이 하나 더 있다: 리다이렉트(sso) 채널은 원래 두 번째 단계가 없으므로 `step="verify"`를 넘기면 안전장치로 계정 본문을 보여 준다. OAuth 핸드오프로 2차 인증 요소 목록을 받은 호스트가 `verifyFactors`를 넘기면, 그 sso 채널은 자격 증명 채널처럼 검증 단계를 렌더링한다—그렇지 않으면 "SSO 전용 + MFA" 배포가 막다른 길에 빠진다.

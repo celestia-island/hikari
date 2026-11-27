@@ -103,10 +103,13 @@ export type HkLoginChannel = HkLoginCredentialsChannel | HkLoginSsoChannel;
  * - `v-model` (channel key) + `channels` — the segment group.
  * - `step` — `'account' | 'verify'`; the host flips it when its ladder
  *   answers with factors, and the SAME card swaps its header copy and
- *   body over to the step-up (which never renders on an sso channel: a
- *   redirect flow has no second step by construction — passing
- *   `step="verify"` with an sso channel renders the account body as a
- *   fail-safe).
+ *   body over to the step-up. A redirect (sso) channel has no second step
+ *   of its own, so `step="verify"` without an announced factor table
+ *   renders the account body as a fail-safe — but a host that RECEIVED a
+ *   ladder (the OAuth hand-off calling back with `mfa_pending` /
+ *   `mfa_factors`, which is the only way an SSO-only deployment can ask
+ *   for a second factor) passes `verifyFactors` and gets the real step-up
+ *   on the sso channel too.
  * - `account-submit(channel, username, password)` — credentials
  *   channel submitted (password is empty while `passwordField` is off).
  * - `sso-click(channel)` — the primary sso row was picked.
@@ -431,9 +434,17 @@ export const HkLoginFlow = defineComponent({
         ? t("hikari::loginFlow.signInSubtitle", "Welcome back")
         : "");
 
-      // The fail-safe of the old design, kept: verify only ever renders
-      // for a credentials channel (a redirect flow has no second step).
-      const verifying = props.step === "verify" && channel.mode === "credentials";
+      // A credentials channel carries its own second step, so `step=verify`
+      // always renders the step-up for it. An sso channel has no second
+      // step by construction — EXCEPT when the host announces a factor
+      // table: the OAuth hand-off hands such a login back (chest's
+      // `mfa_pending` / `mfa_factors` cookies) with the ladder filled in,
+      // and on an SSO-only deployment the sso channel is the ONLY one
+      // there is, so refusing to render would dead-end every account with
+      // MFA. With no announced factors the old fail-safe still holds: the
+      // account body renders instead of a dead MFA card.
+      const verifying = props.step === "verify"
+        && (channel.mode === "credentials" || props.verifyFactors.length > 0);
 
       return (
         <div class="hk-login-flow">

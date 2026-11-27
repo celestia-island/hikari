@@ -404,6 +404,7 @@
   "hikari::loginFlow.channelOrg": "تسجيل الدخول بالمؤسسة",
   "hikari::loginFlow.signInTitle": "تسجيل الدخول",
   "hikari::loginFlow.signInSubtitle": "مرحبًا بعودتك",
+  "hikari::loginFlow.providerCelestiaAuth": "منصة المصادقة الموحّدة من Celestia",
   "hikari::mdEditor.bold": "عريض",
   "hikari::mdEditor.italic": "مائل",
   "hikari::mdEditor.strikethrough": "مشطوب",

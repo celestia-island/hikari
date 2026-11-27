@@ -404,6 +404,7 @@
   "hikari::loginFlow.channelOrg": "Login da organização",
   "hikari::loginFlow.signInTitle": "Entrar",
   "hikari::loginFlow.signInSubtitle": "Bem-vindo de volta",
+  "hikari::loginFlow.providerCelestiaAuth": "Plataforma de autenticação unificada da Celestia",
   "hikari::mdEditor.bold": "Negrito",
   "hikari::mdEditor.italic": "Itálico",
   "hikari::mdEditor.strikethrough": "Tachado",

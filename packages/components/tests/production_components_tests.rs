@@ -219,6 +219,100 @@ mod tests {
         assert!(src.contains("store.error(&t("), "failure push missing");
     }
 
+    /// Header slots (2026-11-28): the card grows the extensibility the
+    /// family's other header components already have — a host label that
+    /// wins over the language token, extra marks beside it, and its own
+    /// action dock BEFORE the copy control (so the card's own control
+    /// stays nearest the corner).
+    ///
+    /// MUT: dropping any of the three from the render (or swapping the
+    /// action/copy order) never passes — each named assertion catches it.
+    #[test]
+    fn test_code_highlight_header_slots() {
+        let raw = include_str!(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/production/code_highlight.rs"
+        ));
+        let src: String = raw
+            .lines()
+            .filter(|line| !line.trim().starts_with("//"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        // The props exist and are optional (an absent slot renders nothing).
+        assert!(
+            src.contains("pub label: Option<String>"),
+            "label slot missing"
+        );
+        assert!(
+            src.contains("pub label_extra: Option<Element>"),
+            "label_extra slot missing"
+        );
+        assert!(
+            src.contains("pub actions: Option<Element>"),
+            "actions slot missing"
+        );
+        assert!(
+            src.contains("pub copy_as_icon: bool"),
+            "icon-copy switch missing"
+        );
+        // A host label wins over the token. Whitespace-insensitive: rustfmt
+        // reflows this expression, and a pin keyed to one line shape breaks
+        // on formatting rather than on behaviour.
+        let compact: String = src.chars().filter(|c| !c.is_whitespace()).collect();
+        assert!(
+            compact.contains("props.label.clone().unwrap_or_else(||language.clone())"),
+            "label does not win over the language token"
+        );
+        // The RIGHT cluster renders the host's actions BEFORE the card's own
+        // copy control, and BOTH live inside it. (The copy control is built
+        // as an `Element` before `rsx!` — the macro takes a component call
+        // only as an interpolated element — so the pin reads the
+        // interpolation, not a literal `if props.copyable` block.)
+        let actions_at = src
+            .find("class: actions_classes")
+            .expect("actions cluster missing");
+        let cluster_end = src[actions_at..]
+            .find("div {\n                class: content_classes")
+            .map(|n| actions_at + n)
+            .unwrap_or(src.len());
+        let cluster = &src[actions_at..cluster_end];
+        let host_actions_at = cluster
+            .find("{actions.clone()}")
+            .expect("host actions not rendered");
+        let copy_at = cluster
+            .find("{copy_control.clone()}")
+            .expect("copy control not in the actions cluster");
+        assert!(
+            host_actions_at < copy_at,
+            "host actions must render BEFORE the card's own copy control"
+        );
+        // …and the control really is conditional on `copyable` with an icon
+        // form — the switch is what makes the slot useful in dense chrome.
+        assert!(
+            src.contains("let copy_control: Option<Element> = if !props.copyable"),
+            "copy control lost its `copyable` gate"
+        );
+        // The slot hooks have their own classes (a host styles its own label
+        // without touching the language token's rule).
+        assert!(
+            src.contains("hk-code-highlight-actions"),
+            "actions hook missing"
+        );
+        assert!(
+            src.contains("hk-code-highlight-label"),
+            "label hook missing"
+        );
+        // The icon form is the family's standard IconButton, not a hand-rolled
+        // button: the same control the rest of the library uses.
+        let icon_at = src
+            .find("IconButton(IconButtonProps {")
+            .expect("icon copy button missing");
+        assert!(
+            src[icon_at..].contains("icon: Some(MdiIcon::ContentCopy)"),
+            "icon copy glyph missing"
+        );
+    }
+
     // ── MarkdownEditor ───────────────────────────────────────────
 
     #[test]

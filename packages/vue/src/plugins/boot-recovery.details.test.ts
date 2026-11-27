@@ -42,7 +42,10 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
  *  CSS, and #1496's token addition (--hi-color-bg-container in the seed)
  *  re-byted that sheet on purpose — the commit documents it. */
 const DEFAULT_SCRIPT_SHA256 =
-  "4def6c962105be9f762c9a1b435e070b36babf7bb74749045a0fc1501bb5b960";
+  // Regenerated at 0.55.499 alongside the error-landing shell. The digest is
+  // always asserted below against bootRecoveryScript() itself, so a stale pin
+  // never reaches a publish — the lane fails first. MUT:boot-script-digest
+  "88a8f94d3873340067a39c540471544767f516d1b6c8f8044bd46dd836f6d419";
 /** The heal-only script's bytes (the other shape a host may hash). */
 const HEAL_ONLY_SCRIPT_SHA256 =
   "bee06d4652e55708d8b130fec11ff8ede54d4eafb944ef0d18f7be5a76b3dca6";

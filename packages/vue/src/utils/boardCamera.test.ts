@@ -195,4 +195,42 @@ describe("boardCamera — content bbox", () => {
   it("falls back to a default rect with no content", () => {
     expect(boardBBox([]).w).toBeGreaterThan(0);
   });
+
+  it("counts zero-size junctions as points when asked", () => {
+    // a sequence diagram's message rows live on invisible junctions: the
+    // fit must see them or it frames the participant headers alone
+    const box = boardBBox([{ x: 10, y: 10, w: 100, h: 50 }, { x: 260, y: 400, w: 0, h: 0 }], { points: true });
+    expect(box).toEqual({ x: 10, y: 10, w: 250, h: 390 });
+  });
+
+  it("a junction without a finite position is a placeholder, not content", () => {
+    // One NaN would poison every min/max, and the isFinite fallback below
+    // could no longer tell — the fit would compute k = NaN (a blank board).
+    const box = boardBBox([{ x: 10, y: 10, w: 100, h: 50 }, { x: Number.NaN, y: 400, w: 0, h: 0 }], { points: true });
+    expect(box).toEqual({ x: 10, y: 10, w: 100, h: 50 });
+  });
+});
+
+describe("boardCamera — content smaller than the viewport", () => {
+  const content = { x: 0, y: 0, w: 200, h: 100 };
+  const viewport = { w: 800, h: 600 };
+
+  it("re-centers by default (a fitted board cannot be dragged)", () => {
+    const cam = boardClampPan({ x: 500, y: -900, k: 1 }, content, viewport);
+    expect(cam.x).toBe(300);
+    expect(cam.y).toBe(250);
+  });
+
+  it('"keep" lets it float while half of it stays in view', () => {
+    const far = boardClampPan({ x: 5000, y: -900, k: 1 }, content, viewport, 0.5, "keep");
+    expect(far.x).toBe(viewport.w - 100);
+    expect(far.y).toBe(-50);
+    expect(boardClampPan({ x: 120, y: 33, k: 1 }, content, viewport, 0.5, "keep")).toEqual({ x: 120, y: 33, k: 1 });
+  });
+
+  it("content larger than the viewport clamps the same way in both modes", () => {
+    const big = { x: 0, y: 0, w: 2000, h: 100 };
+    expect(boardClampPan({ x: 900, y: 0, k: 1 }, big, viewport, 0.5, "keep").x)
+      .toBe(boardClampPan({ x: 900, y: 0, k: 1 }, big, viewport).x);
+  });
 });

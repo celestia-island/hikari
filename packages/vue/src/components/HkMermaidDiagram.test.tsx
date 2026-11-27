@@ -82,22 +82,90 @@ describe("HkMermaidDiagram", () => {
     expect(c.querySelector(".hk-board")).toBeNull();
   });
 
-  it("minimap=false hides the corner map; grid defaults off", async () => {
+  it("minimap=false hides the zoom bar; grid defaults off", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;
     const c = mount({ source: FLOWCHART, minimap: false });
     await settle();
-    expect(c.querySelector(".hk-board-minimap")).toBeNull();
+    expect(c.querySelector(".hk-mermaid__toolbar")).toBeNull();
+    expect(c.querySelector(".hk-mm-zoom-bar")).toBeNull();
     const grid = c.querySelector(".hk-board-grid") as HTMLElement;
     expect(grid.style.display).toBe("none");
   });
 
-  it("minimap defaults on (the caller decides the chrome)", async () => {
+  it("minimap defaults on: the zoom bar sits in its own ROW under the board, never over it", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;
     const c = mount({ source: FLOWCHART });
     await settle();
-    expect(c.querySelector(".hk-board-minimap")).not.toBeNull();
+    const toolbar = c.querySelector(".hk-mermaid__toolbar")!;
+    expect(toolbar.querySelector(".hk-mm-zoom-bar")).not.toBeNull();
+    // No overlay dock inside the stage: at fit zoom the board's own
+    // bottom-right dock covered the last node of every wide diagram.
+    const stage = c.querySelector(".hk-mermaid__stage")!;
+    expect(c.querySelector(".hk-board-minimap")).toBeNull();
+    expect(c.querySelector(".hk-board")!.closest(".hk-mermaid__stage")).toBe(stage);
+    // The bar FOLLOWS the stage in flow — it cannot cover anything.
+    expect(toolbar.parentElement).toBe(c.querySelector(".hk-mermaid"));
+    expect(toolbar.previousElementSibling).toBe(stage);
+  });
+
+  it("every arrow of a top-down flowchart ends along a vertical end tangent", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({
+      source: [
+        "flowchart TD",
+        "  A[markdown] --> B[pest parser]",
+        "  B --> C[AST]",
+        "  C -->|old lane| D[tairitsu VDom]",
+        "  C --> E[knowledge.json]",
+      ].join("\n"),
+    });
+    await settle();
+    const arrows = [...c.querySelectorAll<SVGPathElement>(".hk-board-edge[marker-end]")];
+    expect(arrows).toHaveLength(4);
+    for (const path of arrows) {
+      const d = path.getAttribute("d") ?? "";
+      const legs = d.match(/C [^C]+/g) ?? [];
+      const n = legs[legs.length - 1].slice(2).replace(/,/g, "").trim().split(/\s+/).map(Number);
+      // second control point of the last cubic, then the end point
+      expect(n[2], d).toBe(n[4]);
+      expect(n[3], d).toBeLessThan(n[5]);
+    }
+  });
+
+  it("edges and arrowheads carry the diagram ink, not the board's scene ink", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: "flowchart TD\nA --> B" });
+    await settle();
+    const ink = "rgb(var(--color-primary) / 62%)";
+    expect(c.querySelector("marker path")!.getAttribute("fill")).toBe(ink);
+    const path = c.querySelector<SVGPathElement>(".hk-board-edge")!;
+    expect(path.getAttribute("stroke")).toBe(ink);
+    expect(path.style.stroke).toBe(ink);
+  });
+
+  it("an edge that skips ranks is drawn THROUGH its lane (three legs, not one long curve)", async () => {
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: "flowchart TD\nT[top] --> A[rank 1]\nA --> B[rank 2]\nB --> C[rank 3]\nT --> C" });
+    await settle();
+    const paths = [...c.querySelectorAll<SVGPathElement>(".hk-board-edge")];
+    // the last edge declared (`T --> C`) spans three ranks
+    const skip = paths[paths.length - 1];
+    expect(skip.getAttribute("d")!.match(/C [^C]+/g)).toHaveLength(3);
+    // a direct edge is a single cubic
+    expect(paths[0].getAttribute("d")!.match(/C [^C]+/g)).toHaveLength(1);
+    // and the lane's cells were emitted as hidden board nodes (zero-size)
+    const inputs = (c.querySelector(".hk-board") as unknown as { __vueParentComponent?: { props: { nodes: Array<{ id: string; hidden?: boolean; w: number }> } } }).__vueParentComponent;
+    const lane = (inputs?.props.nodes ?? []).filter((n) => n.id.startsWith("j:e3:"));
+    expect(lane).toHaveLength(2);
+    for (const j of lane) {
+      expect(j.hidden).toBe(true);
+      expect(j.w).toBe(0);
+    }
   });
 
   it("sequence renders participant lanes and message labels", async () => {

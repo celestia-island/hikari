@@ -7,7 +7,9 @@
  *    snapping — an active pinch stays raw/continuous while the fingers
  *    move and only animates to the nearest rung on release;
  *  - wheel steps one rung per notch, anchored at the pointer;
- *  - pan is clamped against the content bbox (half-viewport slack);
+ *  - pan is clamped against the content bbox (half-viewport slack), and a
+ *    board may let content smaller than the viewport float instead of
+ *    re-centering (`smallContentPan: "keep"`);
  *  - reduced-motion (or `animated: false`) skips the tween and snaps.
  *
  * The component wires DOM events; this composable stays input-agnostic.
@@ -21,6 +23,7 @@ import {
   type BoardCamera,
   type BoardPoint,
   type BoardRect,
+  type BoardSmallContentPan,
   type BoardViewport,
   boardClampPan,
   boardFit,
@@ -52,6 +55,10 @@ export interface UseBoardCameraOptions {
    *  library's default cap (BOARD_FIT_CAP). Unset keeps the default; the
    *  camera clamp still honours maxK. */
   fitCap?: number;
+  /** What a drag does with content smaller than the viewport: `"center"`
+   *  (default) pins a fitted board, `"keep"` lets it be dragged while half
+   *  of it stays in view (see BoardSmallContentPan). */
+  smallContentPan?: BoardSmallContentPan;
 }
 
 export interface UseBoardCameraReturn {
@@ -90,6 +97,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
      *  viewport may want to fill it instead of parking at the library's
      *  default cap (BOARD_FIT_CAP). Unset keeps the default. */
     fitCap = undefined,
+    smallContentPan = "center",
   } = options;
 
   const camera = ref<BoardCamera>({ x: 0, y: 0, k: 1 });
@@ -119,7 +127,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
 
   const clampCam = (cam: BoardCamera): BoardCamera => {
     const k = Math.min(maxK, Math.max(kFloor, cam.k));
-    return boardClampPan({ ...cam, k }, contentRect(), viewport());
+    return boardClampPan({ ...cam, k }, contentRect(), viewport(), 0.5, smallContentPan);
   };
 
   function animateTo(target: BoardCamera): void {

@@ -82,3 +82,34 @@ describe("mermaid graph label width contract", () => {
     expect(diamond).toMatch(/max-width:\s*72%/);
   });
 });
+
+/**
+ * The zoom bar must live OUTSIDE the board's overflow-hidden viewport.
+ *
+ * The bar used to be HkBoard's bottom-right OVERLAY dock. At fit zoom the
+ * diagram fills the board edge to edge, so the dock sat on top of the last
+ * node of every wide diagram (docs.celestia.world 2026-11-27, the LR
+ * platform map — its final node half hidden). A row of its own cannot
+ * cover anything at any viewport size.
+ *
+ * MUT: the bar's `position` inside the toolbar row is load-bearing and the
+ * second pin reads it directly. `absolute` (with the base rule's corner
+ * insets neutralised to `auto`) would float the bar out of the row and
+ * over the board's corner; `static` would leave the slider pop nothing to
+ * anchor to. Both turn the `position: relative` assertion RED.
+ */
+describe("mermaid zoom bar placement contract", () => {
+  it("docks the bar in a flow row below the stage, aligned to the end edge", () => {
+    const css = compiled("HkMermaidDiagram.scss");
+    const toolbar = ruleFor(css, ".hk-mermaid__toolbar {");
+    expect(toolbar).toMatch(/display:\s*flex/);
+    expect(toolbar).toMatch(/justify-content:\s*flex-end/);
+  });
+
+  it("keeps the bar anchored to that row — neither self-docked nor dock-less", () => {
+    const css = compiled("HkMermaidDiagram.scss");
+    const bar = ruleFor(css, ".hk-mermaid__toolbar > .hk-minimap");
+    expect(bar).toMatch(/position:\s*relative/);
+    expect(bar).toMatch(/inset:\s*auto/);
+  });
+});

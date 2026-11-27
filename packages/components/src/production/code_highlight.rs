@@ -213,7 +213,9 @@ pub struct CodeHighlightProps {
     /// syntect pipeline) cannot hand this card plain text — doing so would
     /// throw the spans away. The card's job is the chrome (header slots,
     /// gutter, copy control); the token markup belongs to whoever can
-    /// highlight. Trusted markup only: it is injected as HTML.
+    /// highlight. Trusted markup only: it is injected as HTML. MUT:
+    /// preferring `code` over this renders the raw source and never passes
+    /// the SSR pin.
     pub code_html: Option<String>,
 
     #[default(true)]

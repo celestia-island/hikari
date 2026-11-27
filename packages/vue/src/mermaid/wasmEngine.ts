@@ -127,6 +127,7 @@ export function normalizeStateDiagram(source: string): string {
   // with the top-level one (merging is the defect this rewrite exists to
   // remove, and it reappears one level down if the id is global).
   let depth = 0;
+  let noteSeq = 0;
   for (const raw of source.split("\n")) {
     const line = raw.replace(/^\s*stateDiagram(-v\d+)?/, "graph TD");
 
@@ -147,6 +148,23 @@ export function normalizeStateDiagram(source: string): string {
     }
 
     const scope = depth > 0 ? `_${depth}` : "";
+
+    // `note right of X : text` / `note over X : text` / `note left of X`.
+    // A note is an ANNOTATION, and an unrecognised statement in a state
+    // diagram fails the WHOLE parse (the card falls back to a code block), so
+    // the line becomes a small note node joined to its subject by a dotted
+    // link — close to what mermaid draws, and never fatal.
+    const note = /^\s*note\s+(?:right\s+of|left\s+of|over|on)\s+([A-Za-z0-9_,\s]+?)\s*:\s*(.*)$/i.exec(line);
+    if (note) {
+      noteSeq += 1;
+      const text = note[2].trim().replace(/"/g, "'");
+      const subjects = note[1].split(",").map((t) => t.trim()).filter(Boolean);
+      out.push(`${note[0].match(/^\s*/)?.[0] ?? ""}__hk_note_${noteSeq}(["${text}"])`);
+      for (const subject of subjects) {
+        out.push(`${note[0].match(/^\s*/)?.[0] ?? ""}__hk_note_${noteSeq} -.-> ${subject}`);
+      }
+      continue;
+    }
     const START = `__hk_state_start${scope}`;
     const END = `__hk_state_end${scope}`;
     const rewritten = line

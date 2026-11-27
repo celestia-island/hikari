@@ -657,3 +657,53 @@ describe("flowchart routing — review round 2 pins", () => {
     }
   });
 });
+
+describe("node shape sizing", () => {
+  /** Build a one-node graph of `shape` and read back the laid-out box. */
+  const sizeOf = async (shape: string): Promise<{ w: number; h: number }> => {
+    await mermaidReady;
+    // The grammar takes the shape from BRACKET syntax (`A([text])`), not the
+    // `@{ shape: … }` attribute form mermaid also accepts, so this walks the
+    // bracket spellings.
+    const bracket: Record<string, string> = {
+      rect: "[same label]",
+      rounded: "(same label)",
+      diamond: "{same label}",
+      circle: "((same label))",
+      stadium: "([same label])",
+      subroutine: "[[same label]]",
+      cylinder: "[(same label)]",
+      hexagon: "{{same label}}",
+      parallelogram: "[/same label/]",
+      asymmetric: ">same label]",
+      doublecircle: "(((same label)))",
+    };
+    const doc = wasmMermaidEngine.parse(`flowchart TD\n  A${bracket[shape]}\n`);
+    expect(doc, `${shape} must parse`).not.toBeNull();
+    const model = buildBoardModel(doc as never, measure);
+    const n = model.nodes.find((x) => x.id === "n:A")!;
+    return { w: n.w, h: n.h };
+  };
+
+  it("gives the slanted/rounded outline family extra slack over a plain rect", async () => {
+    // The outline is drawn INSIDE the box, so a box sized for the label alone
+    // would clip it. MUT: folding these shapes back into the rect branch
+    // (the pre-wave default) turns this red.
+    const rect = await sizeOf("rect");
+    const wide = await sizeOf("hexagon");
+    expect(wide.w).toBeGreaterThan(rect.w);
+    expect(wide.h).toBeGreaterThan(rect.h);
+    // Every member of the slack family shares that floor.
+    for (const shape of ["stadium", "cylinder", "parallelogram", "doublecircle"]) {
+      const s = await sizeOf(shape);
+      expect(s.w, shape).toBeGreaterThan(rect.w);
+    }
+    // …while the plain boxes keep the roomier-but-tight default.
+    const rounded = await sizeOf("rounded");
+    expect(rounded.w).toBe(rect.w);
+    // The subroutine/asymmetric pair sits between the two.
+    const sub = await sizeOf("subroutine");
+    expect(sub.w).toBeGreaterThan(rect.w);
+    expect(sub.w).toBeLessThan(wide.w);
+  });
+});

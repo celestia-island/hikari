@@ -19,6 +19,23 @@ pub enum NodeShape {
     Rounded,
     Diamond,
     Circle,
+    /// `([text])` — pill/stadium.
+    Stadium,
+    /// `[[text]]` — subroutine (double side bars).
+    Subroutine,
+    /// `[(text)]` — cylinder/database.
+    Cylinder,
+    /// `{{text}}` — hexagon.
+    Hexagon,
+    /// `[/text/]` — parallelogram.
+    Parallelogram,
+    /// `[\\text\\]` — trapezoid (mermaid's alt form, `[\\text/]`).
+    Trapezoid,
+    /// `>text]` — asymmetric flag.
+    Asymmetric,
+    /// `(((text)))` — double circle.
+    #[serde(rename = "doublecircle")]
+    DoubleCircle,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -33,6 +50,10 @@ pub struct MermaidNode {
 pub enum EdgeType {
     Arrow,
     Line,
+    /// `-.->` — dashed arrow.
+    Dotted,
+    /// `==>` — thick arrow.
+    Thick,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

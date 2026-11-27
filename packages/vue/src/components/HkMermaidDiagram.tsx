@@ -65,6 +65,60 @@ function fallbackBlock(source: string): () => VNode {
   );
 }
 
+/** Outline painters for the shapes a CSS border cannot draw. Each returns
+ *  the SVG children for a `w × h` box: the label sits centred on top, so the
+ *  path only has to describe the BORDER. */
+const OUTLINE_SHAPES: Record<string, ((w: number, h: number) => VNode) | undefined> = {
+  // `([text])` — a pill: both ends fully round.
+  stadium: (w, h) => <rect x={0} y={0} width={w} height={h} rx={h / 2} ry={h / 2} />,
+  // `[[text]]` — a subroutine: the box plus two inset vertical bars.
+  subroutine: (w, h) => (
+    <>
+      <rect x={0} y={0} width={w} height={h} rx={2} ry={2} />
+      <line x1={6} y1={0} x2={6} y2={h} />
+      <line x1={w - 6} y1={0} x2={w - 6} y2={h} />
+    </>
+  ),
+  // `[(text)]` — a cylinder/database: rounded cap, flat body, elliptical lid.
+  cylinder: (w, h) => {
+    const r = Math.min(h * 0.22, w / 2);
+    return (
+      <>
+        <path d={`M 0 ${r} A ${w / 2} ${r} 0 0 1 ${w} ${r} L ${w} ${h - r} A ${w / 2} ${r} 0 0 1 0 ${h - r} Z`} />
+        <path d={`M 0 ${r} A ${w / 2} ${r} 0 0 0 ${w} ${r}`} fill="none" />
+      </>
+    );
+  },
+  // `{{text}}` — a hexagon: pointed left/right ends.
+  hexagon: (w, h) => {
+    const t = Math.min(w * 0.18, h * 0.5);
+    return <polygon points={`${t},0 ${w - t},0 ${w},${h / 2} ${w - t},${h} ${t},${h} 0,${h / 2}`} />;
+  },
+  // `[/text/]` — a parallelogram skewing right.
+  parallelogram: (w, h) => {
+    const t = Math.min(w * 0.16, 18);
+    return <polygon points={`${t},0 ${w},0 ${w - t},${h} 0,${h}`} />;
+  },
+  // `[\text\]` — a trapezoid narrowing downward.
+  trapezoid: (w, h) => {
+    const t = Math.min(w * 0.16, 18);
+    return <polygon points={`0,0 ${w},0 ${w - t},${h} ${t},${h}`} />;
+  },
+  // `>text]` — an asymmetric flag: flat left edge, notched right edge.
+  asymmetric: (w, h) => <polygon points={`0,0 ${w},0 ${w - Math.min(w * 0.14, 16)},${h / 2} ${w},${h} 0,${h}`} />,
+  // `(((text)))` — a double circle: the ring plus a concentric inner ring.
+  doublecircle: (w, h) => {
+    const rx = w / 2;
+    const ry = h / 2;
+    return (
+      <>
+        <ellipse cx={rx} cy={ry} rx={rx} ry={ry} />
+        <ellipse cx={rx} cy={ry} rx={Math.max(rx - 5, 2)} ry={Math.max(ry - 5, 2)} fill="none" />
+      </>
+    );
+  },
+};
+
 /** Per-kind node painters (the board `node` slot body). */
 function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
   const n = props.node;
@@ -98,6 +152,25 @@ function MermaidNodeBody(props: { node: BoardNodeInput }): VNode {
                 svg viewport (R7 finding 1). */}
             <svg class="hk-mmd-node__diamond" viewBox={`-1 -1 ${w + 2} ${h + 2}`} aria-hidden="true">
               <polygon points={pts} />
+            </svg>
+            <span class="hk-mmd-node__label">{label}</span>
+          </div>
+        );
+      }
+      // Every grammar shape gets its own painter. The outline-only family
+      // (stadium / subroutine / cylinder / hexagon / parallelogram /
+      // trapezoid / asymmetric / double circle) is drawn as an SVG STRIP
+      // behind the label rather than a CSS border: a skewed or double-bar
+      // outline cannot be a `border-radius`, and a polygon keeps the label
+      // box identical across shapes (the layout sized it already).
+      const outline = OUTLINE_SHAPES[shape];
+      if (outline) {
+        const w = n.w || 76;
+        const h = n.h || 44;
+        return (
+          <div class={`hk-mmd-node hk-mmd-node--${shape} hk-mmd-node--outline`}>
+            <svg class="hk-mmd-node__outline" viewBox={`-1 -1 ${w + 2} ${h + 2}`} preserveAspectRatio="none" aria-hidden="true">
+              {outline(w, h)}
             </svg>
             <span class="hk-mmd-node__label">{label}</span>
           </div>

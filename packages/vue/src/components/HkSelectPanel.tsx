@@ -3,6 +3,7 @@ import {
   defineComponent,
   nextTick,
   onBeforeUnmount,
+  onUpdated,
   ref,
   Teleport,
   watch,
@@ -432,10 +433,14 @@ export default defineComponent({
     // so nothing leaks across the panel's lifetime (the sheet Teleport
     // stays mounted through its leave transition).
     let panelScrollbar: OverlayScrollbarHandle | null = null;
+    /** Which viewport shape the rail is currently attached to ("sheet-list"
+     *  / "popout-body" / "panel"), or null when detached. */
+    let attachedShape: string | null = null;
 
     function detachPanelScrollbar(): void {
       panelScrollbar?.detach();
       panelScrollbar = null;
+      attachedShape = null;
     }
 
     function attachPanelScrollbar(): void {
@@ -452,6 +457,10 @@ export default defineComponent({
           ? popoutBodyRef.value
           : panelRef.value;
       if (!viewport) return;
+      // Remember WHICH shape the rail was attached to: the slot can flip
+      // on a live panel and `slots` are not reactive, so the re-attach is
+      // driven by onUpdated comparing against this (2026-11-27 R19).
+      attachedShape = sheetMode.value ? "sheet-list" : hasPinnedHeader() ? "popout-body" : "panel";
       panelScrollbar = attachOverlayScrollbars(viewport, {
         axis: "vertical",
         // Both surfaces get an exact host: the popout host (panel + tracks)
@@ -464,6 +473,26 @@ export default defineComponent({
             : popoutHostRef.value,
       });
     }
+
+    // A parent may forward the slot conditionally (HkCurrencySelect pins a
+    // search only while `searchable`), so the slot can flip on an ALREADY
+    // OPEN panel — and the flip swaps the scroll viewport's identity
+    // (body ⇄ bare panel). The rail binds to the viewport once per open
+    // (see attachPanelScrollbar), so without this watcher the flip leaves
+    // the surface scrolling with NO scrollbar at all (2026-11-27 R19,
+    // live-probed). Re-attach on the flip; the breakpoint crossing needs
+    // nothing here (that watcher closes the panel instead).
+    watch(
+      () => [props.open, hasPinnedHeader()] as const,
+      ([open, pinned], [prevOpen, prevPinned]) => {
+        if (!open || (open === prevOpen && pinned === prevPinned)) return;
+        void nextTick(() => {
+          if (!props.open) return;
+          attachPanelScrollbar();
+        });
+      },
+    );
+
 
     // ── sheet duplicate-title filter ───────────────────────────────
     // Composition-slot consumers often open a sheet whose content
@@ -579,6 +608,26 @@ export default defineComponent({
       // convention.
       { immediate: true },
     );
+
+    // The `pinnedHeader` slot can flip on an ALREADY OPEN panel (a parent
+    // like HkCurrencySelect pins its search only while `searchable`), and
+    // the flip swaps the scroll viewport's identity (body ⇄ bare panel).
+    // `slots` are NOT reactive, so a watcher on slot presence never fires;
+    // the component's own update is the reliable signal. Without this, the
+    // flip left the surface scrolling with no overlay scrollbar at all
+    // (2026-11-27 R19, live-probed).
+    onUpdated(() => {
+      if (!props.open) return;
+      const shape = sheetMode.value
+        ? "sheet-list"
+        : hasPinnedHeader()
+          ? "popout-body"
+          : "panel";
+      if (shape !== attachedShape) {
+        detachPanelScrollbar();
+        attachPanelScrollbar();
+      }
+    });
 
     onBeforeUnmount(() => {
       document.removeEventListener("click", onDocumentClick, true);

@@ -170,6 +170,81 @@ describe("HkSelectPanel pinnedHeader — desktop popout", () => {
     expect(document.body.querySelector(".hk-select-popout-host > .hk-scrollbar-track")).toBeTruthy();
   });
 
+  it("re-attaches the overlay rail when the pinned slot flips on a live panel (2026-11-27 R19)", async () => {
+    // HkCurrencySelect pins its search only while `searchable` — a parent
+    // can flip that WHILE the panel is open, and the flip swaps the scroll
+    // viewport's identity (body ⇄ bare panel). The rail binds once per
+    // open, so without a re-attach the surface scrolls with no scrollbar.
+    // Reactive-slot rig: the pinned prop flips on a LIVE open panel.
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const open = ref(false);
+    const pinned = ref(true);
+    const anchorEl = ref<HTMLElement | null>(null);
+    const wrapper = createApp({
+      setup() {
+        return () =>
+          h("div", [
+            h("button", {
+              ref: (el: Element | ComponentPublicInstance | null) => {
+                anchorEl.value = el as HTMLElement | null;
+              },
+              type: "button",
+              onClick: () => { open.value = !open.value; },
+            }),
+            h(
+              HkSelectPanel,
+              {
+                open: open.value,
+                "onUpdate:open": (v: boolean) => { open.value = v; },
+                anchorRef: anchorEl.value,
+                title: "Filters",
+              },
+              // Reactive slot presence (slots are the CHILDREN object, not
+              // props): the pinned band appears/disappears on the live panel.
+              pinned.value
+                ? {
+                    pinnedHeader: () => h("input", { class: "pin", type: "search" }),
+                    default: () => [h("div", { class: "row" }, "a"), h("div", { class: "row" }, "b")],
+                  }
+                : { default: () => [h("div", { class: "row" }, "a"), h("div", { class: "row" }, "b")] },
+            ),
+          ]);
+      },
+    });
+    wrapper.mount(host);
+    mounts.push(wrapper);
+    host.querySelector<HTMLButtonElement>("button")!.click();
+    await nextTick(); await nextTick();
+    expect(
+      document.body.querySelector(".hk-select-popout-body-host > .hk-scrollbar-track"),
+      "pinned shape: the rail hugs the body",
+    ).toBeTruthy();
+    // Flip the slot OFF on the live panel: the bare popout becomes the
+    // scroller, so the rail must move to the fixed host.
+    pinned.value = false;
+    await nextTick(); await nextTick();
+    console.log("PROBE after-flip bodyHost=", !!document.body.querySelector(".hk-select-popout-body-host"),
+      "trackAnywhere=", !!document.body.querySelector(".hk-scrollbar-track"),
+      "trackOnHost=", !!document.body.querySelector(".hk-select-popout-host > .hk-scrollbar-track"),
+      "panelCls=", JSON.stringify(document.body.querySelector(".hk-select-popout")?.className));
+    expect(
+      document.body.querySelector(".hk-select-popout-host > .hk-scrollbar-track"),
+      "header-less shape: the rail hugs the popout host",
+    ).toBeTruthy();
+    expect(
+      document.body.querySelector(".hk-select-popout-body-host"),
+      "the body wrapper is gone",
+    ).toBeNull();
+    // …and back ON: the rail returns to the body host.
+    pinned.value = true;
+    await nextTick(); await nextTick();
+    expect(
+      document.body.querySelector(".hk-select-popout-body-host > .hk-scrollbar-track"),
+      "the rail follows the flip back",
+    ).toBeTruthy();
+  });
+
   it("clicks inside the pinned band never dismiss the popout (it is inside the surface)", async () => {
     const { container, open } = mountPanel();
     await openPanel(container);

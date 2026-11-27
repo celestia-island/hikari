@@ -577,6 +577,20 @@ export type { HkScrollProgressHandle, HkScrollProgressRegistrar } from "./compon
 // The change-mark rail's public vocabulary: HkScrollContainer's `markers`
 // prop is typed with it, so consumers can name what they pass.
 export type { OverlayScrollMapSegment, OverlayScrollbarMarker } from "./composables/useOverlayScrollbar";
+// The overlay scrollbar ENGINE itself, not just its vocabulary. Every
+// scroll region in the family must render the SAME bar; without this
+// export a host that owns a plain `overflow:auto` box (a results list, a
+// side pane) could only choose between a native bar and a hand-rolled
+// one — and shittim-chest's kit copy (a stale 332-line fork of this
+// 694-line module) is exactly that cost, paid. Consumers still hide the
+// native bar themselves (the module doc's two-liner); this only attaches
+// the shared chrome.
+export {
+  attachOverlayScrollbars,
+  type OverlayScrollbarAxis,
+  type OverlayScrollbarHandle,
+  type OverlayScrollbarOptions,
+} from "./composables/useOverlayScrollbar";
 export { useDeferredTransition } from "./composables/useDeferredTransition";
 export { useSurfaceTransition } from "./composables/useSurfaceTransition";
 export { useSizeMorph } from "./composables/useSizeMorph";

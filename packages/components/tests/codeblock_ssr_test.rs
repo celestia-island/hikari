@@ -103,3 +103,32 @@ fn the_header_slots_render_through_ssr() {
         "icon copy button missing: {html}"
     );
 }
+
+/// A host with its own highlighter keeps ITS spans: pre-highlighted markup
+/// wins over the plain-text path, and the card still owns the chrome.
+///
+/// MUT: preferring `code` over `code_html` (or dropping the branch) renders
+/// the raw source and loses every token span.
+#[test]
+fn pre_highlighted_markup_wins_over_plain_text() {
+    let html = render(CodeHighlight(CodeHighlightProps {
+        language: "rust".to_string(),
+        code: "fn main() {}".to_string(),
+        code_html: Some(
+            "<span class=\"tok-kw\">fn</span> <span class=\"tok-fn\">main</span>".to_string(),
+        ),
+        copy_as_icon: true,
+        ..Default::default()
+    }));
+    assert!(html.contains("tok-kw"), "highlight spans dropped: {html}");
+    assert!(html.contains("tok-fn"), "highlight spans dropped: {html}");
+    // The card's own chrome is still there.
+    assert!(
+        html.contains("hk-code-highlight-header"),
+        "chrome lost: {html}"
+    );
+    assert!(
+        html.contains("hk-code-highlight-line-numbers"),
+        "gutter lost: {html}"
+    );
+}

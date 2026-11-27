@@ -207,6 +207,15 @@ pub struct CodeHighlightProps {
     #[default("".to_string())]
     pub code: String,
 
+    /// ALREADY-HIGHLIGHTED source markup, which wins over [`Self::code`].
+    ///
+    /// A host that highlights on the SERVER (lagrange's docs renderer owns a
+    /// syntect pipeline) cannot hand this card plain text — doing so would
+    /// throw the spans away. The card's job is the chrome (header slots,
+    /// gutter, copy control); the token markup belongs to whoever can
+    /// highlight. Trusted markup only: it is injected as HTML.
+    pub code_html: Option<String>,
+
     #[default(true)]
     pub line_numbers: bool,
 
@@ -285,6 +294,9 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     // this markup to avoid it). A distinct name plus an explicit text node
     // keeps the source where it belongs.
     let code_text = props.code.clone();
+    // Pre-highlighted markup wins: a host with its own highlighter keeps its
+    // spans instead of losing them to this card's plain-text path.
+    let code_html = props.code_html.clone();
     let language = props.language.clone();
 
     // The copy control's face is CONSTANT (user direction 2026-11-11: a
@@ -433,7 +445,11 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
                     class: code_classes,
                     code {
                         class: language_class.clone(),
-                        {code_text.clone()}
+                        if let Some(html) = &code_html {
+                            {VNode::Element(Box::new(VElement::new("span").dangerous_inner_html(html)))}
+                        } else {
+                            {code_text.clone()}
+                        }
                     }
                 }
             }

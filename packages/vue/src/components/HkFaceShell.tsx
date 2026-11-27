@@ -314,9 +314,11 @@ export const HkFaceShell = defineComponent({
      *  value (e.g. `"var(--s-footer-height)"`). */
     footerHeight: { type: String, default: undefined },
     navTitle: { type: String, default: undefined },
-    /** Extra class for the mobile nav drawer's panel — lets consumers zero
-     *  nested paddings so drawer nav rows and a `userPanel` footer share
-     *  one left edge. */
+    /** Extra class for the mobile nav drawer's panel — a scoping hook for
+     *  consumer chrome (theme/surface overrides). It is NOT a padding
+     *  lever any more: the shell zeroes the drawer body's padding itself
+     *  so the nav panel fills the drawer (see the HDrawer call below), so
+     *  nav rows and the `userPanel` footer already share one left edge. */
     drawerPanelClass: { type: String, default: undefined },
     /** Content host mode (see the component doc): `document` wraps the
      *  content in the shell's scroll viewport + padding wrapper;
@@ -719,6 +721,16 @@ export const HkFaceShell = defineComponent({
               size="280px"
               title={props.navTitle ?? t("hikari::adminShell.navTitle", "Navigation")}
               panelClass={props.drawerPanelClass}
+              // NO BODY PADDING. The slot below is a nav PANEL, not prose:
+              // every consumer fills it (`width={inDrawer ? "100%" : …}`) and
+              // the panel brings its own paddings. HDrawer's 1rem body
+              // padding would inset that panel — and its overlay scroll rail,
+              // which rides the panel's own edge — leaving the rail floating
+              // ~20px inside the drawer instead of hugging it (2026-11-27
+              // field report, phone screenshot: "侧边栏的滚动条没贴边").
+              // Measured on the docs hub before/after: rail right edge 260 vs
+              // panel 280 (20px gap) → 276 (4px, the engine's standard inset).
+              padding="none"
             >
               {/* The drawer body carries the nav; a `userPanel` slot rides
                   the drawer footer (identity + account actions) so mobile

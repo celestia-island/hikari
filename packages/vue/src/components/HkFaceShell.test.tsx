@@ -7,6 +7,12 @@ import { createApp, defineComponent, h, inject, nextTick, type VNode } from "vue
 // HDrawer teleports and animates; replace it with an inline passthrough
 // (same stub shape as HkAdminShell.test.tsx) so the shell contract is
 // testable without the overlay runtime.
+/** Records what the shell hands its mobile drawer. `padding` is the
+ *  contract this file pins: a nav PANEL brings its own paddings, so the
+ *  drawer body must add none (a 1rem body padding insets the panel and the
+ *  overlay scroll rail that rides its edge — the 2026-11-27 field report). */
+const drawerState = vi.hoisted(() => ({ padding: "unset" as string | undefined }));
+
 vi.mock("@celestia-island/hikari", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@celestia-island/hikari")>();
   const { defineComponent, h } = await import("vue");
@@ -18,16 +24,30 @@ vi.mock("@celestia-island/hikari", async (importOriginal) => {
       size: { type: String, default: "280px" },
       title: { type: String, default: undefined },
       panelClass: { type: String, default: undefined },
+      padding: { type: String, default: undefined },
     },
     setup(props, { slots }) {
       return () =>
         props.modelValue
-          ? h("div", { class: ["drawer-stub", props.panelClass] }, [
-              h("div", { class: "drawer-stub-body" }, slots.default?.()),
+          ? ((drawerState.padding = props.padding),
+            h("div", { class: ["drawer-stub", props.panelClass] }, [
+              h(
+                "div",
+                {
+                  class: "drawer-stub-body",
+                  // The real HDrawer maps `padding` onto `--hk-pad` on the
+                  // panel (runtime/containerPad) and the body consumes it.
+                  // The stub renders that token on the body so the shell's
+                  // obligation ("this drawer ends up unpadded") is observable
+                  // without a CSS engine.
+                  style: drawerState.padding === "none" ? { "--hk-pad": "0" } : undefined,
+                },
+                slots.default?.(),
+              ),
               slots.footer
                 ? h("div", { class: "drawer-stub-footer" }, slots.footer())
                 : null,
-            ])
+            ]))
           : null;
     },
   });
@@ -336,5 +356,81 @@ describe("the contentMode attrs leak (R2 S2)", () => {
       'contentMode: { type: String as PropType<"document" | "stage">, default: "document" }',
     );
     expect(src, "and forwarded honestly").toContain("contentMode: props.contentMode,");
+  });
+});
+
+/**
+ * The MOBILE DRAWER host contract (2026-11-27 field report, phone
+ * screenshot: "侧边栏的滚动条没贴边" — the nav panel's scroll rail floated
+ * ~20px inside the drawer instead of hugging its edge).
+ *
+ * Root cause, measured on the docs hub: HkFaceShell handed HDrawer no
+ * `padding`, so the drawer body carried its 1rem default; the nav panel
+ * (which every consumer fills with `inDrawer ? "100%" : …`) was inset to
+ * the content box, and the shared overlay rail — attached to the panel's
+ * body band — rode the PANEL's edge, not the drawer's. Zeroing the drawer
+ * body's padding makes the panel fill it: rail right edge moved 260 → 276
+ * against a 280px panel (the engine's own 4px inset).
+ *
+ * MUT: dropping `padding="none"` from the shell's HDrawer turns this RED.
+ */
+describe("mobile drawer: the nav panel fills it", () => {
+  it("passes padding=none so the panel (and its scroll rail) reaches the drawer edge", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: 400 });
+    try {
+      let openDrawer: (() => void) | null = null;
+      let drawerSidebarParams: Record<string, unknown> | null = null;
+      drawerState.padding = "unset";
+      const c = mount(
+        h(
+          HkFaceShell,
+          { navTitle: "Navigation" },
+          {
+            header: (params: Record<string, unknown>) => {
+              openDrawer = params.onOpenDrawer as () => void;
+              return null;
+            },
+            content: CONTENT,
+            sidebar: (params: Record<string, unknown>) => {
+              drawerSidebarParams = params;
+              return h("div", { class: "nav-panel" }, "NAV");
+            },
+          },
+        ),
+      );
+      // Below the desktop breakpoint the shell renders the drawer host; it
+      // mounts closed, so open it the way the hamburger does.
+      expect(typeof openDrawer, "the shell must hand the header a drawer opener").toBe("function");
+      (openDrawer as unknown as () => void)();
+      await nextTick();
+      await nextTick();
+
+      const stub = c.ownerDocument.querySelector(".drawer-stub");
+      expect(stub, "the drawer opens below the breakpoint").not.toBeNull();
+      // THE contract: no body padding, so the panel fills the drawer.
+      expect(drawerState.padding).toBe("none");
+      // …and the panel is told it is in the drawer, which is what makes the
+      // consumers render `width: 100%`. Both halves must hold: padding alone
+      // would shrink a panel that still sizes itself to a fixed width.
+      expect(drawerSidebarParams).not.toBeNull();
+      expect(drawerSidebarParams!.inDrawer).toBe(true);
+      expect(drawerSidebarParams!.collapsed).toBe(false);
+      expect(stub!.querySelector(".nav-panel")).not.toBeNull();
+      // SECOND, INDEPENDENT guard: the DRAWER BODY must end up with no
+      // padding, asserted through the container-padding TOKEN the stub
+      // renders — not through the source text. Two earlier forms were
+      // rejected by review for the right reasons: a fixed window was passed
+      // by an unrelated `padding="none"` 1000+ chars away, and an anchored
+      // source slice could be satisfied by a COMMENT (`/* padding="none"
+      // retired above */`) while the prop was gone. Reading the rendered
+      // token has neither hole, and it is refactor-proof: a props-constant
+      // spread that still passes the prop keeps the token at 0.
+      const stubBody = stub!.querySelector<HTMLElement>(".drawer-stub-body");
+      expect(stubBody, "the drawer body renders").not.toBeNull();
+      expect(stubBody!.style.getPropertyValue("--hk-pad").trim()).toBe("0");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, writable: true, value: originalWidth });
+    }
   });
 });

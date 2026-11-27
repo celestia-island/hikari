@@ -142,6 +142,7 @@ describe("isAnimationParked", () => {
  *  out of a tick callback where nothing can catch it. `halt()` used to call
  *  `cancelAnimationFrame` bare, so a transition report's own timeout threw
  *  `ReferenceError: cancelAnimationFrame is not defined` (2026-11-27, seen
+ *  MUT:frameless-halt-guard
  *  as an unhandled exception in a full-suite run). */
 describe("animationBus without a frame source", () => {
   it("a report timeout that lands after rAF disappeared does not throw", () => {

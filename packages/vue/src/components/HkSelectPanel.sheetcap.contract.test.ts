@@ -9,7 +9,8 @@
  *     (`--hk-select-panel-max-height`) used to land here and squashed every
  *     picker sheet to under half the phone;
  *   - the panel stops scroll chaining (`overscroll-behavior: contain`), so a
- *     swipe on the grabber / title / pinned band never drags the page behind;
+ *     swipe on the grabber / title / pinned band does not drag the page
+ *     behind; MUT:sheet-overscroll-contain
  *   - the pinned band and the popout's closed header-bearing shape exist.
  */
 import { describe, expect, it } from "vitest";
@@ -56,10 +57,10 @@ describe("HkSelectPanel mobile sheet height contract", () => {
     expect(pinned).toContain("flex: none");
     expect(pinned).toContain("var(--space-16)");
     // A column flex container, matching the popout band's box model. Kept
-    // for consistency across the two bands, NOT because a block band was
+    // for consistency across the two bands, not because a block band was
     // shown to collapse: R23 measured a block band identically in real
     // Chromium (see the rule's own comment), so this pin guards the steady
-    // state, not a fixed defect.
+    // state rather than a fixed defect. MUT:sheet-band-box-model
     expect(pinned).toContain("display: flex");
     expect(pinned).toContain("flex-direction: column");
     expect(pinned).not.toMatch(/overflow|flex:\s*1/);
@@ -72,9 +73,10 @@ describe("HkSelectPanel desktop popout — header-bearing shape", () => {
     expect(block("&.is-pinned-header")).toContain("overflow: hidden");
     expect(block(".hk-select-popout-pinned")).toContain("flex: none");
     // The wrapper must FILL the leftover column (`flex: 1`): without it the
-    // wrapper sizes to content, the body's `flex: 1; min-height: 0` never
-    // engages, and a long catalog overflows the capped panel instead of
+    // wrapper sizes to content, the body's `flex: 1; min-height: 0` does not
+    // engage, and a long catalog overflows the capped panel instead of
     // scrolling (2026-11-27 R14 — the deletion survived the whole suite).
+    // MUT:body-host-flex-fill
     expect(block(".hk-select-popout-body-host")).toContain("flex: 1");
     expect(block(".hk-select-popout-body-host")).toContain("position: relative");
     const body = block(".hk-select-popout-body");

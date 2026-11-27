@@ -4,8 +4,9 @@
  * waterfalls — runs its add / remove / reorder through HkListTransition so
  * the choreography, the bus reporting and the reduced-motion collapse are
  * written once). Pinned: the flow IS a transition host with the move track
- * armed (never the disabled class), items are its keyed children, and the
+ * armed (not the disabled class), items are its keyed children, and the
  * selection check / multi semantics are unchanged.
+ * MUT:waterfall-adopts-primitive
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { createApp, h, nextTick, ref } from "vue";

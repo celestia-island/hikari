@@ -554,7 +554,8 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     const { container } = mountPicker({ mode: "multi", selected: ["us", "cn"] });
     await openPopup(container);
     // Catalog order cn < jp < us: the selected run keeps it (cn, us), the
-    // rest keeps it too (cn-main, jp) — never selection order.
+    // rest keeps it too (cn-main, jp) — not selection order.
+    // MUT:affix-rank-selection-order
     expect(rowLabels()).toEqual(["China", "United States", "中华人民共和国", "Japan"]);
     const d = divider();
     expect(d, "the boundary divider renders").toBeTruthy();
@@ -608,11 +609,12 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     // Two different facts. The FIRST is a real boundary case: no selected
     // run at all, so there is no boundary to draw.
     //
-    // The "everything checked" half is NOT a divider case and is not claimed
-    // as one: `rowNodes` only inserts at `index === selectedRunLength`, and
-    // an index never reaches `rows.length`, so the `run < rows.length` clause
-    // is unreachable by construction (recorded as S3 in the 2026-11-27 R3
-    // round — kept as belt, not as a covered branch). What this half DOES
+    // The "everything checked" half is not a divider case and is not claimed
+    // as one: `rowNodes` only inserts at `index === selectedRunLength`, and an
+    // index cannot reach `rows.length`, so the `run < rows.length` clause is
+    // unreachable by construction (recorded as S3 in the 2026-11-27 R3 round —
+    // kept as belt, not as a covered branch). What this half DOES
+    // MUT:affix-divider-guard
     // pin is the ranking under a full selection: with all four keys selected
     // the order must still be the catalog's, not selection order.
     const none = mountPicker({ mode: "multi", selected: [] });
@@ -691,16 +693,16 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     expect(events.select).toEqual([]);
     expect(events.remove).toEqual([]);
     // NON-empty query matching an already-selected option: Enter adds the
-    // first row the query can still ADD (the unchecked China), never
-    // un-checks the row the user is looking at.
+    // first row the query can still ADD (the unchecked China) rather than
+    // un-checking the row the user is looking at. MUT:affix-enter-addable
     await typeQuery("8");
     await pressEnter();
     expect(events.remove).toEqual([]);
     expect(events.select).toEqual(["cn"]);
     // The selection advanced through the ADD path.
     expect(selected.value).toEqual(["jp", "cn"]);
-    // A query matching ONLY selected options: nothing addable → no-op
-    // (the custom row is hidden by the exact match, so Enter does nothing).
+    // A query matching only selected options: nothing addable → no-op (the
+    // custom row is hidden by the exact match). MUT:affix-enter-addable
     selected.value = ["cn", "jp", "us"];
     events.select.length = 0;
     await typeQuery("united");
@@ -874,9 +876,9 @@ describe("HkAffixPicker badge capsule", () => {
 
   it("options without a badge render no badge nodes", async () => {
     // MULTI + tag layout on purpose (R2: single mode and the rows layout
-    // never render tags, so a `.hk-affix-tag-badge` assertion there is
-    // vacuous): both surfaces — remaining rows AND selected tags — must
-    // stay badge-free for a badge-less option.
+    // render no tags, so a `.hk-affix-tag-badge` assertion there is vacuous):
+    // both surfaces — remaining rows AND selected tags — must stay badge-free
+    // for a badge-less option. MUT:affix-badge-capsule
     const { container } = mountPicker({
       options: BADGED,
       mode: "multi",

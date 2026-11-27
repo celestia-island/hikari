@@ -1,7 +1,8 @@
 /**
  * HkSelectPanel's TWO content bands (2026-11-27 user direction): the
- * `pinnedHeader` slot is chrome that never scrolls — a picker's live-filter
- * search field — and renders OUTSIDE the surface's scroll region on both
+ * `pinnedHeader` slot is chrome outside the scroll region — a picker's
+ * live-filter search field — rendered OUTSIDE that region on both
+ * MUT:pinned-band-outside-scroll
  * form factors. Before the slot every picker painted its search INSIDE the
  * scrolling content, so the first swipe down scrolled the filter off the
  * sheet. Pinned here at the DOM level, both shapes:
@@ -16,9 +17,10 @@
  *                      .hk-select-sheet-body > .hk-select-sheet-list { default }
  *
  * plus the second half of the same report: the `maxHeight` cap is a DESKTOP
- * POPOUT measure and never reaches the sheet (it squashed every picker
- * sheet to under half the phone), and a header-less panel renders the exact
+ * POPOUT measure and stays out of the sheet (it squashed every picker sheet
+ * to under half the phone), and a header-less panel renders the exact
  * pre-slot DOM (no wrapper, the popout itself scrolls).
+ * MUT:pinned-cap-popout-only
  */
 import { afterEach, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";

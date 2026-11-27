@@ -203,7 +203,8 @@ describe("HkListTransition duration props", () => {
     // as seconds (300 ms → 0.3 ms) left the entire suite — and the 2026-11-27
     // R15 mutation actually applied to HkListTransition.tsx — green, while
     // every `300ms` host got its choreography report cut to a rounding
-    // error. Assert the ARITHMETIC through the bus window (4000, never 2040)
+    // error. Assert the ARITHMETIC through the bus window (4000, not 2040).
+    // MUT:list-ms-unit
     // so the unit branch cannot drift back.
     const bus = await import("../runtime/animationBus");
     const spy = vi.spyOn(bus, "reportTransition");

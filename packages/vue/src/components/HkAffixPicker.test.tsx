@@ -641,6 +641,18 @@ describe("HkAffixPicker rows layout (multi default)", () => {
     await pressEnter();
     expect(events.select).toEqual([]);
     expect(events.remove).toEqual([]);
+    // A WHITESPACE-ONLY query is the same no-op: Vue judges emptiness on
+    // the TRIMMED query (`const q = query.value.trim()`), so a blank-feeling
+    // field must not commit the checked row sitting at the top of the
+    // ranked list (2026-11-27 R12 — the mirror pins the same rule through
+    // `affix_query_present`).
+    const input2 = searchInput();
+    input2.value = "   ";
+    input2.dispatchEvent(new Event("input", { bubbles: true }));
+    await nextTick();
+    await pressEnter();
+    expect(events.select).toEqual([]);
+    expect(events.remove).toEqual([]);
     // NON-empty query matching an already-selected option: Enter adds the
     // first row the query can still ADD (the unchecked China), never
     // un-checks the row the user is looking at.

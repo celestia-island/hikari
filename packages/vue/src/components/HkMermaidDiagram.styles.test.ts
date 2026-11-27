@@ -62,9 +62,11 @@ describe("mermaid cluster frame stylesheet contract", () => {
  * `HT…`; measured on docs.celestia.world, 10 of 11 labels clipped, and all
  * 11 clean once the cap was lifted at runtime).
  *
- * The diamond keeps its cap on purpose: its label band is inscribed in the
- * rhombus waist, which is narrower than the node's reserved box — that is
- * the shape the percentage was written for.
+ * The diamond keeps its cap: its label band is inscribed in the rhombus
+ * waist, which is ALREADY narrower than the cap band (waist ≈ 0.675·box vs
+ * band 0.72·box), so the cap is latent — it neither binds the label nor
+ * protects the waist today, and is kept only as a guard for a future change
+ * of the diamond's sizing slope.
  *
  * MUT: restoring `max-width: 72%` on the base label rule turns this RED.
  */

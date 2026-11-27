@@ -93,7 +93,8 @@
 
   // Diamond: a true rhombus SVG polygon (see the node slot painter) —
   // the layout reserved a wide-short box (horizontal diagonal = width)
-  // so the inscribed label band fits inside the rhombus waist.
+  // so the inscribed label band fits inside the rhombus waist. THIS is the
+  // one shape whose label must stay narrower than its box.
   &--diamond {
     position: relative;
     border: none;
@@ -117,13 +118,26 @@
   &__label {
     position: relative;
     z-index: 1;
-    max-width: 72%;
+    // The layout sizes a node FROM its label (`labelWidth + 2 * NODE_PAD_X`
+    // in mermaid/layout.ts), so the box is exactly big enough for the text
+    // and a percentage cap can only ever CLIP it. The old 72% hit every
+    // shape: measured on docs.celestia.world 2026-11-27, all 11 labels of a
+    // real diagram ellipsized ("markdown" → "markd…", "HTML" → "HT…"), and
+    // on a phone-width docs page every node read as a fragment. 100% keeps
+    // the ellipsis as a last resort while letting the sized box do its job.
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     // 1.3: the descender-clipping contract floor for clipped line boxes
     // (textClip.contract.test.ts) — 1.25 cuts g/j/p/q/y ink.
     line-height: 1.3;
+  }
+
+  // The ONE shape whose label band is narrower than its reserved box: the
+  // rhombus waist. Base labels take 100% (see above).
+  &--diamond &__label {
+    max-width: 72%;
   }
 }
 

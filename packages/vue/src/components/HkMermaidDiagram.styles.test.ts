@@ -50,3 +50,33 @@ describe("mermaid cluster frame stylesheet contract", () => {
     expect(ruleFor(css, ".hk-mmd-group__label")).toMatch(/position:\s*absolute/);
   });
 });
+
+/**
+ * Graph node labels must be allowed the width the LAYOUT already gave them.
+ *
+ * `mermaid/layout.ts` sizes a node from its own text
+ * (`labelWidth + 2 * NODE_PAD_X`), so the box is exactly big enough for the
+ * label. A percentage cap on the label can therefore only ever CLIP it —
+ * and one did: `max-width: 72%` ellipsized every graph label, which is what
+ * a real docs page showed on 2026-11-27 (`markdown` → `markd…`, `HTML` →
+ * `HT…`; measured on docs.celestia.world, 10 of 11 labels clipped, and all
+ * 11 clean once the cap was lifted at runtime).
+ *
+ * The diamond keeps its cap on purpose: its label band is inscribed in the
+ * rhombus waist, which is narrower than the node's reserved box — that is
+ * the shape the percentage was written for.
+ *
+ * MUT: restoring `max-width: 72%` on the base label rule turns this RED.
+ */
+describe("mermaid graph label width contract", () => {
+  it("lets rect/rounded/circle labels use the box the layout sized for them", () => {
+    const css = compiled("HkMermaidDiagram.scss");
+    expect(ruleFor(css, ".hk-mmd-node__label")).toMatch(/max-width:\s*100%/);
+  });
+
+  it("keeps the narrow band for the diamond waist", () => {
+    const css = compiled("HkMermaidDiagram.scss");
+    const diamond = ruleFor(css, ".hk-mmd-node--diamond .hk-mmd-node__label");
+    expect(diamond).toMatch(/max-width:\s*72%/);
+  });
+});

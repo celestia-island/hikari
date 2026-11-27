@@ -115,4 +115,36 @@ describe("stateDiagram", () => {
     expect(doc).not.toBeNull();
     expect(doc!.kind).toBe("graph");
   });
+
+  /// `[*]` is two DIFFERENT pseudostates (initial and final). The old blanket
+  /// replace mapped both to one literal node, so the layout merged them into a
+  /// single labelled box with every edge pointing at it.
+  /// MUT: collapsing either rewrite back to one id never passes — the two
+  /// circle assertions below catch it.
+  it("keeps the initial and final pseudostates apart, as circles", async () => {
+    await mermaidReady;
+    const doc = wasmMermaidEngine.parse("stateDiagram-v2\n  [*] --> Idle\n  Idle --> Running\n  Running --> [*]");
+    expect(doc).not.toBeNull();
+    const g = doc as unknown as { nodes: Array<{ id: string; label: string; shape: string }>; edges: Array<{ source: string; target: string }> };
+    const circles = g.nodes.filter((n) => n.shape === "circle");
+    expect(circles.length, "one circle for the start and one for the end").toBe(2);
+    expect(new Set(circles.map((n) => n.id)).size).toBe(2);
+    // The pseudostates carry no text (mermaid draws a bare circle).
+    for (const c of circles) expect(c.label).toBe("");
+    // …and they are NOT the same node the transitions run through.
+    const ids = g.nodes.map((n) => n.id);
+    expect(ids).toContain("Idle");
+    expect(ids).toContain("Running");
+    // The start has no incoming edge; the end has no outgoing edge.
+    const sources = g.edges.map((e) => e.source);
+    const targets = g.edges.map((e) => e.target);
+    const [start, end] = [circles[0].id, circles[1].id].sort();
+    void start;
+    void end;
+    const startNode = circles.find((c) => !targets.includes(c.id));
+    const endNode = circles.find((c) => !sources.includes(c.id));
+    expect(startNode, "a start pseudostate with no incoming edge").toBeTruthy();
+    expect(endNode, "an end pseudostate with no outgoing edge").toBeTruthy();
+    expect(startNode!.id).not.toBe(endNode!.id);
+  });
 });

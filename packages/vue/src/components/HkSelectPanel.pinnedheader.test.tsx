@@ -224,10 +224,7 @@ describe("HkSelectPanel pinnedHeader — desktop popout", () => {
     // scroller, so the rail must move to the fixed host.
     pinned.value = false;
     await nextTick(); await nextTick();
-    console.log("PROBE after-flip bodyHost=", !!document.body.querySelector(".hk-select-popout-body-host"),
-      "trackAnywhere=", !!document.body.querySelector(".hk-scrollbar-track"),
-      "trackOnHost=", !!document.body.querySelector(".hk-select-popout-host > .hk-scrollbar-track"),
-      "panelCls=", JSON.stringify(document.body.querySelector(".hk-select-popout")?.className));
+
     expect(
       document.body.querySelector(".hk-select-popout-host > .hk-scrollbar-track"),
       "header-less shape: the rail hugs the popout host",

@@ -474,25 +474,20 @@ export default defineComponent({
       });
     }
 
-    // A parent may forward the slot conditionally (HkCurrencySelect pins a
-    // search only while `searchable`), so the slot can flip on an ALREADY
-    // OPEN panel — and the flip swaps the scroll viewport's identity
-    // (body ⇄ bare panel). The rail binds to the viewport once per open
-    // (see attachPanelScrollbar), so without this watcher the flip leaves
-    // the surface scrolling with NO scrollbar at all (2026-11-27 R19,
-    // live-probed). Re-attach on the flip; the breakpoint crossing needs
-    // nothing here (that watcher closes the panel instead).
+    // A retitled open sheet must re-judge its duplicate heading — the
+    // exact-text match lives against the CURRENT title, so the filter
+    // restores a heading that stopped matching (and re-hides one that
+    // started, via the observer's characterData window below).
     watch(
-      () => [props.open, hasPinnedHeader()] as const,
-      ([open, pinned], [prevOpen, prevPinned]) => {
-        if (!open || (open === prevOpen && pinned === prevPinned)) return;
-        void nextTick(() => {
-          if (!props.open) return;
-          attachPanelScrollbar();
-        });
+      () => props.title,
+      (newTitle) => {
+        // A retitled open panel re-labels its breadcrumb layer.
+        if (handle.value && newTitle) {
+          manager.setTitle(handle.value.id, newTitle);
+        }
+        if (props.open && sheetMode.value) syncDupTitle();
       },
     );
-
 
     // ── sheet duplicate-title filter ───────────────────────────────
     // Composition-slot consumers often open a sheet whose content

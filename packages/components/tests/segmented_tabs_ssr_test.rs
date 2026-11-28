@@ -93,6 +93,31 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
         "exactly one unchecked: {html}"
     );
     assert!(!html.contains("aria-checked=\"aria-checked\""), "{html}");
+    // Every trigger is an explicit submit-proof button (`type="button"`, the
+    // literal the Vue render emits) — never the RSX raw identifier `r#type`,
+    // which leaks into the emitted markup as the attribute NAME `r#type`.
+    // The match is BOUNDARY-anchored on purpose: a plain
+    // `matches("type=\"button\"")` is satisfied by the SUBSTRING inside
+    // `r#type="button"`, so it would stay green through exactly the defect
+    // it claims to guard.
+    assert!(
+        !html.contains("r#type"),
+        "raw identifier leaked into the markup: {html}"
+    );
+    let typed = html
+        .match_indices("type=\"button\"")
+        .filter(|(at, _)| {
+            !html[..*at].ends_with("r#")
+                && (html.as_bytes()[*at - 1] == b' '
+                    || html.as_bytes()[*at - 1] == b'\t'
+                    || html.as_bytes()[*at - 1] == b'\n')
+        })
+        .count();
+    assert_eq!(
+        typed, 2,
+        "every trigger must carry its own type=\"button\" (not just the \
+         r#type substring): {html}"
+    );
     assert!(
         html.matches("data-active").count() == 1,
         "exactly one active trigger: {html}"

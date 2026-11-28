@@ -1,10 +1,17 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  BEIAN_TAG_ID,
   GA_TAG_ID,
   isValidGaMeasurementId,
   parseBeianLines,
+  readBeianLines,
   readGaMeasurementId,
+  readSiteMeta,
 } from "./siteMeta";
 
 // MUT:site-meta-ga-tag-id — renaming the boot-tag id would silently detach
@@ -151,5 +158,106 @@ describe("parseBeianLines (erp sanitize_beian_lines semantics)", () => {
 
   it("drops entries whose url is a non-string JSON value (erp Some(_) => None)", () => {
     expect(parseBeianLines('[{"title":"ok","url":42}]')).toEqual([]);
+  });
+});
+
+// MUT:site-meta-beian-tag-read — the beian boot tag is a SECOND injection
+// channel (build-time hosts); deleting its reader while keeping
+// parseBeianLines green would silently empty every static site's footer.
+describe("readBeianLines", () => {
+  const docWith = (id: string, text: string): Document => {
+    const doc = document.implementation.createHTMLDocument("t");
+    const tag = doc.createElement("script");
+    tag.type = "application/json";
+    tag.id = id;
+    tag.textContent = text;
+    doc.head.appendChild(tag);
+    return doc;
+  };
+
+  it("reads and sanitizes the tag payload", () => {
+    const doc = docWith(
+      BEIAN_TAG_ID,
+      JSON.stringify([{ title: "京ICP备00000000号-1", url: "https://beian.miit.gov.cn/" }]),
+    );
+    expect(readBeianLines(doc)).toEqual([
+      { title: "京ICP备00000000号-1", url: "https://beian.miit.gov.cn/" },
+    ]);
+  });
+
+  it("treats a missing tag and blank content as no lines", () => {
+    expect(readBeianLines(docWith("some-other-id", '[{"title":"x"}]'))).toEqual([]);
+    expect(readBeianLines(docWith(BEIAN_TAG_ID, "   "))).toEqual([]);
+  });
+
+  // MUT:site-meta-beian-guard-pin — deleting the guard branch reddens this
+  // test (R4 mutation evidence); the claims below document what the pin does
+  // NOT cover.
+  // The placeholder guard CANNOT be pinned behaviourally from the outside:
+  // ANY prefix (`$…` / `__…`) makes the value fail `JSON.parse`, so
+  // `parseBeianLines` would already answer [] and no assertion could tell
+  // "guard rejected it" from "parser rejected it" (R2 mutation evidence:
+  // deleting the guard left a placeholder-only test green). It is pinned
+  // structurally instead — the source of this module must still carry the
+  // placeholder branch — and the placeholder assertions stay as the
+  // end-to-end contract (whatever rejects them, the answer is []).
+  //
+  // KNOWN BLIND SPOT of this text pin, stated so nobody mistakes it for a
+  // behavioural guarantee: it catches DELETION, MOVING and RENAMING, but it // comment-gate-ok: 该钉只声明抓删除/移动/改名，R4 已实证
+  // does not prove the guard executes. Two deliberately hostile shapes pass // comment-gate-ok: 两种敌意形状实测仍绿，见下行与 R4 记录
+  // green — `false && (guard)`, and computing the predicate into an unused
+  // variable — both were mutation-tested in R4 and the runs are in the PR // comment-gate-ok: 此句引用 R4 已归档的变异运行记录（PR 轮次账），非本测试的新行为声称
+  // ledger. Accepting that is cheaper than deleting the guard, which exists
+  // for parity with both hosts' analytics.ts.
+  it("keeps the envsubst placeholder guard in the reader", () => {
+    // Scope the assertion to THIS reader's body: the GA reader carries an
+    // identical guard string, so a whole-file `toContain` would stay green
+    // even after the beian guard was deleted (R2 follow-up mutation proof).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const src = readFileSync(join(here, "siteMeta.ts"), "utf8");
+    const start = src.indexOf("export function readBeianLines");
+    expect(start).toBeGreaterThan(-1);
+    const body = src.slice(start, src.indexOf("return parseBeianLines(raw);", start));
+    expect(body).toContain('raw.startsWith("$") || raw.startsWith("__")');
+    expect(readBeianLines(docWith(BEIAN_TAG_ID, "$BEIAN_LINES"))).toEqual([]);
+    expect(readBeianLines(docWith(BEIAN_TAG_ID, "__BEIAN_LINES__"))).toEqual([]);
+  });
+
+  it("returns [] rather than throwing on malformed JSON", () => {
+    expect(readBeianLines(docWith(BEIAN_TAG_ID, "{not json"))).toEqual([]);
+    expect(readBeianLines(docWith(BEIAN_TAG_ID, '"just a string"'))).toEqual([]);
+  });
+});
+
+// MUT:site-meta-aggregate — readSiteMeta is the single call hosts make at
+// boot; dropping either half (or reading the wrong tag) has to redden here,
+// because a host test that only asserts "it returned an object" would not.
+describe("readSiteMeta", () => {
+  const docWithBoth = (ga: string, beian: string): Document => {
+    const doc = document.implementation.createHTMLDocument("t");
+    for (const [id, text] of [
+      [GA_TAG_ID, ga],
+      [BEIAN_TAG_ID, beian],
+    ]) {
+      const tag = doc.createElement("script");
+      tag.type = "application/json";
+      tag.id = id;
+      tag.textContent = text;
+      doc.head.appendChild(tag);
+    }
+    return doc;
+  };
+
+  it("reads both halves in one call", () => {
+    const doc = docWithBoth("G-ABCDEF1234", JSON.stringify([{ title: "备案" }]));
+    expect(readSiteMeta(doc)).toEqual({
+      gaMeasurementId: "G-ABCDEF1234",
+      beianLines: [{ title: "备案" }],
+    });
+  });
+
+  it("reads both halves as absent on a bare document", () => {
+    const doc = document.implementation.createHTMLDocument("t");
+    expect(readSiteMeta(doc)).toEqual({ gaMeasurementId: null, beianLines: [] });
   });
 });

@@ -129,3 +129,79 @@ export function parseBeianLines(raw: string): Array<SiteBeianLine> {
   }
   return lines;
 }
+
+/**
+ * DOM id of the JSON boot tag carrying the raw `beian_lines` value (the
+ * JSON array `parseBeianLines` consumes). This is the ONE build-time channel
+ * this repo defines — but NO host emits it yet (2026-11-28 audit):
+ *
+ * - erp and chest both resolve the setting server-side and never emit it
+ *   (erp serves the already-parsed array on `/api/auth/login-methods`; chest
+ *   ships `CHEST_FOOTER_EXTRA` → `/health.footer_extra`, a different shape).
+ * - `celestia.ac.cn` still uses its own `celestia-footer-extra` tag, whose
+ *   schema is WIDER than ours (it also accepts string arrays and a bare HTML
+ *   string). Moving that site onto this channel is a host-side task, not a
+ *   property of this module.
+ *
+ * Absence therefore reads as an empty footer everywhere today — which is the
+ * intended degradation, never an error.
+ */
+export const BEIAN_TAG_ID = "celestia-beian-lines";
+
+/**
+ * Read the beian lines from the served document's boot tag. Every failure
+ * mode (no document, tag absent, blank content) reads as "no compliance
+ * lines"; a present but malformed value also reads as `[]` rather than
+ * throwing, because a misconfigured deployment must not break the shell's
+ * footer render.
+ *
+ * The `$…` / `__…` placeholder guard is DEFENSIVE REDUNDANCY, and the honest
+ * statement of what it is worth: it is unobservable from outside. Any
+ * placeholder prefix makes the value fail `JSON.parse`, so `parseBeianLines`
+ * alone already answers `[]` — no behavioural assertion can distinguish "the
+ * guard rejected it" from "the parser rejected it" (mutation evidence: both
+ * deleting the guard and neutering it to a literal comparison leave the
+ * end-to-end assertions green). Its presence is therefore pinned
+ * structurally in `siteMeta.test.ts` (a text pin scoped to this function's
+ * body), which catches deletion / move / rename but does NOT prove the
+ * guard runs. It is kept — rather than deleted — for one reason only:
+ * parity with the two hosts' `analytics.ts`, which carry the same branch.
+ */
+export function readBeianLines(doc: Document = document): Array<SiteBeianLine> {
+  let raw: string | null;
+  try {
+    raw = doc.getElementById(BEIAN_TAG_ID)?.textContent?.trim() ?? null;
+  } catch {
+    return []; // doc-less context (prerender / workers)
+  }
+  if (raw === null || raw.length === 0 || raw.startsWith("$") || raw.startsWith("__")) {
+    return [];
+  }
+  return parseBeianLines(raw);
+}
+
+/** What one site's deployment injected: the GA id and the compliance lines. */
+export interface SiteMeta {
+  /** GA4 measurement id, or null when this deployment ships no tracking. */
+  gaMeasurementId: string | null;
+  /** Compliance/beian footer lines, already sanitized; empty when absent. */
+  beianLines: Array<SiteBeianLine>;
+}
+
+/**
+ * Read every host-injected site variable in one call. Deliberately NOT a
+ * Vue composable: nothing here is reactive (the boot tags are written once
+ * into the served document before any script runs, and never change for
+ * the life of the page), so wrapping it in `ref`s would only add weight.
+ * Hosts call it once at boot — erp/chest pass the result into their
+ * analytics + footer, static sites read it in the same place.
+ *
+ * `doc` is injectable so tests (and prerender contexts) never touch the
+ * ambient `document`.
+ */
+export function readSiteMeta(doc: Document = document): SiteMeta {
+  return {
+    gaMeasurementId: readGaMeasurementId(doc),
+    beianLines: readBeianLines(doc),
+  };
+}

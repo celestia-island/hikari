@@ -274,6 +274,14 @@ MISC_SHEETS: list[str] = [
 
 # W9 — final gap wave (found by the 193-coverage audit; these fell outside
 # the INVENTORY lists). HkMenuSection ships no sheet of its own.
+# SSR segmented wave (2026-11-28): the Rust `SegmentedTabs` component renders
+# the static form of Vue `HkTabs variant="segmented"` (radiogroup + sliding
+# indicator node), so a server-built page shows the family pill from the first
+# byte. Its whole look lives in this one sheet.
+SSR_SEGMENTED_SHEETS: list[str] = [
+    "HkTabs.scss",
+]
+
 GAP_SHEETS: list[str] = [
     "HkKeywordSearchModal.scss",
     "HkLocalizedInput.scss",
@@ -339,7 +347,7 @@ def registry_pairs() -> list[tuple[str, str]]:
     list by construction. The order here is the manifest row order.
     """
     pairs = list(EXPLICIT_PAIRS)
-    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS:
+    for sheet in FAMILY_SHEETS + CHROME_SHEETS + BASIC_SHEETS + ADVANCED_SHEETS + DATA_SHEETS + DISPLAY_SHEETS + LAYOUT_SHEETS + OVERLAY_SHEETS + SCENE_SHEETS + MISC_SHEETS + GAP_SHEETS + SSR_SEGMENTED_SHEETS:
         pairs.append((f"components/{sheet}", f"components/{sheet}"))
     return pairs
 

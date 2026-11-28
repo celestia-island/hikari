@@ -250,7 +250,7 @@ impl StyleRegistry {
             BreadcrumbComponent, ExpansionPanelComponent, KeywordSearchModalComponent,
             LocalizedInputComponent, MenuComponent, MenuIdentityItemComponent, MenuPanelComponent,
             MenuSectionComponent, ModalBreadcrumbComponent, SearchTriggerComponent,
-            SidebarComponent, TabsComponent,
+            SegmentedTabsComponent, SidebarComponent, TabsComponent,
         };
         MenuComponent::register(self);
         ExpansionPanelComponent::register(self);
@@ -262,6 +262,7 @@ impl StyleRegistry {
         LocalizedInputComponent::register(self);
         ModalBreadcrumbComponent::register(self);
         TabsComponent::register(self);
+        SegmentedTabsComponent::register(self);
         BreadcrumbComponent::register(self);
         SidebarComponent::register(self);
     }

@@ -140,8 +140,9 @@ pub use crate::layout::{
 pub use crate::navigation::{
     BreadcrumbItemProps, BreadcrumbProps, ExpansionPanelProps, KeywordSearchModalProps,
     LocalizedInputProps, MenuIdentityItemProps, MenuItemProps, MenuPanelProps, MenuProps,
-    MenuSectionProps, ModalBreadcrumbProps, SearchTriggerProps, SidebarItemProps, SidebarLeafProps,
-    SidebarProps, SidebarSectionProps, StepsProps, SubMenuProps, TabPaneProps, TabsProps,
+    MenuSectionProps, ModalBreadcrumbProps, SearchTriggerProps, SegmentedTabsProps,
+    SidebarItemProps, SidebarLeafProps, SidebarProps, SidebarSectionProps, StepsProps,
+    SubMenuProps, TabPaneProps, TabsProps,
 };
 pub use crate::overlay::{
     AdaptiveDialogProps, AmbientLayerProps, ContextMenuProviderProps, FloatingLayerProps,

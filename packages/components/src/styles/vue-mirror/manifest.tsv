@@ -169,3 +169,4 @@ components/HkStepGuide.scss	components/HkStepGuide.scss
 components/HkTagDotRow.scss	components/HkTagDotRow.scss
 components/HkUserPicker.scss	components/HkUserPicker.scss
 components/HkExpansionPanel.scss	components/HkExpansionPanel.scss
+components/HkTabs.scss	components/HkTabs.scss

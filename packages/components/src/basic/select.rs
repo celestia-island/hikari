@@ -346,6 +346,58 @@ pub struct SelectProps {
     /// Fires with the desired highlight index (the Rust-side stand-in for
     /// Vue's local `highlightedIndex` writes).
     pub on_highlight_change: Option<EventHandler<i32>>,
+
+    /// Render a native `<select>` instead of the mirrored trigger and
+    /// popout: the platform's own menu, keyboard and mobile picker, one
+    /// `<option>` per option, and none of the sheet's classes — `class` and
+    /// `attrs` land on the element. For a host that draws the field itself
+    /// and wants the option model and the change wiring; the popout-only
+    /// props are ignored.
+    #[default]
+    pub native: bool,
+
+    /// Attributes set on the native `<select>` by name — `name`, `title`,
+    /// `data-*`, `aria-*`, test hooks. Read in the `native` form only; the
+    /// mirrored form takes its attributes as props.
+    pub attrs: Vec<(String, String)>,
+}
+
+/// The `native` form: a real `<select>` carrying the option model. The
+/// chosen option is marked `selected` (so serialized HTML is right) and the
+/// control's `value` is written too — the live write the platform applies
+/// to a `<select>` selects the option by value.
+pub fn native_select(props: &SelectProps) -> VNode {
+    let mut select = VElement::new("select");
+    if !props.class.is_empty() {
+        select = select.class(props.class.clone());
+    }
+    if props.disabled {
+        select = select.attr("disabled", "true");
+    }
+    select = select.attr("value", props.model_value.clone());
+    let writer = props.on_value_change.clone();
+    select = select.on_event("change", move |event: Box<dyn EventData>| {
+        let Some(handler) = writer.as_ref() else {
+            return;
+        };
+        if let Some(change) = event.as_any().downcast_ref::<ChangeEvent>() {
+            handler.call(change.value.clone());
+        }
+    });
+    for option in &props.options {
+        let mut element = VElement::new("option").attr("value", option.value.clone());
+        if option.disabled {
+            element = element.attr("disabled", "true");
+        }
+        if option.value == props.model_value {
+            element = element.attr("selected", "selected");
+        }
+        element
+            .children
+            .push(VNode::Text(VText::new(&option.label)));
+        select.children.push(VNode::Element(Box::new(element)));
+    }
+    crate::utils::passthrough::onto_root(VNode::Element(Box::new(select)), &props.attrs)
 }
 
 /// The controlled event wiring every layer shares: the open flag, the disabled
@@ -460,6 +512,9 @@ impl SelectWiring {
 
 #[component]
 pub fn Select(props: SelectProps) -> Element {
+    if props.native {
+        return native_select(&props);
+    }
     let options = props.options.clone();
     let option_count = options.len();
     let display_label = select_display_label(&options, &props.model_value, &props.placeholder);
@@ -733,7 +788,7 @@ impl StyledComponent for SelectComponent {
 
 #[cfg(test)]
 mod tests {
-    use std::cell::Cell;
+    use std::cell::{Cell, RefCell};
     use std::rc::Rc;
 
     use super::*;
@@ -973,5 +1028,112 @@ mod tests {
         .render_to_html();
         assert!(!html.contains("data-hk-outside"), "{html}");
         assert!(page.armed().is_empty());
+    }
+
+    #[test]
+    fn a_native_select_is_a_real_select_with_one_option_each() {
+        let node = Select(SelectProps {
+            native: true,
+            class: "sort-pick".to_string(),
+            model_value: "newest".to_string(),
+            attrs: vec![("data-testid".to_string(), "sort".to_string())],
+            options: vec![
+                SelectOption {
+                    value: "oldest".to_string(),
+                    label: "Oldest first".to_string(),
+                    disabled: false,
+                },
+                SelectOption {
+                    value: "newest".to_string(),
+                    label: "Newest first".to_string(),
+                    disabled: false,
+                },
+                SelectOption {
+                    value: "level".to_string(),
+                    label: "By level".to_string(),
+                    disabled: true,
+                },
+            ],
+            ..Default::default()
+        });
+        let html = node.render_to_html();
+        assert!(
+            html.starts_with("<select "),
+            "the element is the root: {html}"
+        );
+        assert!(html.contains(r#"class="sort-pick""#), "{html}");
+        assert!(html.contains(r#"data-testid="sort""#), "{html}");
+        // The control's own `value` — the live write the platform applies to
+        // a `<select>` — is read on the element: the chosen option carries the
+        // same string, so a lookup in the markup could not tell them apart.
+        let VNode::Element(select) = &node else {
+            panic!("the root is an element: {html}")
+        };
+        assert_eq!(select.tag, "select");
+        assert_eq!(select.attributes.get("value").unwrap(), "newest", "{html}");
+        // Attribute order inside a tag is not part of the contract; which
+        // option carries which attribute, and which text, is.
+        let option = |value: &str| -> (String, String) {
+            let tag = html
+                .split('<')
+                .find(|tag| {
+                    tag.starts_with("option") && tag.contains(&format!(r#"value="{value}""#))
+                })
+                .unwrap_or_else(|| panic!("no option {value} in {html}"));
+            let (attributes, text) = tag
+                .split_once('>')
+                .unwrap_or_else(|| panic!("unclosed tag {tag}"));
+            (attributes.to_string(), text.to_string())
+        };
+        let (oldest, text) = option("oldest");
+        assert!(
+            !oldest.contains("selected") && !oldest.contains("disabled"),
+            "{oldest}"
+        );
+        assert_eq!(text, "Oldest first");
+        let (newest, text) = option("newest");
+        assert!(
+            newest.contains(r#"selected="selected""#),
+            "the chosen option is the selected one: {newest}"
+        );
+        assert_eq!(text, "Newest first");
+        let (level, text) = option("level");
+        assert!(level.contains(r#"disabled="true""#), "{level}");
+        assert_eq!(text, "By level");
+        assert!(
+            !html.contains("hk-select"),
+            "no sheet chrome on a native select: {html}"
+        );
+        // No class passed, no class attribute rendered.
+        let bare = Select(SelectProps {
+            native: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(bare.starts_with("<select"), "{bare}");
+        assert!(!bare.contains("class="), "{bare}");
+    }
+
+    #[test]
+    fn a_native_select_hands_the_host_the_committed_value() {
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = Select(SelectProps {
+            native: true,
+            on_value_change: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            options: choices(),
+            ..Default::default()
+        });
+        let VNode::Element(root) = &node else {
+            panic!("the root is an element");
+        };
+        let listener = root
+            .event_handlers
+            .get("change")
+            .unwrap_or_else(|| panic!("the native select has no change listener"));
+        listener.borrow_mut()(Box::new(ChangeEvent::new().value("a")));
+        assert_eq!(*received.borrow(), vec!["a".to_string()]);
     }
 }

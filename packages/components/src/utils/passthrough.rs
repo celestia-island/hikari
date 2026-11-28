@@ -136,7 +136,10 @@ mod tests {
             rsx! {
                 button { style: "color: red", "Save" }
             },
-            &[("style".to_string(), "margin: 0; ; border-width: 2px".to_string())],
+            &[(
+                "style".to_string(),
+                "margin: 0; ; border-width: 2px".to_string(),
+            )],
         );
         let VNode::Element(element) = node else {
             panic!("the root is an element");

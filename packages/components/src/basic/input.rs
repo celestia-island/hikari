@@ -246,6 +246,22 @@ pub struct InputProps {
     /// Vue: the `keydown` emit (after the submit-on-Enter interception).
     pub onkeydown: Option<EventHandler<KeyboardEvent>>,
 
+    /// Vue: the `change` emit (a listener the attrs spread brings along).
+    /// Fires with the field's committed value.
+    pub onchange: Option<EventHandler<ChangeEvent>>,
+
+    /// Attributes set on the field element by name, after the component's
+    /// own — `maxlength`, `min`, `step`, `title`, `data-*`, `aria-*`, test
+    /// hooks (Vue: the attrs spread on the element). A name the component
+    /// renders itself takes the host's value, as a spread attribute does.
+    pub attrs: Vec<(String, String)>,
+
+    /// Render the field element alone: no caption, box, affixes or message
+    /// line, `class` on the element and none of the sheet's own classes —
+    /// the host draws the chrome and keeps the event wiring.
+    #[default]
+    pub bare: bool,
+
     // ── compatibility tail (accepted, inert; see the header note) ──────────
     /// Retired glow toggle; the Vue sheet owns the field chrome.
     #[default]
@@ -279,6 +295,7 @@ struct FieldEvents {
     onfocus: Option<EventHandler<FocusEvent>>,
     onblur: Option<EventHandler<FocusEvent>>,
     onkeydown: Option<EventHandler<KeyboardEvent>>,
+    onchange: Option<EventHandler<ChangeEvent>>,
     submit: Option<EventHandler<()>>,
     textarea: bool,
     disabled: bool,
@@ -305,6 +322,13 @@ impl FieldEvents {
 
     fn blur(&self, event: FocusEvent) {
         if let Some(handler) = self.onblur.as_ref() {
+            handler.call(event);
+        }
+    }
+
+    /// Vue's `change` emit: the event carries the field's committed value.
+    fn change(&self, event: ChangeEvent) {
+        if let Some(handler) = self.onchange.as_ref() {
             handler.call(event);
         }
     }
@@ -365,10 +389,15 @@ pub fn Input(props: InputProps) -> Element {
     let spellcheck_attr = props
         .spellcheck
         .map(|enabled| if enabled { "true" } else { "false" });
-    let autocomplete = props
-        .autocomplete
-        .clone()
-        .unwrap_or_else(|| "off".to_string());
+    // Vue: `autocomplete ?? "off"`. A bare field keeps the browser default
+    // unless the host says otherwise — the host owns that field.
+    let autocomplete = props.autocomplete.clone().or_else(|| {
+        if props.bare {
+            None
+        } else {
+            Some("off".to_string())
+        }
+    });
     let data_align = if is_textarea {
         None
     } else {
@@ -391,13 +420,21 @@ pub fn Input(props: InputProps) -> Element {
         push_class(&mut box_classes, "hk-input-box-number");
     }
 
-    let mut element_classes = String::from("hk-input-element");
-    if is_textarea {
+    let mut element_classes = if props.bare {
+        // The host's class alone: a bare field carries none of the sheet's.
+        props.class.clone()
+    } else {
+        String::from("hk-input-element")
+    };
+    if is_textarea && !props.bare {
         push_class(&mut element_classes, "hk-input-textarea");
         if is_autogrow {
             push_class(&mut element_classes, "hk-input-textarea-autogrow");
         }
     }
+    // The password-manager hints ride on the sheet's own field, not on a
+    // host's.
+    let pm_hints = !props.bare;
 
     let prefix = props.prefix.clone().or_else(|| props.prefix_icon.clone());
     let suffix = props.suffix.clone().or_else(|| props.suffix_icon.clone());
@@ -407,6 +444,7 @@ pub fn Input(props: InputProps) -> Element {
         onfocus: props.onfocus.clone(),
         onblur: props.onblur.clone(),
         onkeydown: props.onkeydown.clone(),
+        onchange: props.onchange.clone(),
         submit: props.submit_on_enter.clone(),
         textarea: is_textarea,
         disabled: props.disabled,
@@ -415,7 +453,7 @@ pub fn Input(props: InputProps) -> Element {
 
     // The field element: input or textarea, exactly the two branches Vue
     // renders under the same box. `rsx!` consumes one closure per attribute, so
-    // the four handlers are built once and moved into whichever branch renders
+    // the handlers are built once and moved into whichever branch renders
     // (only one arm executes, so both arms may take the same bindings).
     let oninput_events = events.clone();
     let oninput = move |event: InputEvent| oninput_events.input(event);
@@ -425,6 +463,8 @@ pub fn Input(props: InputProps) -> Element {
     let onblur = move |event: FocusEvent| onblur_events.blur(event);
     let onkeydown_events = events.clone();
     let onkeydown = move |event: KeyboardEvent| onkeydown_events.key(event);
+    let onchange_events = events.clone();
+    let onchange = move |event: ChangeEvent| onchange_events.change(event);
 
     let field = if is_textarea {
         rsx! {
@@ -440,13 +480,14 @@ pub fn Input(props: InputProps) -> Element {
                 name: props.name.clone(),
                 autocomplete: autocomplete,
                 autofocus: props.autofocus,
-                "data-1p-ignore": true,
-                "data-lpignore": "true",
+                "data-1p-ignore": pm_hints,
+                "data-lpignore": if pm_hints { Some("true") } else { None },
                 "aria-label": aria_label,
                 oninput: oninput,
                 onfocus: onfocus,
                 onblur: onblur,
                 onkeydown: onkeydown,
+                onchange: onchange,
             }
         }
     } else {
@@ -463,16 +504,24 @@ pub fn Input(props: InputProps) -> Element {
                 name: props.name.clone(),
                 autocomplete: autocomplete,
                 autofocus: props.autofocus,
-                "data-1p-ignore": true,
-                "data-lpignore": "true",
+                "data-1p-ignore": pm_hints,
+                "data-lpignore": if pm_hints { Some("true") } else { None },
                 "aria-label": aria_label,
                 oninput: oninput,
                 onfocus: onfocus,
                 onblur: onblur,
                 onkeydown: onkeydown,
+                onchange: onchange,
             }
         }
     };
+    // Vue's attrs spread lands on the field element after the template's own.
+    let field = crate::utils::passthrough::onto_root(field, &props.attrs);
+
+    // A bare field is the element and nothing else.
+    if props.bare {
+        return field;
+    }
 
     let required = props.required;
     let hide_label = props.hide_label;
@@ -669,6 +718,7 @@ mod tests {
             onfocus: None,
             onblur: None,
             onkeydown: None,
+            onchange: None,
             submit: None,
             textarea: false,
             disabled: false,
@@ -697,5 +747,144 @@ mod tests {
             "no input element with an input listener is rendered"
         );
         assert_eq!(*received.borrow(), vec!["Hello".to_string()]);
+    }
+
+    #[test]
+    fn a_change_event_reaches_the_host() {
+        // Vue: a `change` listener through the attrs spread; the event
+        // carries the field's committed value.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let events = FieldEvents {
+            oninput: None,
+            onfocus: None,
+            onblur: None,
+            onkeydown: None,
+            onchange: Some(EventHandler::new(move |event: ChangeEvent| {
+                sink.borrow_mut().push(event.value);
+            })),
+            submit: None,
+            textarea: false,
+            disabled: false,
+            readonly: false,
+        };
+        events.change(ChangeEvent::new().value("committed"));
+        assert_eq!(*received.borrow(), vec!["committed".to_string()]);
+    }
+
+    #[test]
+    fn a_rendered_change_event_reaches_the_host() {
+        // The listener has to be wired to the element the component renders,
+        // on every branch: the field, the textarea branch and the bare form.
+        for (props, tag, class_part) in [
+            (InputProps::default(), "input", "hk-input-element"),
+            (
+                InputProps {
+                    input_type: Some("textarea".to_string()),
+                    ..Default::default()
+                },
+                "textarea",
+                "",
+            ),
+            (
+                InputProps {
+                    bare: true,
+                    ..Default::default()
+                },
+                "input",
+                "",
+            ),
+        ] {
+            let received = Rc::new(RefCell::new(Vec::<String>::new()));
+            let sink = Rc::clone(&received);
+            let node = Input(InputProps {
+                onchange: Some(EventHandler::new(move |event: ChangeEvent| {
+                    sink.borrow_mut().push(event.value);
+                })),
+                ..props
+            });
+            assert!(
+                crate::testing::commit_on(&node, tag, class_part, "committed"),
+                "no {tag} with a change listener is rendered: {}",
+                node.render_to_html()
+            );
+            assert_eq!(*received.borrow(), vec!["committed".to_string()]);
+        }
+    }
+
+    #[test]
+    fn host_attributes_land_on_the_field_element() {
+        let html = Input(InputProps {
+            attrs: vec![
+                ("maxlength".to_string(), "14".to_string()),
+                ("data-testid".to_string(), "nick".to_string()),
+            ],
+            ..Default::default()
+        })
+        .render_to_html();
+        let field = html
+            .split('<')
+            .find(|tag| tag.starts_with("input "))
+            .unwrap_or_else(|| panic!("no field element in {html}"));
+        assert!(field.contains(r#"maxlength="14""#), "{field}");
+        assert!(field.contains(r#"data-testid="nick""#), "{field}");
+        // The sheet's own chrome is still around it.
+        assert!(html.contains("hk-input-wrapper"), "{html}");
+    }
+
+    #[test]
+    fn a_bare_input_is_the_field_element_alone() {
+        let html = Input(InputProps {
+            bare: true,
+            class: "nick-input".to_string(),
+            placeholder: Some("Nickname".to_string()),
+            attrs: vec![("maxlength".to_string(), "14".to_string())],
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.starts_with("<input "),
+            "the element is the root: {html}"
+        );
+        assert!(html.contains(r#"class="nick-input""#), "{html}");
+        assert!(html.contains(r#"type="text""#), "{html}");
+        assert!(html.contains(r#"maxlength="14""#), "{html}");
+        assert!(
+            !html.contains("hk-input"),
+            "no sheet chrome on a bare field: {html}"
+        );
+        assert!(!html.contains("data-lpignore"), "{html}");
+        assert!(!html.contains("<div"), "{html}");
+    }
+
+    #[test]
+    fn a_bare_textarea_branch_is_the_element_alone_too() {
+        let html = Input(InputProps {
+            bare: true,
+            input_type: Some("textarea".to_string()),
+            class: "notes".to_string(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.starts_with("<textarea "),
+            "the element is the root: {html}"
+        );
+        assert!(
+            html.contains(r#"class="notes""#),
+            "no sheet class on a bare field: {html}"
+        );
+        assert!(!html.contains("hk-input"), "{html}");
+        // No class passed: no class attribute, like a host's own element.
+        let plain = Input(InputProps {
+            bare: true,
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            plain.starts_with("<input "),
+            "the element is the root: {plain}"
+        );
+        assert!(!plain.contains("class="), "{plain}");
     }
 }

@@ -102,6 +102,22 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     })
 }
 
+/// Trim mermaid's activation markers (`+`/`-`, possibly doubled) off a
+/// message endpoint. They are per-message state; the participant they name is
+/// the bare identifier.
+fn strip_activation(name: &str) -> String {
+    let trimmed = name.trim();
+    let stripped = trimmed
+        .trim_start_matches(['+', '-'])
+        .trim_end_matches(['+', '-'])
+        .trim();
+    if stripped.is_empty() {
+        trimmed.to_string()
+    } else {
+        stripped.to_string()
+    }
+}
+
 fn parse_message(line: &str) -> Option<SequenceMessage> {
     // Longest token first: -->> before ->> before --> before ->.
     for (token, kind) in ARROWS {
@@ -115,8 +131,12 @@ fn parse_message(line: &str) -> Option<SequenceMessage> {
                 continue;
             }
             return Some(SequenceMessage {
-                from,
-                to,
+                // Mermaid writes activation with a trailing `+`/`-` glued to
+                // the participant (`Alice ->>+ Bob: hi`). The glyph is
+                // STATE, not part of the name: leaving it in put lanes on the
+                // board literally named "+ Bob" and "- Alice".
+                from: strip_activation(&from),
+                to: strip_activation(&to),
                 text,
                 arrow_kind: *kind,
             });
@@ -155,6 +175,39 @@ mod tests {
         assert_eq!(doc.messages[0].from, "Alice");
         assert_eq!(doc.messages[0].to, "Alice");
         assert_eq!(doc.participants, vec!["Alice".to_string()]);
+    }
+
+    /// MUT: dropping `strip_activation` puts lanes on the board literally
+    /// named "+ Bob" — the glyph is per-message state, never a name.
+    #[test]
+    fn activation_markers_never_become_participant_names() {
+        let doc = parse_sequence(
+            "sequenceDiagram\n  participant Alice\n  participant Bob\n  Alice ->>+ Bob: hi\n  Bob -->>- Alice: yo\n",
+        )
+        .expect("parse");
+        assert_eq!(
+            doc.participants,
+            vec!["Alice".to_string(), "Bob".to_string()]
+        );
+        for msg in &doc.messages {
+            assert!(
+                !msg.from.contains('+') && !msg.from.contains('-'),
+                "{:?}",
+                msg.from
+            );
+            assert!(
+                !msg.to.contains('+') && !msg.to.contains('-'),
+                "{:?}",
+                msg.to
+            );
+        }
+        // Every endpoint is a real participant, never a glyph-named lane.
+        let endpoints: Vec<&str> = doc
+            .messages
+            .iter()
+            .flat_map(|m| [m.from.as_str(), m.to.as_str()])
+            .collect();
+        assert_eq!(endpoints, vec!["Alice", "Bob", "Bob", "Alice"]);
     }
 
     #[test]

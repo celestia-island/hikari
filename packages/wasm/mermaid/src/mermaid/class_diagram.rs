@@ -243,6 +243,40 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
 
         if let Some(rel) = parse_relationship(line) {
             relationships.push(rel);
+            continue;
+        }
+
+        // `Dog : bark()` — a member declared OUTSIDE any class block. Mermaid
+        // lets members accumulate on an implied class; relations are tried
+        // first so a labelled relation keeps its caption. The name must be a
+        // bare identifier: a quoted multiplicity or a relation pattern before
+        // the colon is the other branches' business.
+        if let Some((name_text, member_text)) = line.split_once(':') {
+            let name = name_text.trim();
+            let ident = !name.is_empty()
+                && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+                && !name.chars().next().unwrap().is_ascii_digit();
+            if ident
+                && let Some(member) = parse_member(member_text.trim())
+            {
+                let cls = match classes.iter_mut().find(|c| c.name == name) {
+                    Some(c) => c,
+                    None => {
+                        classes.push(ClassDefinition {
+                            name: name.to_string(),
+                            attributes: Vec::new(),
+                            methods: Vec::new(),
+                        });
+                        classes.last_mut().unwrap()
+                    }
+                };
+                if member.is_method {
+                    cls.methods.push(member);
+                } else {
+                    cls.attributes.push(member);
+                }
+                continue;
+            }
         }
     }
 
@@ -251,6 +285,25 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
         && (!cls.attributes.is_empty() || !cls.methods.is_empty())
     {
         classes.push(cls);
+    }
+
+    // Implied classes: a relationship's endpoints ARE classes — mermaid lets a
+    // diagram name one only through the relation (`classDiagram\n  Animal <|--
+    // Dog`). The old gate returned None when no `class` block existed, so every
+    // relationship-only diagram failed the whole parse and the card fell back
+    // to a plain code block. Endpoints are appended in first-seen order.
+    if !relationships.is_empty() {
+        for rel in &relationships {
+            for name in [&rel.from, &rel.to] {
+                if !classes.iter().any(|c| &c.name == name) {
+                    classes.push(ClassDefinition {
+                        name: name.clone(),
+                        attributes: Vec::new(),
+                        methods: Vec::new(),
+                    });
+                }
+            }
+        }
     }
 
     if classes.is_empty() {
@@ -289,7 +342,8 @@ mod tests {
         assert_eq!(names, vec!["Student", "School"]);
     }
 
-    /// The opposite quoting order (`"*" School`) is the same decoration.
+    /// A bare `class X` line registers the class: a diagram can name one
+    /// without a body, and the class list must not come back empty.
     #[test]
     fn a_bare_class_declaration_registers_the_class() {
         let doc = parse_class_diagram("classDiagram\n  class Only\n").expect("parse");
@@ -297,7 +351,23 @@ mod tests {
         assert!(doc.relationships.is_empty());
     }
 
-    /// A relationship with no multiplicity keeps its endpoints untouched.
+    /// MUT: dropping the implied-classes pass leaves the class list empty and
+    /// the whole parse fails — the exact whole-diagram fallback this exists to
+    /// remove.
+    #[test]
+    fn relationship_endpoints_imply_classes() {
+        let doc = parse_class_diagram("classDiagram\n  Animal <|-- Dog\n  Dog : bark()\n")
+            .expect("a relationship-only diagram must parse");
+        // First-seen DOCUMENT order: `Dog` enters via its member line, the
+        // implied pass then appends `Animal`.
+        let names: Vec<&str> = doc.classes.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["Dog", "Animal"]);
+        assert_eq!(doc.relationships[0].rel_type, "inheritance");
+        // The member line still lands on the implied class.
+        let dog = doc.classes.iter().find(|c| c.name == "Dog").unwrap();
+        assert_eq!(dog.methods.len(), 1);
+    }
+
     #[test]
     fn plain_relationships_are_unchanged() {
         let doc = parse_class_diagram(

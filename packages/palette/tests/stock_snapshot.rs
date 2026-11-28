@@ -16,8 +16,12 @@
 //! The cross-family pin: the semantic quartet (and only it) must equal the
 //! `Hikari`/`Tairitsu` components-side palettes — the one value family the
 //! web preset and those palettes share by design. Everything else is
-//! expected to differ (the web default is pink/paper + Nord-black-blue;
-//! the components palettes are the chinese-constant aesthetic).
+//! expected to differ (the web default is pink/white on the family
+//! pure-white/pure-black floors since 2026-11-28, dark surface the Nord
+//! navy; the components palettes are the chinese-constant aesthetic).
+//! The two byte-locks below always red when the crate and either artifact
+//! drift apart — they are the mutation oracle this file exists for.
+//! MUT:stock-artifact-drift
 
 use hikari_palette::derivation::{stock_vars, StockMode};
 use hikari_palette::stock::{stock_default, StockRgb};

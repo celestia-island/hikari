@@ -95,11 +95,10 @@
 //     transform paints at its exact fractional device position, so an
 //     unsnapped coordinate is resampled into a uniform blur). The pure kernel
 //     is exported ([`tooltip_pixel_snap_delta`]) and the tracker calls it
-//     ([`snap_to_pixel_grid`]); the DOM half compiles only under
-//     `wasm32-unknown-unknown` (the target type-checks again but still has
-//     no runtime host), and on the shipped `wasm32-wasip2`
-//     artifact there is no layout to measure, so the pass is a no-op there —
-//     the same ceiling the clamp pass below documents.
+//     ([`snap_to_pixel_grid`]); the DOM half compiles on both wasm targets —
+//     `web_sys` on `wasm32-unknown-unknown`, the WIT host on `wasm32-wasip2`
+//     (where the platform reads the device ratio as 1, so the pass is a
+//     no-op there).
 //   * NO FOCUS TRAP / NO `afterLeave` — there is no leave transition driver, so
 //     there is no "finished leaving" edge to report.
 //   * The tag-id sequence (`hk-tooltip-{n}`) is Vue's format, but the id is
@@ -381,7 +380,7 @@ fn measure_anchor_rect(anchor: &str) -> Option<TooltipRect> {
 /// Write one batch of inline declarations onto the popup element. Returns
 /// whether the popup was found — the tracker stops itself when it is not (the
 /// element left the document).
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 fn write_popup_style(popup_id: &str, declarations: &[(&'static str, String)]) -> bool {
     let Some(element) = platform::get_element_by_id(popup_id) else {
         return false;
@@ -401,7 +400,7 @@ fn write_popup_style(popup_id: &str, declarations: &[(&'static str, String)]) ->
 /// Non-browser builds have no inline-style writer (the stub platform exposes no
 /// `set_style_property`); the tracker degrades to "popup not found" and stops on
 /// its first tick.
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+#[cfg(not(target_arch = "wasm32"))]
 fn write_popup_style(_popup_id: &str, _declarations: &[(&'static str, String)]) -> bool {
     false
 }
@@ -414,7 +413,7 @@ fn write_popup_style(_popup_id: &str, _declarations: &[(&'static str, String)]) 
 ///
 /// Returns whether the popup was found; a zero-sized box (no layout) or an
 /// on-grid box is a no-op, exactly Vue's early returns.
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 fn snap_to_pixel_grid(popup_id: &str) -> bool {
     let Some(element) = platform::get_element_by_id(popup_id) else {
         return false;
@@ -448,9 +447,9 @@ fn snap_to_pixel_grid(popup_id: &str) -> bool {
 }
 
 /// The stub platform has no layout at all (`get_bounding_client_rect` is a
-/// `None` stub on `wasm32-wasip2`), so the snap pass is inert there; the
-/// tracker keeps running on its declaration writes.
-#[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+/// `None` stub), so the snap pass is inert there; the tracker keeps running on
+/// its declaration writes.
+#[cfg(not(target_arch = "wasm32"))]
 fn snap_to_pixel_grid(_popup_id: &str) -> bool {
     false
 }

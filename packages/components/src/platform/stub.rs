@@ -2,6 +2,8 @@
 //!
 //! This module provides no-op implementations for SSR and other non-browser targets.
 
+use super::MutationObserverOptions;
+
 pub fn log(_message: &str) {}
 
 pub fn log_warn(_message: &str) {}
@@ -43,24 +45,6 @@ pub fn create_mutation_observer(_callback: impl FnMut() + 'static) -> u64 {
 pub fn observe_mutations<T>(_observer_id: u64, _element: &T, _options: &MutationObserverOptions) {}
 
 pub fn disconnect_mutation(_observer_id: u64) {}
-
-pub struct MutationObserverOptions {
-    pub child_list: bool,
-    pub attributes: bool,
-    pub character_data: bool,
-    pub subtree: Option<bool>,
-}
-
-impl Default for MutationObserverOptions {
-    fn default() -> Self {
-        Self {
-            child_list: true,
-            attributes: false,
-            character_data: false,
-            subtree: Some(true),
-        }
-    }
-}
 
 pub fn now_timestamp() -> f64 {
     0.0

@@ -7,6 +7,8 @@ use tairitsu_vdom::platform::DomRect;
 use wasm_bindgen::JsCast;
 use web_sys::{Element, HtmlElement};
 
+use super::MutationObserverOptions;
+
 pub fn get_bounding_rect_by_class_impl(
     class_name: &str,
     start_element: &Element,
@@ -224,24 +226,6 @@ pub fn disconnect_mutation(observer_id: u64) {
         }
         map.borrow_mut().remove(&observer_id);
     });
-}
-
-pub struct MutationObserverOptions {
-    pub child_list: bool,
-    pub attributes: bool,
-    pub character_data: bool,
-    pub subtree: Option<bool>,
-}
-
-impl Default for MutationObserverOptions {
-    fn default() -> Self {
-        Self {
-            child_list: true,
-            attributes: false,
-            character_data: false,
-            subtree: Some(true),
-        }
-    }
 }
 
 pub fn now_timestamp() -> f64 {

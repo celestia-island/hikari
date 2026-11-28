@@ -391,8 +391,14 @@
   --hi-color-primary: var(--hi-primary);
   --hi-color-background: var(--hi-background);
   --hi-color-surface: rgb(var(--color-surface));
-  // Widely used by component styles (code blocks, tables, markdown
-  // renderer, demo blocks) but previously never defined here.
+  // Legacy static fallbacks for the components aesthetic family — a third
+  // colour channel beside the runtime token map, deliberately NOT the
+  // live ink-alpha formulas. Read by demo-layer styles (demo_block's
+  // --hi-color-surface-secondary fallback). The #1622 review traced this
+  // sheet end-to-end and these values never reach a page — the compiled
+  // bundle.css has no runtime consumer and lagrange reads the component
+  // registry CSS. Do not retune them to tokens without re-verifying that
+  // chain.
   --hi-color-surface-secondary: rgba(248, 250, 252, 0.5);
   --hi-color-bg-elevated: #f6f8fa;
   --hi-color-text-tertiary: #8c8c8c;

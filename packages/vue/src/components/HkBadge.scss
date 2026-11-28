@@ -113,7 +113,7 @@
 
 .hk-badge-default {
   --hk-badge-text: rgb(var(--color-text));
-  --hk-badge-bg: rgb(var(--color-surface) / var(--opacity-half));
+  --hk-badge-bg: var(--hi-color-bg-subtle);
   --hk-badge-border: var(--border-input);
 }
 

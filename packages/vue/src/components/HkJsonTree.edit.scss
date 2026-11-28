@@ -67,7 +67,7 @@
   font-size: var(--text-3xs, 0.5rem);
   line-height: 1.4;
   color: rgb(var(--color-muted));
-  background: rgb(var(--color-surface) / 0.6);
+  background: var(--hi-color-bg-subtle);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   border-radius: var(--radius-sm, 4px);
   padding: 0 var(--space-4, 0.25rem);
@@ -82,7 +82,7 @@
 .s-jt-input {
   font: inherit;
   color: rgb(var(--color-text));
-  background: rgb(var(--color-surface) / 0.6);
+  background: var(--hi-color-bg-subtle);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   border-radius: var(--radius-xs, 2px);
   padding: 0 var(--space-4, 0.25rem);

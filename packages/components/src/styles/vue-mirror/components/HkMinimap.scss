@@ -183,7 +183,7 @@
   padding: 0;
   cursor: pointer;
   color: rgb(var(--color-text) / 70%);
-  background: rgb(var(--color-surface) / 0.55);
+  background: var(--hi-color-bg-subtle);
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-sm);
   opacity: 0.55;
@@ -192,7 +192,7 @@
   &:hover,
   &:focus-visible {
     opacity: 1;
-    background: rgb(var(--color-surface) / 0.9);
+    background: rgb(var(--color-text) / 6%); /* hover escalation over the resting ink band */
     color: rgb(var(--color-text));
   }
 }

@@ -31,7 +31,7 @@
   font-family: var(--font-mono, vars.$hikari-font-family-mono);
   font-size: var(--text-2xs, 0.625rem);
   line-height: 1.55;
-  background: rgb(var(--color-surface) / 0.5);
+  background: var(--hi-color-bg-subtle);
   border-radius: var(--radius-sm, 4px);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   @include user-select(none);
@@ -218,7 +218,7 @@
   color: rgb(var(--color-muted));
   font-size: var(--text-3xs, 0.5rem);
   font-weight: 500;
-  background: rgb(var(--color-surface) / 0.6);
+  background: var(--hi-color-bg-subtle);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 10%));
   border-radius: var(--radius-sm, 4px);
   padding: 0 0.3em;

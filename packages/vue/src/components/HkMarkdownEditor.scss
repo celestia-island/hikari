@@ -12,7 +12,7 @@
   min-width: 0;
   border: 1px solid var(--border-faint);
   border-radius: var(--radius-md, 8px);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  background: var(--hi-color-bg-subtle);
   color: rgb(var(--color-text));
   overflow: hidden;
 }

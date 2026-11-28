@@ -107,7 +107,7 @@
   padding: var(--space-8, 0.5rem);
   border: 1px solid var(--border-faint, rgb(var(--color-border) / 12%));
   border-radius: var(--radius-md, 8px);
-  background: rgb(var(--color-background) / 0.5);
+  background: var(--hi-color-bg-subtle);
 }
 
 .s-log-empty {

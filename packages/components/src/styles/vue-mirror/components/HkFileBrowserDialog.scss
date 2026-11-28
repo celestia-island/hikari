@@ -43,7 +43,7 @@
   padding: var(--space-6) var(--space-8);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  background: var(--hi-color-bg-subtle);
 }
 
 .hk-file-browser-crumbs {
@@ -209,7 +209,7 @@
   padding: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, rgb(var(--color-surface)) 55%, transparent);
+  background: var(--hi-color-bg-subtle);
   color: rgb(var(--color-muted));
   cursor: pointer;
   transition:

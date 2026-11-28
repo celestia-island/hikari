@@ -190,6 +190,9 @@ describe("readBeianLines", () => {
     expect(readBeianLines(docWith(BEIAN_TAG_ID, "   "))).toEqual([]);
   });
 
+  // MUT:site-meta-beian-guard-pin — deleting the guard branch reddens this
+  // test (R4 mutation evidence); the claims below document what the pin does
+  // NOT cover.
   // The placeholder guard CANNOT be pinned behaviourally from the outside:
   // ANY prefix (`$…` / `__…`) makes the value fail `JSON.parse`, so
   // `parseBeianLines` would already answer [] and no assertion could tell

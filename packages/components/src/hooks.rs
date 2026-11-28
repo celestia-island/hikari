@@ -9,7 +9,7 @@
 //! - **Tablet**: 641-1023px
 //! - **Desktop**: ≥1024px
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 use crate::platform::{inner_width as platform_inner_width, on_resize};
 use crate::prelude::*;
 
@@ -62,7 +62,7 @@ impl ScreenSize {
 pub fn use_screen_size() -> Signal<ScreenSize> {
     let screen_size = use_signal(get_screen_size_from_window);
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let screen_size = screen_size.clone();
         use_effect(move || {
@@ -91,7 +91,7 @@ pub fn use_is_desktop() -> Signal<bool> {
 }
 
 fn get_screen_size_from_window() -> ScreenSize {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let width = platform_inner_width() as u32;
         match width {
@@ -100,7 +100,7 @@ fn get_screen_size_from_window() -> ScreenSize {
             1024.. => ScreenSize::Desktop,
         }
     }
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+    #[cfg(not(target_arch = "wasm32"))]
     {
         ScreenSize::Desktop
     }
@@ -109,7 +109,7 @@ fn get_screen_size_from_window() -> ScreenSize {
 pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal<bool> {
     let matches = use_signal(|| check_media_query(min_width, max_width));
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let matches = matches.clone();
         use_effect(move || {
@@ -124,7 +124,7 @@ pub fn use_media_query(min_width: Option<u32>, max_width: Option<u32>) -> Signal
 }
 
 fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let width = platform_inner_width() as u32;
 
@@ -142,7 +142,7 @@ fn check_media_query(min_width: Option<u32>, max_width: Option<u32>) -> bool {
 
         true
     }
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+    #[cfg(not(target_arch = "wasm32"))]
     {
         let _ = (min_width, max_width);
         false

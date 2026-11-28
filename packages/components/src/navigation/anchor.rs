@@ -26,7 +26,7 @@ use hikari_palette::classes::{
     AnchorClass, ClassesBuilder, Display, FlexDirection, Gap, Padding, UtilityClass,
 };
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 use crate::platform;
 use crate::prelude::*;
 
@@ -72,7 +72,7 @@ pub fn Anchor(
                 onclick: move |_| {
                     active_anchor_for_click.set(href.clone());
 
-                    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                    #[cfg(target_arch = "wasm32")]
                     {
                         let target_id = href.trim_start_matches('#');
                         if let Some(rect) = platform::get_element_rect_by_id(target_id) {
@@ -116,10 +116,11 @@ pub fn Anchor(
     }
 }
 
-///
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+/// The `href` of the anchor whose section currently sits in the scrollport,
+/// updated on every scroll (the link to mark active).
+#[cfg(target_arch = "wasm32")]
 pub fn use_scrollspy(anchor_items: Vec<AnchorItem>) -> ReactiveSignal<String> {
-    let active_anchor = use_signal(|| String::new());
+    let active_anchor = use_signal(String::new);
     let active_anchor_for_effect = active_anchor.clone();
 
     use_effect(move || {

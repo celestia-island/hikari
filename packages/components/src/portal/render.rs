@@ -5,9 +5,9 @@ use hikari_palette::classes::{
     ClassesBuilder, DropdownClass, PortalClass, TooltipClass, UtilityClass,
 };
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 use super::provider::use_portal;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 use crate::platform::{element_closest, element_from_point, request_animation_frame, set_timeout};
 use crate::platform::{inner_height, inner_width, log};
 use crate::portal::positioning::calculate_position;
@@ -26,10 +26,7 @@ fn use_animated_portal_entry(
     Callback<MouseEvent>,
     Signal<(String, String)>,
 ) {
-    #[cfg_attr(
-        not(all(target_arch = "wasm32", target_os = "unknown")),
-        allow(unused_variables)
-    )]
+    #[cfg_attr(not(target_arch = "wasm32"), allow(unused_variables))]
     let id_for_close = id.clone();
     let internal_animation_state = use_signal(|| initial_state);
 
@@ -56,7 +53,7 @@ fn use_animated_portal_entry(
     .signal()
     .clone();
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let internal_animation_state_for_effect = internal_animation_state.clone();
         let portal = use_portal();
@@ -320,15 +317,15 @@ fn DropdownPortalEntry(
                 onclick: move |e: MouseEvent| {
                     e.stop_propagation();
                     if close_on_select {
-                        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+                        #[cfg(target_arch = "wasm32")]
                         {
-                            if let Some(target_el) = element_from_point(e.client_x, e.client_y) {
-                                if element_closest(&target_el, ".hk-menu-item").is_some() {
-                                    close_dropdown_for_content.call(e);
-                                }
+                            if let Some(target_el) = element_from_point(e.client_x, e.client_y)
+                                && element_closest(&target_el, ".hk-menu-item").is_some()
+                            {
+                                close_dropdown_for_content.call(e);
                             }
                         }
-                        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+                        #[cfg(not(target_arch = "wasm32"))]
                         {
                             close_dropdown_for_content.call(e);
                         }

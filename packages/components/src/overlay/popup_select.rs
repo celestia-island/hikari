@@ -85,6 +85,12 @@
 //     one-open-at-a-time keeps a shared open id in its own state (the same
 //     "several rows could technically be open" delta `data/filter_panel.rs`
 //     carries) and renders the others closed.
+//   * Outside click: Vue's popover shield spares the trigger
+//     (`anchorRef.contains(target)`) and closes on anything else. The reused
+//     popover mirror shields its layer host the same way; this wrapper is
+//     handed to it as the trigger through `PopoverProps::anchor_selector`,
+//     keyed by `data-hk-outside-trigger` on the wrapper while the popup is
+//     open — so a press on the trigger stays the trigger's own toggle.
 //   * NO `useOverlay` registry entry, no enter/leave transition, no auto-flip
 //     (the reused popover mirror's documented delta): Escape closes ONE layer
 //     — the trigger consumes the key only while it actually closes `open`, so a
@@ -105,6 +111,7 @@ use hikari_icons::MdiIcon;
 use crate::basic::select::step_highlight;
 use crate::feedback::Popover;
 use crate::feedback::popover::{PopoverAnchorRect, PopoverPlacement};
+use crate::overlay::outside_click::{self, ShieldKey};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -556,6 +563,11 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
     };
 
     // ── the layer (the reused HkPopover mirror) ───────────────────────────
+    // The popover's shield spares this wrapper as the trigger (Vue:
+    // `anchorRef.contains(target)`). The key is published only where a
+    // shield can exist, and asked for before the popover's render arms it.
+    let trigger = ShieldKey::new();
+    let trigger_attr = (is_open && outside_click::prepare()).then(|| trigger.value().to_string());
     let layer = if is_open {
         let rows = VNode::Fragment(build_rows());
         let viewport_style = popup_select_viewport_style();
@@ -568,6 +580,7 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
         };
         let anchor = props.anchor;
         let on_open_change = props.on_open_change.clone();
+        let anchor_selector = Some(trigger.trigger_selector());
         rsx! {
             // Vue mounts `HkPopover` with exactly these props (backdrop off,
             // sheet on mobile, the field label as the sheet title, the content
@@ -582,6 +595,7 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
                 close_on_escape: true,
                 glass: true,
                 anchor,
+                anchor_selector,
                 sheet_on_mobile: true,
                 title: sheet_title,
                 class: "hk-popup-select-content".to_string(),
@@ -609,6 +623,7 @@ pub fn PopupSelect(props: PopupSelectProps) -> Element {
     rsx! {
         div {
             class: wrapper_classes,
+            "data-hk-outside-trigger": trigger_attr,
             if let Some(label) = label_text {
                 label {
                     class: "hk-popup-select-label",
@@ -665,6 +680,9 @@ impl StyledComponent for PopupSelectComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn options() -> Vec<PopupSelectOption> {
@@ -961,6 +979,70 @@ mod tests {
         );
         // The exact R2 stock anatomy: `<div ...><span>Alpha</span></div>`.
         assert!(html.contains("<span>Alpha</span>"), "{html}");
+    }
+
+    /// The value of `name="…"` in rendered HTML, or the empty string.
+    fn attribute(html: &str, name: &str) -> String {
+        html.split(&format!("{name}=\""))
+            .nth(1)
+            .map(|rest| rest.split('"').next().unwrap_or_default().to_string())
+            .unwrap_or_default()
+    }
+
+    #[test]
+    fn an_open_popup_spares_its_trigger_and_closes_on_a_click_elsewhere() {
+        let page = outside_click::TestPage::new();
+        let closes = Rc::new(Cell::new(0));
+        let count = Rc::clone(&closes);
+        let html = PopupSelect(PopupSelectProps {
+            open: true,
+            options: options(),
+            anchor: Some(anchor()),
+            on_open_change: Some(event_handler(move |open: bool| {
+                if !open {
+                    count.set(count.get() + 1);
+                }
+            })),
+            ..Default::default()
+        })
+        .render_to_html();
+        // The reused popover shields its own layer host and takes this
+        // wrapper as the trigger it must spare.
+        let surface = format!(
+            "[data-hk-outside=\"{}\"]",
+            attribute(&html, "data-hk-outside")
+        );
+        let trigger = format!(
+            "[data-hk-outside-trigger=\"{}\"]",
+            attribute(&html, "data-hk-outside-trigger")
+        );
+        assert!(
+            !surface.contains("=\"\"") && !trigger.contains("=\"\""),
+            "{html}"
+        );
+        assert_eq!(page.armed().len(), 1, "one shield, the popover's");
+
+        page.click(&[trigger.as_str()], &[surface.as_str(), trigger.as_str()]);
+        assert_eq!(
+            closes.get(),
+            0,
+            "a press on the trigger stays the trigger's toggle"
+        );
+
+        page.click(&["main"], &[surface.as_str(), trigger.as_str()]);
+        assert_eq!(closes.get(), 1, "a click elsewhere asks the host to close");
+    }
+
+    #[test]
+    fn a_closed_popup_select_publishes_no_trigger_key() {
+        let page = outside_click::TestPage::new();
+        let html = PopupSelect(PopupSelectProps {
+            options: options(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!html.contains("data-hk-outside"), "{html}");
+        assert!(page.armed().is_empty());
     }
 
     #[test]

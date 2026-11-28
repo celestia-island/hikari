@@ -33,6 +33,8 @@ pub mod scene;
 pub mod scripts;
 pub mod style_builder;
 pub mod styled;
+#[cfg(test)]
+mod testing;
 pub mod utils;
 
 // Prelude module

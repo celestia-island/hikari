@@ -315,11 +315,12 @@ pub fn NumberInput(props: NumberInputProps) -> Element {
     let max_attr = max.map(number_input_format);
     let classes = number_input_classes(&props);
 
-    // Live path: `Number(target.value)` → `emitValue`.
+    // Live path: `Number(target.value)` → `emitValue`. The whole value, so a
+    // second digit makes twelve and not two.
     let on_field_input = {
         let oninput = props.oninput.clone();
         move |event: InputEvent| {
-            let Some(parsed) = number_input_parse(&event.data) else {
+            let Some(parsed) = number_input_parse(&event.value) else {
                 return;
             };
             let next = number_input_emit_value(parsed, min, max);
@@ -425,6 +426,9 @@ impl StyledComponent for NumberInputComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -717,5 +721,24 @@ mod tests {
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored number input sheet"
         );
+    }
+
+    #[test]
+    fn a_number_input_event_parses_the_field_s_value() {
+        // Vue: `emitValue(Number(target.value))`. Parsing the inserted
+        // fragment would make the second digit of "12" emit two.
+        let received = Rc::new(RefCell::new(Vec::<f64>::new()));
+        let sink = Rc::clone(&received);
+        let node = NumberInput(NumberInputProps {
+            oninput: Some(EventHandler::new(move |value: f64| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-number-input-field", "2", "12"),
+            "no number field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec![12.0]);
     }
 }

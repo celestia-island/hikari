@@ -75,12 +75,15 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         String::new()
     };
 
-    // Create two separate handlers for the two textareas
+    // Create two separate handlers for the two textareas. Each hands the host
+    // the field's whole value after the event (Vue: `onInput` emits
+    // `update:modelValue` with `target.value`), never the fragment this one
+    // keystroke inserted.
     let handle_input_edit = {
         let on_change = props.on_change.clone();
         let content_for_edit = content.clone();
         move |e: InputEvent| {
-            let new_value = e.data.clone();
+            let new_value = e.value.clone();
             content_for_edit.set(new_value.clone());
             if let Some(handler) = on_change.as_ref() {
                 handler.call(new_value);
@@ -92,7 +95,7 @@ pub fn MarkdownEditor(props: MarkdownEditorProps) -> Element {
         let on_change = props.on_change.clone();
         let content_for_split = content.clone();
         move |e: InputEvent| {
-            let new_value = e.data.clone();
+            let new_value = e.value.clone();
             content_for_split.set(new_value.clone());
             if let Some(handler) = on_change.as_ref() {
                 handler.call(new_value);
@@ -572,5 +575,41 @@ impl StyledComponent for MarkdownEditorComponent {
 
     fn name() -> &'static str {
         "markdown-editor"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use super::*;
+
+    #[test]
+    fn an_editor_input_event_hands_the_host_the_field_s_value() {
+        // Both textareas (the edit pane and the split pane's editor) emit
+        // `update:modelValue` with `target.value`.
+        for mode in [MarkdownEditorMode::Edit, MarkdownEditorMode::Split] {
+            let received = Rc::new(RefCell::new(Vec::<String>::new()));
+            let sink = Rc::clone(&received);
+            let node = MarkdownEditor(MarkdownEditorProps {
+                mode,
+                on_change: Some(EventHandler::new(move |value: String| {
+                    sink.borrow_mut().push(value);
+                })),
+                ..Default::default()
+            });
+            assert!(
+                crate::testing::type_into(
+                    &node,
+                    "textarea",
+                    "hk-markdown-editor-textarea",
+                    "#",
+                    "# hi"
+                ),
+                "no editor textarea with an input listener is rendered in {mode:?}"
+            );
+            assert_eq!(*received.borrow(), vec!["# hi".to_string()], "in {mode:?}");
+        }
     }
 }

@@ -57,13 +57,14 @@ pub fn AutoComplete(props: AutoCompleteProps) -> Element {
         filtered_options_for_effect.set(filtered);
     });
 
-    // Handle input change
+    // Handle input change: the host is handed the field's whole value as it
+    // stands after the event, never the fragment this keystroke inserted.
     let is_open_for_input = is_open.clone();
     let focused_index_for_input = focused_index.clone();
     let handle_input = {
         let on_select = props.on_select.clone();
         move |e: InputEvent| {
-            on_select.call(e.data.clone());
+            on_select.call(e.value.clone());
             is_open_for_input.set(true);
             focused_index_for_input.set(0);
         }
@@ -323,5 +324,32 @@ impl StyledComponent for AutoCompleteComponent {
 
     fn name() -> &'static str {
         "autocomplete"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use super::*;
+
+    #[test]
+    fn an_autocomplete_input_event_hands_the_host_the_field_s_value() {
+        // The options are matched against what the field holds, so the host
+        // must receive the whole value — not the last character typed.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = AutoComplete(AutoCompleteProps {
+            on_select: EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            }),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "", "i", "hi"),
+            "no field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["hi".to_string()]);
     }
 }

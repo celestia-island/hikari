@@ -9,6 +9,9 @@ pub mod adaptive_dialog;
 pub mod ambient_layer;
 pub mod context_menu_provider;
 pub mod floating_layer;
+// Not glob-re-exported: `arm` / `release` are too bare for every module's
+// scope — call them as `outside_click::arm`.
+pub mod outside_click;
 pub mod popup_select;
 pub mod protocol_modal;
 pub mod screen_identify;

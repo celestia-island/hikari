@@ -3,6 +3,7 @@
 
 pub mod icon_helper;
 pub mod pad;
+pub mod passthrough;
 pub mod positioning;
 
 pub use icon_helper::*;

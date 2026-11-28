@@ -4,7 +4,7 @@
 use hikari_palette::classes::{ClassesBuilder, GlowClass};
 use tairitsu_vdom::IntoAttrValue;
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 use crate::platform::{
     element_from_point, get_bounding_client_rect, get_element_by_class_upward, set_style_property,
 };
@@ -179,7 +179,7 @@ pub fn Glow(props: GlowProps) -> Element {
         .add_raw(&props.preset.to_string())
         .build();
 
-    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    #[cfg(target_arch = "wasm32")]
     {
         let glow_color = match props.color {
             GlowColor::Ghost => "var(--hi-ghost-glow, rgba(128, 128, 128, 0.5))",
@@ -208,36 +208,26 @@ pub fn Glow(props: GlowProps) -> Element {
 
         // 鼠标移动处理 - 更新光标位置
         let onmousemove_handler = move |event: MouseEvent| {
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            #[cfg(target_arch = "wasm32")]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
 
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
+                if let Some(target_el) = element_from_point(client_x, client_y)
+                    && let Some(wrapper) =
                         get_element_by_class_upward("hk-glow-wrapper", &target_el)
-                    {
-                        if let Some(rect) = get_bounding_client_rect(&wrapper) {
-                            let relative_x = client_x as f64 - rect.x;
-                            let relative_y = client_y as f64 - rect.y;
-                            let width = rect.width;
-                            let height = rect.height;
+                    && let Some(rect) = get_bounding_client_rect(&wrapper)
+                {
+                    let relative_x = client_x as f64 - rect.x;
+                    let relative_y = client_y as f64 - rect.y;
+                    let width = rect.width;
+                    let height = rect.height;
 
-                            if width > 0.0 && height > 0.0 {
-                                let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
-                                let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
-                                set_style_property(
-                                    &wrapper,
-                                    "--glow-x",
-                                    &format!("{:.1}%", percent_x),
-                                );
-                                set_style_property(
-                                    &wrapper,
-                                    "--glow-y",
-                                    &format!("{:.1}%", percent_y),
-                                );
-                            }
-                        }
+                    if width > 0.0 && height > 0.0 {
+                        let percent_x = ((relative_x / width) * 100.0).clamp(0.0, 100.0);
+                        let percent_y = ((relative_y / height) * 100.0).clamp(0.0, 100.0);
+                        set_style_property(&wrapper, "--glow-x", &format!("{:.1}%", percent_x));
+                        set_style_property(&wrapper, "--glow-y", &format!("{:.1}%", percent_y));
                     }
                 }
             }
@@ -247,16 +237,15 @@ pub fn Glow(props: GlowProps) -> Element {
         // MouseEnter: 转换到 Hover 状态，设置强度 0.5
         let onmouseenter_handler = move |event: MouseEvent| {
             on_event_for_enter(InteractionEvent::MouseEnter);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            #[cfg(target_arch = "wasm32")]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
+                if let Some(target_el) = element_from_point(client_x, client_y)
+                    && let Some(wrapper) =
                         get_element_by_class_upward("hk-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
-                    }
+                {
+                    set_style_property(&wrapper, "--glow-intensity-scale", "0.5");
                 }
             }
             let _ = event;
@@ -265,16 +254,15 @@ pub fn Glow(props: GlowProps) -> Element {
         // MouseLeave: 转换到 Idle 状态，设置强度 0
         let onmouseleave_handler = move |event: MouseEvent| {
             on_event_for_leave(InteractionEvent::MouseLeave);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            #[cfg(target_arch = "wasm32")]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
+                if let Some(target_el) = element_from_point(client_x, client_y)
+                    && let Some(wrapper) =
                         get_element_by_class_upward("hk-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "0");
-                    }
+                {
+                    set_style_property(&wrapper, "--glow-intensity-scale", "0");
                 }
             }
             let _ = event;
@@ -283,16 +271,15 @@ pub fn Glow(props: GlowProps) -> Element {
         // MouseDown: 转换到 Active 状态，设置强度 1.0
         let onmousedown_handler = move |event: MouseEvent| {
             on_event_for_down(InteractionEvent::MouseDown);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            #[cfg(target_arch = "wasm32")]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
+                if let Some(target_el) = element_from_point(client_x, client_y)
+                    && let Some(wrapper) =
                         get_element_by_class_upward("hk-glow-wrapper", &target_el)
-                    {
-                        set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
-                    }
+                {
+                    set_style_property(&wrapper, "--glow-intensity-scale", "1.0");
                 }
             }
             let _ = event;
@@ -301,17 +288,16 @@ pub fn Glow(props: GlowProps) -> Element {
         // MouseUp: 根据当前状态恢复强度
         let onmouseup_handler = move |event: MouseEvent| {
             on_event_for_up(InteractionEvent::MouseUp);
-            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            #[cfg(target_arch = "wasm32")]
             {
                 let client_x = event.client_x;
                 let client_y = event.client_y;
-                if let Some(target_el) = element_from_point(client_x, client_y) {
-                    if let Some(wrapper) =
+                if let Some(target_el) = element_from_point(client_x, client_y)
+                    && let Some(wrapper) =
                         get_element_by_class_upward("hk-glow-wrapper", &target_el)
-                    {
-                        let target = get_intensity_for_state(*state_clone.borrow());
-                        set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());
-                    }
+                {
+                    let target = get_intensity_for_state(*state_clone.borrow());
+                    set_style_property(&wrapper, "--glow-intensity-scale", &target.to_string());
                 }
             }
             let _ = event;
@@ -332,7 +318,7 @@ pub fn Glow(props: GlowProps) -> Element {
         }
     }
 
-    #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
+    #[cfg(not(target_arch = "wasm32"))]
     {
         rsx! {
             div { class: glow_classes, "data-glow": "true", {props.children} }

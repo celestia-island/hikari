@@ -75,6 +75,22 @@ pub struct TextareaProps {
 
     /// Fires with the field's new text (Vue: `update:modelValue`).
     pub oninput: Option<EventHandler<String>>,
+
+    /// Vue: the `change` emit (a listener the attrs spread brings along).
+    /// Fires with the field's committed value.
+    pub onchange: Option<EventHandler<ChangeEvent>>,
+
+    /// Attributes set on the field element by name, after the component's
+    /// own — `title`, `data-*`, `aria-*`, test hooks (Vue: the attrs spread
+    /// on the element). A name the component renders itself takes the
+    /// host's value, as a spread attribute does.
+    pub attrs: Vec<(String, String)>,
+
+    /// Render the field element alone: no wrapper, no counter line, `class`
+    /// on the element and none of the sheet's own classes — the host draws
+    /// the chrome and keeps the event wiring.
+    #[default]
+    pub bare: bool,
 }
 
 /// Vue's `charCount` = `modelValue.length`: UTF-16 code units, NOT Unicode
@@ -109,10 +125,13 @@ pub fn Textarea(props: TextareaProps) -> Element {
         wrapper_classes.push_str(&props.class);
     }
 
-    let field_classes = if props.auto_grow {
-        "hk-textarea-field hk-textarea-field-autogrow"
+    let field_classes = if props.bare {
+        // The host's class alone: a bare field carries none of the sheet's.
+        props.class.clone()
+    } else if props.auto_grow {
+        "hk-textarea-field hk-textarea-field-autogrow".to_string()
     } else {
-        "hk-textarea-field"
+        "hk-textarea-field".to_string()
     };
 
     let count_class = if over_limit {
@@ -129,15 +148,24 @@ pub fn Textarea(props: TextareaProps) -> Element {
     let limit_text = format!(" / {}", props.max_length.unwrap_or_default());
 
     let oninput_handler = props.oninput.clone();
+    // Vue's `@input` reads `event.target.value`: the host is handed the
+    // field's whole value after the event, not the fragment it inserted.
     let oninput = move |event: InputEvent| {
         if let Some(handler) = oninput_handler.as_ref() {
-            handler.call(event.data.clone());
+            handler.call(event.value.clone());
+        }
+    };
+    // Vue's `change` emit: the event carries the field's committed value.
+    let onchange_handler = props.onchange.clone();
+    let onchange = move |event: ChangeEvent| {
+        if let Some(handler) = onchange_handler.as_ref() {
+            handler.call(event);
         }
     };
 
-    rsx! {
-        div {
-            class: wrapper_classes,
+    // Vue's attrs spread lands on the field element after the template's own.
+    let field = crate::utils::passthrough::onto_root(
+        rsx! {
             textarea {
                 class: field_classes,
                 value: props.model_value.clone(),
@@ -146,7 +174,21 @@ pub fn Textarea(props: TextareaProps) -> Element {
                 rows: props.rows,
                 maxlength: maxlength_attr,
                 oninput: oninput,
+                onchange: onchange,
             }
+        },
+        &props.attrs,
+    );
+
+    // A bare field is the element and nothing else.
+    if props.bare {
+        return field;
+    }
+
+    rsx! {
+        div {
+            class: wrapper_classes,
+            {field}
             if show_count {
                 div { class: "hk-textarea-count",
                     span { class: count_class, {count_text} }
@@ -172,6 +214,9 @@ impl StyledComponent for TextareaComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -187,6 +232,32 @@ mod tests {
         assert!(!props.show_count);
         assert_eq!(props.class, "");
         assert!(props.oninput.is_none());
+    }
+
+    #[test]
+    fn a_textarea_input_event_hands_the_host_the_field_s_value() {
+        // Vue's `@input` reads `event.target.value`; the inserted fragment
+        // would leave a controlled textarea the last keystroke only.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = Textarea(TextareaProps {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "textarea", "hk-textarea-field", "d", "typed"),
+            "no textarea with an input listener is rendered"
+        );
+        assert!(
+            crate::testing::type_into(&node, "textarea", "hk-textarea-field", "", "type"),
+            "no textarea with an input listener is rendered"
+        );
+        assert_eq!(
+            *received.borrow(),
+            vec!["typed".to_string(), "type".to_string()]
+        );
     }
 
     #[test]
@@ -224,6 +295,91 @@ mod tests {
         assert!(
             !css.contains(".hk-input") && !css.contains("--hi-text-primary"),
             "legacy .hk-input / --hi-* rules are retired for the textarea"
+        );
+    }
+
+    /// Invoke the change listener of the first textarea in `node`.
+    fn commit(node: &Element) -> bool {
+        fn walk(node: &VNode) -> bool {
+            match node {
+                VNode::Element(element) => {
+                    if element.tag == "textarea"
+                        && let Some(handler) = element.event_handlers.get("change")
+                    {
+                        handler.borrow_mut()(Box::new(ChangeEvent::new().value("committed")));
+                        return true;
+                    }
+                    element.children.iter().any(walk)
+                }
+                VNode::Fragment(children) => children.iter().any(walk),
+                _ => false,
+            }
+        }
+        walk(node)
+    }
+
+    #[test]
+    fn a_textarea_change_event_reaches_the_host() {
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = Textarea(TextareaProps {
+            onchange: Some(EventHandler::new(move |event: ChangeEvent| {
+                sink.borrow_mut().push(event.value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            commit(&node),
+            "no textarea with a change listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["committed".to_string()]);
+    }
+
+    #[test]
+    fn textarea_host_attributes_land_on_the_field_element() {
+        let html = Textarea(TextareaProps {
+            attrs: vec![
+                ("readonly".to_string(), "readonly".to_string()),
+                ("data-testid".to_string(), "log".to_string()),
+            ],
+            ..Default::default()
+        })
+        .render_to_html();
+        let field = html
+            .split('<')
+            .find(|tag| tag.starts_with("textarea "))
+            .unwrap_or_else(|| panic!("no field element in {html}"));
+        assert!(field.contains(r#"readonly="readonly""#), "{field}");
+        assert!(field.contains(r#"data-testid="log""#), "{field}");
+        assert!(!html.contains("hk-textarea-count"), "{html}");
+        assert!(
+            html.contains(r#"class="hk-textarea""#),
+            "the wrapper is still there: {html}"
+        );
+    }
+
+    #[test]
+    fn a_bare_textarea_is_the_field_element_alone() {
+        let html = Textarea(TextareaProps {
+            bare: true,
+            class: "share-log".to_string(),
+            show_count: true,
+            max_length: Some(20),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(
+            html.starts_with("<textarea "),
+            "the element is the root: {html}"
+        );
+        assert!(html.contains(r#"class="share-log""#), "{html}");
+        assert!(
+            !html.contains("hk-textarea"),
+            "no sheet chrome on a bare field: {html}"
+        );
+        assert!(
+            !html.contains("<div"),
+            "no wrapper and no counter line: {html}"
         );
     }
 }

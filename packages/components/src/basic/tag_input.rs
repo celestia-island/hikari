@@ -1225,7 +1225,8 @@ pub fn TagInput(props: TagInputProps) -> Element {
                 spellcheck: "false",
                 "data-1p-ignore": Some("true"),
                 "data-lpignore": "true",
-                oninput: move |event: InputEvent| oninput_inline.set_query(event.data.clone()),
+                // Vue: `query.value = (e.target as HTMLInputElement).value`.
+                oninput: move |event: InputEvent| oninput_inline.set_query(event.value.clone()),
                 onkeydown: move |event: KeyboardEvent| onkeydown_inline.inline_key(event),
             }
         }
@@ -1498,6 +1499,9 @@ impl StyledComponent for TagInputComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn option(key: &str, label: &str) -> TagOption {
@@ -2220,5 +2224,25 @@ mod tests {
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored tag input sheet"
         );
+    }
+
+    #[test]
+    fn a_tag_field_input_event_hands_the_host_the_field_s_value() {
+        // Vue's inline `onInput` writes `(e.target as HTMLInputElement).value`
+        // into the query; the inserted fragment alone never matches a row.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = TagInput(TagInputProps {
+            options: catalog(),
+            onquery: Some(EventHandler::new(move |query: String| {
+                sink.borrow_mut().push(query);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-tag-input-element", "n", "cn"),
+            "no tag field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["cn".to_string()]);
     }
 }

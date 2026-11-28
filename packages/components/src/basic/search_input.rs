@@ -36,12 +36,12 @@
 //     debounce window, exactly where a controlled component's async edges
 //     already live.
 //   * `Enter` reports the CONTROLLED value ([`SearchInputProps::model_value`]).
-//     Vue reads `(e.target as HTMLInputElement).value`; the wasm event payload
-//     carries no target value, so the mirror cannot re-read the element. Same
-//     convention the crate's other field mirrors use for `InputEvent`.
-//   * `oninput` forwards `InputEvent.data` — the host stack's "field's new
-//     text" payload, the convention `basic/input.rs` and `entry/search.rs`
-//     already document — rather than Vue's `target.value` read.
+//     Vue reads `(e.target as HTMLInputElement).value`; a key event carries
+//     no field value, so the mirror cannot re-read the element on that edge.
+//     Same convention the crate's other field mirrors use for `KeyboardEvent`.
+//   * `oninput` forwards `InputEvent.value` — the field's whole value as it
+//     stands after the event, which is what Vue's `target.value` read gives
+//     (the convention `basic/input.rs` documents).
 //   * NO `clearValue` FOCUS RESTORE: Vue calls `inputRef.value?.focus()` after
 //     emitting; element refs are never populated in this host stack, so the
 //     mirror cannot move focus. The host owns focus.
@@ -199,7 +199,7 @@ pub fn SearchInput(props: SearchInputProps) -> Element {
                 disabled: boolean_attr(disabled),
                 oninput: move |event: InputEvent| {
                     if let Some(handler) = oninput_for_field.as_ref() {
-                        handler.call(event.data.clone());
+                        handler.call(event.value.clone());
                     }
                 },
                 onkeydown: move |event: KeyboardEvent| {
@@ -253,6 +253,9 @@ impl StyledComponent for SearchInputComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -427,5 +430,23 @@ mod tests {
         assert!(html.contains(r#"tabindex="-1""#), "{html}");
         assert!(html.contains(r#"type="button""#), "{html}");
         assert!(!html.contains("hk-icon-button"), "{html}");
+    }
+
+    #[test]
+    fn a_search_field_input_event_hands_the_host_the_field_s_value() {
+        // Vue's `onInput` emits `update:modelValue` with `target.value`.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = SearchInput(SearchInputProps {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-search-input-field", "k", "hk"),
+            "no search field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["hk".to_string()]);
     }
 }

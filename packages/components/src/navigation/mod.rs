@@ -21,7 +21,7 @@ pub mod stepper;
 pub mod steps;
 pub mod tabs;
 
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(target_arch = "wasm32")]
 pub use anchor::use_scrollspy;
 pub use anchor::{Anchor, AnchorBuilder, AnchorItem, AnchorProps};
 pub use breadcrumb::{

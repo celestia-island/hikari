@@ -13,8 +13,9 @@ doctest = false
 # Hikari palette
 hikari-palette = { version = "^0.6", path = "../palette" }
 
-# Tairitsu framework (for theme context)
+# Tairitsu framework (for theme context). The whole workspace moves to the
+# 0.6.0 crates line together (`packages/components/Cargo.toml` says why).
 # Local development redirects these to working copies via ~/.cargo/config.toml [patch.crates-io].
-tairitsu-vdom = "^0.5"
-tairitsu-hooks = "^0.5"
-tairitsu-macros = "^0.5"
+tairitsu-vdom = "^0.6.0"
+tairitsu-hooks = "^0.6.0"
+tairitsu-macros = "^0.6.0"

@@ -129,8 +129,8 @@ pub struct FilePickerFieldProps {
     pub id: Option<String>,
 
     /// Fires with the new path text as the operator types (Vue:
-    /// `update:modelValue`; the `InputEvent.data` convention the crate's
-    /// other field mirrors use).
+    /// `update:modelValue`, which reads `target.value` — the convention the
+    /// crate's other field mirrors use).
     pub oninput: Option<EventHandler<String>>,
 
     /// Fires on a Browse press: the host opens its picker / mounts the
@@ -163,7 +163,7 @@ pub fn FilePickerField(props: FilePickerFieldProps) -> Element {
     let oninput = props.oninput.clone();
     let on_input = move |event: InputEvent| {
         if let Some(handler) = oninput.as_ref() {
-            handler.call(event.data.clone());
+            handler.call(event.value.clone());
         }
     };
 
@@ -245,6 +245,9 @@ impl StyledComponent for FilePickerFieldComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -376,5 +379,23 @@ mod tests {
             !css.contains("CSS generation failed"),
             "scss compilation failed for the mirrored file picker sheet"
         );
+    }
+
+    #[test]
+    fn a_path_field_input_event_hands_the_host_the_field_s_value() {
+        // Vue's `onInput` emits `update:modelValue` with `target.value`.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = FilePickerField(FilePickerFieldProps {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-file-picker-input", "c", "src"),
+            "no path field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["src".to_string()]);
     }
 }

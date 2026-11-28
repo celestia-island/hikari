@@ -1071,9 +1071,12 @@ impl PasswordPublish {
     }
 
     /// Vue's `onInput`: the pending-clear transform, the full-width filter,
-    /// then `update:modelValue` + the flag update.
+    /// then `update:modelValue` + the flag update. The transform reads the
+    /// field's whole value after the event (`e.target.value` in Vue), which is
+    /// what the pending-clear rule compares against the previous password.
     fn input(&self, event: InputEvent) {
-        let change = password_apply_input(&self.previous, &event.data, self.feedback.pending_clear);
+        let change =
+            password_apply_input(&self.previous, &event.value, self.feedback.pending_clear);
         if let Some(handler) = self.on_value_change.as_ref() {
             handler.call(change.value.clone());
         }
@@ -1618,6 +1621,9 @@ impl StyledComponent for PasswordSurfaceComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     // ── the pure layer ───────────────────────────────────────────────────
@@ -2300,6 +2306,31 @@ mod tests {
         assert!(props.on_focus.is_none());
         assert!(props.on_blur.is_none());
         assert!(props.on_keydown.is_none());
+    }
+
+    #[test]
+    fn a_password_input_event_is_transformed_from_the_field_s_value() {
+        // Vue's `onInput` reads `e.target.value` and, while the old password
+        // awaits its first keystroke, keeps only what was typed beyond it.
+        // Handed the inserted fragment instead, the same rule answers empty.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = PasswordSurface(PasswordSurfaceProps {
+            value: "old".to_string(),
+            feedback: PasswordFeedback {
+                pending_clear: true,
+                ..PasswordFeedback::default()
+            },
+            on_value_change: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-pwd-input", "a", "olda"),
+            "no password field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["a".to_string()]);
     }
 
     #[test]

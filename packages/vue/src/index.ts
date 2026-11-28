@@ -1358,3 +1358,13 @@ export {
   type OverviewRulerHandle,
   type OverviewRulerOptions,
 } from "./composables/useOverviewRuler";
+
+// Site meta — the single upstream definition of host-injected site variables
+// (GA measurement id boot tag, compliance/beian footer lines).
+export {
+  GA_TAG_ID,
+  isValidGaMeasurementId,
+  readGaMeasurementId,
+  parseBeianLines,
+} from "./siteMeta";
+export type { SiteBeianLine } from "./siteMeta";

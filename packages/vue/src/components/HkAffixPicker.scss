@@ -104,7 +104,7 @@
   padding: var(--space-4, 4px) var(--space-16, 16px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: rgb(var(--color-surface) / var(--opacity-half));
+  background: var(--hi-color-bg-subtle);
   transition: border-color 0.12s ease, background 0.12s ease;
 
   &:hover {

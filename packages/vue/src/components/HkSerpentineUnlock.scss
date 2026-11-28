@@ -10,7 +10,7 @@
   flex-direction: column;
   border-radius: var(--radius-md, 8px);
   border: 1px solid var(--border-faint);
-  background: rgb(var(--color-surface) / 40%);
+  background: var(--hi-color-bg-subtle);
   cursor: grab;
   touch-action: none;
   @include user-select(none);

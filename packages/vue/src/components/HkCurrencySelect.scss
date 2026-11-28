@@ -163,7 +163,7 @@
   padding: var(--space-8) var(--space-12);
   border: 1px solid color-mix(in srgb, rgb(var(--color-text)) 12%, transparent);
   border-radius: var(--radius-md);
-  background: rgb(var(--color-background) / 45%);
+  background: var(--hi-color-bg-subtle);
   flex: none;
 }
 

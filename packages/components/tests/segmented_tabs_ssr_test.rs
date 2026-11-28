@@ -45,9 +45,7 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
     // Root carries the segmented variant marker (attribute ORDER is not part
     // of the contract — the SSR emitter sorts attrs its own way — so every
     // pin below matches presence, never sequence).
-    let root_at = html
-        .find(r#"class="hk-tabs""#)
-        .unwrap_or_else(|| panic!("root missing: {html}"));
+    assert!(html.contains(r#"class="hk-tabs""#), "root missing: {html}");
     assert!(
         html.contains("data-variant=\"segmented\""),
         "root variant marker missing: {html}"
@@ -126,7 +124,69 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
         !with_inactive[0].contains("data-active"),
         "the inactive trigger must stay unmarked: {html}"
     );
-    let _ = root_at;
+}
+
+/// HkTabs' roving-tabindex FALLBACK: when `active_key` matches no navigable
+/// option, the first navigable option keeps the tab stop instead — the
+/// radiogroup must never become keyboard-unreachable (HkTabs.tsx
+/// `fallbackTabbableIdx`).
+///
+/// MUT:segmented-tab-fallback — dropping the fallback (tab stop only on an
+/// exact active match) leaves EVERY trigger at tabindex="-1" in both cases
+/// and turns this red.
+#[test]
+fn the_tab_stop_falls_back_to_the_first_navigable_option() {
+    // No match at all: both triggers unchecked; the FIRST one is tabbable.
+    let nomatch = render(SegmentedTabsProps {
+        items: two_options(),
+        active_key: "missing".to_string(),
+        ..Default::default()
+    });
+    let triggers: Vec<&str> = nomatch.split("<button").skip(1).collect();
+    assert_eq!(triggers.len(), 2, "{nomatch}");
+    let tabbable: Vec<&&str> = triggers
+        .iter()
+        .filter(|t| !t.contains("tabindex=\"-1\""))
+        .collect();
+    assert_eq!(tabbable.len(), 1, "exactly one tab stop: {nomatch}");
+    assert!(
+        tabbable[0].contains(r#"data-pane="preview""#),
+        "the FIRST navigable option keeps the tab stop: {nomatch}"
+    );
+    // Active key set but that option is disabled: the fallback moves the tab
+    // stop to the (enabled) source trigger.
+    let disabled_active = render(SegmentedTabsProps {
+        items: vec![
+            SegmentedTabOption {
+                key: "preview".to_string(),
+                label: "Preview".to_string(),
+                attrs: vec![("data-pane".to_string(), "preview".to_string())],
+                disabled: true,
+            },
+            SegmentedTabOption {
+                key: "source".to_string(),
+                label: "Source".to_string(),
+                attrs: vec![("data-pane".to_string(), "source".to_string())],
+                ..Default::default()
+            },
+        ],
+        active_key: "preview".to_string(),
+        ..Default::default()
+    });
+    let dtriggers: Vec<&str> = disabled_active.split("<button").skip(1).collect();
+    let dtabbable: Vec<&&str> = dtriggers
+        .iter()
+        .filter(|t| !t.contains("tabindex=\"-1\""))
+        .collect();
+    assert_eq!(dtabbable.len(), 1, "{disabled_active}");
+    assert!(
+        dtabbable[0].contains(r#"data-pane="source""#),
+        "the tab stop must move to the enabled option: {disabled_active}"
+    );
+    assert!(
+        dtriggers[0].contains("aria-disabled=\"true\""),
+        "the disabled option still announces itself: {disabled_active}"
+    );
 }
 
 /// Passthrough attributes (a host hooks its own behaviour with e.g.
@@ -141,12 +201,18 @@ fn passthrough_attributes_reach_their_own_trigger() {
         active_key: "source".to_string(),
         ..Default::default()
     });
-    let preview_idx = html.find("Preview").unwrap();
-    let source_idx = html
-        .find(">Source<")
-        .unwrap_or_else(|| html.find("Source").unwrap());
-    let preview_chunk = &html[preview_idx.saturating_sub(300)..preview_idx];
-    let source_chunk = &html[source_idx.saturating_sub(300)..source_idx];
+    // Per-trigger grouping (attribute order inside one trigger is not part
+    // of the contract).
+    let triggers: Vec<&str> = html.split("<button").skip(1).collect();
+    assert_eq!(triggers.len(), 2, "{html}");
+    let preview_chunk = triggers
+        .iter()
+        .find(|t| t.contains(r#"data-pane="preview""#))
+        .unwrap_or_else(|| panic!("preview trigger missing: {html}"));
+    let source_chunk = triggers
+        .iter()
+        .find(|t| t.contains(r#"data-pane="source""#))
+        .unwrap_or_else(|| panic!("source trigger missing: {html}"));
     assert!(
         preview_chunk.contains(r#"data-pane="preview""#),
         "preview trigger lost its hook: {html}"

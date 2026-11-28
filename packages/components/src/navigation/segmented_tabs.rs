@@ -58,10 +58,18 @@ pub struct SegmentedTabsProps {
 ///   `aria-label` only when a name was given;
 /// - the indicator node with NO `data-ready` (the sheet keeps it transparent
 ///   until the runtime has measured a frame);
-/// - triggers: `hk-tabs-trigger`, `type="button"`, `role="radio"`,
-///   `aria-checked`, `data-active` on the active one only, `aria-disabled` +
-///   `data-disabled` on disabled ones, roving tabindex (`-1` on every
-///   non-active option — the active one joins the page tab sequence).
+/// - triggers: `"type"="button"`, `role="radio"`, `aria-checked`,
+///   `data-active` on the active one only, `aria-disabled` + `data-disabled`
+///   on disabled ones, roving tabindex (`-1` on every non-active option —
+///   the active one joins the page tab sequence; when `active_key` matches
+///   NO navigable option, the FIRST navigable option takes the tab stop
+///   instead, mirroring HkTabs' fallback, so the radiogroup never becomes
+///   keyboard-unreachable);
+/// - DELIBERATE SUBSET: this form renders no strip-level `disabled`, no
+///   `block`/merged/actions surface and no panels — the interactive host
+///   (the docs shell) re-parents the slot and replaces it with the live
+///   `HkTabs`, which owns all of that. A host wanting those renders the Vue
+///   component instead.
 ///
 /// MUT:segmented-static-shape — diverging from any of these (dropping the
 /// variant markers, the indicator node, `aria-checked`, the roving tabindex
@@ -72,6 +80,26 @@ pub fn SegmentedTabs(props: SegmentedTabsProps) -> Element {
         "hk-tabs".to_string()
     } else {
         format!("hk-tabs {}", props.class)
+    };
+
+    // HkTabs' fallback (HkTabs.tsx `fallbackTabbableIdx`): when the active key
+    // matches no NAVIGABLE option (no match at all, or a disabled one), the
+    // FIRST navigable option keeps the tab stop — the radiogroup must never
+    // become keyboard-unreachable. Precomputed here so the rsx loop stays a
+    // simple comparison.
+    let active_is_navigable = props
+        .items
+        .iter()
+        .any(|o| o.key == props.active_key && !o.disabled);
+    let tabbable_key = if active_is_navigable {
+        props.active_key.clone()
+    } else {
+        props
+            .items
+            .iter()
+            .find(|o| !o.disabled)
+            .map(|o| o.key.clone())
+            .unwrap_or_default()
     };
 
     rsx! {
@@ -93,10 +121,13 @@ pub fn SegmentedTabs(props: SegmentedTabsProps) -> Element {
                 for option in props.items.iter() {
                     {
                         let active = option.key == props.active_key;
+                        // The fallback key is the tab stop when the active key
+                        // matched no navigable option (see above).
+                        let tabbable = option.key == tabbable_key;
                         let base = rsx! {
                             button {
                                 class: "hk-tabs-trigger",
-                                r#type: "button",
+                                "type": "button",
                                 role: "radio",
                                 // STRING value on purpose: the rsx bool
                                 // shorthand means "attr presence" and would
@@ -105,7 +136,7 @@ pub fn SegmentedTabs(props: SegmentedTabsProps) -> Element {
                                 "data-active": active.then_some("true"),
                                 "aria-disabled": option.disabled.then_some("true"),
                                 "data-disabled": option.disabled.then_some("true"),
-                                tabindex: if active { None } else { Some("-1") },
+                                tabindex: if tabbable { None } else { Some("-1") },
                                 "data-key": option.key.clone(),
                                 {option.label.clone()}
                             }

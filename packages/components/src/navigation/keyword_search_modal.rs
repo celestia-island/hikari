@@ -102,9 +102,9 @@
 //     window. ONE SCROLLBAR PER WINDOW is preserved either way: the results
 //     list owns no scroll region of its own (the 2026-09-08 audit), the
 //     modal window is THE scroller.
-//   * `oninput` forwards `InputEvent.data` (the crate-wide field convention,
-//     `basic/input.rs`) instead of Vue's `target.value` re-read — the wasm
-//     event payload carries no target value.
+//   * `oninput` forwards `InputEvent.value` — the field's whole value as it
+//     stands after the event, which is what Vue's `target.value` re-read
+//     gives (the crate-wide field convention, `basic/input.rs`).
 //   * the score chip reads [`keyword_search_semantic_score_percent`]:
 //     Vue's `(score * 100).toFixed(0)`; Rust's `{:.0}` rounds exact `.5`
 //     ties to even where JavaScript rounds away from zero — a float product
@@ -623,7 +623,7 @@ pub fn KeywordSearchModal(props: KeywordSearchModalProps) -> Element {
     let query_writer = props.on_query_change.clone();
     let on_query_input = move |event: InputEvent| {
         if let Some(handler) = query_writer.as_ref() {
-            handler.call(event.data);
+            handler.call(event.value.clone());
         }
     };
 
@@ -779,6 +779,8 @@ impl StyledComponent for KeywordSearchModalComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+
     use super::*;
 
     fn record(key: &str, texts: &[(&str, Option<f64>)]) -> KeywordSearchRecord {
@@ -1265,5 +1267,25 @@ mod tests {
             "scss compilation failed for the mirrored keyword-search-modal sheet"
         );
         assert_eq!(KeywordSearchModalComponent::name(), "keyword-search-modal");
+    }
+
+    #[test]
+    fn a_keyword_field_input_event_hands_the_host_the_field_s_value() {
+        // Vue's `onInput` writes `(e.target as HTMLInputElement).value` into
+        // the live query; the inserted fragment alone never matches a row.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = KeywordSearchModal(KeywordSearchModalProps {
+            open: true,
+            on_query_change: Some(EventHandler::new(move |query: String| {
+                sink.borrow_mut().push(query);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-kw-search-input", "k", "work"),
+            "no keyword field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["work".to_string()]);
     }
 }

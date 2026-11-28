@@ -129,9 +129,11 @@ pub fn Textarea(props: TextareaProps) -> Element {
     let limit_text = format!(" / {}", props.max_length.unwrap_or_default());
 
     let oninput_handler = props.oninput.clone();
+    // Vue's `@input` reads `event.target.value`: the host is handed the
+    // field's whole value after the event, not the fragment it inserted.
     let oninput = move |event: InputEvent| {
         if let Some(handler) = oninput_handler.as_ref() {
-            handler.call(event.data.clone());
+            handler.call(event.value.clone());
         }
     };
 
@@ -172,6 +174,9 @@ impl StyledComponent for TextareaComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -187,6 +192,32 @@ mod tests {
         assert!(!props.show_count);
         assert_eq!(props.class, "");
         assert!(props.oninput.is_none());
+    }
+
+    #[test]
+    fn a_textarea_input_event_hands_the_host_the_field_s_value() {
+        // Vue's `@input` reads `event.target.value`; the inserted fragment
+        // would leave a controlled textarea the last keystroke only.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = Textarea(TextareaProps {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "textarea", "hk-textarea-field", "d", "typed"),
+            "no textarea with an input listener is rendered"
+        );
+        assert!(
+            crate::testing::type_into(&node, "textarea", "hk-textarea-field", "", "type"),
+            "no textarea with an input listener is rendered"
+        );
+        assert_eq!(
+            *received.borrow(),
+            vec!["typed".to_string(), "type".to_string()]
+        );
     }
 
     #[test]

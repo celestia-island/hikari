@@ -211,7 +211,9 @@ pub fn Search(props: SearchProps) -> Element {
                     }
                 },
                 oninput: move |e: InputEvent| {
-                    let new_value = e.data.clone();
+                    // The field's whole value after the event, never the
+                    // fragment this keystroke inserted.
+                    let new_value = e.value.clone();
                     value_signal_for_oninput.set(new_value.clone());
                     on_search_for_oninput.call(new_value);
                 },
@@ -255,5 +257,41 @@ impl StyledComponent for SearchComponent {
 
     fn name() -> &'static str {
         "search"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use super::*;
+
+    #[test]
+    fn a_search_input_event_hands_the_host_the_field_s_value() {
+        // `on_search` filters on what the field holds, so it must receive the
+        // whole value — not the last character typed.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        // The dropdown is a portal entry, so the field needs a portal context
+        // (the pattern of `tests/basic_components_tests.rs`).
+        let entries = use_signal(Vec::<crate::portal::PortalEntry>::new);
+        provide_context(crate::portal::PortalContext {
+            entries: entries.inner().clone(),
+            add_entry: Callback::new(|_| {}),
+            remove_entry: Callback::new(|_| {}),
+            clear_all: Callback::new(|_| {}),
+        });
+        let node = Search(SearchProps {
+            on_search: EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            }),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "", "v", "dev"),
+            "no field with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["dev".to_string()]);
     }
 }

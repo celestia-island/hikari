@@ -51,7 +51,10 @@ hikari-i18n = { version = "^0.6", path = "../i18n" }
 #   - tairitsu-web 0.6.0: `WitPlatform::body()` and the two style getters
 #     the wasip2 platform backend reads. The whole line moves with it:
 #     `WitPlatform`'s element and event types are tairitsu-vdom 0.6.0's, so
-#     a `^0.5` requirement next to it puts two `tairitsu-vdom`s in one graph.
+#     a `^0.5` requirement next to it puts two `tairitsu-vdom`s in one graph;
+#   - tairitsu-vdom 0.6.0: `InputEvent.value`, the field's whole value
+#     after an input event — every field mirror's `oninput` hands it to the
+#     host, the way Vue's handlers read `target.value`.
 # Nothing enforces the tairitsu-web/glue pairing at package time: consumers
 # must package the whole line together (ledger L127's failure mode).
 tairitsu-vdom = "^0.6.0"

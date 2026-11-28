@@ -51,10 +51,13 @@ pub struct TransferProps {
     pub on_change: Option<EventHandler<Vec<String>>>,
 }
 
-///
-///
-///
-///
+/// The search field's input writer: the filter text is handed the field's
+/// whole value as it stands after the event, never the fragment this one
+/// keystroke inserted (the crate's field convention, `basic/input.rs`).
+fn search_writer(write: impl Fn(String) + 'static) -> impl Fn(InputEvent) + 'static {
+    move |event: InputEvent| write(event.value.clone())
+}
+
 #[component]
 pub fn Transfer(props: TransferProps) -> Element {
     let titles = props
@@ -239,9 +242,7 @@ fn TransferPanel(
 
     // Clone for handle_search
     let search_text_for_handler = search_text.clone();
-    let handle_search = move |e: InputEvent| {
-        search_text_for_handler.set(e.data.clone());
-    };
+    let handle_search = search_writer(move |value| search_text_for_handler.set(value));
 
     // Clone for display in input value
     let search_text_value = search_text.get();
@@ -362,5 +363,23 @@ impl StyledComponent for TransferComponent {
 
     fn name() -> &'static str {
         "transfer"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    use super::*;
+
+    #[test]
+    fn a_transfer_search_input_event_hands_the_filter_the_field_s_value() {
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let write = search_writer(move |value: String| sink.borrow_mut().push(value));
+        write(InputEvent::new().data("a").value("ja"));
+        write(InputEvent::new().data("").value("j"));
+        assert_eq!(*received.borrow(), vec!["ja".to_string(), "j".to_string()]);
     }
 }

@@ -286,9 +286,14 @@ struct FieldEvents {
 }
 
 impl FieldEvents {
+    /// Vue's `@input` handler reads `event.target.value`, so the host is
+    /// handed the field's whole value as it stands after the event
+    /// (`InputEvent.value`) — what a controlled field stores. The inserted
+    /// fragment (`InputEvent.data`) would leave it the last keystroke only,
+    /// and nothing at all on a deletion.
     fn input(&self, event: InputEvent) {
         if let Some(handler) = self.oninput.as_ref() {
-            handler.call(event.data.clone());
+            handler.call(event.value.clone());
         }
     }
 
@@ -534,6 +539,9 @@ impl StyledComponent for InputComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -644,5 +652,50 @@ mod tests {
             !css.contains("--hi-input-text-color"),
             "legacy --hi-input-* vars are retired"
         );
+    }
+
+    #[test]
+    fn an_input_event_hands_the_host_the_field_s_value() {
+        // A controlled field stores what the field holds after the event, the
+        // way Vue's handler reads `event.target.value` — never the fragment
+        // this one keystroke inserted, which is the last character while
+        // typing and nothing at all on a deletion.
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let events = FieldEvents {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            onfocus: None,
+            onblur: None,
+            onkeydown: None,
+            submit: None,
+            textarea: false,
+            disabled: false,
+            readonly: false,
+        };
+        events.input(InputEvent::new().data("o").value("Hello"));
+        events.input(InputEvent::new().data("").value("Hell"));
+        assert_eq!(
+            *received.borrow(),
+            vec!["Hello".to_string(), "Hell".to_string()]
+        );
+    }
+
+    #[test]
+    fn the_rendered_field_is_wired_to_the_same_payload() {
+        let received = Rc::new(RefCell::new(Vec::<String>::new()));
+        let sink = Rc::clone(&received);
+        let node = Input(InputProps {
+            oninput: Some(EventHandler::new(move |value: String| {
+                sink.borrow_mut().push(value);
+            })),
+            ..Default::default()
+        });
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-input-element", "o", "Hello"),
+            "no input element with an input listener is rendered"
+        );
+        assert_eq!(*received.borrow(), vec!["Hello".to_string()]);
     }
 }

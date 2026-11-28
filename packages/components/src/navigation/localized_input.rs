@@ -90,8 +90,9 @@
 //   * NO `placeholderVariant`: the mirrored `HkInput` renders the NATIVE
 //     placeholder only (its marquee overlay has no mirror); Vue's
 //     `truncate`/`marquee` distinction disappears with it.
-//   * `oninput` forwards `InputEvent.data` (the crate-wide field
-//     convention, `basic/input.rs`) instead of Vue's `target.value` re-read.
+//   * `oninput` forwards `InputEvent.value` — the field's whole value as it
+//     stands after the event, which is what Vue's `target.value` re-read
+//     gives (the crate-wide field convention, `basic/input.rs`).
 //   * NO list transitions (HkListTransition squeeze in/out) and no
 //     popup-manager stacking context — the picker mirror's own documented
 //     deltas, inherited by composition.
@@ -1008,27 +1009,14 @@ mod tests {
         });
 
         // Serialization drops handlers, so walk the tree and INVOKE the
-        // field's input listener (the `feedback/modal.rs` test pattern):
-        // deleting the wiring leaves it a no-op.
-        fn type_into_field(node: &Element) -> bool {
-            match node {
-                VNode::Element(el) => {
-                    if el.tag == "input"
-                        && el.class.to_string().contains("hk-input-element")
-                        && let Some(handler) = el.event_handlers.get("input")
-                    {
-                        handler.borrow_mut()(Box::new(InputEvent::new().data("Hello"))
-                            as Box<dyn tairitsu_vdom::EventData>);
-                        return true;
-                    }
-                    el.children.iter().any(type_into_field)
-                }
-                VNode::Fragment(children) => children.iter().any(type_into_field),
-                _ => false,
-            }
-        }
-        assert!(type_into_field(&node), "no field element found");
-        // update:modelValue fires with the raw text…
+        // field's input listener: deleting the wiring leaves it a no-op. The
+        // event inserts "o" into a field that then reads "Hello" — the host
+        // must receive the field's value, not the inserted fragment.
+        assert!(
+            crate::testing::type_into(&node, "input", "hk-input-element", "o", "Hello"),
+            "no field element found"
+        );
+        // update:modelValue fires with the field's value…
         assert_eq!(*values.borrow(), vec!["Hello".to_string()]);
         // …and update:translations fires with the trimmed merge.
         assert_eq!(*maps.borrow(), vec![translations(&[("en", "Hello")])]);

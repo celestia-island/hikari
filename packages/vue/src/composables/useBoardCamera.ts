@@ -33,6 +33,7 @@ import {
   quantizeBoardK,
   quantizeBoardPercentK,
   type BoardZoomLadder,
+  type BoardWritingDirection,
 } from "../utils/boardCamera";
 
 /** Animated transition duration, ms (wheel notch / minimap bar / pinch release). */
@@ -61,6 +62,8 @@ export interface UseBoardCameraOptions {
   /** Logical-pixel reserve at the viewport's end edge (a minimap dock). The
    * fit/reset camera centers content in the remaining safe area. */
   fitEndReserve?: number;
+  /** Live writing direction used to place that logical end reserve. */
+  fitWritingDirection?: MaybeRefOrGetter<BoardWritingDirection>;
   /** Existing boards keep the geometric 1.05ⁿ ladder. Document diagrams opt
    * into exact linear percent rungs (50%, 55%, 60%…). */
   zoomLadder?: BoardZoomLadder;
@@ -109,6 +112,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
      *  default cap (BOARD_FIT_CAP). Unset keeps the default. */
     fitCap = undefined,
     fitEndReserve = 0,
+    fitWritingDirection = "ltr",
     zoomLadder = "geometric",
     zoomStepPercent = 5,
     smallContentPan = "center",
@@ -231,6 +235,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   function fit(): void {
     const fitOptions = {
       endReserve: fitEndReserve,
+      writingDirection: toValue(fitWritingDirection),
       ...(fitCap !== undefined ? { cap: fitCap } : {}),
     };
     const target = zoomLadder === "percent"

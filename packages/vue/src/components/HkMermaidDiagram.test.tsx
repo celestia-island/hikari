@@ -89,6 +89,7 @@ describe("HkMermaidDiagram", () => {
     const c = mount({ source: FLOWCHART, minimap: false });
     await settle();
     expect(c.querySelector(".hk-board-minimap")).toBeNull();
+    expect(c.querySelector(".hk-minimap--collapsed")).toBeNull();
     expect(c.querySelector(".hk-mm-zoom-bar")).toBeNull();
     const grid = c.querySelector(".hk-board-grid") as HTMLElement;
     expect(grid.style.display).toBe("none");
@@ -132,6 +133,9 @@ describe("HkMermaidDiagram", () => {
     const explicit = mount({ source: FLOWCHART, height: 500 });
     await settle();
     expect(explicit.querySelector<HTMLElement>(".hk-mermaid__stage")!.style.height).toBe("500px");
+    const automatic = mount({ source: FLOWCHART, height: "auto", maxHeight: "auto" });
+    await settle();
+    expect(automatic.querySelector<HTMLElement>(".hk-mermaid__stage")!.style.maxHeight).toBe("40vh");
   });
 
   it("passes readable linear zoom governance into the board", async () => {

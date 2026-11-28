@@ -78,6 +78,19 @@ describe("HkMarkdownRenderer mermaid fences", () => {
     const host = container.querySelector(".hk-md-mermaid") as HTMLElement;
     expect(host.querySelector(".hk-mermaid")).not.toBeNull();
     expect(host.querySelector(".hk-board")).not.toBeNull();
+    // MUT:markdown-viewport-policy — bypassing HkMermaidDiagram's defaults in
+    // this consumer never passes: the prose path shares the 40vh cap and fit
+    // ceiling, while minimap=false also removes the minimap fit reserve.
+    expect((host.querySelector(".hk-mermaid__stage") as HTMLElement).style.maxHeight).toBe("40vh");
+    const board = host.querySelector(".hk-board") as unknown as {
+      __vueParentComponent?: { props: Record<string, unknown> };
+    };
+    expect(board.__vueParentComponent?.props).toMatchObject({
+      minimap: false,
+      fitEndReserve: 0,
+      fitCap: 1,
+      zoomLadder: "percent",
+    });
     // Prose around the fence is untouched. (No h1 assertion: the
     // happy-dom DOMPurify build strips SOME leading tags — an
     // environment artifact, not product behavior — so prose presence is

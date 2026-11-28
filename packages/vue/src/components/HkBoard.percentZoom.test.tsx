@@ -8,10 +8,16 @@ const widthDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "
 const heightDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientHeight");
 const mounted: Array<{ app: ReturnType<typeof createApp>; host: HTMLElement }> = [];
 
-function mountBoard(props: Record<string, unknown>, viewport = { w: 800, h: 600 }): HTMLElement {
+function mountBoard(
+  props: Record<string, unknown>,
+  viewport = { w: 800, h: 600 },
+  writingDirection: "ltr" | "rtl" = "ltr",
+): HTMLElement {
   Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, get: () => viewport.w });
   Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, get: () => viewport.h });
   const host = document.createElement("div");
+  host.dir = writingDirection;
+  host.style.direction = writingDirection;
   document.body.appendChild(host);
   const app = createApp(defineComponent({
     setup: () => () => h(HkBoard, { nodes, ...props }),
@@ -78,6 +84,23 @@ describe("HkBoard percent governance", () => {
     await nextTick();
     const transform = host.querySelector<HTMLElement>(".hk-board-world")!.style.transform;
     expect(transform).toContain("scale(0)");
+  });
+
+  it("reads the host's live RTL direction when placing the fit reserve", async () => {
+    // MUT:board-live-rtl-reserve — using a hard-coded physical right edge never
+    // passes: this host's fit must translate to x=450 (the LTR value is 270).
+    const host = mountBoard({
+      zoomLadder: "percent",
+      minK: 0.5,
+      maxK: 2,
+      fitCap: 1,
+      fitEndReserve: 180,
+      pan: "float",
+      animated: false,
+    }, { w: 800, h: 600 }, "rtl");
+    await nextTick();
+    const transform = host.querySelector<HTMLElement>(".hk-board-world")!.style.transform;
+    expect(transform).toContain("translate(450px");
   });
 
   it("keeps the default board on its existing geometric ladder", async () => {

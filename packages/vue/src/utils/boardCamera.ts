@@ -78,6 +78,15 @@ export function quantizeBoardK(k: number): number {
 /** Zoom governance is opt-in per board. Existing scene boards keep the
  * geometric ladder; document diagrams use exact linear percent rungs. */
 export type BoardZoomLadder = "geometric" | "percent";
+export type BoardWritingDirection = "ltr" | "rtl";
+
+export interface BoardFitOptions {
+  pad?: number;
+  cap?: number;
+  /** Reserve on the LOGICAL inline end (right in LTR, left in RTL). */
+  endReserve?: number;
+  writingDirection?: BoardWritingDirection;
+}
 
 export interface BoardPercentZoomOptions {
   /** Linear increment in displayed percent (5 means 50%, 55%, 60%…). */
@@ -218,7 +227,7 @@ export function boardClampPan(
 export function boardFit(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: { pad?: number; cap?: number; endReserve?: number } = {},
+  opts: BoardFitOptions = {},
 ): BoardCamera {
   const pad = opts.pad ?? BOARD_FIT_PAD;
   const cap = opts.cap ?? BOARD_FIT_CAP;
@@ -228,9 +237,10 @@ export function boardFit(
   const kw = content.w > 0 ? availW / content.w : cap;
   const kh = content.h > 0 ? availH / content.h : cap;
   const k = Math.min(cap, Math.min(kw, kh));
+  const signedReserve = opts.writingDirection === "rtl" ? endReserve : -endReserve;
   return {
     k,
-    x: (viewport.w - endReserve - content.w * k) / 2 - content.x * k,
+    x: (viewport.w + signedReserve - content.w * k) / 2 - content.x * k,
     y: (viewport.h - content.h * k) / 2 - content.y * k,
   };
 }
@@ -242,7 +252,7 @@ export function boardFit(
 export function boardFitPercent(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: BoardPercentZoomOptions & { pad?: number; cap?: number; endReserve?: number },
+  opts: BoardPercentZoomOptions & BoardFitOptions,
 ): BoardCamera {
   const raw = boardFit(content, viewport, opts);
   // Preserve the degenerate-viewport sentinel. Turning 0 into minK would draw
@@ -250,9 +260,10 @@ export function boardFitPercent(
   if (raw.k <= 0) return raw;
   const k = quantizeBoardPercentK(raw.k, { ...opts, direction: "floor" });
   const endReserve = Math.max(0, opts.endReserve ?? 0);
+  const signedReserve = opts.writingDirection === "rtl" ? endReserve : -endReserve;
   return {
     k,
-    x: (viewport.w - endReserve - content.w * k) / 2 - content.x * k,
+    x: (viewport.w + signedReserve - content.w * k) / 2 - content.x * k,
     y: (viewport.h - content.h * k) / 2 - content.y * k,
   };
 }

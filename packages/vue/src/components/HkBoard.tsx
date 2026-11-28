@@ -212,6 +212,13 @@ export default defineComponent({
       animated: props.animated,
       fitCap: props.fitCap,
       fitEndReserve: props.fitEndReserve,
+      // The dock uses inset-inline-end, so the fit reserve must follow the
+      // LIVE writing direction too (right in LTR, left in RTL).
+      fitWritingDirection: () => {
+        const el = viewportRef.value;
+        if (!el || typeof getComputedStyle === "undefined") return "ltr";
+        return getComputedStyle(el).direction === "rtl" ? "rtl" : "ltr";
+      },
       zoomLadder: props.zoomLadder,
       zoomStepPercent: props.zoomStepPercent,
       smallContentPan: props.pan === "float" ? "keep" : "center",

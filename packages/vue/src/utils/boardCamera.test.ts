@@ -57,17 +57,21 @@ describe("boardCamera — exact linear percent ladder", () => {
   });
 
   it("fit rounds DOWN to 85% instead of cropping at the nearest rung", () => {
-    // Raw fit = (600 − 80) / 600 = 0.8666…, so nearest would choose 90% and
-    // cut off content; floor chooses 85%. MUT:fit-floor — changing floor to
-    // nearest catches this exact regression.
-    const content = { x: 0, y: 0, w: 100, h: 600 };
+    // Raw fit = (600 − 80) / 590 = 0.88135…, so nearest chooses 90% and
+    // overflows the padded viewport; floor chooses 85%. MUT:fit-floor —
+    // changing floor to nearest catches this exact regression (the previous
+    // 0.8666 sample was equivalent under BOTH rules and could not).
+    const content = { x: 0, y: 0, w: 100, h: 590 };
     const viewport = { w: 800, h: 600 };
     const raw = boardFit(content, viewport, { cap: 1 });
     const fitted = boardFitPercent(content, viewport, { ...governance, cap: 1 });
-    expect(raw.k).toBeGreaterThan(0.85);
+    expect(raw.k).toBeGreaterThan(0.875);
     expect(raw.k).toBeLessThan(0.9);
+    expect(quantizeBoardPercentK(raw.k, governance)).toBe(0.9);
     expect(fitted.k).toBe(0.85);
     expect(fitted.k).toBeLessThanOrEqual(raw.k);
+    expect(fitted.y + (content.y + content.h) * fitted.k)
+      .toBeLessThanOrEqual(viewport.h - 40);
   });
 
   it("reserves the minimap's end-edge dock out of the fitted content", () => {
@@ -86,6 +90,24 @@ describe("boardCamera — exact linear percent ladder", () => {
     expect(drawnRight).toBeLessThanOrEqual(viewport.w - 180);
     // 160px map + 10px inset means its left edge is 630px.
     expect(drawnRight).toBeLessThan(630);
+  });
+
+  it("mirrors the minimap reserve onto the left dock in RTL", () => {
+    // MUT:minimap-fit-reserve-rtl — ignoring writingDirection never passes:
+    // the LTR fit starts at 40px and runs beneath the RTL dock (10…170px);
+    // the mirrored fit starts at 220px, clear of that dock.
+    const content = { x: 0, y: 0, w: 900, h: 200 };
+    const viewport = { w: 800, h: 600 };
+    const fitted = boardFitPercent(content, viewport, {
+      ...governance,
+      cap: 1,
+      endReserve: 180,
+      writingDirection: "rtl",
+    });
+    expect(fitted.k).toBe(0.6);
+    expect(fitted.x).toBe(220);
+    const drawnLeft = fitted.x + content.x * fitted.k;
+    expect(drawnLeft).toBeGreaterThan(170);
   });
 
   it("keeps a long diagram at the readable 50% floor for panning", () => {

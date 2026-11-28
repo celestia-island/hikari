@@ -355,7 +355,8 @@ export default defineComponent({
      * by maxHeight instead of letting a tall graph take the whole page. */
     height: { type: [Number, String] as PropType<number | "auto">, default: "auto" },
     /** Auto-height ceiling: px number or any CSS length. Default 40vh;
-     * "none" opts out. An explicit height already expresses the host's size. */
+     * "none" opts out; "auto" keeps the default. An explicit height already
+     * expresses the host's size. */
     maxHeight: { type: [Number, String] as PropType<number | string>, default: MERMAID_DEFAULT_MAX_HEIGHT },
     /** Linear percent governance. Defaults are deliberately readable: a tall
      * graph pans at 50% rather than auto-fitting into unreadable miniature. */
@@ -446,8 +447,9 @@ export default defineComponent({
         return { height: typeof props.height === "number" ? `${props.height}px` : props.height };
       }
       const suggested = `${model.value?.suggestedHeight ?? 240}px`;
-      if (props.maxHeight === "none" || props.maxHeight === "") return { height: suggested };
-      const cap = typeof props.maxHeight === "number" ? `${props.maxHeight}px` : props.maxHeight;
+      const requestedCap = props.maxHeight === "auto" ? MERMAID_DEFAULT_MAX_HEIGHT : props.maxHeight;
+      if (requestedCap === "none" || requestedCap === "") return { height: suggested };
+      const cap = typeof requestedCap === "number" ? `${requestedCap}px` : requestedCap;
       return { height: suggested, maxHeight: cap };
     });
     const waitingForEngine = computed(() => !getMermaidEngine() && !engineSettled.value);

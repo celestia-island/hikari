@@ -132,20 +132,35 @@ export function parseBeianLines(raw: string): Array<SiteBeianLine> {
 
 /**
  * DOM id of the JSON boot tag carrying the raw `beian_lines` value (the
- * JSON array `parseBeianLines` consumes). Hosts that ship a build-time
- * pipeline inject it as `<script type="application/json" id="…">`; hosts
- * that resolve the setting server-side (erp serves the already-parsed array
- * on `/api/auth/login-methods`) simply never emit it — absence reads as an
- * empty footer, never as an error.
+ * JSON array `parseBeianLines` consumes). This is the ONE build-time channel
+ * this repo defines — but NO host emits it yet (2026-11-28 audit):
+ *
+ * - erp and chest both resolve the setting server-side and never emit it
+ *   (erp serves the already-parsed array on `/api/auth/login-methods`; chest
+ *   ships `CHEST_FOOTER_EXTRA` → `/health.footer_extra`, a different shape).
+ * - `celestia.ac.cn` still uses its own `celestia-footer-extra` tag, whose
+ *   schema is WIDER than ours (it also accepts string arrays and a bare HTML
+ *   string). Moving that site onto this channel is a host-side task, not a
+ *   property of this module.
+ *
+ * Absence therefore reads as an empty footer everywhere today — which is the
+ * intended degradation, never an error.
  */
 export const BEIAN_TAG_ID = "celestia-beian-lines";
 
 /**
  * Read the beian lines from the served document's boot tag. Every failure
- * mode (no document, tag absent, empty/whitespace content, envsubst
- * leftovers `$…` / `__…`) reads as "no compliance lines"; a present but
- * malformed JSON array also reads as `[]` rather than throwing, because a
- * misconfigured deployment must not break the shell's footer render.
+ * mode (no document, tag absent, blank content) reads as "no compliance
+ * lines"; a present but malformed value also reads as `[]` rather than
+ * throwing, because a misconfigured deployment must not break the shell's
+ * footer render.
+ *
+ * The `$…` / `__…` placeholder guard is asserted SEPARATELY from the parser's
+ * malformed-JSON fallback: a placeholder is not valid JSON, so `parseBeianLines`
+ * would return `[]` on its own and a test that only fed placeholders could not
+ * tell the guard from its absence. `readBeianLines` is therefore tested with
+ * `$` / `__` prefixes on otherwise-VALID payloads, where the guard is the only
+ * thing that can reject them.
  */
 export function readBeianLines(doc: Document = document): Array<SiteBeianLine> {
   let raw: string | null;

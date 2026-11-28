@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -181,9 +185,29 @@ describe("readBeianLines", () => {
     ]);
   });
 
-  it("treats a missing tag, blank content and placeholders as no lines", () => {
+  it("treats a missing tag and blank content as no lines", () => {
     expect(readBeianLines(docWith("some-other-id", '[{"title":"x"}]'))).toEqual([]);
     expect(readBeianLines(docWith(BEIAN_TAG_ID, "   "))).toEqual([]);
+  });
+
+  // The placeholder guard CANNOT be pinned behaviourally from the outside:
+  // ANY prefix (`$…` / `__…`) makes the value fail `JSON.parse`, so
+  // `parseBeianLines` would already answer [] and no assertion could tell
+  // "guard rejected it" from "parser rejected it" (R2 mutation evidence:
+  // deleting the guard left a placeholder-only test green). It is pinned
+  // structurally instead — the source of this module must still carry the
+  // placeholder branch — and the placeholder assertions stay as the
+  // end-to-end contract (whatever rejects them, the answer is []).
+  it("keeps the envsubst placeholder guard in the reader", () => {
+    // Scope the assertion to THIS reader's body: the GA reader carries an
+    // identical guard string, so a whole-file `toContain` would stay green
+    // even after the beian guard was deleted (R2 follow-up mutation proof).
+    const here = dirname(fileURLToPath(import.meta.url));
+    const src = readFileSync(join(here, "siteMeta.ts"), "utf8");
+    const start = src.indexOf("export function readBeianLines");
+    expect(start).toBeGreaterThan(-1);
+    const body = src.slice(start, src.indexOf("return parseBeianLines(raw);", start));
+    expect(body).toContain('raw.startsWith("$") || raw.startsWith("__")');
     expect(readBeianLines(docWith(BEIAN_TAG_ID, "$BEIAN_LINES"))).toEqual([]);
     expect(readBeianLines(docWith(BEIAN_TAG_ID, "__BEIAN_LINES__"))).toEqual([]);
   });

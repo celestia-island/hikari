@@ -222,6 +222,17 @@ pub struct CodeHighlightProps {
     #[default(true)]
     pub line_numbers: bool,
 
+    /// Render the card's own header. Hosts that already provide the language
+    /// label, pane switch and copy action turn this off instead of hiding a
+    /// duplicate header with local CSS.
+    #[default(true)]
+    pub show_header: bool,
+
+    /// Standalone cards keep their border/radius/shadow. Embedded panes pass
+    /// false so the outer card owns the only frame.
+    #[default(true)]
+    pub framed: bool,
+
     #[default(true)]
     pub copyable: bool,
 
@@ -319,6 +330,7 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
     let label_text = props.label.clone().unwrap_or_else(|| language.clone());
 
     let language_class = format!("language-{}", language);
+    let framed_attr = if props.framed { "true" } else { "false" };
 
     // Pre-compute line number elements outside rsx! using VElement builder
     let line_number_nodes: Vec<VNode> = (1..=line_count)
@@ -405,30 +417,33 @@ pub fn CodeHighlight(props: CodeHighlightProps) -> Element {
         div {
             class: container_classes,
             "data-palette": props.palette.data_attr(),
+            "data-framed": framed_attr,
 
-            div {
-                class: header_classes,
-
-                // LEFT cluster: the host's label (or the language token)
-                // plus any extra marks it docked there.
+            if props.show_header {
                 div {
-                    class: label_classes,
-                    {label_text.clone()}
-                    if let Some(extra) = &props.label_extra {
-                        {extra.clone()}
-                    }
-                }
+                    class: header_classes,
 
-                // RIGHT cluster: host actions first, then this card's own
-                // copy control — the family's header-action order (the
-                // card's own control sits closest to the corner).
-                div {
-                    class: actions_classes,
-                    if let Some(actions) = &props.actions {
-                        {actions.clone()}
+                    // LEFT cluster: the host's label (or the language token)
+                    // plus any extra marks it docked there.
+                    div {
+                        class: label_classes,
+                        {label_text.clone()}
+                        if let Some(extra) = &props.label_extra {
+                            {extra.clone()}
+                        }
                     }
-                    if let Some(copy_control) = &copy_control {
-                        {copy_control.clone()}
+
+                    // RIGHT cluster: host actions first, then this card's own
+                    // copy control — the family's header-action order (the
+                    // card's own control sits closest to the corner).
+                    div {
+                        class: actions_classes,
+                        if let Some(actions) = &props.actions {
+                            {actions.clone()}
+                        }
+                        if let Some(copy_control) = &copy_control {
+                            {copy_control.clone()}
+                        }
                     }
                 }
             }
@@ -469,6 +484,12 @@ impl StyledComponent for CodeHighlightComponent {
     border-radius: var(--radius-md, 8px);
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.hk-code-highlight[data-framed="false"] {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .hk-code-highlight-header {

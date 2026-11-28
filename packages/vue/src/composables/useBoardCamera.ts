@@ -27,9 +27,12 @@ import {
   type BoardViewport,
   boardClampPan,
   boardFit,
+  boardFitPercent,
   boardTweenCam,
   boardZoomAt,
   quantizeBoardK,
+  quantizeBoardPercentK,
+  type BoardZoomLadder,
 } from "../utils/boardCamera";
 
 /** Animated transition duration, ms (wheel notch / minimap bar / pinch release). */
@@ -55,6 +58,11 @@ export interface UseBoardCameraOptions {
    *  library's default cap (BOARD_FIT_CAP). Unset keeps the default; the
    *  camera clamp still honours maxK. */
   fitCap?: number;
+  /** Existing boards keep the geometric 1.05ⁿ ladder. Document diagrams opt
+   * into exact linear percent rungs (50%, 55%, 60%…). */
+  zoomLadder?: BoardZoomLadder;
+  /** Linear rung size; ignored by the geometric ladder. */
+  zoomStepPercent?: number;
   /** What a drag does with content smaller than the viewport: `"center"`
    *  (default) pins a fitted board, `"keep"` lets it be dragged while half
    *  of it stays in view (see BoardSmallContentPan). */
@@ -97,6 +105,8 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
      *  viewport may want to fill it instead of parking at the library's
      *  default cap (BOARD_FIT_CAP). Unset keeps the default. */
     fitCap = undefined,
+    zoomLadder = "geometric",
+    zoomStepPercent = 5,
     smallContentPan = "center",
   } = options;
 
@@ -124,6 +134,9 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
 
   const viewport = (): BoardViewport => toValue(viewportSize);
   const contentRect = (): BoardRect => toValue(content);
+  const quantize = (k: number): number => zoomLadder === "percent"
+    ? quantizeBoardPercentK(k, { stepPercent: zoomStepPercent, minK, maxK })
+    : quantizeBoardK(k);
 
   const clampCam = (cam: BoardCamera): BoardCamera => {
     const k = Math.min(maxK, Math.max(kFloor, cam.k));
@@ -164,12 +177,12 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
     // Quantize FIRST, then solve the anchored pan for the QUANTIZED k —
     // anchoring on the raw k and swapping in the quantized one afterwards
     // lets the anchored world point jump by the raw/quantized ratio.
-    const k = quantizeBoardK(camera.value.k * factor);
+    const k = quantize(camera.value.k * factor);
     animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
   function zoomToK(targetK: number, anchor?: BoardPoint): void {
-    const k = quantizeBoardK(targetK);
+    const k = quantize(targetK);
     animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
@@ -194,7 +207,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   function settlePinch(anchor?: BoardPoint): void {
     // Same quantize-then-anchor discipline as the wheel path: the pinch
     // midpoint stays pinned to its world point while k snaps onto the rung.
-    const k = quantizeBoardK(camera.value.k);
+    const k = quantize(camera.value.k);
     animateTo(boardZoomAt(camera.value, k, anchorPoint(anchor)));
   }
 
@@ -212,8 +225,19 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   }
 
   function fit(): void {
-    const target = boardFit(contentRect(), viewport(), fitCap !== undefined ? { cap: fitCap } : {});
-    kFloor = Math.min(minK, target.k);
+    const fitOptions = fitCap !== undefined ? { cap: fitCap } : {};
+    const target = zoomLadder === "percent"
+      ? boardFitPercent(contentRect(), viewport(), {
+          ...fitOptions,
+          stepPercent: zoomStepPercent,
+          minK,
+          maxK,
+        })
+      : boardFit(contentRect(), viewport(), fitOptions);
+    // Percent mode has a real readability floor: a long diagram pans at 50%
+    // rather than silently fitting at 37%. Geometric boards retain their old
+    // dynamic floor, which lets an extreme aspect ratio fit below minK.
+    kFloor = target.k <= 0 ? 0 : zoomLadder === "percent" ? minK : Math.min(minK, target.k);
     animateTo(target);
   }
 

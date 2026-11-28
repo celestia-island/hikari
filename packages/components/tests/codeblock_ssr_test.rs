@@ -132,3 +132,45 @@ fn pre_highlighted_markup_wins_over_plain_text() {
         "gutter lost: {html}"
     );
 }
+
+/// Embedded source panes can suppress the duplicate header and frame through
+/// component props, not host CSS overrides. MUT:embedded-code-chrome — removing
+/// either conditional never passes: the header returns, or data-framed stays
+/// true; the highlighted code body and gutter must remain intact either way.
+#[test]
+fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
+    let html = render(CodeHighlight(CodeHighlightProps {
+        language: "mermaid".to_string(),
+        code: "graph TD\nA-->B".to_string(),
+        code_html: Some("<span class=\"tok-kw\">graph</span> TD".to_string()),
+        show_header: false,
+        framed: false,
+        copyable: false,
+        ..Default::default()
+    }));
+    for absent in [
+        "hk-code-highlight-header",
+        "hk-code-highlight-language",
+        "hk-code-highlight-actions",
+        "hk-code-highlight-copy",
+    ] {
+        assert!(!html.contains(absent), "unexpected {absent}: {html}");
+    }
+    assert!(html.contains("data-framed=\"false\""), "frame flag: {html}");
+    assert!(html.contains("hk-code-highlight-code"), "code body: {html}");
+    assert!(
+        html.contains("hk-code-highlight-line-numbers"),
+        "gutter: {html}"
+    );
+    assert!(html.contains("tok-kw"), "highlight body: {html}");
+
+    let standalone = card();
+    assert!(
+        standalone.contains("data-framed=\"true\""),
+        "default frame: {standalone}"
+    );
+    assert!(
+        standalone.contains("hk-code-highlight-header"),
+        "default header: {standalone}"
+    );
+}

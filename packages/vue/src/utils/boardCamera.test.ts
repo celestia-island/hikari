@@ -8,6 +8,7 @@ import {
   boardClampPan,
   boardEaseOutCubic,
   boardFit,
+  boardFitPercent,
   boardLevelOf,
   boardStepRung,
   boardToScreen,
@@ -15,6 +16,7 @@ import {
   boardToWorld,
   boardZoomAt,
   quantizeBoardK,
+  quantizeBoardPercentK,
   quantizeBoardStep,
 } from "./boardCamera";
 
@@ -38,6 +40,54 @@ describe("boardCamera — 5% geometric ladder", () => {
     expect(quantizeBoardStep(base, 1.05 ** 2)).toBeCloseTo(base * BOARD_ZOOM_FACTOR ** 2, 5);
     // a ratio inside the same rung stays on the base rung
     expect(quantizeBoardStep(base, 1.02)).toBeCloseTo(base, 5);
+  });
+});
+
+describe("boardCamera — exact linear percent ladder", () => {
+  const governance = { stepPercent: 5, minK: 0.5, maxK: 2 };
+
+  it("lands arbitrary scales on exact 5% multiples within the host bounds", () => {
+    // MUT:linear-percent-rungs — using the geometric quantizer never passes:
+    // 1.05ⁿ produces labels such as 116%, while every result here is a 5%
+    // multiple and stays inside the Mermaid 50–200% window.
+    const samples = [0.2, 0.5, 0.52, 0.87, 1, 1.37, 1.98, 2, 3];
+    const actual = samples.map((k) => quantizeBoardPercentK(k, governance));
+    expect(actual).toEqual([0.5, 0.5, 0.5, 0.85, 1, 1.35, 2, 2, 2]);
+    for (const k of actual) expect((k * 100) % 5).toBeCloseTo(0, 8);
+  });
+
+  it("fit rounds DOWN to 85% instead of cropping at the nearest rung", () => {
+    // Raw fit = (600 − 80) / 600 = 0.8666…, so nearest would choose 90% and
+    // cut off content; floor chooses 85%. MUT:fit-floor — changing floor to
+    // nearest catches this exact regression.
+    const content = { x: 0, y: 0, w: 100, h: 600 };
+    const viewport = { w: 800, h: 600 };
+    const raw = boardFit(content, viewport, { cap: 1 });
+    const fitted = boardFitPercent(content, viewport, { ...governance, cap: 1 });
+    expect(raw.k).toBeGreaterThan(0.85);
+    expect(raw.k).toBeLessThan(0.9);
+    expect(fitted.k).toBe(0.85);
+    expect(fitted.k).toBeLessThanOrEqual(raw.k);
+  });
+
+  it("keeps a long diagram at the readable 50% floor for panning", () => {
+    const content = { x: 0, y: 0, w: 300, h: 6000 };
+    const viewport = { w: 800, h: 400 };
+    const fitted = boardFitPercent(content, viewport, governance);
+    expect(boardFit(content, viewport).k).toBeLessThan(0.5);
+    expect(fitted.k).toBe(0.5);
+    // The centred 50% camera is taller than the viewport, so the board's
+    // existing pan clamp has something meaningful to reveal.
+    expect(content.h * fitted.k).toBeGreaterThan(viewport.h);
+  });
+
+  it("preserves the zero sentinel for a hidden viewport", () => {
+    const fitted = boardFitPercent(
+      { x: 0, y: 0, w: 100, h: 100 },
+      { w: 0, h: 0 },
+      governance,
+    );
+    expect(fitted.k).toBe(0);
   });
 });
 

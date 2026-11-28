@@ -23,34 +23,15 @@
   min-height: 0;
 }
 
-// Zoom bar docked in its OWN ROW under the board. The bar used to be the
-// board's bottom-right OVERLAY: at fit zoom the content fills the board
-// edge to edge, so the dock sat on top of the last node of every wide
-// diagram (docs.celestia.world 2026-11-27, the LR platform map). A row of
-// its own can never cover anything, at any viewport size.
-.hk-mermaid__toolbar {
-  display: flex;
-  justify-content: flex-end;
-  flex: none;
-  padding: var(--space-4, 4px) var(--space-8, 8px);
-  border-top: 1px solid rgb(var(--color-text) / 8%);
+// Embedded mode: the outer card owns the only border and radius. The board
+// itself still supplies its complete bottom-right minimap dock.
+.hk-mermaid--flush {
+  border: 0;
+  border-radius: 0;
+}
 
-  // The bar keeps its own card's internals (the slider pop anchors to
-  // it) but stops self-docking: this row owns the placement.
-  > .hk-minimap {
-    position: relative;
-    inset: auto;
-    width: auto;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    cursor: default;
-    @include backdrop-filter(none);
-  }
-
-  .hk-mm-zoom-bar {
-    border-top: 0;
-  }
+.hk-mermaid--loading {
+  min-height: 160px;
 }
 
 // ── Fallback (no engine / parse failure) ──────────────────────────────
@@ -60,6 +41,12 @@
   border-radius: var(--radius-sm, 6px);
   padding: 0.75em 1em;
   background: rgb(var(--color-text) / 3%);
+
+  &--flush {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+  }
 
   pre {
     margin: 0;

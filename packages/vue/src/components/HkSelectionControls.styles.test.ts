@@ -2750,7 +2750,9 @@ describe("label first-line anchoring", () => {
     const imported = [
       ...host.matchAll(/@import\s+['"]\.\/vue-mirror\/components\/([\w-]+)\.scss['"]/g),
     ].map((m) => m[1]);
-    expect(imported.length, "mirror imports the regex reads").toBe(156);
+    // (157: the SSR segmented wave added `HkTabs` — the mirror + both lanes
+    // are co-pinned in the Rust `vue_mirror_drift_tests` registry needle.)
+    expect(imported.length, "mirror imports the regex reads").toBe(157);
     expect(imported.length, "mirror imports in the host stylesheet").toBeGreaterThan(100);
     const at = (name: string) => imported.indexOf(name);
     for (const name of ["HkCheckbox", "HkRadio", "HkSwitch", "HkLabel"]) {
@@ -2779,6 +2781,16 @@ describe("label first-line anchoring", () => {
     // Compiled and parsed once per run: the no-token scan below reads the same
     // bundle, and this entry is the most expensive compile in the file.
     const bundle = compiledHostBundle();
+    // The builder lane must ship the SSR segmented sheet too: the Rust
+    // `SegmentedTabs` component's whole look lives in the vendored `HkTabs`
+    // mirror, and an import that reaches the registry lane but not THIS
+    // bundle would leave Rust/WASM consumers unstyled (the 2026-11-28 wave).
+    // MUT:ssr-sheet-in-bundle — dropping the `HkTabs` import from
+    // `index.scss` turns this red.
+    expect(
+        bundle.some((rule: Rule) => /hk-tabs-list(?![\w-])/.test(rule.selector)),
+      "the compiled host bundle must carry the segmented sheet",
+    ).toBe(true);
     // Selector-scoped, not selector-textual: `:has(.hk-label…)` on a foreign
     // rule must land in the set too, so the test is the token anywhere in the
     // selector.

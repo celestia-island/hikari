@@ -151,11 +151,11 @@
   --hi-color-info-fg: rgb(var(--color-info-fg));
   /* Surface-layer aliases the runtime writes on every apply — seeded so
    * no-JS consumers resolve them instead of invalid var(). */
-  --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);
+  --hi-color-bg-subtle: rgb(var(--color-text) / 4%); /* ink-alpha: survives identical floors (pure-floor 2026-11-28) */
   --hi-color-bg-elevated: rgb(var(--color-surface));
   --hi-color-bg-container: rgb(var(--color-surface));
   --hi-color-bg-canvas: rgb(var(--color-background));
-  --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
+  --hi-secondary-bg: rgb(var(--color-text) / 6%); /* ink-alpha hover veil: survives identical floors (pure-floor 2026-11-28) */
   --hi-color-accent: rgb(var(--color-accent));
   /* Gen-1 shorthand references that were never defined anywhere — wired to
      the canonical tokens so the consuming rules render as intended. */

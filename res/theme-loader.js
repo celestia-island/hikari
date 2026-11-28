@@ -15,8 +15,8 @@
   }
   var THEMES = {
     default: {
-      dark: { primary: [136, 192, 208], bg: [22, 27, 38], surface: [34, 40, 54] },
-      light: { primary: [214, 51, 132], bg: [245, 245, 240], surface: [255, 255, 255] }
+      dark: { primary: [136, 192, 208], bg: [0, 0, 0], surface: [34, 40, 54] },
+      light: { primary: [214, 51, 132], bg: [255, 255, 255], surface: [255, 255, 255] }
     }
   };
   var FALLBACK_THEME = THEMES.default;

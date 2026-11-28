@@ -400,11 +400,11 @@ pub fn stock_vars(mode: StockMode) -> BTreeMap<String, String> {
         "--hi-color-info-fg",
         format!("rgb({} {} {})", info_fg.r, info_fg.g, info_fg.b),
     );
-    put("--hi-color-bg-subtle", "rgb(var(--color-surface) / 0.5)".to_string());
+    put("--hi-color-bg-subtle", "rgb(var(--color-text) / 4%)".to_string());
     put("--hi-color-bg-elevated", rgb_var("--color-surface"));
     put("--hi-color-bg-container", rgb_var("--color-surface"));
     put("--hi-color-bg-canvas", rgb_var("--color-background"));
-    put("--hi-secondary-bg", "rgb(var(--color-surface) / 0.5)".to_string());
+    put("--hi-secondary-bg", "rgb(var(--color-text) / 6%)".to_string());
     out
 }
 

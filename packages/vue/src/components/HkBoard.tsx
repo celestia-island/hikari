@@ -223,6 +223,20 @@ export default defineComponent({
       return { x: from.x + (dx / len) * dist, y: from.y + (dy / len) * dist };
     };
 
+    /** An end caption's anchor: `dist` px along the line from its border and
+     *  `side` px OFF the shaft (perpendicular). On the shaft the caption
+     *  crosses the arrow and is illegible (audit screenshot, 2026-11-28);
+     *  off to one side it reads like mermaid's own placement. The two ends
+     *  naturally land on opposite sides because their directions invert. */
+    const offsetEnd = (from: BoardPoint, to: BoardPoint, dist: number, side: number): { x: number; y: number } => {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      return { x: from.x + ux * dist - uy * side, y: from.y + uy * dist + ux * side };
+    };
+
     const edgePaths = computed(() => {
       const rects = rectOf.value;
       const out: {
@@ -248,6 +262,7 @@ export default defineComponent({
         const toCenter = { x: to.x + to.w / 2, y: to.y + to.h / 2 };
         const fromCenter = { x: from.x + from.w / 2, y: from.y + from.h / 2 };
         const fan = fanOrdinal.value.get(e.id) ?? { index: 0, count: 1 };
+        const edgeLen = Math.hypot(toCenter.x - fromCenter.x, toCenter.y - fromCenter.y);
         const a = boardAnchor(from, e.anchorFrom ?? "center", toCenter, fan.index, fan.count);
         const b = boardAnchor(to, e.anchorTo ?? "center", fromCenter, fan.index, fan.count);
         const viaCenters = (e.via ?? [])
@@ -289,13 +304,19 @@ export default defineComponent({
           headStart: e.headStart,
           label: e.label && e.label !== "" ? e.label : null,
           labelAt: mid,
-          // The end captions sit just OFF the border, a step toward the other
-          // end: on the border they collide with the node, any further they
-          // drift off their line.
+          // End captions sit OFF the shaft (perpendicular to the line): on it
+          // they cross the arrow and are illegible (audit screenshot,
+          // 2026-11-28). Short edges (adjacent classes) would stack them onto
+          // the midpoint caption, so they step closer to the border and
+          // further off the shaft as the edge shrinks.
           labelFrom: e.labelFrom ?? null,
-          labelFromAt: e.labelFrom ? offsetToward(a, b, 14) : null,
+          labelFromAt: e.labelFrom
+            ? offsetEnd(a, b, edgeLen > 90 ? 14 : 8, edgeLen > 90 ? 12 : 16)
+            : null,
           labelTo: e.labelTo ?? null,
-          labelToAt: e.labelTo ? offsetToward(b, a, 14) : null,
+          labelToAt: e.labelTo
+            ? offsetEnd(b, a, edgeLen > 90 ? 14 : 8, edgeLen > 90 ? 12 : 16)
+            : null,
         });
       }
       return out;

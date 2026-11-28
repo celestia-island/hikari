@@ -16,6 +16,7 @@ pub mod menu_panel;
 pub mod menu_section;
 pub mod modal_breadcrumb;
 pub mod search_trigger;
+pub mod segmented_tabs;
 pub mod sidebar;
 pub mod stepper;
 pub mod steps;
@@ -42,6 +43,9 @@ pub use menu_panel::*;
 pub use menu_section::*;
 pub use modal_breadcrumb::*;
 pub use search_trigger::*;
+pub use segmented_tabs::{
+    SegmentedTabOption, SegmentedTabs, SegmentedTabsComponent, SegmentedTabsProps,
+};
 pub use sidebar::{
     Sidebar, SidebarComponent, SidebarItem, SidebarItemProps, SidebarLeaf, SidebarLeafProps,
     SidebarProps, SidebarSection, SidebarSectionProps,

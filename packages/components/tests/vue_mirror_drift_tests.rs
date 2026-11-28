@@ -601,6 +601,8 @@ fn registry_bundle_ships_the_shared_tokens_and_chrome() {
         ".hk-menu-flag",
         // W9 final gap family
         ".hk-expansion-panel",
+        // SSR segmented wave (SegmentedTabs ships the vendored HkTabs sheet).
+        ".hk-tabs-list",
         ".hk-kw-search",
         ".hk-localized-input",
         ".hk-menu-identity-item",

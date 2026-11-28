@@ -112,11 +112,12 @@
 //     delta above. `None` hides the block (Vue's manual pane has none);
 //     note the crate renders a Some block for ANY draft, manual
 //     included — Vue-identical hosts pass None there.
-//   * `HkTabs` (segmented) IS NOT MIRRORED and `HkTabs.scss` is not part
-//     of the vendored set, so the segmented strip renders here as DOM
-//     hooks — the same `hk-tabs*` classes/attributes Vue's HTabs emits
-//     for the plain options this editor passes (no spans, no merged runs,
-//     no edge actions): `data-variant`/`data-block`/`role=radiogroup`,
+//   * `HkTabs.scss` IS vendored now (2026-11-28, the `SegmentedTabs` SSR
+//     wave) and ships through both style lanes, so this editor's strip is
+//     styled by the family sheet. Its DOM hooks remain the same `hk-tabs*`
+//     classes/attributes Vue's HkTabs emits for the plain options this
+//     editor passes (no spans, no merged runs, no edge actions):
+//     `data-variant`/`data-block`/`role=radiogroup`,
 //     `role=radio` + `aria-checked` + `data-active` triggers, the roving
 //     tabindex (the active trigger joins the page tab sequence). The
 //     scroller wrapper is a plain `div.hk-tabs-scroller` (the

@@ -4,7 +4,7 @@
 //! before `->` — a long token must never be misread as its shorter
 //! prefix (`A-->>B` must not parse as `A-` + `->>B`).
 
-use super::types::{SeqArrowKind, SequenceDiagram, SequenceMessage};
+use super::types::{SeqArrowKind, SequenceBlock, SequenceDiagram, SequenceMessage};
 
 /// Arrow tokens longest-first, mapped to the TS SeqArrowKind literals.
 const ARROWS: &[(&str, SeqArrowKind)] = &[
@@ -17,6 +17,11 @@ const ARROWS: &[(&str, SeqArrowKind)] = &[
 pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     let mut participants: Vec<String> = Vec::new();
     let mut messages: Vec<SequenceMessage> = Vec::new();
+    // Block frames: `(kind, label, first message index)`. `else`/`and` close
+    // the open frame and open a sibling with the same keyword — mermaid's
+    // sections are frames of their own.
+    let mut open_blocks: Vec<(String, Option<String>, usize)> = Vec::new();
+    let mut blocks: Vec<SequenceBlock> = Vec::new();
     // `participant A as Alice` declares the id `A` with the DISPLAY name
     // `Alice`. The contract carries display names only, so the alias is
     // resolved here: the id is replaced by its name everywhere (declaration
@@ -33,6 +38,54 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
         if line.starts_with("sequenceDiagram") {
             continue;
         }
+        // Block control lines. `end` closes; `else`/`and` close-and-reopen a
+        // sibling (kind inherited from the open frame); anything else that
+        // starts with a block keyword opens one. These never fail the parse:
+        // an unlabelled `end` with nothing open is just dropped.
+        let first = line.split_whitespace().next().unwrap_or("");
+        let rest_label = line
+            .split_whitespace()
+            .skip(1)
+            .collect::<Vec<_>>()
+            .join(" ");
+        let make_label = || Some(strip_quotes(&rest_label)).filter(|l| !l.is_empty());
+        match first {
+            "alt" | "opt" | "loop" | "par" | "critical" | "break" => {
+                open_blocks.push((first.to_string(), make_label(), messages.len()));
+                continue;
+            }
+            "else" | "and" => {
+                // The frame being CLOSED keeps its own label (the `alt` line's);
+                // the new label belongs to the sibling being opened.
+                if let Some((kind, stored_label, from)) = open_blocks.pop() {
+                    if messages.len() > from {
+                        blocks.push(SequenceBlock {
+                            kind: kind.clone(),
+                            label: stored_label,
+                            from,
+                            to: messages.len() - 1,
+                        });
+                    }
+                    open_blocks.push((kind, make_label(), messages.len()));
+                }
+                continue;
+            }
+            "end" => {
+                if let Some((kind, label, from)) = open_blocks.pop()
+                    && messages.len() > from
+                {
+                    blocks.push(SequenceBlock {
+                        kind,
+                        label,
+                        from,
+                        to: messages.len() - 1,
+                    });
+                }
+                continue;
+            }
+            _ => {}
+        }
+
         if let Some(p) = line.strip_prefix("participant ") {
             let raw = p.trim();
             if raw.is_empty() {
@@ -62,6 +115,19 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
                 participants.push(msg.to.clone());
             }
             messages.push(msg);
+        }
+    }
+
+    // Unterminated blocks: tolerate a missing `end` (the tolerant-grammar
+    // rule the family lives by — degrade, never fail).
+    for (kind, label, from) in open_blocks.drain(..) {
+        if messages.len() > from {
+            blocks.push(SequenceBlock {
+                kind,
+                label,
+                from,
+                to: messages.len() - 1,
+            });
         }
     }
 
@@ -99,6 +165,7 @@ pub fn parse_sequence(source: &str) -> Option<SequenceDiagram> {
     Some(SequenceDiagram {
         participants,
         messages,
+        blocks,
     })
 }
 
@@ -115,6 +182,16 @@ fn strip_activation(name: &str) -> String {
         trimmed.to_string()
     } else {
         stripped.to_string()
+    }
+}
+
+/// Mermaid lets block labels be quoted; the quotes are syntax.
+fn strip_quotes(text: &str) -> String {
+    let t = text.trim();
+    if t.len() >= 2 && t.starts_with('"') && t.ends_with('"') {
+        t[1..t.len() - 1].trim().to_string()
+    } else {
+        t.to_string()
     }
 }
 
@@ -179,6 +256,72 @@ mod tests {
 
     /// MUT: dropping `strip_activation` puts lanes on the board literally
     /// named "+ Bob" — the glyph is per-message state, never a name.
+    /// MUT: dropping the block-arm (or the `else` sibling logic, or the
+    /// tolerant unterminated close) each never passes — the span assertions
+    /// below catch every one.
+    #[test]
+    fn alt_opt_and_else_become_frames_over_their_message_spans() {
+        let doc = parse_sequence(
+            "sequenceDiagram\n  Alice ->> Bob: a\n  alt success\n    Bob -->> Alice: b\n  else failure\n    Bob -->> Alice: c\n  end\n  opt maybe\n    Alice ->> Bob: d\n  end\n  Alice ->> Bob: e\n",
+        )
+        .expect("parse");
+        assert_eq!(doc.blocks.len(), 3);
+        // alt spans messages 1..=2, its else-section is its own frame.
+        assert_eq!(
+            (
+                doc.blocks[0].kind.as_str(),
+                doc.blocks[0].from,
+                doc.blocks[0].to
+            ),
+            ("alt", 1, 1)
+        );
+        assert_eq!(doc.blocks[0].label.as_deref(), Some("success"));
+        assert_eq!(
+            (
+                doc.blocks[1].kind.as_str(),
+                doc.blocks[1].label.as_deref(),
+                doc.blocks[1].from,
+                doc.blocks[1].to
+            ),
+            ("alt", Some("failure"), 2, 2)
+        );
+        // opt spans message 3; the trailing message sits OUTSIDE every frame.
+        assert_eq!(
+            (
+                doc.blocks[2].kind.as_str(),
+                doc.blocks[2].from,
+                doc.blocks[2].to
+            ),
+            ("opt", 3, 3)
+        );
+        assert_eq!(doc.messages.len(), 5);
+    }
+
+    /// An unterminated block still frames what it gathered (the family's
+    /// degrade-never-fail rule).
+    #[test]
+    fn an_unterminated_block_frames_what_it_gathered() {
+        let doc = parse_sequence(
+            "sequenceDiagram\n  Alice ->> Bob: a\n  loop retry\n    Bob -->> Alice: b\n",
+        )
+        .expect("parse");
+        assert_eq!(doc.blocks.len(), 1);
+        assert_eq!(doc.blocks[0].kind, "loop");
+        assert_eq!((doc.blocks[0].from, doc.blocks[0].to), (1, 1));
+    }
+
+    /// A block with NO messages paints nothing (empty spans are never
+    /// recorded).
+    #[test]
+    fn an_empty_block_is_not_recorded() {
+        let doc = parse_sequence(
+            "sequenceDiagram\n  Alice ->> Bob: a\n  opt nothing\n  end\n  Alice ->> Bob: b\n",
+        )
+        .expect("parse");
+        assert!(doc.blocks.is_empty());
+        assert_eq!(doc.messages.len(), 2);
+    }
+
     #[test]
     fn activation_markers_never_become_participant_names() {
         let doc = parse_sequence(

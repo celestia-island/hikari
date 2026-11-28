@@ -139,6 +139,11 @@ export interface BoardEdgeInput {
    * message text). Plain text — no markup, SVG <text> with a surface
    * halo so it stays legible over the path it names. */
   label?: string;
+  /** Small caption at the FROM end, just off the border (mermaid class
+   * multiplicities: `Student "1"` paints `1` near Student). */
+  labelFrom?: string;
+  /** Small caption at the TO end. */
+  labelTo?: string;
 }
 
 // Ink colors ride INLINE STYLES beside the stroke presentation attribute:
@@ -210,6 +215,14 @@ export default defineComponent({
     /** Edges sharing a `from` node fan across its border (天女散花). */
     const fanOrdinal = computed(() => boardFanOrdinals(props.edges));
 
+    /** A point `dist` px from `from`, toward `to` (straight line). */
+    const offsetToward = (from: BoardPoint, to: BoardPoint, dist: number): { x: number; y: number } => {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const len = Math.hypot(dx, dy) || 1;
+      return { x: from.x + (dx / len) * dist, y: from.y + (dy / len) * dist };
+    };
+
     const edgePaths = computed(() => {
       const rects = rectOf.value;
       const out: {
@@ -223,6 +236,10 @@ export default defineComponent({
         headStart?: "arrow";
         label: string | null;
         labelAt: { x: number; y: number };
+        labelFrom: string | null;
+        labelFromAt: { x: number; y: number } | null;
+        labelTo: string | null;
+        labelToAt: { x: number; y: number } | null;
       }[] = [];
       for (const e of props.edges) {
         const from = rects.get(e.from);
@@ -272,6 +289,13 @@ export default defineComponent({
           headStart: e.headStart,
           label: e.label && e.label !== "" ? e.label : null,
           labelAt: mid,
+          // The end captions sit just OFF the border, a step toward the other
+          // end: on the border they collide with the node, any further they
+          // drift off their line.
+          labelFrom: e.labelFrom ?? null,
+          labelFromAt: e.labelFrom ? offsetToward(a, b, 14) : null,
+          labelTo: e.labelTo ?? null,
+          labelToAt: e.labelTo ? offsetToward(b, a, 14) : null,
         });
       }
       return out;
@@ -700,6 +724,28 @@ export default defineComponent({
                     dominant-baseline="middle"
                   >
                     {e.label}
+                  </text>
+                )}
+                {e.labelFrom !== null && e.labelFromAt !== null && (
+                  <text
+                    class="hk-board-edge-endlabel"
+                    x={e.labelFromAt.x}
+                    y={e.labelFromAt.y}
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                  >
+                    {e.labelFrom}
+                  </text>
+                )}
+                {e.labelTo !== null && e.labelToAt !== null && (
+                  <text
+                    class="hk-board-edge-endlabel"
+                    x={e.labelToAt.x}
+                    y={e.labelToAt.y}
+                    text-anchor="middle"
+                    dominant-baseline="middle"
+                  >
+                    {e.labelTo}
                   </text>
                 )}
               </g>

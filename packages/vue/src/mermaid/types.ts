@@ -108,10 +108,20 @@ export interface SequenceMessage {
   arrowKind: SeqArrowKind;
 }
 
+/** One block frame over a message span (inclusive indices). Rust parity:
+ *  `SequenceBlock`, omitted from the JSON when there are none. */
+export interface MermaidSequenceBlock {
+  kind: string;
+  label: string | null;
+  from: number;
+  to: number;
+}
+
 export interface MermaidSequenceDoc {
   kind: "sequence";
   participants: string[];
   messages: SequenceMessage[];
+  blocks?: MermaidSequenceBlock[];
 }
 
 // ── Class ────────────────────────────────────────────────────────────

@@ -248,6 +248,60 @@ describe("HkMermaidDiagram", () => {
     expect(paths.some((p) => p.getAttribute("marker-start")?.includes("hk-board-ah-")), "a two-ended arrow").toBe(true);
   });
 
+  it("paints class multiplicities at the relation's ends, end to end", async () => {
+    // The full path under test: the parser lifts `Student "1"` /
+    // `"*" School` into the contract, the class layout forwards them (swapped
+    // when the adornment swaps the route), the board paints each near its
+    // class. MUT: dropping `labelFrom`/`labelTo` from ANY of the three
+    // projections (layout → diagram → board) or from the board's text render
+    // leaves this green-while-blank — that is why the pin is end-to-end.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({
+      source: 'classDiagram\n  class Student\n  class School\n  Student "1" --> "*" School : attends\n',
+    });
+    await settle();
+    expect(c.querySelector(".hk-mermaid-fallback")).toBeNull();
+    const ends = [...c.querySelectorAll(".hk-board-edge-endlabel")].map((t) => t.textContent);
+    expect(ends, "both multiplicities painted").toEqual(expect.arrayContaining(["1", "*"]));
+    // The relation caption is still the midpoint label.
+    expect([...c.querySelectorAll(".hk-board-edge-label")].map((t) => t.textContent)).toEqual(["attends"]);
+  });
+
+  it("paints sequence block frames over their message rows", async () => {
+    // alt/else/opt open, section and close into frames spanning exactly their
+    // message rows. MUT: dropping the block parsing (frames vanish), the
+    // layout's frame nodes (frames vanish), or mis-scoping the span (wrong
+    // label/count) each never passes the assertions below.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({
+      source: [
+        "sequenceDiagram",
+        "  Alice ->> Bob: a",
+        "  alt success",
+        "    Bob -->> Alice: b",
+        "  else failure",
+        "    Bob -->> Alice: c",
+        "  end",
+        "  opt maybe",
+        "    Alice ->> Bob: d",
+        "  end",
+        "  Alice ->> Bob: e",
+      ].join("\n"),
+    });
+    await settle();
+    expect(c.querySelector(".hk-mermaid-fallback")).toBeNull();
+    const frames = [...c.querySelectorAll(".hk-mmd-group .hk-mmd-group__label")].map((el) => el.textContent);
+    expect(frames, "alt section, else section, opt frame").toEqual([
+      "alt: success",
+      "alt: failure",
+      "opt: maybe",
+    ]);
+    // The five messages still render as edges.
+    expect(c.querySelectorAll(".hk-board-edge").length).toBeGreaterThanOrEqual(5);
+  });
+
   it("changing the source re-parses (computed pipeline, no stale board)", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;

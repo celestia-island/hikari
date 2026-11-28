@@ -418,6 +418,10 @@ export default defineComponent({
         headStart: e.headStart,
         ink: MERMAID_EDGE_INK,
         label: e.label ?? undefined,
+        // The class multiplicities ride the same four-projection path as the
+        // head glyphs — a drop in any layer is invisible to a props-level test.
+        labelFrom: e.labelFrom,
+        labelTo: e.labelTo,
         via: e.via,
       })),
     );

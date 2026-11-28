@@ -25,19 +25,32 @@
 // `platform::get_bounding_client_rect` or use
 // [`anchor_rect_from_element_id`].
 //
+// Outside click (Vue: `onDocumentClick`, a capture-phase listener on the
+// document): while the anchored branch is open, a click that lands outside
+// the layer host and outside `anchor_selector` asks the host to close
+// (`on_open_change(false)`), through the page-wide shield in
+// `overlay::outside_click`. It follows Vue's gate — `close_on_backdrop`
+// decides it, and it applies whether or not the backdrop dims the page. The
+// sheet branch dismisses through its scrim instead. Pass the trigger in
+// `anchor_selector`: it toggles the popover, and closing it first would make
+// that toggle reopen it. A surface opened from inside this one renders inside
+// the layer host, so its clicks are not outside.
+//
 // Behaviour deltas vs Vue (documented):
 //   * no `<Teleport>` (renders in place; `position: fixed` from the sheet)
 //     and no popup-manager z band — the host's stacking context decides;
-//   * the auto-flip pass (viewport measure → flip side), the outside-click
-//     shield (`data-hk-popout-layer` nesting protocol), the ancestor-zoom
-//     division and the `registered`/`after-close` emit edges are Vue
-//     runtime contracts without a tairitsu analogue in this wave;
+//   * the auto-flip pass (viewport measure → flip side), the ancestor-zoom
+//     division and the `registered`/`after-close` emit edges are Vue runtime
+//     contracts without a tairitsu analogue in this wave; the outside-click
+//     shield matches on DOM containment instead of the popup-manager z
+//     registry (layers render in place, so containment is the nesting);
 //   * the mobile sheet branch keys off `sheet_on_mobile` + the live
 //     viewport width (Vue's `useBreakpoint`); crossing the breakpoint does
 //     not auto-close the open popover.
 // Replaces the retired legacy `Popover` (`PopoverPositioning` trigger
 // guesswork, no sheet branch) and its `PortalEntry::Popover` layer.
 
+use crate::overlay::outside_click::{self, ShieldKey};
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -210,7 +223,9 @@ pub struct PopoverProps {
     #[default(true)]
     pub backdrop: bool,
 
-    /// Backdrop / scrim click closes (Vue default true).
+    /// Backdrop / scrim click closes (Vue default true). On the anchored
+    /// branch it also gates the outside-click shield (Vue: `onDocumentClick`
+    /// returns early without it).
     #[default(true)]
     pub close_on_backdrop: bool,
 
@@ -230,6 +245,12 @@ pub struct PopoverProps {
     /// sheet's fixed default position.
     pub anchor: Option<PopoverAnchorRect>,
 
+    /// A CSS selector for the trigger this popover anchors against (Vue:
+    /// `anchorRef`). A click inside it never counts as an outside click: the
+    /// trigger toggles the popover, and closing it first would make that
+    /// toggle reopen it.
+    pub anchor_selector: Option<String>,
+
     /// Dock as a bottom sheet on mobile-width viewports (<768px), exactly
     /// like Vue's `sheetOnMobile`.
     #[default]
@@ -246,6 +267,13 @@ pub struct PopoverProps {
 
     /// Fires with the desired open state (Vue: `update:modelValue`).
     pub on_open_change: Option<EventHandler<bool>>,
+}
+
+/// Whether an open popover closes on an outside click: the anchored branch
+/// only, and only when `closeOnBackdrop` allows it (Vue: the first line of
+/// `onDocumentClick`). The sheet branch dismisses through its scrim.
+pub fn popover_shields(close_on_backdrop: bool, sheet_branch: bool) -> bool {
+    close_on_backdrop && !sheet_branch
 }
 
 #[component]
@@ -327,6 +355,20 @@ pub fn Popover(props: PopoverProps) -> Element {
         move |_: MouseEvent| close()
     };
 
+    // Vue: `onDocumentClick` guards the anchored branch only, behind
+    // `closeOnBackdrop`. The shield is armed on every render while open and
+    // the layer host carries its key, which is how a click tells "inside the
+    // surface" from "outside". Where there is no page to listen on (SSR,
+    // native) nothing is armed and the key stays out of the markup.
+    let shield = popover_shields(props.close_on_backdrop, sheet_branch)
+        .then(|| {
+            let key = ShieldKey::new();
+            let ignore: Vec<String> = props.anchor_selector.iter().cloned().collect();
+            outside_click::arm(&key, ignore, request_close.clone()).then_some(key)
+        })
+        .flatten();
+    let shield_attr = shield.as_ref().map(ShieldKey::value);
+
     // Compose the layer tree explicitly: rsx top-level accepts ONE
     // element/control-flow child, so the scrim/backdrop siblings and the
     // layer host are collected into a fragment-style child list.
@@ -407,6 +449,7 @@ pub fn Popover(props: PopoverProps) -> Element {
     layer_children.push(rsx! {
         div {
             "data-hk-popout-layer": "",
+            "data-hk-outside": shield_attr,
             {panel}
         }
     });
@@ -429,6 +472,9 @@ impl StyledComponent for PopoverComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+    use std::rc::Rc;
+
     use super::*;
 
     #[test]
@@ -513,8 +559,126 @@ mod tests {
         assert!(props.glass);
         assert!(props.padding.is_none());
         assert!(props.anchor.is_none());
+        assert!(props.anchor_selector.is_none());
         assert!(!props.sheet_on_mobile);
         assert_eq!(props.title, "");
+    }
+
+    #[test]
+    fn popover_shields_the_anchored_branch_behind_close_on_backdrop() {
+        assert!(
+            popover_shields(true, false),
+            "Vue's default: an outside click closes"
+        );
+        assert!(
+            !popover_shields(false, false),
+            "`closeOnBackdrop` off: the host dismisses it"
+        );
+        assert!(
+            !popover_shields(true, true),
+            "the sheet dismisses through its scrim"
+        );
+        assert!(!popover_shields(false, true));
+    }
+
+    fn open_popover() -> PopoverProps {
+        PopoverProps {
+            open: true,
+            children: rsx! {
+                p { "details" }
+            },
+            ..Default::default()
+        }
+    }
+
+    /// The shield key the layer host carries, read back from rendered HTML.
+    fn shield_key(html: &str) -> Option<String> {
+        html.split("data-hk-outside=\"")
+            .nth(1)
+            .map(|rest| rest.split('"').next().unwrap_or_default().to_string())
+    }
+
+    fn close_counter() -> (Rc<Cell<u32>>, EventHandler<bool>) {
+        let closes = Rc::new(Cell::new(0));
+        let count = Rc::clone(&closes);
+        let handler = event_handler(move |open: bool| {
+            if !open {
+                count.set(count.get() + 1);
+            }
+        });
+        (closes, handler)
+    }
+
+    #[test]
+    fn an_outside_click_asks_the_host_to_close_and_the_trigger_does_not() {
+        let page = outside_click::TestPage::new();
+        let (closes, on_open_change) = close_counter();
+        let html = Popover(PopoverProps {
+            anchor_selector: Some("#trigger".to_string()),
+            on_open_change: Some(on_open_change),
+            ..open_popover()
+        })
+        .render_to_html();
+        let key = shield_key(&html).expect("the layer host carries the shield key");
+        assert!(html.contains("data-hk-popout-layer"), "{html}");
+        let surface = format!("[data-hk-outside=\"{key}\"]");
+        assert_eq!(page.armed().len(), 1);
+
+        // The trigger toggles the popover itself: closing first would make
+        // that toggle reopen it.
+        page.click(&["#trigger"], &[&surface]);
+        assert_eq!(
+            closes.get(),
+            0,
+            "a click on the trigger is not an outside click"
+        );
+
+        page.click(&["main"], &[surface.as_str(), "#trigger"]);
+        assert_eq!(closes.get(), 1, "a click elsewhere asks the host to close");
+    }
+
+    #[test]
+    fn a_click_inside_the_layer_host_is_not_outside() {
+        let page = outside_click::TestPage::new();
+        let (closes, on_open_change) = close_counter();
+        let html = Popover(PopoverProps {
+            on_open_change: Some(on_open_change),
+            ..open_popover()
+        })
+        .render_to_html();
+        let key = shield_key(&html).expect("the layer host carries the shield key");
+        let surface = format!("[data-hk-outside=\"{key}\"]");
+        page.click(&[surface.as_str()], &[&surface]);
+        assert_eq!(closes.get(), 0);
+    }
+
+    #[test]
+    fn a_closed_or_unshielded_popover_leaves_no_key_in_the_markup() {
+        let page = outside_click::TestPage::new();
+        for props in [
+            PopoverProps {
+                children: rsx! {
+                    p { "details" }
+                },
+                ..Default::default()
+            },
+            PopoverProps {
+                close_on_backdrop: false,
+                ..open_popover()
+            },
+        ] {
+            let html = Popover(props).render_to_html();
+            assert!(!html.contains("data-hk-outside"), "{html}");
+        }
+        assert!(page.armed().is_empty());
+    }
+
+    #[test]
+    fn without_a_page_to_listen_on_the_markup_carries_no_key() {
+        // A server render has no listener: its output must not carry a
+        // per-render value.
+        let html = Popover(open_popover()).render_to_html();
+        assert!(!html.contains("data-hk-outside"), "{html}");
     }
 
     #[test]

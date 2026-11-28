@@ -89,6 +89,14 @@ mod tests {
     }
 }
 
+/// Where a page-wide capture `click` landed, as the outside-click seam asks
+/// about it: "did the click land inside an element matching `selector`?" —
+/// the element under the pointer or one of its ancestors. The backend owns
+/// the element type, so the question travels instead of the element.
+pub trait ClickLocation {
+    fn inside(&self, selector: &str) -> bool;
+}
+
 #[cfg(not(target_arch = "wasm32"))]
 pub mod stub;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]

@@ -23,7 +23,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tairitsu_vdom::platform::{DomOps, LayoutOps, ObserverOps, QueryOps, ScrollOps, TimerOps};
 use tairitsu_web::wit_platform::{WitElement, WitPlatform};
 
-use super::MutationObserverOptions;
+use super::{ClickLocation, MutationObserverOptions};
 
 /// The platform every function here forwards to. `new()` is only `Err` off
 /// wasm, where this module is not compiled.
@@ -161,6 +161,59 @@ pub fn request_animation_frame_with_timestamp(callback: impl FnOnce(f64) + 'stat
 
 pub fn on_scroll(mut callback: impl FnMut() + 'static) {
     platform().on_scroll(Box::new(move |_x, _y| callback()));
+}
+
+/// A page click seen from the element that received it (the WIT event's
+/// `target`).
+struct EventLocation {
+    target: Option<WitElement>,
+}
+
+impl ClickLocation for EventLocation {
+    fn inside(&self, selector: &str) -> bool {
+        self.target
+            .as_ref()
+            .is_some_and(|element| platform().element_closest(element, selector).is_some())
+    }
+}
+
+/// The listener goes on the document element: the parent of `<body>`, the one
+/// document-level node `WitPlatform` hands out (the world has no `document`
+/// node of its own); `<body>` itself when that parent cannot be read. In the
+/// capture phase it sees every click in the page, ahead of the target's own
+/// handlers, like a capture listener on the document. On `<body>` alone a
+/// click in the strip outside its box (the default margin) would be missed.
+pub fn on_document_click(mut callback: impl FnMut(&dyn ClickLocation) + 'static) -> bool {
+    use tairitsu_vdom::platform::ListenerOptions;
+    use tairitsu_vdom::{EventData, MouseEvent};
+
+    let host = platform();
+    let Some(body) = host.body() else {
+        return false;
+    };
+    let root = tairitsu_web::wit_platform::get_parent_element(&host, &body).unwrap_or(body);
+    host.add_event_listener_with_options(
+        &root,
+        "click",
+        Box::new(move |event: Box<dyn EventData>| {
+            let mouse = event.as_any().downcast_ref::<MouseEvent>();
+            let target = mouse
+                .and_then(|mouse| mouse.target)
+                .filter(|raw| *raw != 0)
+                .map(WitElement::from_raw)
+                .or_else(|| {
+                    mouse.and_then(|mouse| {
+                        platform().element_from_point(mouse.client_x, mouse.client_y)
+                    })
+                });
+            callback(&EventLocation { target });
+        }),
+        ListenerOptions {
+            capture: true,
+            ..Default::default()
+        },
+    );
+    true
 }
 
 pub fn get_computed_style_value(element: &WitElement, property: &str) -> Option<String> {

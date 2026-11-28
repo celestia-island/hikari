@@ -129,12 +129,16 @@
 //   * NO `<Teleport>`, no overlay root, no popup-manager z band: the surface
 //     renders IN PLACE, so the host's stacking context decides the paint
 //     order (Vue reads its z from `usePopupManager`).
-//   * NO OUTSIDE-CLICK LISTENER: Vue installs a capture-phase `document`
-//     `click` watcher while the popout is open. The document contract has no
-//     tairitsu analogue in this wave, so the HOST owns outside dismissal —
-//     [`select_panel_outside_click_closes`] is the same predicate Vue's
-//     handler applies (open + popout branch + outside anchor + outside the
-//     panel host), exposed as a pure function instead of a listener.
+//   * The OUTSIDE-CLICK listener is the page-wide shield every closing
+//     surface shares (`overlay::outside_click`), not a listener per panel:
+//     Vue installs a capture-phase `document` `click` watcher while the popout
+//     is open, and so does the shield — a click outside the popout host and
+//     outside `anchor_selector` emits `update:open(false)`.
+//     [`select_panel_outside_click_closes`] remains the pure statement of
+//     that rule. The anchor reaches the panel as a rect, which cannot answer
+//     "did the click land on the trigger?": pass the trigger's selector in
+//     `anchor_selector` (Vue: `props.anchorRef?.contains(target)`), or a
+//     click on the trigger closes the panel before its own toggle runs.
 //   * NO AUTO-FLIP AND NO VIEWPORT CLAMP: both read the MEASURED panel box
 //     (`offsetWidth`/`offsetHeight`, `popupViewportRect`, `clampWithGutter`)
 //     and this wave has no ref + measurement pairing. The placed side/align is
@@ -184,6 +188,7 @@ use crate::basic::select::{
     SelectAnchorRect, SelectOption, SelectPanelPlacement, select_popout_style, step_highlight,
 };
 use crate::basic::{IconButton, IconButtonSize, IconButtonVariant};
+use crate::overlay::outside_click::{self, ShieldKey};
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -336,22 +341,23 @@ pub fn select_panel_key_action(key: &str) -> SelectPanelKeyAction {
     }
 }
 
-/// Vue's `onDocumentClick` guard, exposed as a pure predicate because the
-/// mirror installs no document listener (the host owns outside dismissal).
+/// Vue's `onDocumentClick` guard, exposed as a pure predicate: the popout
+/// host carries a shield while the panel is open (see
+/// `overlay::outside_click`), and the dispatch asks exactly this.
 ///
 /// Vue closes when the panel is open, the popout branch is live, and the
 /// press landed outside BOTH the anchor and the fixed host (the host wraps the
 /// panel AND the overlay-scrollbar tracks, so one containment question covers
 /// both; the sheet branch dismisses through its scrim instead and never
-/// participates). The host asks the same questions and closes when this
-/// returns `true`.
+/// participates). A host that dismisses the panel itself asks the same
+/// questions and closes when this returns `true`.
 pub fn select_panel_outside_click_closes(
     open: bool,
     sheet_branch: bool,
     in_anchor: bool,
     in_panel_host: bool,
 ) -> bool {
-    open && !sheet_branch && !in_anchor && !in_panel_host
+    open && !sheet_branch && outside_click::click_closes(in_panel_host, in_anchor)
 }
 
 #[define_props]
@@ -416,6 +422,12 @@ pub struct SelectPanelProps {
     /// anchor_rect_from_element_id` measures one by id). Without it the popout
     /// keeps the stylesheet's default box — Vue without `anchorRef`.
     pub anchor: Option<SelectAnchorRect>,
+
+    /// A CSS selector for the trigger the host anchors against (Vue:
+    /// `anchorRef`). A click inside it never counts as an outside click: the
+    /// trigger toggles the panel, and closing it first would make that toggle
+    /// reopen it.
+    pub anchor_selector: Option<String>,
 
     /// Extra class on the surface root (the popout host / the sheet panel).
     /// Vue has no `class` prop here; the crate's mirrors all carry one.
@@ -521,6 +533,20 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
         on_value_change: props.on_value_change.clone(),
         on_highlight_change: props.on_highlight_change.clone(),
     };
+
+    // Vue: the capture-phase `document` watcher exists while the popout is
+    // open — never for the sheet, whose scrim dismisses. The shield is armed
+    // on every open render and the popout host carries its key, which is how
+    // a click tells the panel from the page around it.
+    let shield = (open && branch == SelectPanelBranch::Popout)
+        .then(|| {
+            let key = ShieldKey::new();
+            let wiring = wiring.clone();
+            let ignore: Vec<String> = props.anchor_selector.iter().cloned().collect();
+            outside_click::arm(&key, ignore, move || wiring.request_open(false)).then_some(key)
+        })
+        .flatten();
+    let shield_attr = shield.as_ref().map(ShieldKey::value);
 
     // ── the surface ───────────────────────────────────────────────────────
     // Rows exist only while open (Vue mounts the surface, and its slot
@@ -664,6 +690,7 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                             class: host_classes,
                             "data-side": side.token(),
                             "data-align": align.token(),
+                            "data-hk-outside": shield_attr,
                             style: geometry,
                             div {
                                 class: "hk-select-popout is-pinned-header",
@@ -686,6 +713,7 @@ pub fn SelectPanel(props: SelectPanelProps) -> Element {
                             class: host_classes,
                             "data-side": side.token(),
                             "data-align": align.token(),
+                            "data-hk-outside": shield_attr,
                             style: geometry,
                             div {
                                 class: "hk-select-popout",
@@ -734,6 +762,9 @@ impl StyledComponent for SelectPanelComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn options() -> Vec<SelectOption> {
@@ -914,10 +945,96 @@ mod tests {
         assert!(props.pinned_header.is_none());
         assert_eq!(props.active_branch, None);
         assert!(props.anchor.is_none());
+        assert!(props.anchor_selector.is_none());
         assert_eq!(props.class, "");
         assert!(props.on_open_change.is_none());
         assert!(props.on_value_change.is_none());
         assert!(props.on_highlight_change.is_none());
+    }
+
+    /// The shield key the popout host carries, read back from rendered HTML.
+    fn shield_key(html: &str) -> String {
+        html.split("data-hk-outside=\"")
+            .nth(1)
+            .map(|rest| rest.split('"').next().unwrap_or_default().to_string())
+            .expect("the popout host carries the shield key")
+    }
+
+    #[test]
+    fn an_open_popout_closes_on_a_click_outside_it_and_its_trigger() {
+        let page = outside_click::TestPage::new();
+        let closes = Rc::new(Cell::new(0));
+        let count = Rc::clone(&closes);
+        let html = SelectPanel(SelectPanelProps {
+            open: true,
+            options: options(),
+            anchor: Some(anchor()),
+            anchor_selector: Some("#field".to_string()),
+            on_open_change: Some(event_handler(move |open: bool| {
+                if !open {
+                    count.set(count.get() + 1);
+                }
+            })),
+            ..Default::default()
+        })
+        .render_to_html();
+        let surface = format!("[data-hk-outside=\"{}\"]", shield_key(&html));
+        assert_eq!(page.armed().len(), 1);
+
+        // The trigger toggles the panel itself: closing first would make
+        // that toggle reopen it.
+        page.click(&["#field"], &[&surface]);
+        assert_eq!(closes.get(), 0, "a click on the trigger is not outside");
+        page.click(&[surface.as_str()], &[&surface]);
+        assert_eq!(closes.get(), 0, "a click inside the host keeps the panel");
+
+        page.click(&["main"], &[&surface]);
+        assert_eq!(
+            closes.get(),
+            1,
+            "a click elsewhere emits update:open(false)"
+        );
+    }
+
+    #[test]
+    fn a_pinned_popout_carries_the_shield_on_its_host_too() {
+        let page = outside_click::TestPage::new();
+        let html = SelectPanel(SelectPanelProps {
+            open: true,
+            options: options(),
+            pinned_header: Some(rsx! {
+                input { "search" }
+            }),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains("is-pinned-header"), "{html}");
+        assert!(
+            html.contains("data-hk-outside=\""),
+            "the pinned host carries the key too: {html}"
+        );
+        assert_eq!(page.armed().len(), 1);
+    }
+
+    #[test]
+    fn a_closed_panel_and_the_sheet_carry_no_shield() {
+        let page = outside_click::TestPage::new();
+        for props in [
+            SelectPanelProps {
+                options: options(),
+                ..Default::default()
+            },
+            SelectPanelProps {
+                open: true,
+                options: options(),
+                active_branch: Some(SelectPanelBranch::Sheet),
+                ..Default::default()
+            },
+        ] {
+            let html = SelectPanel(props).render_to_html();
+            assert!(!html.contains("data-hk-outside"), "{html}");
+        }
+        assert!(page.armed().is_empty());
     }
 
     #[test]

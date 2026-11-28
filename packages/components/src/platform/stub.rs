@@ -2,7 +2,7 @@
 //!
 //! This module provides no-op implementations for SSR and other non-browser targets.
 
-use super::MutationObserverOptions;
+use super::{ClickLocation, MutationObserverOptions};
 
 pub fn log(_message: &str) {}
 
@@ -103,6 +103,12 @@ pub fn request_animation_frame_with_timestamp(_callback: impl FnOnce(f64) + 'sta
 }
 
 pub fn on_scroll(_callback: impl FnMut() + 'static) {}
+
+/// No document to listen on (SSR, native): always `false`, so nothing is
+/// armed and the caller's own dismissal paths stay the only ones.
+pub fn on_document_click(_callback: impl FnMut(&dyn ClickLocation) + 'static) -> bool {
+    false
+}
 
 pub fn draw_qrcode_on_canvas_by_id(
     _canvas_id: &str,

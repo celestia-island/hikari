@@ -88,7 +88,7 @@ web-sys = { version = "^0.3", features = [
     "MouseEvent", "Event", "NodeList",
     "DomRect",
     "DomTokenList",
-    "EventTarget",
+    "EventTarget", "AddEventListenerOptions",
 ] }
 
 # Component (wasm32-wasip2) dependencies. On this target the browser is reachable

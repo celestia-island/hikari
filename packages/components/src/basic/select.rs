@@ -10,7 +10,7 @@
 // `.hk-select*` class name is literal and identical in both forms. The DOM
 // contract below mirrors the Vue render output:
 //
-//   div.hk-select-wrapper
+//   div.hk-select-wrapper [data-hk-outside]   (shield key; desktop popout only)
 //     label.hk-select-label                       (label; Vue puts no `for` on it)
 //       {label} span.hk-select-required (*)       (required)
 //     button.hk-select-trigger
@@ -66,11 +66,12 @@
 //     `usePopupManager`). The retired legacy `PortalEntry::Dropdown` layer is
 //     NOT reused — an inline fixed layer keeps the geometry in props instead of
 //     a portal registry entry.
-//   * no outside-click close: the desktop popout owns no document-level
-//     pointerdown watcher (Vue's `HkSelectPanel` closes on an outside press;
-//     the retired legacy layer had a full-screen mask). `open` closes through
-//     Escape, a row selection, or the mobile scrim — the HOST owns outside
-//     dismissal on desktop.
+//   * outside click (Vue: `HkSelectPanel`'s capture-phase `document` watcher
+//     while the desktop popout is open): the popout arm shields the WRAPPER,
+//     which holds the trigger and the popout both, through the page-wide
+//     registry in `overlay::outside_click` — a click on the trigger toggles, a
+//     click on a row commits, anything else emits `update:open(false)`. The
+//     sheet dismisses through its scrim and carries no shield.
 //   * no auto-flip and no viewport clamp: both need the MEASURED panel box
 //     (Vue's `positionPanel` reads `offsetWidth`/`offsetHeight`) and tairitsu
 //     0.5.22 has no ref + measurement pairing. The placed side is used
@@ -103,6 +104,7 @@ use hikari_icons::{Icon, MdiIcon};
 
 // The pointer highlight channel this file used is bound on the mouse family now
 // (ledger L88); the tairitsu event set it needs comes from the prelude.
+use crate::overlay::outside_click::{self, ShieldKey};
 use crate::platform;
 use crate::prelude::*;
 use crate::styled::StyledComponent;
@@ -507,6 +509,19 @@ pub fn Select(props: SelectProps) -> Element {
         on_highlight_change: props.on_highlight_change.clone(),
     };
 
+    // Vue: `HkSelectPanel`'s capture-phase `document` watcher, while the
+    // desktop popout is open. The wrapper holds the trigger AND the popout,
+    // so one key covers both — a click on the trigger toggles, a click on a
+    // row commits, and anything else closes. The sheet's scrim dismisses.
+    let shield = (is_open && !sheet_mode)
+        .then(|| {
+            let key = ShieldKey::new();
+            let wiring = wiring.clone();
+            outside_click::arm(&key, Vec::new(), move || wiring.request_open(false)).then_some(key)
+        })
+        .flatten();
+    let shield_attr = shield.as_ref().map(ShieldKey::value);
+
     // ── option rows ───────────────────────────────────────────────────────
     // Rows exist only while the panel is open (Vue mounts the panel and its
     // slot content on open), so the whole `options` sweep sits behind the
@@ -662,6 +677,7 @@ pub fn Select(props: SelectProps) -> Element {
     rsx! {
         div {
             class: wrapper_classes,
+            "data-hk-outside": shield_attr,
             if let Some(label) = label_text {
                 label {
                     class: "hk-select-label",
@@ -717,6 +733,9 @@ impl StyledComponent for SelectComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn anchor() -> SelectAnchorRect {
@@ -881,5 +900,78 @@ mod tests {
             !css.contains(".hk-select-dropdown") && !css.contains(".hi-select-option-selected"),
             "legacy select dropdown classes are retired"
         );
+    }
+
+    fn choices() -> Vec<SelectOption> {
+        vec![SelectOption {
+            value: "a".to_string(),
+            label: "Alpha".to_string(),
+            disabled: false,
+        }]
+    }
+
+    /// The shield key the wrapper carries, read back from rendered HTML.
+    fn shield_key(html: &str) -> String {
+        html.split("data-hk-outside=\"")
+            .nth(1)
+            .map(|rest| rest.split('"').next().unwrap_or_default().to_string())
+            .expect("the wrapper carries the shield key")
+    }
+
+    #[test]
+    fn an_open_select_closes_on_a_click_outside_its_wrapper() {
+        let page = outside_click::TestPage::new();
+        let closes = Rc::new(Cell::new(0));
+        let count = Rc::clone(&closes);
+        let html = Select(SelectProps {
+            open: true,
+            options: choices(),
+            anchor: Some(anchor()),
+            on_open_change: Some(event_handler(move |open: bool| {
+                if !open {
+                    count.set(count.get() + 1);
+                }
+            })),
+            ..Default::default()
+        })
+        .render_to_html();
+        let wrapper_tag = html.split('>').next().unwrap_or_default().to_string();
+        assert!(
+            wrapper_tag.contains("hk-select-wrapper") && wrapper_tag.contains("data-hk-outside"),
+            "the key sits on the wrapper, which holds the trigger and the popout: {html}"
+        );
+        let surface = format!("[data-hk-outside=\"{}\"]", shield_key(&html));
+        assert_eq!(page.armed().len(), 1);
+
+        // The trigger toggles and a row commits: neither is an outside click.
+        page.click(
+            &[".hk-select-trigger", surface.as_str()],
+            &[surface.as_str()],
+        );
+        assert_eq!(closes.get(), 0);
+        page.click(
+            &[".hk-select-option", surface.as_str()],
+            &[surface.as_str()],
+        );
+        assert_eq!(closes.get(), 0);
+
+        page.click(&["main"], &[surface.as_str()]);
+        assert_eq!(
+            closes.get(),
+            1,
+            "a click elsewhere emits update:open(false)"
+        );
+    }
+
+    #[test]
+    fn a_closed_select_carries_no_shield() {
+        let page = outside_click::TestPage::new();
+        let html = Select(SelectProps {
+            options: choices(),
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!html.contains("data-hk-outside"), "{html}");
+        assert!(page.armed().is_empty());
     }
 }

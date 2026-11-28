@@ -7,7 +7,7 @@ use tairitsu_vdom::platform::DomRect;
 use wasm_bindgen::JsCast;
 use web_sys::{Element, HtmlElement};
 
-use super::MutationObserverOptions;
+use super::{ClickLocation, MutationObserverOptions};
 
 pub fn get_bounding_rect_by_class_impl(
     class_name: &str,
@@ -435,4 +435,50 @@ pub fn on_scroll(callback: impl FnMut() + 'static) {
         .expect("failed to add scroll listener");
 
     closure.forget();
+}
+
+/// A page click seen from the element that received it.
+struct EventLocation {
+    target: Option<Element>,
+}
+
+impl ClickLocation for EventLocation {
+    fn inside(&self, selector: &str) -> bool {
+        self.target
+            .as_ref()
+            .is_some_and(|element| element.closest(selector).ok().flatten().is_some())
+    }
+}
+
+pub fn on_document_click(mut callback: impl FnMut(&dyn ClickLocation) + 'static) -> bool {
+    use wasm_bindgen::closure::Closure;
+
+    let Some(document) = web_sys::window().and_then(|window| window.document()) else {
+        return false;
+    };
+    let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
+        let point = event
+            .dyn_ref::<web_sys::MouseEvent>()
+            .map(|mouse| (mouse.client_x(), mouse.client_y()));
+        // A click whose target is not an element (the document itself, a text
+        // node) still has a point; the element under it is the target.
+        let target = event
+            .target()
+            .and_then(|target| target.dyn_into::<Element>().ok())
+            .or_else(|| point.and_then(|(x, y)| element_from_point(x, y)));
+        callback(&EventLocation { target });
+    }) as Box<dyn FnMut(web_sys::Event)>);
+    let options = web_sys::AddEventListenerOptions::new();
+    options.set_capture(true);
+    let added = document
+        .add_event_listener_with_callback_and_add_event_listener_options(
+            "click",
+            closure.as_ref().unchecked_ref(),
+            &options,
+        )
+        .is_ok();
+    if added {
+        closure.forget();
+    }
+    added
 }

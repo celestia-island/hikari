@@ -11,17 +11,26 @@
 // sheet is NOT part of the vendored mirror set, so those classes reach the Rust
 // form as DOM hooks — the same deal `basic/kbd.rs` documents). The provider
 // therefore owns no class of its own; it owns the STATE, the POINTER, and the
-// Escape path. (The Vue component's own test suite agrees: its `.content` /
-// `.quadrant` specs assert behaviour, never CSS.)
+// two close paths — Escape on the panel, and a click outside the surface.
+// (The Vue component's own test suite agrees: its `.content` / `.quadrant`
+// specs assert behaviour, never CSS.)
 //
 // DOM contract (mirrors Vue: the slot, then ONE menu surface):
 //
 //   {children}                                    (Vue: the default slot)
 //   div.hk-select-popout-host                     (only while open + content)
 //       data-side="bottom|top" data-align="start|end"
+//       [data-hk-outside={shield key}]            (while a page listener exists)
 //       (style: pointer-pinned inline geometry — see `context_menu_position_style`)
 //     div.hk-select-popout [aria-label={title}]   (keydown: Escape closes)
 //       {menu}                                    (host-supplied level/rows)
+//
+// Outside click (Vue: `HkMenu`'s capture-phase `document` listener): a click
+// that lands outside the popout host asks the host to close through
+// `on_close`, the same request Escape makes, exactly once per open. A
+// context menu has no trigger to spare — it opens where the pointer was — so
+// everything outside the surface counts as outside. The shield is the shared
+// one in `overlay::outside_click`.
 //
 // Control contract (Vue: `provide(CONTEXT_MENU_KEY)` + an internal `ref`):
 // Vue's provider holds `open` / `request` / `menuEpoch` in `ref`s and exposes
@@ -54,12 +63,13 @@
 //     back guard below 768px. This provider has no sheet of its own — the
 //     popout renders at every width, and a host that wants the sheet grammar
 //     mounts one.
-//   * NO AUTO-FLIP / OUTSIDE-CLICK CLOSE / CASCADE / KEYBOARD ROW NAVIGATION:
-//     all of them are HkSelectPanel/HkMenu runtime contracts (document-level
-//     listeners, measured boxes, per-level panels). The quadrant choice is a
-//     PREFERENCE, exactly as in Vue where the panel still flips afterwards.
-//     Escape (on the panel) and the host's own dismissal paths are the close
-//     channels; the panel must hold focus for Esc to reach it.
+//   * NO AUTO-FLIP / CASCADE / KEYBOARD ROW NAVIGATION: they are
+//     HkSelectPanel/HkMenu runtime contracts (document-level listeners for
+//     the click attribution across levels, measured boxes, per-level panels).
+//     The quadrant choice is a PREFERENCE, exactly as in Vue where the panel
+//     still flips afterwards. Escape (on the panel), an outside click and
+//     the host's own dismissal paths are the close channels; the panel must
+//     hold focus for Esc to reach it.
 //   * NO MENU GRAMMAR IS INVENTED: the `div.hk-menu-level role="menu"` level and
 //     its rows are the host's content slot. An open request with NO content
 //     paints nothing (a delta from Vue, whose empty `items` still paints an
@@ -67,6 +77,7 @@
 
 use crate::basic::select::{SelectPanelPlacement, select_popout_style};
 use crate::feedback::PopoverAnchorRect;
+use crate::overlay::outside_click::{self, ShieldKey};
 use crate::prelude::*;
 use crate::styled::StyledComponent;
 
@@ -216,8 +227,9 @@ pub struct ContextMenuProviderProps {
     #[default]
     pub title: String,
 
-    /// Close request (Escape, or the host's own dismissal paths). The host owns
-    /// `open` and must flip it (Vue: `request.onClose`).
+    /// Close request (Escape, a click outside the menu, or the host's own
+    /// dismissal paths). The host owns `open` and must flip it (Vue:
+    /// `request.onClose`).
     pub on_close: Option<EventHandler<()>>,
 
     /// The menu content — the level/rows (`div.hk-menu-level[role=menu]` …) the
@@ -246,16 +258,31 @@ pub fn ContextMenuProvider(props: ContextMenuProviderProps) -> Element {
         Some(props.title.clone())
     };
     let menu = props.menu.clone().unwrap_or_else(empty_vnode);
-    let on_close = props.on_close.clone();
-    let panel_keydown = move |event: KeyboardEvent| {
-        if event.key == "Escape" {
-            event.prevent_default();
-            event.stop_propagation();
+    // Escape and an outside click ask the host the same way (Vue: both run
+    // `close(true)`, which fires `request.onClose`).
+    let request_close = {
+        let on_close = props.on_close.clone();
+        move || {
             if let Some(handler) = on_close.as_ref() {
                 handler.call(());
             }
         }
     };
+    let panel_keydown = {
+        let close = request_close.clone();
+        move |event: KeyboardEvent| {
+            if event.key == "Escape" {
+                event.prevent_default();
+                event.stop_propagation();
+                close();
+            }
+        }
+    };
+    // The surface is armed on every render while open and carries its shield
+    // key, which is how a click tells the menu from the page around it.
+    let shield = ShieldKey::new();
+    let shield_attr =
+        outside_click::arm(&shield, Vec::new(), request_close).then(|| shield.value().to_string());
 
     // The slot first, then the one menu surface (Vue's fragment order).
     let surface = rsx! {
@@ -263,6 +290,7 @@ pub fn ContextMenuProvider(props: ContextMenuProviderProps) -> Element {
             class: CONTEXT_MENU_HOST_CLASS,
             "data-side": placement.side(),
             "data-align": placement.align(),
+            "data-hk-outside": shield_attr,
             style: geometry,
             div {
                 class: CONTEXT_MENU_PANEL_CLASS,
@@ -294,6 +322,9 @@ impl StyledComponent for ContextMenuProviderComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::Cell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn viewport() -> ContextMenuViewport {
@@ -482,6 +513,66 @@ mod tests {
         assert!(html.contains(r#"class="host-app""#), "{html}");
         assert!(!html.contains("hk-select-popout-host"), "{html}");
         assert!(!html.contains("hk-select-popout"), "{html}");
+    }
+
+    /// The shield key the popout host carries, read back from rendered HTML.
+    fn shield_key(html: &str) -> String {
+        html.split("data-hk-outside=\"")
+            .nth(1)
+            .map(|rest| rest.split('"').next().unwrap_or_default().to_string())
+            .expect("the popout host carries the shield key")
+    }
+
+    #[test]
+    fn an_outside_click_asks_the_host_to_close_once() {
+        let page = outside_click::TestPage::new();
+        let closes = Rc::new(Cell::new(0));
+        let count = Rc::clone(&closes);
+        let html = ContextMenuProvider(ContextMenuProviderProps {
+            open: true,
+            menu: Some(rsx! {
+                div { class: "hk-menu-level", "role": "menu",
+                    button { class: "hk-menu-row", "type": "button", "Copy" }
+                }
+            }),
+            on_close: Some(event_handler(move |()| {
+                count.set(count.get() + 1);
+            })),
+            children: rsx! {
+                main { class: "host-app", "app" }
+            },
+            ..Default::default()
+        })
+        .render_to_html();
+        let surface = format!("[data-hk-outside=\"{}\"]", shield_key(&html));
+        assert_eq!(page.armed().len(), 1);
+
+        page.click(&[surface.as_str()], &[surface.as_str()]);
+        assert_eq!(
+            closes.get(),
+            0,
+            "a click inside the menu is the menu's own business"
+        );
+
+        page.click(&["main.host-app"], &[surface.as_str()]);
+        assert_eq!(closes.get(), 1, "a click outside asks the host to close");
+    }
+
+    #[test]
+    fn a_closed_menu_arms_no_shield() {
+        let page = outside_click::TestPage::new();
+        let html = ContextMenuProvider(ContextMenuProviderProps {
+            menu: Some(rsx! {
+                div { class: "hk-menu-level", "role": "menu" }
+            }),
+            children: rsx! {
+                main { class: "host-app", "app" }
+            },
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(!html.contains("data-hk-outside"), "{html}");
+        assert!(page.armed().is_empty());
     }
 
     #[test]

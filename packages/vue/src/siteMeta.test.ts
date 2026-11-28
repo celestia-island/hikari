@@ -59,20 +59,41 @@ describe("readGaMeasurementId boot-tag branches", () => {
     expect(readGaMeasurementId(docWithBootTag(null))).toBeNull();
   });
 
-  it("returns null for malformed JSON-ish junk and warns once", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(readGaMeasurementId(docWithBootTag("not-an-id"))).toBeNull();
-    expect(warn).toHaveBeenCalledTimes(1);
-    warn.mockRestore();
+  // MUT:site-meta-beian-codepoints — the 64 limit is CODE POINTS (Rust
+  // chars().count() in erp), not UTF-16 units: astral characters must count
+  // as one. A `.length`-based mutation reddens the first assertion here.
+  it("counts astral code points, not UTF-16 units, against the 64 limit", () => {
+    const fortyAstral = "😀".repeat(40); // 40 code points / 80 UTF-16 units
+    expect(parseBeianLines(JSON.stringify([{ title: fortyAstral }]))).toHaveLength(1);
+    // 65 astral code points are over the limit — and a `.length`-based
+    // implementation would see 130 UTF-16 units and keep the line, so this
+    // is the mutation-sensitive half.
+    const sixtyFiveAstral = "😀".repeat(65);
+    expect(parseBeianLines(JSON.stringify([{ title: sixtyFiveAstral }]))).toHaveLength(0);
   });
 
-  it("returns null for envsubst leftovers without warning", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  // MUT:site-meta-beian-https-case — the protocol check is case-sensitive by
+  // alignment with erp (`HTTPS://` is NOT a valid url → the entry is DROPPED,
+  // not downgraded to plain text). A `.toLowerCase()`-style normalization
+  // mutation would keep the entry and redden this.
+  it("drops entries whose url uses an uppercase-scheme form", () => {
+    expect(
+      parseBeianLines(JSON.stringify([{ title: "x", url: "HTTPS://beian.example" }]))
+    ).toHaveLength(0);
+  });
+
+  it("returns null for malformed JSON-ish junk, silently like the hosts", () => {
+    // MUT:site-meta-ga-silent-reject — a warn on the invalid id (R2's S2:
+    // the module originally warned per call) reddens THIS silent-null test.
+    // The hosts' analytics.ts never warn on an invalid id (the boot tag is
+    // our own deploy payload); this module must not either.
+    expect(readGaMeasurementId(docWithBootTag("not-an-id"))).toBeNull();
+  });
+
+  it("returns null for envsubst leftovers", () => {
     expect(readGaMeasurementId(docWithBootTag("$CELESTIA_GA_MEASUREMENT_ID"))).toBeNull();
     expect(readGaMeasurementId(docWithBootTag("__CHEST_GA_MEASUREMENT_ID__"))).toBeNull();
     expect(readGaMeasurementId(docWithBootTag(""))).toBeNull();
-    expect(warn).not.toHaveBeenCalled();
-    warn.mockRestore();
   });
 });
 

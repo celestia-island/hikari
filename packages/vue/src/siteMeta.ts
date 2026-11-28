@@ -46,7 +46,7 @@ export function isValidGaMeasurementId(raw: string): boolean {
  * Read/placeholder semantics mirror the two hosts' `resolveMeasurementId`
  * (their common intersection): `textContent` is trimmed, and a raw `$…` or
  * `__…` prefix means the injection channel never ran. A malformed
- * non-placeholder value warns once so a misconfigured deployment is
+ * non-placeholder value silently returns null so a misconfigured deployment is
  * discoverable in the console without polluting the page.
  */
 export function readGaMeasurementId(doc: Document = document): string | null {
@@ -60,10 +60,10 @@ export function readGaMeasurementId(doc: Document = document): string | null {
     return null;
   }
   if (!isValidGaMeasurementId(raw)) {
-    // eslint-disable-next-line no-console -- one-shot deploy diagnostic
-    console.warn(
-      `[siteMeta] ${GA_TAG_ID} rejected (expected G- + 1..=32 uppercase alphanumerics); GA stays disabled`,
-    );
+    // Silent, exactly like both hosts' analytics.ts: the boot tag is our own
+    // deployment's payload, so an invalid id is a deploy-time mistake that
+    // other signals already surface — per-call warnings here would only spam
+    // re-renders.
     return null;
   }
   return raw;

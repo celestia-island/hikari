@@ -83,34 +83,25 @@ describe("mermaid graph label width contract", () => {
   });
 });
 
-/**
- * The zoom bar must live OUTSIDE the board's overflow-hidden viewport.
+/** Embedded diagrams let the outer card own the only frame. The complete
+ * minimap stays in HkBoard's standard corner dock (its stylesheet contract is
+ * pinned in minimapDock.styles.test.ts); there is no second toolbar painter.
  *
- * The bar used to be HkBoard's bottom-right OVERLAY dock. At fit zoom the
- * diagram fills the board edge to edge, so the dock sat on top of the last
- * node of every wide diagram (docs.celestia.world 2026-11-27, the LR
- * platform map — its final node half hidden). A row of its own cannot
- * cover anything at any viewport size.
- *
- * MUT: the bar's `position` inside the toolbar row is load-bearing and the
- * second pin reads it directly. `absolute` (with the base rule's corner
- * insets neutralised to `auto`) would float the bar out of the row and
- * over the board's corner; `static` would leave the slider pop nothing to
- * anchor to. Both turn the `position: relative` assertion RED.
+ * MUT:mermaid-flush-frame — restoring the inner border/radius catches the
+ * compiled declaration assertions even though DOM-only tests cannot see CSS.
  */
-describe("mermaid zoom bar placement contract", () => {
-  it("docks the bar in a flow row below the stage, aligned to the end edge", () => {
+describe("mermaid embedded frame contract", () => {
+  it("removes the inner border and radius in flush mode", () => {
     const css = compiled("HkMermaidDiagram.scss");
-    const toolbar = ruleFor(css, ".hk-mermaid__toolbar {");
-    expect(toolbar).toMatch(/display:\s*flex/);
-    expect(toolbar).toMatch(/justify-content:\s*flex-end/);
+    const flush = ruleFor(css, ".hk-mermaid--flush");
+    expect(flush).toMatch(/border:\s*0/);
+    expect(flush).toMatch(/border-radius:\s*0/);
+    expect(css).not.toContain(".hk-mermaid__toolbar");
   });
 
-  it("keeps the bar anchored to that row — neither self-docked nor dock-less", () => {
+  it("keeps the loading state at a useful panel height", () => {
     const css = compiled("HkMermaidDiagram.scss");
-    const bar = ruleFor(css, ".hk-mermaid__toolbar > .hk-minimap");
-    expect(bar).toMatch(/position:\s*relative/);
-    expect(bar).toMatch(/inset:\s*auto/);
+    expect(ruleFor(css, ".hk-mermaid--loading")).toMatch(/min-height:\s*160px/);
   });
 
   /// The shape sample's labels ellipsized inside boxes that were BIG ENOUGH:

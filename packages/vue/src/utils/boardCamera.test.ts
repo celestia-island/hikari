@@ -8,6 +8,7 @@ import {
   boardClampPan,
   boardEaseOutCubic,
   boardFit,
+  boardFitPercent,
   boardLevelOf,
   boardStepRung,
   boardToScreen,
@@ -15,6 +16,7 @@ import {
   boardToWorld,
   boardZoomAt,
   quantizeBoardK,
+  quantizeBoardPercentK,
   quantizeBoardStep,
 } from "./boardCamera";
 
@@ -38,6 +40,94 @@ describe("boardCamera — 5% geometric ladder", () => {
     expect(quantizeBoardStep(base, 1.05 ** 2)).toBeCloseTo(base * BOARD_ZOOM_FACTOR ** 2, 5);
     // a ratio inside the same rung stays on the base rung
     expect(quantizeBoardStep(base, 1.02)).toBeCloseTo(base, 5);
+  });
+});
+
+describe("boardCamera — exact linear percent ladder", () => {
+  const governance = { stepPercent: 5, minK: 0.5, maxK: 2 };
+
+  it("lands arbitrary scales on exact 5% multiples within the host bounds", () => {
+    // MUT:linear-percent-rungs — using the geometric quantizer never passes:
+    // 1.05ⁿ produces labels such as 116%, while every result here is a 5%
+    // multiple and stays inside the Mermaid 50–200% window.
+    const samples = [0.2, 0.5, 0.52, 0.87, 1, 1.37, 1.98, 2, 3];
+    const actual = samples.map((k) => quantizeBoardPercentK(k, governance));
+    expect(actual).toEqual([0.5, 0.5, 0.5, 0.85, 1, 1.35, 2, 2, 2]);
+    for (const k of actual) expect((k * 100) % 5).toBeCloseTo(0, 8);
+  });
+
+  it("fit rounds DOWN to 85% instead of cropping at the nearest rung", () => {
+    // Raw fit = (600 − 80) / 590 = 0.88135…, so nearest chooses 90% and
+    // overflows the padded viewport; floor chooses 85%. MUT:fit-floor —
+    // changing floor to nearest catches this exact regression (the previous
+    // 0.8666 sample was equivalent under BOTH rules and could not).
+    const content = { x: 0, y: 0, w: 100, h: 590 };
+    const viewport = { w: 800, h: 600 };
+    const raw = boardFit(content, viewport, { cap: 1 });
+    const fitted = boardFitPercent(content, viewport, { ...governance, cap: 1 });
+    expect(raw.k).toBeGreaterThan(0.875);
+    expect(raw.k).toBeLessThan(0.9);
+    expect(quantizeBoardPercentK(raw.k, governance)).toBe(0.9);
+    expect(fitted.k).toBe(0.85);
+    expect(fitted.k).toBeLessThanOrEqual(raw.k);
+    expect(fitted.y + (content.y + content.h) * fitted.k)
+      .toBeLessThanOrEqual(viewport.h - 40);
+  });
+
+  it("reserves the minimap's end-edge dock out of the fitted content", () => {
+    // MUT:minimap-fit-reserve — dropping endReserve from either the scale or
+    // centering equation catches a real overlap: the unreserved fit puts the
+    // content's end at 760px, through a dock that begins at 630px.
+    const content = { x: 0, y: 0, w: 900, h: 200 };
+    const viewport = { w: 800, h: 600 };
+    const fitted = boardFitPercent(content, viewport, {
+      ...governance,
+      cap: 1,
+      endReserve: 180,
+    });
+    expect(fitted.k).toBe(0.6);
+    const drawnRight = fitted.x + (content.x + content.w) * fitted.k;
+    expect(drawnRight).toBeLessThanOrEqual(viewport.w - 180);
+    // 160px map + 10px inset means its left edge is 630px.
+    expect(drawnRight).toBeLessThan(630);
+  });
+
+  it("mirrors the minimap reserve onto the left dock in RTL", () => {
+    // MUT:minimap-fit-reserve-rtl — ignoring writingDirection never passes:
+    // the LTR fit starts at 40px and runs beneath the RTL dock (10…170px);
+    // the mirrored fit starts at 220px, clear of that dock.
+    const content = { x: 0, y: 0, w: 900, h: 200 };
+    const viewport = { w: 800, h: 600 };
+    const fitted = boardFitPercent(content, viewport, {
+      ...governance,
+      cap: 1,
+      endReserve: 180,
+      writingDirection: "rtl",
+    });
+    expect(fitted.k).toBe(0.6);
+    expect(fitted.x).toBe(220);
+    const drawnLeft = fitted.x + content.x * fitted.k;
+    expect(drawnLeft).toBeGreaterThan(170);
+  });
+
+  it("keeps a long diagram at the readable 50% floor for panning", () => {
+    const content = { x: 0, y: 0, w: 300, h: 6000 };
+    const viewport = { w: 800, h: 400 };
+    const fitted = boardFitPercent(content, viewport, governance);
+    expect(boardFit(content, viewport).k).toBeLessThan(0.5);
+    expect(fitted.k).toBe(0.5);
+    // The centred 50% camera is taller than the viewport, so the board's
+    // existing pan clamp has something meaningful to reveal.
+    expect(content.h * fitted.k).toBeGreaterThan(viewport.h);
+  });
+
+  it("preserves the zero sentinel for a hidden viewport", () => {
+    const fitted = boardFitPercent(
+      { x: 0, y: 0, w: 100, h: 100 },
+      { w: 0, h: 0 },
+      governance,
+    );
+    expect(fitted.k).toBe(0);
   });
 });
 

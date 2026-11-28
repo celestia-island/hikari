@@ -398,9 +398,11 @@ export default defineComponent({
           host.className = "hk-md-mermaid";
           host.dataset.mermaid = "mounted";
           carrier.replaceWith(host);
-          // Report contexts are narrow reading panes: the minimap is noise
-          // for a diagram-sized board, canvas dragging stays on (wide
-          // diagrams are exactly what pan was built for).
+          // Report contexts are narrow reading panes: the minimap is noise,
+          // so this host opts out of the overview AND its fit reserve. It still
+          // inherits the shared readable viewport policy deliberately (40vh
+          // auto cap, linear zoom, fitCap 1) rather than the old unbounded
+          // suggested height and 1.25 fit ceiling.
           const app = createApp(HkMermaidDiagram, { source, minimap: false, interactive: true });
           app.mount(host);
           kept.add({ el: host, app, source });

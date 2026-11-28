@@ -9,9 +9,8 @@
  *    gives syntax highlighting). No engine, or a parse failure, or an
  *    unsupported diagram type → the source falls back to a plain code
  *    block — never a broken surface.
- *  - the caller decides the chrome: `minimap` turns the zoom bar off,
- *    `interactive` gates canvas dragging/zoom (an HkBoard prop, passed
- *    straight through).
+ *  - the caller decides the chrome: `minimap` toggles HkBoard's full overview
+ *    (map + viewport + zoom controls), `interactive` gates canvas gestures.
  *
  * Layout lives in ../mermaid/layout.ts (pure, deterministic); this file
  * only adapts the laid-out model into HkBoard nodes/edges and paints
@@ -21,12 +20,11 @@
 import { computed, defineComponent, ref, type CSSProperties, type PropType, type VNode } from "vue";
 
 import HkBoard, { type BoardEdgeInput, type BoardNodeInput } from "./HkBoard";
-import HkMinimap from "./HkMinimap";
+import HkSpinner from "./HkSpinner";
 import { buildBoardModel, createCanvasMeasureText, type LaidOutNode, type MeasureText } from "../mermaid/layout";
 import { getMermaidEngine } from "../mermaid/engine";
 import { mermaidReady } from "../mermaid/wasmEngine";
 import type { ClassDefinition, ClassVisibility, MermaidDoc, MermaidNodeShape } from "../mermaid/types";
-import { BOARD_K_MAX, BOARD_K_MIN, type BoardCamera } from "../utils/boardCamera";
 import "./HkMermaidDiagram.scss";
 
 /** Edge (and arrowhead) ink for a diagram. The board default is a subdued
@@ -36,13 +34,12 @@ import "./HkMermaidDiagram.scss";
  *  quieter than the border so the boxes lead. */
 const MERMAID_EDGE_INK = "rgb(var(--color-primary) / 62%)";
 
-/** The slice of HkBoard's exposed surface the zoom bar drives. */
-interface BoardHandle {
-  zoomIn: () => void;
-  zoomOut: () => void;
-  zoomToPercent: (percent: number) => void;
-  reset: () => void;
-}
+const MERMAID_DEFAULT_MAX_HEIGHT = "40vh";
+const MERMAID_DEFAULT_MIN_ZOOM_PERCENT = 50;
+const MERMAID_DEFAULT_MAX_ZOOM_PERCENT = 200;
+const MERMAID_DEFAULT_ZOOM_STEP_PERCENT = 5;
+// HkMinimap is 160px wide plus its corner inset; 180 leaves a visible gap.
+const MERMAID_DEFAULT_MINIMAP_FIT_RESERVE = 180;
 
 const VISIBILITY_SIGN: Record<ClassVisibility, string> = {
   public: "+",
@@ -55,9 +52,9 @@ const VISIBILITY_SIGN: Record<ClassVisibility, string> = {
  * heuristic otherwise — see layout.ts). */
 const measure: MeasureText = createCanvasMeasureText();
 
-function fallbackBlock(source: string): () => VNode {
+function fallbackBlock(source: string, framed = true): () => VNode {
   return () => (
-    <div class="hk-mermaid-fallback" role="note">
+    <div class={["hk-mermaid-fallback", !framed && "hk-mermaid-fallback--flush"]} role="note">
       <pre>
         <code>{source}</code>
       </pre>
@@ -341,35 +338,54 @@ export default defineComponent({
   props: {
     /** Raw mermaid source. */
     source: { type: String, required: true },
-    /** Show the zoom bar under the diagram (`−` `NN%` `+` reset; the `%`
-     *  label opens a slider). It sits in its own row BELOW the board — the
-     *  board's own bottom-right dock is an overlay, and at fit zoom it
-     *  covered the last node of every wide diagram (measured on
-     *  docs.celestia.world 2026-11-27). */
+    /** Show HkBoard's complete bottom-right minimap: node overview, live
+     * viewport rectangle, pan gesture and the zoom controls. */
     minimap: { type: Boolean, default: true },
+    /** The full map can fold to its standard map-icon button. */
+    minimapCollapsible: { type: Boolean, default: true },
+    /** End-edge space excluded from fit/reset so the default camera does not
+     * place nodes beneath the overview. Set 0 to reclaim it. */
+    minimapFitReserve: { type: Number, default: MERMAID_DEFAULT_MINIMAP_FIT_RESERVE },
     /** Allow dragging / wheel-zooming the canvas (HkBoard pass-through;
      * node taps keep working either way). */
     interactive: { type: Boolean, default: true },
     /** Engineering dot grid (off by default — a diagram is not a map). */
     grid: { type: Boolean, default: false },
-    /** Height of the diagram STAGE in px (default: content-clamped auto).
-     *  The zoom bar row below it adds its own height on top. */
+    /** Explicit stage height. In auto mode the layout suggestion is capped
+     * by maxHeight instead of letting a tall graph take the whole page. */
     height: { type: [Number, String] as PropType<number | "auto">, default: "auto" },
-    /** Fit-zoom ceiling (HkBoard pass-through). */
-    fitCap: { type: Number, default: undefined },
+    /** Auto-height ceiling: px number or any CSS length. Default 40vh;
+     * "none" opts out; "auto" keeps the default. An explicit height already
+     * expresses the host's size. */
+    maxHeight: { type: [Number, String] as PropType<number | string>, default: MERMAID_DEFAULT_MAX_HEIGHT },
+    /** Linear percent governance. Defaults are deliberately readable: a tall
+     * graph pans at 50% rather than auto-fitting into unreadable miniature. */
+    minZoomPercent: { type: Number, default: MERMAID_DEFAULT_MIN_ZOOM_PERCENT },
+    maxZoomPercent: { type: Number, default: MERMAID_DEFAULT_MAX_ZOOM_PERCENT },
+    zoomStepPercent: { type: Number, default: MERMAID_DEFAULT_ZOOM_STEP_PERCENT },
+    /** Fit-zoom ceiling; 1 prevents small diagrams from being enlarged. Reset
+     * uses the same governance: a long graph returns to its readable floor,
+     * not to an arbitrary tiny whole-graph containment scale. */
+    fitCap: { type: Number, default: 1 },
+    /** Standalone diagrams keep a frame. Embedded cards pass false so the
+     * outer card owns the only border/radius. */
+    framed: { type: Boolean, default: true },
   },
   setup(props) {
     // The engine loads asynchronously now, so the first parse can run before it
     // is usable and would cache `parse-failed`. Re-run once the load settles —
     // the same reactive-retry shape `HkQrCode` uses for `qrReady`.
     const engineEpoch = ref(0);
+    const engineSettled = ref(false);
     void mermaidReady
       .then(() => {
         engineEpoch.value += 1;
+        engineSettled.value = true;
       })
       .catch(() => {
-        // Leave the epoch alone: `parsed` keeps reporting parse-failed, which
-        // renders the source as a code block rather than a blank board.
+        // Only a SETTLED failure may fall back to source. While the parser is
+        // still loading, raw unhighlighted text is not an honest preview.
+        engineSettled.value = true;
       });
 
     const parsed = computed<{ doc: MermaidDoc | null; error: string | null }>(() => {
@@ -427,19 +443,35 @@ export default defineComponent({
     );
 
     const viewportStyle = computed<CSSProperties>(() => {
-      const h = props.height === "auto" ? (model.value?.suggestedHeight ?? 240) : props.height;
-      return { height: typeof h === "number" ? `${h}px` : h };
+      if (props.height !== "auto") {
+        return { height: typeof props.height === "number" ? `${props.height}px` : props.height };
+      }
+      const suggested = `${model.value?.suggestedHeight ?? 240}px`;
+      const requestedCap = props.maxHeight === "auto" ? MERMAID_DEFAULT_MAX_HEIGHT : props.maxHeight;
+      if (requestedCap === "none" || requestedCap === "") return { height: suggested };
+      const cap = typeof requestedCap === "number" ? `${requestedCap}px` : requestedCap;
+      return { height: suggested, maxHeight: cap };
     });
-
-    const boardRef = ref<BoardHandle | null>(null);
-    /** Last camera the board reported (it emits on every change, tween
-     *  frames included). */
-    const cam = ref<BoardCamera>({ x: 0, y: 0, k: 1 });
-    const zoomPercent = computed(() => Math.round(cam.value.k * 100));
+    // A registered facade may still be waiting for its wasm surface and return
+    // null in the meantime. Only a real model proves readiness; an engine
+    // object merely existing must not flash the raw-source fallback.
+    const waitingForEngine = computed(() => !engineSettled.value && !model.value);
 
     return () => {
+      if (waitingForEngine.value) {
+        return (
+          <div
+            class={["hk-mermaid", "hk-mermaid--loading", !props.framed && "hk-mermaid--flush"]}
+            style={viewportStyle.value}
+            role="status"
+            aria-label="Loading mermaid diagram"
+          >
+            <HkSpinner center size="lg" minHeight="160px" />
+          </div>
+        );
+      }
       if (!model.value) {
-        return fallbackBlock(props.source)();
+        return fallbackBlock(props.source, props.framed)();
       }
       const kind = parsed.value.doc?.kind ?? "graph";
       const headLine =
@@ -449,64 +481,32 @@ export default defineComponent({
         }) ?? "";
       return (
         <div
-          class="hk-mermaid"
+          class={["hk-mermaid", !props.framed && "hk-mermaid--flush"]}
           data-mermaid-kind={kind}
           role="img"
           aria-label={`mermaid ${kind} diagram: ${headLine.trim().slice(0, 80)}`}
         >
           <div class="hk-mermaid__stage" style={viewportStyle.value}>
             <HkBoard
-              ref={boardRef}
               nodes={boardNodes.value}
               edges={boardEdges.value}
-              minimap={false}
+              minimap={props.minimap}
+              minimapCollapsible={props.minimapCollapsible}
               pan="float"
               interactive={props.interactive}
               grid={props.grid}
               fitOnMount
               fitCap={props.fitCap}
-              onViewportChange={(c: BoardCamera) => {
-                cam.value = c;
-              }}
+              fitEndReserve={props.minimap ? props.minimapFitReserve : 0}
+              minK={props.minZoomPercent / 100}
+              maxK={props.maxZoomPercent / 100}
+              zoomLadder="percent"
+              zoomStepPercent={props.zoomStepPercent}
               v-slots={{
                 node: (slotProps: { node: BoardNodeInput }) => <MermaidNodeBody node={slotProps.node} />,
               }}
             />
           </div>
-          {props.minimap && (
-            <div class="hk-mermaid__toolbar">
-              <HkMinimap
-                toolbarOnly
-                boxes={[]}
-                zoom={cam.value.k}
-                panX={cam.value.x}
-                panY={cam.value.y}
-                viewportWidth={0}
-                viewportHeight={0}
-                contentBounds={{ x: 0, y: 0, w: 0, h: 0 }}
-                zoomPercent={zoomPercent.value}
-                // The board quantizes onto its own ladder, whose ceiling is
-                // the board's `maxK` (default BOARD_K_MAX) — mirror the same
-                // bounds here so the buttons disable exactly when the camera
-                // has nothing left to reach.
-                canZoomIn={cam.value.k < BOARD_K_MAX - 1e-9}
-                canZoomOut={cam.value.k > BOARD_K_MIN + 1e-9}
-                zoomStepPercent={5}
-                minZoomPercent={Math.round(BOARD_K_MIN * 100)}
-                maxZoomPercent={Math.round(BOARD_K_MAX * 100)}
-                showReset
-                // The ± buttons are one-rung steps from wherever the camera
-                // is (the board's own ladder logic); the slider is an
-                // absolute target.
-                onZoomTo={(percent: number, source?: "slider" | "step") => {
-                  if (source === "slider") boardRef.value?.zoomToPercent(percent);
-                  else if (percent > zoomPercent.value) boardRef.value?.zoomIn();
-                  else boardRef.value?.zoomOut();
-                }}
-                onReset={() => boardRef.value?.reset()}
-              />
-            </div>
-          )}
         </div>
       );
     };

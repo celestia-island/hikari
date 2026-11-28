@@ -15,8 +15,8 @@
  *    view (half a viewport of slack on each side); content smaller than
  *    the viewport re-centers;
  *  - `boardFit` fits the whole bbox (pad + cap) and may shrink as far as
- *    needed to show the whole board — fit sits below the interaction
- *    ladder freely;
+ *    needed to show the whole board on the default geometric ladder; the
+ *    opt-in percent ladder instead respects its readable minimum and pans;
  *  - `boardTweenCam` eases between two cameras with an ease-out curve and
  *    GEOMETRIC k interpolation (log-space lerp) so animated zooms still
  *    land exactly on ladder rungs.
@@ -73,6 +73,45 @@ export function quantizeBoardK(k: number): number {
   if (clamped <= BOARD_K_MIN) return BOARD_K_MIN;
   if (clamped >= BOARD_K_MAX) return BOARD_K_MAX;
   return boardKOf(Math.round(boardLevelOf(clamped)));
+}
+
+/** Zoom governance is opt-in per board. Existing scene boards keep the
+ * geometric ladder; document diagrams use exact linear percent rungs. */
+export type BoardZoomLadder = "geometric" | "percent";
+export type BoardWritingDirection = "ltr" | "rtl";
+
+export interface BoardFitOptions {
+  pad?: number;
+  cap?: number;
+  /** Reserve on the LOGICAL inline end (right in LTR, left in RTL). */
+  endReserve?: number;
+  writingDirection?: BoardWritingDirection;
+}
+
+export interface BoardPercentZoomOptions {
+  /** Linear increment in displayed percent (5 means 50%, 55%, 60%…). */
+  stepPercent: number;
+  minK: number;
+  maxK: number;
+  /** Fit rounds DOWN so quantizing never crops content that used to fit. */
+  direction?: "nearest" | "floor";
+}
+
+/** Snap to exact linear percent rungs, not `1.05ⁿ` (whose labels become
+ * 110%, 116%, 122%…). The host's own min/max apply here as well. */
+export function quantizeBoardPercentK(k: number, options: BoardPercentZoomOptions): number {
+  const stepPercent = Number.isFinite(options.stepPercent) && options.stepPercent > 0
+    ? options.stepPercent
+    : 5;
+  const minK = Math.max(0, options.minK);
+  const maxK = Math.max(minK, options.maxK);
+  const clamped = Math.min(maxK, Math.max(minK, k));
+  const units = clamped * 100 / stepPercent;
+  const rung = options.direction === "floor" ? Math.floor(units + 1e-9) : Math.round(units);
+  const result = Math.min(maxK, Math.max(minK, rung * stepPercent / 100));
+  // Decimal rungs should remain stable values for equality checks and CSS
+  // labels (0.85, not 0.8500000000000001).
+  return Math.round(result * 1_000_000) / 1_000_000;
 }
 
 /**
@@ -188,18 +227,43 @@ export function boardClampPan(
 export function boardFit(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: { pad?: number; cap?: number } = {},
+  opts: BoardFitOptions = {},
 ): BoardCamera {
   const pad = opts.pad ?? BOARD_FIT_PAD;
   const cap = opts.cap ?? BOARD_FIT_CAP;
-  const availW = Math.max(0, viewport.w - pad * 2);
+  const endReserve = Math.max(0, opts.endReserve ?? 0);
+  const availW = Math.max(0, viewport.w - pad * 2 - endReserve);
   const availH = Math.max(0, viewport.h - pad * 2);
   const kw = content.w > 0 ? availW / content.w : cap;
   const kh = content.h > 0 ? availH / content.h : cap;
   const k = Math.min(cap, Math.min(kw, kh));
+  const signedReserve = opts.writingDirection === "rtl" ? endReserve : -endReserve;
   return {
     k,
-    x: (viewport.w - content.w * k) / 2 - content.x * k,
+    x: (viewport.w + signedReserve - content.w * k) / 2 - content.x * k,
+    y: (viewport.h - content.h * k) / 2 - content.y * k,
+  };
+}
+
+/** Fit on the linear percent ladder. Rounding down preserves the old fit's
+ * guarantee when a rung exists; when even the minimum cannot contain the
+ * content, the minimum wins and the board becomes pannable instead of
+ * shrinking into illegibility. */
+export function boardFitPercent(
+  content: BoardRect,
+  viewport: BoardViewport,
+  opts: BoardPercentZoomOptions & BoardFitOptions,
+): BoardCamera {
+  const raw = boardFit(content, viewport, opts);
+  // Preserve the degenerate-viewport sentinel. Turning 0 into minK would draw
+  // a hidden board at an arbitrary pan instead of waiting for its real size.
+  if (raw.k <= 0) return raw;
+  const k = quantizeBoardPercentK(raw.k, { ...opts, direction: "floor" });
+  const endReserve = Math.max(0, opts.endReserve ?? 0);
+  const signedReserve = opts.writingDirection === "rtl" ? endReserve : -endReserve;
+  return {
+    k,
+    x: (viewport.w + signedReserve - content.w * k) / 2 - content.x * k,
     y: (viewport.h - content.h * k) / 2 - content.y * k,
   };
 }

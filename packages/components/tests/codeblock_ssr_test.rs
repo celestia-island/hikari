@@ -132,3 +132,69 @@ fn pre_highlighted_markup_wins_over_plain_text() {
         "gutter lost: {html}"
     );
 }
+
+/// Embedded source panes suppress the WHOLE header and frame through component
+/// props, not host CSS overrides. MUT:embedded-code-chrome — removing either
+/// conditional never passes: the header (including a supplied host action and
+/// the default-enabled copy control) returns, or data-framed stays true. The
+/// two-sided pin proves those actions reappear with show_header=true while the
+/// highlighted body and gutter remain intact in both modes.
+#[test]
+fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
+    let html = render(CodeHighlight(CodeHighlightProps {
+        language: "mermaid".to_string(),
+        code: "graph TD\nA-->B".to_string(),
+        code_html: Some("<span class=\"tok-kw\">graph</span> TD".to_string()),
+        actions: Some(tairitsu_macros::rsx! {
+            button { class: "host-pane-switch", "Preview" }
+        }),
+        show_header: false,
+        framed: false,
+        copyable: true,
+        ..Default::default()
+    }));
+    for absent in [
+        "hk-code-highlight-header",
+        "hk-code-highlight-language",
+        "hk-code-highlight-actions",
+        "hk-code-highlight-copy",
+        "host-pane-switch",
+    ] {
+        assert!(!html.contains(absent), "unexpected {absent}: {html}");
+    }
+    assert!(html.contains("data-framed=\"false\""), "frame flag: {html}");
+    assert!(html.contains("hk-code-highlight-code"), "code body: {html}");
+    assert!(
+        html.contains("hk-code-highlight-line-numbers"),
+        "gutter: {html}"
+    );
+    assert!(html.contains("tok-kw"), "highlight body: {html}");
+
+    let standalone = render(CodeHighlight(CodeHighlightProps {
+        language: "mermaid".to_string(),
+        code: "graph TD\nA-->B".to_string(),
+        code_html: Some("<span class=\"tok-kw\">graph</span> TD".to_string()),
+        actions: Some(tairitsu_macros::rsx! {
+            button { class: "host-pane-switch", "Preview" }
+        }),
+        show_header: true,
+        copyable: true,
+        ..Default::default()
+    }));
+    assert!(
+        standalone.contains("data-framed=\"true\""),
+        "default frame: {standalone}"
+    );
+    assert!(
+        standalone.contains("hk-code-highlight-header"),
+        "default header: {standalone}"
+    );
+    assert!(
+        standalone.contains("host-pane-switch"),
+        "host action: {standalone}"
+    );
+    assert!(
+        standalone.contains("hk-code-highlight-copy"),
+        "copy control: {standalone}"
+    );
+}

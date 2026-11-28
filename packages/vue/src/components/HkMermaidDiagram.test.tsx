@@ -47,8 +47,9 @@ afterEach(() => {
 const FLOWCHART = "graph TD\nA[Start] -->|go| B{Choice}\nB -->|yes| C((Done))";
 
 describe("HkMermaidDiagram", () => {
-  it("without a registered engine the source falls back to a code block", async () => {
+  it("falls back to source only after engine loading settles without a registered engine", async () => {
     setMermaidEngineForTests(null);
+    await mermaidReady;
     const c = mount({ source: FLOWCHART });
     await settle();
     expect(c.querySelector(".hk-mermaid-fallback pre code")?.textContent).toContain("graph TD");
@@ -82,32 +83,101 @@ describe("HkMermaidDiagram", () => {
     expect(c.querySelector(".hk-board")).toBeNull();
   });
 
-  it("minimap=false hides the zoom bar; grid defaults off", async () => {
+  it("minimap=false hides the whole board overview; grid defaults off", async () => {
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;
     const c = mount({ source: FLOWCHART, minimap: false });
     await settle();
-    expect(c.querySelector(".hk-mermaid__toolbar")).toBeNull();
+    expect(c.querySelector(".hk-board-minimap")).toBeNull();
+    expect(c.querySelector(".hk-minimap--collapsed")).toBeNull();
     expect(c.querySelector(".hk-mm-zoom-bar")).toBeNull();
     const grid = c.querySelector(".hk-board-grid") as HTMLElement;
     expect(grid.style.display).toBe("none");
   });
 
-  it("minimap defaults on: the zoom bar sits in its own ROW under the board, never over it", async () => {
+  it("minimap defaults to the board's full bottom-right overview, not a toolbar-only substitute", async () => {
+    // MUT:mermaid-full-minimap — setting the board's minimap=false or passing
+    // empty boxes never passes: the SVG and one rect per visible node plus the
+    // viewport rectangle must all be present inside the stage dock.
     setMermaidEngineForTests(mermaidParser);
     await mermaidReady;
     const c = mount({ source: FLOWCHART });
     await settle();
-    const toolbar = c.querySelector(".hk-mermaid__toolbar")!;
-    expect(toolbar.querySelector(".hk-mm-zoom-bar")).not.toBeNull();
-    // No overlay dock inside the stage: at fit zoom the board's own
-    // bottom-right dock covered the last node of every wide diagram.
     const stage = c.querySelector(".hk-mermaid__stage")!;
-    expect(c.querySelector(".hk-board-minimap")).toBeNull();
-    expect(c.querySelector(".hk-board")!.closest(".hk-mermaid__stage")).toBe(stage);
-    // The bar FOLLOWS the stage in flow — it cannot cover anything.
-    expect(toolbar.parentElement).toBe(c.querySelector(".hk-mermaid"));
-    expect(toolbar.previousElementSibling).toBe(stage);
+    const dock = stage.querySelector(".hk-board-minimap")!;
+    expect(dock.querySelector(".hk-minimap-svg")).not.toBeNull();
+    expect(dock.querySelector(".hk-minimap")?.hasAttribute("data-toolbar-only")).toBe(false);
+    expect(dock.querySelector(".hk-minimap")?.hasAttribute("data-collapsible")).toBe(true);
+    // Three visible nodes + the viewport outline.
+    expect(dock.querySelectorAll(".hk-minimap-svg > rect")).toHaveLength(4);
+    expect(dock.querySelector(".hk-mm-zoom-bar")).not.toBeNull();
+    expect(c.querySelector(".hk-mermaid__toolbar")).toBeNull();
+  });
+
+  it("auto height is capped at 40vh and exposes explicit sizing and flush framing", async () => {
+    // MUT:mermaid-viewport-defaults — dropping the maxHeight cap or the framed
+    // class catch only when the auto stage keeps its 40vh max-height and an
+    // embedded diagram loses its own frame; explicit host sizing still wins.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: FLOWCHART, framed: false });
+    await settle();
+    const stage = c.querySelector<HTMLElement>(".hk-mermaid__stage")!;
+    expect(stage.style.height).toMatch(/^\d+(?:\.\d+)?px$/);
+    expect(stage.style.maxHeight).toBe("40vh");
+    expect(c.querySelector(".hk-mermaid--flush")).not.toBeNull();
+
+    const custom = mount({ source: FLOWCHART, maxHeight: 320 });
+    await settle();
+    expect(custom.querySelector<HTMLElement>(".hk-mermaid__stage")!.style.maxHeight).toBe("320px");
+    const explicit = mount({ source: FLOWCHART, height: 500 });
+    await settle();
+    expect(explicit.querySelector<HTMLElement>(".hk-mermaid__stage")!.style.height).toBe("500px");
+    const automatic = mount({ source: FLOWCHART, height: "auto", maxHeight: "auto" });
+    await settle();
+    expect(automatic.querySelector<HTMLElement>(".hk-mermaid__stage")!.style.maxHeight).toBe("40vh");
+  });
+
+  it("passes readable linear zoom governance into the board", async () => {
+    // MUT:mermaid-linear-board-props — removing any forwarded value catches a
+    // contract mismatch that a screenshot of an already-mounted board can miss.
+    setMermaidEngineForTests(mermaidParser);
+    await mermaidReady;
+    const c = mount({ source: FLOWCHART });
+    await settle();
+    const board = c.querySelector(".hk-board") as unknown as {
+      __vueParentComponent?: { props: Record<string, unknown> };
+    };
+    expect(board.__vueParentComponent?.props).toMatchObject({
+      minimap: true,
+      minimapCollapsible: true,
+      minK: 0.5,
+      maxK: 2,
+      zoomLadder: "percent",
+      zoomStepPercent: 5,
+      fitCap: 1,
+      fitEndReserve: 180,
+    });
+
+    const custom = mount({
+      source: FLOWCHART,
+      fitCap: 1.5,
+      minZoomPercent: 40,
+      maxZoomPercent: 180,
+      zoomStepPercent: 10,
+      minimapFitReserve: 220,
+    });
+    await settle();
+    const customBoard = custom.querySelector(".hk-board") as unknown as {
+      __vueParentComponent?: { props: Record<string, unknown> };
+    };
+    expect(customBoard.__vueParentComponent?.props).toMatchObject({
+      minK: 0.4,
+      maxK: 1.8,
+      zoomStepPercent: 10,
+      fitCap: 1.5,
+      fitEndReserve: 220,
+    });
   });
 
   it("every arrow of a top-down flowchart ends along a vertical end tangent", async () => {

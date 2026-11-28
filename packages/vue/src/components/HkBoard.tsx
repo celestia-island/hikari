@@ -47,7 +47,9 @@ import {
   boardBBox,
   boardStepRung,
   quantizeBoardK,
+  quantizeBoardPercentK,
   type BoardCamera,
+  type BoardZoomLadder,
   type BoardPoint,
   type BoardRect,
   type BoardViewport,
@@ -163,6 +165,12 @@ export default defineComponent({
     grid: { type: Boolean, default: true },
     gridSize: { type: Number, default: 24 },
     minimap: { type: Boolean, default: true },
+    /** Let the overview fold to its map-icon affordance. */
+    minimapCollapsible: { type: Boolean, default: false },
+    /** Existing scene boards stay geometric; document diagrams can request
+     * exact linear percent rungs. */
+    zoomLadder: { type: String as PropType<BoardZoomLadder>, default: "geometric" },
+    zoomStepPercent: { type: Number, default: 5 },
     /** `"clamp"` (default): content smaller than the viewport re-centers,
      *  so a fitted board cannot be dragged. `"float"`: it may be dragged
      *  while half of it stays in view — a diagram is content a reader
@@ -175,6 +183,8 @@ export default defineComponent({
      *  viewport; a host that wants fill-the-stage framing passes a higher
      *  cap (the camera clamp still honours maxK). */
     fitCap: { type: Number, default: undefined },
+    /** End-edge safe-area reserve for overlay chrome such as a minimap. */
+    fitEndReserve: { type: Number, default: 0 },
     animated: { type: Boolean, default: true },
     fitOnMount: { type: Boolean, default: true },
   },
@@ -201,6 +211,16 @@ export default defineComponent({
       maxK: props.maxK,
       animated: props.animated,
       fitCap: props.fitCap,
+      fitEndReserve: props.fitEndReserve,
+      // The dock uses inset-inline-end, so the fit reserve must follow the
+      // LIVE writing direction too (right in LTR, left in RTL).
+      fitWritingDirection: () => {
+        const el = viewportRef.value;
+        if (!el || typeof getComputedStyle === "undefined") return "ltr";
+        return getComputedStyle(el).direction === "rtl" ? "rtl" : "ltr";
+      },
+      zoomLadder: props.zoomLadder,
+      zoomStepPercent: props.zoomStepPercent,
       smallContentPan: props.pan === "float" ? "keep" : "center",
     });
     const camera = cam.camera as Ref<BoardCamera>;
@@ -389,6 +409,16 @@ export default defineComponent({
           color: "rgb(var(--color-primary) / 40%)",
         })),
     );
+    // During an animated zoom the world passes through intermediate scales,
+    // but a percent-governed toolbar still displays a rung label rather than
+    // arbitrary values such as 87% between 85% and 90%.
+    const displayedZoomPercent = computed(() => props.zoomLadder === "percent"
+      ? Math.round(quantizeBoardPercentK(camera.value.k, {
+          stepPercent: props.zoomStepPercent,
+          minK: props.minK,
+          maxK: props.maxK,
+        }) * 100)
+      : Math.round(camera.value.k * 100));
 
     // ── gestures ────────────────────────────────────────────────────────
     const pointers = new Map<number, { x: number; y: number }>();
@@ -825,17 +855,20 @@ export default defineComponent({
               viewportWidth={viewportSize.value.w}
               viewportHeight={viewportSize.value.h}
               contentBounds={contentBounds.value}
-              zoomPercent={Math.round(camera.value.k * 100)}
+              zoomPercent={displayedZoomPercent.value}
               canZoomIn={camera.value.k < props.maxK}
               canZoomOut={camera.value.k > props.minK}
-              zoomStepPercent={5}
+              zoomStepPercent={props.zoomStepPercent}
               minZoomPercent={Math.round(props.minK * 100)}
               maxZoomPercent={Math.round(props.maxK * 100)}
               showReset
+              collapsible={props.minimapCollapsible}
               onZoomTo={(percent: number, source?: "slider" | "step") =>
-                cam.zoomToK(source === "slider"
-                  ? quantizeBoardK(percent / 100)
-                  : boardStepRung(camera.value.k, percent / 100))}
+                props.zoomLadder === "percent"
+                  ? cam.zoomToPercent(percent)
+                  : cam.zoomToK(source === "slider"
+                    ? quantizeBoardK(percent / 100)
+                    : boardStepRung(camera.value.k, percent / 100))}
               onReset={() => cam.fit()}
               onPanDelta={(dx: number, dy: number) => cam.panBy(dx, dy)}
             />

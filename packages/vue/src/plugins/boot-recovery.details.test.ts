@@ -41,14 +41,16 @@ import { BOOT_LANDING_DETAILS_CSS } from "./bootLandingDetailsCss.js";
  *  Updated 2026-11-23 (#1497): the boot panel embeds the compiled landing
  *  CSS, and #1496's token addition (--hi-color-bg-container in the seed)
  *  re-byted that sheet on purpose — the commit documents it.
- *  Updated 2026-11-28 (family pure-floor promotion): the same sheet's dark
- *  --color-background seed moved 22 27 38 → 0 0 0 (light 245 245 240 →
- *  255 255 255), re-bying the script on purpose again. */
+ *  Updated 2026-11-28 (family pure-floor promotion): the sheet's dark
+ *  --color-background seed moved 22 27 38 → 0 0 0 and the two derived
+ *  faint-band tokens re-anchored to ink-alpha (the light floor seed was
+ *  already 255 255 255), re-bying the script on purpose again. */
 const DEFAULT_SCRIPT_SHA256 =
   // Regenerated at 0.55.499 alongside the error-landing shell; re-byted
   // 2026-11-28 by the pure-floor promotion. The digest is
-  // always asserted below against bootRecoveryScript() itself, so a stale pin
-  // never reaches a publish — the lane fails first. MUT:boot-script-digest
+  // always asserted below against bootRecoveryScript() itself, so a stale
+  // pin reds the lane before any publish — verified by this file's four
+  // digest tests. MUT:boot-script-digest
   "653273b61ee783f5dec80cfd4334f55b10bea6c1a9e00c2b15f8c2e6ca691ead";
 /** The heal-only script's bytes (the other shape a host may hash). */
 const HEAL_ONLY_SCRIPT_SHA256 =

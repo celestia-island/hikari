@@ -70,6 +70,24 @@ describe("boardCamera — exact linear percent ladder", () => {
     expect(fitted.k).toBeLessThanOrEqual(raw.k);
   });
 
+  it("reserves the minimap's end-edge dock out of the fitted content", () => {
+    // MUT:minimap-fit-reserve — dropping endReserve from either the scale or
+    // centering equation catches a real overlap: the unreserved fit puts the
+    // content's end at 760px, through a dock that begins at 630px.
+    const content = { x: 0, y: 0, w: 900, h: 200 };
+    const viewport = { w: 800, h: 600 };
+    const fitted = boardFitPercent(content, viewport, {
+      ...governance,
+      cap: 1,
+      endReserve: 180,
+    });
+    expect(fitted.k).toBe(0.6);
+    const drawnRight = fitted.x + (content.x + content.w) * fitted.k;
+    expect(drawnRight).toBeLessThanOrEqual(viewport.w - 180);
+    // 160px map + 10px inset means its left edge is 630px.
+    expect(drawnRight).toBeLessThan(630);
+  });
+
   it("keeps a long diagram at the readable 50% floor for panning", () => {
     const content = { x: 0, y: 0, w: 300, h: 6000 };
     const viewport = { w: 800, h: 400 };

@@ -152,6 +152,27 @@ describe("HkMermaidDiagram", () => {
       zoomLadder: "percent",
       zoomStepPercent: 5,
       fitCap: 1,
+      fitEndReserve: 180,
+    });
+
+    const custom = mount({
+      source: FLOWCHART,
+      fitCap: 1.5,
+      minZoomPercent: 40,
+      maxZoomPercent: 180,
+      zoomStepPercent: 10,
+      minimapFitReserve: 220,
+    });
+    await settle();
+    const customBoard = custom.querySelector(".hk-board") as unknown as {
+      __vueParentComponent?: { props: Record<string, unknown> };
+    };
+    expect(customBoard.__vueParentComponent?.props).toMatchObject({
+      minK: 0.4,
+      maxK: 1.8,
+      zoomStepPercent: 10,
+      fitCap: 1.5,
+      fitEndReserve: 220,
     });
   });
 

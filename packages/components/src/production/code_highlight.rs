@@ -224,7 +224,9 @@ pub struct CodeHighlightProps {
 
     /// Render the card's own header. Hosts that already provide the language
     /// label, pane switch and copy action turn this off instead of hiding a
-    /// duplicate header with local CSS.
+    /// duplicate header with local CSS. `false` closes the WHOLE header:
+    /// `actions` and the copy control are header-scoped and are omitted too,
+    /// so the outer card must render every action it still needs.
     #[default(true)]
     pub show_header: bool,
 

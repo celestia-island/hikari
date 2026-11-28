@@ -183,6 +183,8 @@ export default defineComponent({
      *  viewport; a host that wants fill-the-stage framing passes a higher
      *  cap (the camera clamp still honours maxK). */
     fitCap: { type: Number, default: undefined },
+    /** End-edge safe-area reserve for overlay chrome such as a minimap. */
+    fitEndReserve: { type: Number, default: 0 },
     animated: { type: Boolean, default: true },
     fitOnMount: { type: Boolean, default: true },
   },
@@ -209,6 +211,7 @@ export default defineComponent({
       maxK: props.maxK,
       animated: props.animated,
       fitCap: props.fitCap,
+      fitEndReserve: props.fitEndReserve,
       zoomLadder: props.zoomLadder,
       zoomStepPercent: props.zoomStepPercent,
       smallContentPan: props.pan === "float" ? "keep" : "center",

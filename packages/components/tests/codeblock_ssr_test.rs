@@ -133,19 +133,24 @@ fn pre_highlighted_markup_wins_over_plain_text() {
     );
 }
 
-/// Embedded source panes can suppress the duplicate header and frame through
-/// component props, not host CSS overrides. MUT:embedded-code-chrome — removing
-/// either conditional never passes: the header returns, or data-framed stays
-/// true; the highlighted code body and gutter must remain intact either way.
+/// Embedded source panes suppress the WHOLE header and frame through component
+/// props, not host CSS overrides. MUT:embedded-code-chrome — removing either
+/// conditional never passes: the header (including a supplied host action and
+/// the default-enabled copy control) returns, or data-framed stays true. The
+/// two-sided pin proves those actions reappear with show_header=true while the
+/// highlighted body and gutter remain intact in both modes.
 #[test]
 fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
     let html = render(CodeHighlight(CodeHighlightProps {
         language: "mermaid".to_string(),
         code: "graph TD\nA-->B".to_string(),
         code_html: Some("<span class=\"tok-kw\">graph</span> TD".to_string()),
+        actions: Some(tairitsu_macros::rsx! {
+            button { class: "host-pane-switch", "Preview" }
+        }),
         show_header: false,
         framed: false,
-        copyable: false,
+        copyable: true,
         ..Default::default()
     }));
     for absent in [
@@ -153,6 +158,7 @@ fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
         "hk-code-highlight-language",
         "hk-code-highlight-actions",
         "hk-code-highlight-copy",
+        "host-pane-switch",
     ] {
         assert!(!html.contains(absent), "unexpected {absent}: {html}");
     }
@@ -164,7 +170,17 @@ fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
     );
     assert!(html.contains("tok-kw"), "highlight body: {html}");
 
-    let standalone = card();
+    let standalone = render(CodeHighlight(CodeHighlightProps {
+        language: "mermaid".to_string(),
+        code: "graph TD\nA-->B".to_string(),
+        code_html: Some("<span class=\"tok-kw\">graph</span> TD".to_string()),
+        actions: Some(tairitsu_macros::rsx! {
+            button { class: "host-pane-switch", "Preview" }
+        }),
+        show_header: true,
+        copyable: true,
+        ..Default::default()
+    }));
     assert!(
         standalone.contains("data-framed=\"true\""),
         "default frame: {standalone}"
@@ -172,5 +188,13 @@ fn embedded_mode_omits_the_header_and_frame_but_keeps_the_code() {
     assert!(
         standalone.contains("hk-code-highlight-header"),
         "default header: {standalone}"
+    );
+    assert!(
+        standalone.contains("host-pane-switch"),
+        "host action: {standalone}"
+    );
+    assert!(
+        standalone.contains("hk-code-highlight-copy"),
+        "copy control: {standalone}"
     );
 }

@@ -58,6 +58,9 @@ export interface UseBoardCameraOptions {
    *  library's default cap (BOARD_FIT_CAP). Unset keeps the default; the
    *  camera clamp still honours maxK. */
   fitCap?: number;
+  /** Logical-pixel reserve at the viewport's end edge (a minimap dock). The
+   * fit/reset camera centers content in the remaining safe area. */
+  fitEndReserve?: number;
   /** Existing boards keep the geometric 1.05ⁿ ladder. Document diagrams opt
    * into exact linear percent rungs (50%, 55%, 60%…). */
   zoomLadder?: BoardZoomLadder;
@@ -105,6 +108,7 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
      *  viewport may want to fill it instead of parking at the library's
      *  default cap (BOARD_FIT_CAP). Unset keeps the default. */
     fitCap = undefined,
+    fitEndReserve = 0,
     zoomLadder = "geometric",
     zoomStepPercent = 5,
     smallContentPan = "center",
@@ -225,7 +229,10 @@ export function useBoardCamera(options: UseBoardCameraOptions): UseBoardCameraRe
   }
 
   function fit(): void {
-    const fitOptions = fitCap !== undefined ? { cap: fitCap } : {};
+    const fitOptions = {
+      endReserve: fitEndReserve,
+      ...(fitCap !== undefined ? { cap: fitCap } : {}),
+    };
     const target = zoomLadder === "percent"
       ? boardFitPercent(contentRect(), viewport(), {
           ...fitOptions,

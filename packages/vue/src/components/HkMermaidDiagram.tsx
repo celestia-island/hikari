@@ -38,6 +38,8 @@ const MERMAID_DEFAULT_MAX_HEIGHT = "40vh";
 const MERMAID_DEFAULT_MIN_ZOOM_PERCENT = 50;
 const MERMAID_DEFAULT_MAX_ZOOM_PERCENT = 200;
 const MERMAID_DEFAULT_ZOOM_STEP_PERCENT = 5;
+// HkMinimap is 160px wide plus its corner inset; 180 leaves a visible gap.
+const MERMAID_DEFAULT_MINIMAP_FIT_RESERVE = 180;
 
 const VISIBILITY_SIGN: Record<ClassVisibility, string> = {
   public: "+",
@@ -341,6 +343,9 @@ export default defineComponent({
     minimap: { type: Boolean, default: true },
     /** The full map can fold to its standard map-icon button. */
     minimapCollapsible: { type: Boolean, default: true },
+    /** End-edge space excluded from fit/reset so the default camera does not
+     * place nodes beneath the overview. Set 0 to reclaim it. */
+    minimapFitReserve: { type: Number, default: MERMAID_DEFAULT_MINIMAP_FIT_RESERVE },
     /** Allow dragging / wheel-zooming the canvas (HkBoard pass-through;
      * node taps keep working either way). */
     interactive: { type: Boolean, default: true },
@@ -357,7 +362,9 @@ export default defineComponent({
     minZoomPercent: { type: Number, default: MERMAID_DEFAULT_MIN_ZOOM_PERCENT },
     maxZoomPercent: { type: Number, default: MERMAID_DEFAULT_MAX_ZOOM_PERCENT },
     zoomStepPercent: { type: Number, default: MERMAID_DEFAULT_ZOOM_STEP_PERCENT },
-    /** Fit-zoom ceiling; 1 prevents small diagrams from being enlarged. */
+    /** Fit-zoom ceiling; 1 prevents small diagrams from being enlarged. Reset
+     * uses the same governance: a long graph returns to its readable floor,
+     * not to an arbitrary tiny whole-graph containment scale. */
     fitCap: { type: Number, default: 1 },
     /** Standalone diagrams keep a frame. Embedded cards pass false so the
      * outer card owns the only border/radius. */
@@ -485,6 +492,7 @@ export default defineComponent({
               grid={props.grid}
               fitOnMount
               fitCap={props.fitCap}
+              fitEndReserve={props.minimap ? props.minimapFitReserve : 0}
               minK={props.minZoomPercent / 100}
               maxK={props.maxZoomPercent / 100}
               zoomLadder="percent"

@@ -218,18 +218,19 @@ export function boardClampPan(
 export function boardFit(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: { pad?: number; cap?: number } = {},
+  opts: { pad?: number; cap?: number; endReserve?: number } = {},
 ): BoardCamera {
   const pad = opts.pad ?? BOARD_FIT_PAD;
   const cap = opts.cap ?? BOARD_FIT_CAP;
-  const availW = Math.max(0, viewport.w - pad * 2);
+  const endReserve = Math.max(0, opts.endReserve ?? 0);
+  const availW = Math.max(0, viewport.w - pad * 2 - endReserve);
   const availH = Math.max(0, viewport.h - pad * 2);
   const kw = content.w > 0 ? availW / content.w : cap;
   const kh = content.h > 0 ? availH / content.h : cap;
   const k = Math.min(cap, Math.min(kw, kh));
   return {
     k,
-    x: (viewport.w - content.w * k) / 2 - content.x * k,
+    x: (viewport.w - endReserve - content.w * k) / 2 - content.x * k,
     y: (viewport.h - content.h * k) / 2 - content.y * k,
   };
 }
@@ -241,16 +242,17 @@ export function boardFit(
 export function boardFitPercent(
   content: BoardRect,
   viewport: BoardViewport,
-  opts: BoardPercentZoomOptions & { pad?: number; cap?: number },
+  opts: BoardPercentZoomOptions & { pad?: number; cap?: number; endReserve?: number },
 ): BoardCamera {
   const raw = boardFit(content, viewport, opts);
   // Preserve the degenerate-viewport sentinel. Turning 0 into minK would draw
   // a hidden board at an arbitrary pan instead of waiting for its real size.
   if (raw.k <= 0) return raw;
   const k = quantizeBoardPercentK(raw.k, { ...opts, direction: "floor" });
+  const endReserve = Math.max(0, opts.endReserve ?? 0);
   return {
     k,
-    x: (viewport.w - content.w * k) / 2 - content.x * k,
+    x: (viewport.w - endReserve - content.w * k) / 2 - content.x * k,
     y: (viewport.h - content.h * k) / 2 - content.y * k,
   };
 }

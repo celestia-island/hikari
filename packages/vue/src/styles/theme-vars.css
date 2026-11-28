@@ -5,7 +5,7 @@
  * -p hikari-palette --test stock_snapshot. */
 html[data-mode="dark"] {
   --color-accent: 94 129 172;
-  --color-background: 22 27 38;
+  --color-background: 0 0 0;
   --color-border: 128 128 128;
   --color-error: 166 41 55;
   --color-focused-border: 136 192 208;
@@ -34,7 +34,7 @@ html[data-mode="dark"] {
   --hi-color-bg-canvas: rgb(var(--color-background));
   --hi-color-bg-container: rgb(var(--color-surface));
   --hi-color-bg-elevated: rgb(var(--color-surface));
-  --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);
+  --hi-color-bg-subtle: rgb(var(--color-text) / 4%);
   --hi-color-border: rgb(var(--color-border) / 15%);
   --hi-color-danger-fg: rgb(233 104 109);
   --hi-color-error: rgb(var(--color-error));
@@ -58,11 +58,11 @@ html[data-mode="dark"] {
   --hi-color-text-secondary: rgb(var(--color-text-secondary));
   --hi-color-warning: rgb(var(--color-warning));
   --hi-color-warning-fg: rgb(200 130 73);
-  --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
+  --hi-secondary-bg: rgb(var(--color-text) / 6%);
 }
 html[data-mode="light"] {
   --color-accent: 230 167 0;
-  --color-background: 245 245 240;
+  --color-background: 255 255 255;
   --color-border: 128 128 128;
   --color-error: 166 41 55;
   --color-focused-border: 214 51 132;
@@ -91,7 +91,7 @@ html[data-mode="light"] {
   --hi-color-bg-canvas: rgb(var(--color-background));
   --hi-color-bg-container: rgb(var(--color-surface));
   --hi-color-bg-elevated: rgb(var(--color-surface));
-  --hi-color-bg-subtle: rgb(var(--color-surface) / 0.5);
+  --hi-color-bg-subtle: rgb(var(--color-text) / 4%);
   --hi-color-border: rgb(var(--color-border) / 15%);
   --hi-color-danger-fg: rgb(166 41 55);
   --hi-color-error: rgb(var(--color-error));
@@ -115,5 +115,5 @@ html[data-mode="light"] {
   --hi-color-text-secondary: rgb(var(--color-text-secondary));
   --hi-color-warning: rgb(var(--color-warning));
   --hi-color-warning-fg: rgb(137 72 0);
-  --hi-secondary-bg: rgb(var(--color-surface) / 0.5);
+  --hi-secondary-bg: rgb(var(--color-text) / 6%);
 }

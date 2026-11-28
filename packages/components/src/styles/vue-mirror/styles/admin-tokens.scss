@@ -61,8 +61,8 @@
   --hi-color-background: rgb(var(--color-background, 255 255 255));
   --hi-color-bg-canvas: rgb(var(--color-background, 255 255 255));
   --hi-color-bg-elevated: rgb(var(--color-surface, 255 255 255));
-  --hi-color-bg-subtle: rgb(var(--color-surface, 255 255 255) / 0.5);
-  --hi-secondary-bg: rgb(var(--color-surface, 255 255 255) / 0.5);
+  --hi-color-bg-subtle: rgb(var(--color-text, 30 30 30) / 4%);
+  --hi-secondary-bg: rgb(var(--color-text, 30 30 30) / 6%);
   --hi-color-danger: rgb(var(--color-error, 166 41 55));
   --hi-color-success: rgb(var(--color-success, 31 101 48));
   --hi-color-warning: rgb(var(--color-warning, 137 72 0));

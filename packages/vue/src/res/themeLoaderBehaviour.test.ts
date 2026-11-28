@@ -128,10 +128,8 @@ function runThemeLoader(options: RunOptions = {}): RunResult {
   return { storage, vars };
 }
 
-const GREEN = "136,192,208";
-const GREEN_TRIPLET = "rgb(22,27,38)";
-const PINK = "214,51,132";
-const PAPER = "rgb(245,245,240)";
+const BLACK_TRIPLET = "rgb(0,0,0)";
+const WHITE_TRIPLET = "rgb(255,255,255)";
 
 describe("res/theme-loader.js paints the pre-paint palette", () => {
   beforeEach(() => {
@@ -150,7 +148,7 @@ describe("res/theme-loader.js paints the pre-paint palette", () => {
     expect(vars.get("--loader-r")).toBe("136");
     expect(vars.get("--loader-g")).toBe("192");
     expect(vars.get("--loader-b")).toBe("208");
-    expect(vars.get("--loader-bg")).toBe(GREEN_TRIPLET);
+    expect(vars.get("--loader-bg")).toBe(BLACK_TRIPLET);
   });
 
   it("honours an explicitly stored light mode", () => {
@@ -162,7 +160,7 @@ describe("res/theme-loader.js paints the pre-paint palette", () => {
     expect(vars.get("--loader-r")).toBe("214");
     expect(vars.get("--loader-g")).toBe("51");
     expect(vars.get("--loader-b")).toBe("132");
-    expect(vars.get("--loader-bg")).toBe(PAPER);
+    expect(vars.get("--loader-bg")).toBe(WHITE_TRIPLET);
     expect(vars.get("--loader-fg")).toBe("#1a1a1a");
     expect(vars.get("--loader-card-border")).toBe("#ddd");
   });
@@ -172,7 +170,7 @@ describe("res/theme-loader.js paints the pre-paint palette", () => {
       storage: { "hikari-theme-mode": "dark" },
     });
     expect(vars.get("--loader-r")).toBe("136");
-    expect(vars.get("--loader-bg")).toBe(GREEN_TRIPLET);
+    expect(vars.get("--loader-bg")).toBe(BLACK_TRIPLET);
     expect(vars.get("--loader-fg")).toBe("#e0e0e0");
   });
 
@@ -257,7 +255,7 @@ describe("res/theme-loader.js paints the pre-paint palette", () => {
       storage: { "hikari-theme": "does-not-exist", "hikari-theme-mode": "dark" },
     });
     expect(vars.get("--loader-r")).toBe("136");
-    expect(vars.get("--loader-bg")).toBe(GREEN_TRIPLET);
+    expect(vars.get("--loader-bg")).toBe(BLACK_TRIPLET);
   });
 
   it("survives an unparseable geolocation blob instead of throwing", () => {

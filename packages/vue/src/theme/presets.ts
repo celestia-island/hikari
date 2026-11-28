@@ -362,7 +362,7 @@ export function tokensToCSSVars(
     "--hi-color-danger-fg": `rgb(${errorFg.r} ${errorFg.g} ${errorFg.b})`,
     "--hi-color-warning-fg": `rgb(${warningFg.r} ${warningFg.g} ${warningFg.b})`,
     "--hi-color-info-fg": `rgb(${infoFg.r} ${infoFg.g} ${infoFg.b})`,
-    "--hi-color-bg-subtle": "rgb(var(--color-surface) / 0.5)",
+    "--hi-color-bg-subtle": "rgb(var(--color-text) / 4%)",
     "--hi-color-bg-elevated": "rgb(var(--color-surface))",
     // hikari-components (the Rust registry CSS) consumes this legacy name
     // for its code/editor surfaces (issue #1496) — alias it onto the
@@ -370,7 +370,7 @@ export function tokensToCSSVars(
     // hardcoded light fallback their own sheets carry.
     "--hi-color-bg-container": "rgb(var(--color-surface))",
     "--hi-color-bg-canvas": "rgb(var(--color-background))",
-    "--hi-secondary-bg": "rgb(var(--color-surface) / 0.5)",
+    "--hi-secondary-bg": "rgb(var(--color-text) / 6%)",
     ...groupVars,
   };
 }

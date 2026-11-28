@@ -12,8 +12,9 @@
 //!   and stays beside the runtime for now (Phase 2 endgame moves it too).
 //!
 //! The values are migrated VERBATIM from the table `presets.ts` used to
-//! hand-write (2026-11-25): light is the historical pink/paper scheme, dark
-//! the Nord-derived black-blue one. They are NOT the `Hikari` / `Tairitsu`
+//! hand-write (2026-11-25; the page floors moved to the family
+//! pure-white/pure-black pairing on 2026-11-28 — see `stock_default`).
+//! They are NOT the `Hikari` / `Tairitsu`
 //! palettes below — those are the components-side aesthetic family (a
 //! different, older look); the web preset and the components palettes are
 //! siblings, not one derived from the other. Only the semantic quartet
@@ -87,7 +88,9 @@ const fn rgb(r: u8, g: u8, b: u8) -> StockRgb {
     StockRgb { r, g, b }
 }
 
-/// The stock `default` theme — the values the web lane has always shipped.
+/// The stock `default` theme — the values the web lane ships as the
+/// factory line (page floors carry the family pure-white/pure-black
+/// pairing; see the schemes below).
 /// The `name` rides the web lane's ThemePreset.name convention: a literal
 /// string OR a message key resolvable in hikari's own i18n catalog. The
 /// stock theme is every host's factory line, so it ships the CATALOG KEY
@@ -103,8 +106,11 @@ pub fn stock_default() -> StockTheme {
     StockTheme {
         id: "default".to_string(),
         name: "hikari::theme.defaultThemeName".to_string(),
-        // Nord-derived black-blue: the pale Polar Water primary (#88C0D0)
-        // keeps the near-black on-solid ink pair (white on it is ~1.9:1).
+        // Family floor pairing, promoted from the chest/arona brand presets
+        // (light pure white 2026-09-28, dark pure black 2026-11-17 — the
+        // navy family lives on in the surface slots). The pale Polar Water
+        // primary (#88C0D0) keeps the near-black on-solid ink pair (white
+        // on it is ~1.9:1).
         dark: StockTokenScheme {
             primary: rgb(136, 192, 208),
             secondary: rgb(143, 188, 187),
@@ -113,7 +119,7 @@ pub fn stock_default() -> StockTheme {
             muted: rgb(180, 180, 180),
             border: rgb(128, 128, 128),
             focused_border: rgb(136, 192, 208),
-            background: rgb(22, 27, 38),
+            background: rgb(0, 0, 0), // pure black page floor (family 2026-11-17)
             surface: rgb(34, 40, 54),
             selected_background: rgb(70, 70, 85),
             selected_text: rgb(248, 248, 250),
@@ -125,8 +131,11 @@ pub fn stock_default() -> StockTheme {
             on_solid_text: rgb(46, 52, 64),
             on_solid_icon: rgb(46, 52, 64),
         },
-        // The historical pink/paper scheme. Same canonical semantic quartet
-        // (solid fills ignore the mode), house white ink on the fills.
+        // The pink/white scheme (the paper #F5F5F0 light floor retired with
+        // the family floor ruling — surfaces share the white; card
+        // separation rides on border and elevation). Same canonical
+        // semantic quartet (solid fills ignore the mode), house white ink
+        // on the fills.
         light: StockTokenScheme {
             primary: rgb(214, 51, 132),
             secondary: rgb(156, 106, 222),
@@ -135,7 +144,7 @@ pub fn stock_default() -> StockTheme {
             muted: rgb(80, 80, 80),
             border: rgb(128, 128, 128),
             focused_border: rgb(214, 51, 132),
-            background: rgb(245, 245, 240),
+            background: rgb(255, 255, 255), // pure white page floor (family 2026-09-28)
             surface: rgb(255, 255, 255),
             selected_background: rgb(200, 200, 205),
             selected_text: rgb(40, 40, 45),

@@ -200,6 +200,23 @@ pub struct ButtonProps {
     /// Click handler (Vue: the `click` emit).
     pub onclick: Option<EventHandler<MouseEvent>>,
 
+    /// Pointer-enter handler on the root `<button>` (Vue: an `onMouseenter`
+    /// listener reaches the root through the `$attrs` fallthrough).
+    pub onmouseenter: Option<EventHandler<MouseEvent>>,
+
+    /// Pointer-leave handler on the root `<button>` (Vue: `onMouseleave`
+    /// through the fallthrough).
+    pub onmouseleave: Option<EventHandler<MouseEvent>>,
+
+    /// Attributes set on the root `<button>` by name, after the component's
+    /// own: `title`, `id`, `form`, `data-*`, `aria-*`, test hooks (Vue: the
+    /// `$attrs` fallthrough). A name the component renders itself takes the
+    /// host's value, as a fallthrough attribute does. A `class` or `style`
+    /// entry is merged into the root's own, as Vue merges a fallthrough class
+    /// and style — the `class` and `style` props are the plainer way to add
+    /// either.
+    pub attrs: Vec<(String, String)>,
+
     /// Extra class appended after the whole `.hk-btn*` family (Vue merges
     /// `attrs.class` last).
     #[default]
@@ -314,6 +331,9 @@ pub fn Button(props: ButtonProps) -> Element {
         suffix,
         children,
         onclick,
+        onmouseenter,
+        onmouseleave,
+        attrs,
         style,
         button_type,
         autofocus,
@@ -343,20 +363,33 @@ pub fn Button(props: ButtonProps) -> Element {
         _ => children.clone(),
     };
 
-    rsx! {
-        button {
-            class: classes,
-            "type": button_type,
-            disabled: disabled || loading,
-            "aria-label": aria_label,
-            "aria-busy": aria_busy,
-            autofocus: autofocus,
-            style: style_attr,
-            onclick: move |e: MouseEvent| {
-                if let Some(handler) = onclick.as_ref() {
-                    handler.call(e.clone());
-                }
-            },
+    // Vue's `$attrs` (the attributes and listeners the component does not
+    // own) land on the root element after the template's own attributes.
+    crate::utils::passthrough::onto_root(
+        rsx! {
+            button {
+                class: classes,
+                "type": button_type,
+                disabled: disabled || loading,
+                "aria-label": aria_label,
+                "aria-busy": aria_busy,
+                autofocus: autofocus,
+                style: style_attr,
+                onclick: move |e: MouseEvent| {
+                    if let Some(handler) = onclick.as_ref() {
+                        handler.call(e.clone());
+                    }
+                },
+                onmouseenter: move |e: MouseEvent| {
+                    if let Some(handler) = onmouseenter.as_ref() {
+                        handler.call(e.clone());
+                    }
+                },
+                onmouseleave: move |e: MouseEvent| {
+                    if let Some(handler) = onmouseleave.as_ref() {
+                        handler.call(e.clone());
+                    }
+                },
             if loading {
                 // Trusted static markup (see the file header): the ring must
                 // keep its SMIL rotation and its literal `.hk-btn-ring` class.
@@ -382,7 +415,9 @@ pub fn Button(props: ButtonProps) -> Element {
                 }
             }
         }
-    }
+        },
+        &attrs,
+    )
 }
 
 impl StyledComponent for ButtonComponent {
@@ -399,6 +434,9 @@ impl StyledComponent for ButtonComponent {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
     use super::*;
 
     fn glyph() -> Element {
@@ -461,11 +499,67 @@ mod tests {
         assert!(props.suffix.is_none());
         assert!(slot_is_empty(&props.children));
         assert!(props.onclick.is_none());
+        assert!(props.onmouseenter.is_none());
+        assert!(props.onmouseleave.is_none());
+        assert!(props.attrs.is_empty());
         assert_eq!(props.class, "");
         assert_eq!(props.style, "");
         // Vue: `attrs.type || "button"`.
         assert_eq!(props.button_type, "button");
         assert!(!props.autofocus);
+    }
+
+    /// The root `<button>` of a rendered `Button`.
+    fn root(node: &Element) -> &VElement {
+        let VNode::Element(element) = node else {
+            panic!("the root is an element: {node:?}")
+        };
+        element
+    }
+
+    #[test]
+    fn button_hover_events_reach_the_host() {
+        // Vue: `onMouseenter` / `onMouseleave` listeners reach the root
+        // through the `$attrs` fallthrough; here they are typed props.
+        let entered = Rc::new(RefCell::new(0));
+        let left = Rc::new(RefCell::new(0));
+        let enter_count = Rc::clone(&entered);
+        let leave_count = Rc::clone(&left);
+        let node = Button(ButtonProps {
+            onmouseenter: Some(EventHandler::new(move |_: MouseEvent| {
+                *enter_count.borrow_mut() += 1;
+            })),
+            onmouseleave: Some(EventHandler::new(move |_: MouseEvent| {
+                *leave_count.borrow_mut() += 1;
+            })),
+            ..Default::default()
+        });
+        for (name, handler) in [("mouseenter", &entered), ("mouseleave", &left)] {
+            let listener = root(&node)
+                .event_handlers
+                .get(name)
+                .unwrap_or_else(|| panic!("the root has no {name} listener"));
+            listener.borrow_mut()(Box::new(MouseEvent::new()));
+            assert_eq!(*handler.borrow(), 1, "{name} reaches the host once");
+        }
+    }
+
+    #[test]
+    fn button_passes_host_attributes_to_its_root() {
+        let html = Button(ButtonProps {
+            attrs: vec![
+                ("title".to_string(), "Save now".to_string()),
+                ("data-testid".to_string(), "save".to_string()),
+            ],
+            ..Default::default()
+        })
+        .render_to_html();
+        assert!(html.contains(r#"title="Save now""#), "{html}");
+        assert!(html.contains(r#"data-testid="save""#), "{html}");
+        // Nothing passed, nothing rendered.
+        let plain = Button(ButtonProps::default()).render_to_html();
+        assert!(!plain.contains("title="), "{plain}");
+        assert!(!plain.contains("data-testid"), "{plain}");
     }
 
     #[test]

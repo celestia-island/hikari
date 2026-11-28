@@ -452,7 +452,10 @@ export default defineComponent({
       const cap = typeof requestedCap === "number" ? `${requestedCap}px` : requestedCap;
       return { height: suggested, maxHeight: cap };
     });
-    const waitingForEngine = computed(() => !getMermaidEngine() && !engineSettled.value);
+    // A registered facade may still be waiting for its wasm surface and return
+    // null in the meantime. Only a real model proves readiness; an engine
+    // object merely existing must not flash the raw-source fallback.
+    const waitingForEngine = computed(() => !engineSettled.value && !model.value);
 
     return () => {
       if (waitingForEngine.value) {

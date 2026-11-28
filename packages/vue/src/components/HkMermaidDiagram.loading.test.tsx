@@ -22,19 +22,9 @@ describe("HkMermaidDiagram loading state", () => {
     // MUT:mermaid-loading-gate — marking the engine settled before its promise
     // settles catches immediately: the fallback source appears and the spinner
     // disappears, which is exactly the flash this contract forbids.
-    setMermaidEngineForTests(null);
-    const host = document.createElement("div");
-    document.body.appendChild(host);
-    const app = createApp({ render: () => h(HkMermaidDiagram, { source: "flowchart TD\nA --> B" }) });
-    app.mount(host);
-    expect(host.querySelector('[role="status"] .hk-spinner')).not.toBeNull();
-    expect(host.querySelector(".hk-mermaid-fallback")).toBeNull();
-    expect(host.textContent).not.toContain("flowchart TD");
-
-    // Drive the actual reactive seam: a parser registered before the ready
-    // promise resolves must replace the spinner, not leave it stuck in place.
+    let allowDocument = false;
     setMermaidEngineForTests({
-      parse: () => ({
+      parse: () => allowDocument ? ({
         kind: "graph",
         variant: "flowchart",
         direction: "TD",
@@ -43,8 +33,20 @@ describe("HkMermaidDiagram loading state", () => {
           { id: "B", label: "B", shape: "rect" },
         ],
         edges: [{ source: "A", target: "B", label: null, edgeType: "arrow" }],
-      }),
+      }) : null,
     });
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    const app = createApp({ render: () => h(HkMermaidDiagram, { source: "flowchart TD\nA --> B" }) });
+    app.mount(host);
+    expect(host.querySelector('[role="status"] .hk-spinner')).not.toBeNull();
+    expect(host.querySelector(".hk-mermaid-fallback")).toBeNull();
+    expect(host.textContent).not.toContain("flowchart TD");
+
+    // Drive the actual reactive seam: the engine OBJECT was registered from
+    // the start, but its document only becomes available with the ready
+    // promise. A mere registration must never select the source fallback.
+    allowDocument = true;
     ready.resolve();
     await nextTick();
     await new Promise((r) => setTimeout(r, 0));

@@ -155,12 +155,17 @@ export const BEIAN_TAG_ID = "celestia-beian-lines";
  * throwing, because a misconfigured deployment must not break the shell's
  * footer render.
  *
- * The `$…` / `__…` placeholder guard is asserted SEPARATELY from the parser's
- * malformed-JSON fallback: a placeholder is not valid JSON, so `parseBeianLines`
- * would return `[]` on its own and a test that only fed placeholders could not
- * tell the guard from its absence. `readBeianLines` is therefore tested with
- * `$` / `__` prefixes on otherwise-VALID payloads, where the guard is the only
- * thing that can reject them.
+ * The `$…` / `__…` placeholder guard is DEFENSIVE REDUNDANCY, and the honest
+ * statement of what it is worth: it is unobservable from outside. Any
+ * placeholder prefix makes the value fail `JSON.parse`, so `parseBeianLines`
+ * alone already answers `[]` — no behavioural assertion can distinguish "the
+ * guard rejected it" from "the parser rejected it" (mutation evidence: both
+ * deleting the guard and neutering it to a literal comparison leave the
+ * end-to-end assertions green). Its presence is therefore pinned
+ * structurally in `siteMeta.test.ts` (a text pin scoped to this function's
+ * body), which catches deletion / move / rename but does NOT prove the
+ * guard runs. It is kept — rather than deleted — for one reason only:
+ * parity with the two hosts' `analytics.ts`, which carry the same branch.
  */
 export function readBeianLines(doc: Document = document): Array<SiteBeianLine> {
   let raw: string | null;

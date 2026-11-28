@@ -198,6 +198,13 @@ describe("readBeianLines", () => {
   // structurally instead — the source of this module must still carry the
   // placeholder branch — and the placeholder assertions stay as the
   // end-to-end contract (whatever rejects them, the answer is []).
+  //
+  // KNOWN BLIND SPOT of this text pin, stated so nobody mistakes it for a
+  // behavioural guarantee: it catches DELETION, MOVING and RENAMING, but it
+  // does not prove the guard executes. Two deliberately hostile shapes pass
+  // green — `false && (guard)`, and computing the predicate into an unused
+  // variable. R4 measured both. Accepting that is cheaper than deleting the
+  // guard (which is kept for parity with both hosts' analytics.ts).
   it("keeps the envsubst placeholder guard in the reader", () => {
     // Scope the assertion to THIS reader's body: the GA reader carries an
     // identical guard string, so a whole-file `toContain` would stay green

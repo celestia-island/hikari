@@ -152,6 +152,24 @@ impl MermaidDiagram {
 pub struct SequenceDiagram {
     pub participants: Vec<String>,
     pub messages: Vec<SequenceMessage>,
+    /// Block frames (`alt`/`opt`/`loop`/`par`/`critical`/`break`), in document
+    /// order. `from`/`to` are INCLUSIVE indices into [`Self::messages`]; an
+    /// empty span is never recorded (a block with no messages paints nothing).
+    /// Absent from the JSON when there are none, so pre-block documents keep
+    /// their exact shape.
+    #[serde(rename = "blocks", skip_serializing_if = "Vec::is_empty")]
+    pub blocks: Vec<SequenceBlock>,
+}
+
+/// One block frame: which keyword opened it, its label (the text after the
+/// keyword, or after an `else`/`and` section marker), and the message span it
+/// frames.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct SequenceBlock {
+    pub kind: String,
+    pub label: Option<String>,
+    pub from: usize,
+    pub to: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]

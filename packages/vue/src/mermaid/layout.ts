@@ -74,6 +74,10 @@ export interface LaidOutEdge {
   anchorTo?: MermaidAnchorMode;
   dashed: boolean;
   arrow: "none" | "solid" | "open";
+  /** Class-diagram multiplicity at the FROM end (`Student "1"` → `"1"`). */
+  labelFrom?: string;
+  /** Class-diagram multiplicity at the TO end. */
+  labelTo?: string;
   /** Non-arrow adornment at the target end (`--o` ring, `--x` cross). */
   headEnd?: "circle" | "cross";
   /** Non-arrow adornment at the SOURCE end (`<-->` draws an arrowhead). */
@@ -938,6 +942,35 @@ function layoutSequence(
     edges.push({ id: `e:life:${p}`, from: `p:${p}`, to: `j:life:${p}`, style: "straight", dashed: true, arrow: "none", label: null });
   }
 
+  // Block frames (alt/opt/loop/…): one passthrough group node per frame,
+  // spanning the frame's message rows and the participants its messages
+  // actually touch (a two-party alt must not span every lane on the page).
+  doc.blocks?.forEach((blk, bi) => {
+    if (blk.to < blk.from) return;
+    const span = doc.messages.slice(blk.from, blk.to + 1);
+    if (span.length === 0) return;
+    const xs = span.flatMap((m) => {
+      const a = centerX.get(m.from);
+      const b = centerX.get(m.to);
+      return [a, b].filter((v): v is number => v !== undefined);
+    });
+    if (xs.length === 0) return;
+    const pad = 22;
+    const left = Math.min(...xs) - pad;
+    const right = Math.max(...xs) + pad;
+    const top = firstRowY + blk.from * SEQ_ROW_STEP - 22;
+    const height = (blk.to - blk.from) * SEQ_ROW_STEP + 44;
+    nodes.push({
+      id: `b:${bi}`,
+      x: left,
+      y: top,
+      w: Math.max(right - left, 120),
+      h: height,
+      kind: "group",
+      data: { label: `${blk.kind}${blk.label ? `: ${blk.label}` : ""}` },
+    });
+  });
+
   doc.messages.forEach((msg, i) => {
     const fromX = centerX.get(msg.from) ?? MARGIN;
     const toX = centerX.get(msg.to) ?? MARGIN;
@@ -1030,6 +1063,10 @@ function layoutClass(
         dashed: dashedRel.has(r.relType),
         arrow,
         label: r.label,
+        // Multiplicity belongs to the CLASS end, not the routed end: when the
+        // edge was swapped for the adornment, the cardinalities swap with it.
+        labelFrom: (swap ? r.toCardinality : r.fromCardinality) ?? undefined,
+        labelTo: (swap ? r.fromCardinality : r.toCardinality) ?? undefined,
       };
     });
 

@@ -441,10 +441,10 @@ fn parse_edge(pair: pest::iterators::Pair<Rule>) -> ParsedEdge {
     for inner in pair.into_inner() {
         match inner.as_rule() {
             Rule::arr | Rule::arr_lbl | Rule::arr_text => {
-                return (EdgeType::Arrow, edge_label(&inner), None, None)
+                return (EdgeType::Arrow, edge_label(&inner), None, None);
             }
             Rule::ln | Rule::ln_lbl | Rule::ln_text => {
-                return (EdgeType::Line, edge_label(&inner), None, None)
+                return (EdgeType::Line, edge_label(&inner), None, None);
             }
             // Head-adorned links keep their LINE kind and carry the glyph in
             // the contract (`headEnd`/`headStart`) so the painter can draw it.
@@ -463,7 +463,7 @@ fn parse_edge(pair: pest::iterators::Pair<Rule>) -> ParsedEdge {
                     edge_label(&inner),
                     Some(EdgeHead::Circle),
                     None,
-                )
+                );
             }
             Rule::x_head => {
                 return (
@@ -471,13 +471,13 @@ fn parse_edge(pair: pest::iterators::Pair<Rule>) -> ParsedEdge {
                     edge_label(&inner),
                     Some(EdgeHead::Cross),
                     None,
-                )
+                );
             }
             Rule::dotted | Rule::dotted_lbl => {
-                return (EdgeType::Dotted, edge_label(&inner), None, None)
+                return (EdgeType::Dotted, edge_label(&inner), None, None);
             }
             Rule::thick | Rule::thick_lbl => {
-                return (EdgeType::Thick, edge_label(&inner), None, None)
+                return (EdgeType::Thick, edge_label(&inner), None, None);
             }
             _ => {}
         }

@@ -101,7 +101,10 @@ fn split_cardinality(text: &str) -> (String, Option<String>) {
         let card = t[1..1 + close].trim();
         let rest = t[2 + close..].trim();
         if !rest.is_empty() {
-            return (rest.to_string(), Some(card.to_string()).filter(|c| !c.is_empty()));
+            return (
+                rest.to_string(),
+                Some(card.to_string()).filter(|c| !c.is_empty()),
+            );
         }
     }
     // `Student "1"` — trailing quoted cardinality.
@@ -111,7 +114,10 @@ fn split_cardinality(text: &str) -> (String, Option<String>) {
         let card = t[open + 1..t.len() - 1].trim();
         let rest = t[..open].trim();
         if !rest.is_empty() {
-            return (rest.to_string(), Some(card.to_string()).filter(|c| !c.is_empty()));
+            return (
+                rest.to_string(),
+                Some(card.to_string()).filter(|c| !c.is_empty()),
+            );
         }
     }
     (t.to_string(), None)
@@ -256,9 +262,7 @@ pub fn parse_class_diagram(source: &str) -> Option<MermaidClassDoc> {
             let ident = !name.is_empty()
                 && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
                 && !name.chars().next().unwrap().is_ascii_digit();
-            if ident
-                && let Some(member) = parse_member(member_text.trim())
-            {
+            if ident && let Some(member) = parse_member(member_text.trim()) {
                 let cls = match classes.iter_mut().find(|c| c.name == name) {
                     Some(c) => c,
                     None => {
@@ -347,7 +351,13 @@ mod tests {
     #[test]
     fn a_bare_class_declaration_registers_the_class() {
         let doc = parse_class_diagram("classDiagram\n  class Only\n").expect("parse");
-        assert_eq!(doc.classes.iter().map(|c| c.name.as_str()).collect::<Vec<_>>(), vec!["Only"]);
+        assert_eq!(
+            doc.classes
+                .iter()
+                .map(|c| c.name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Only"]
+        );
         assert!(doc.relationships.is_empty());
     }
 
@@ -370,10 +380,8 @@ mod tests {
 
     #[test]
     fn plain_relationships_are_unchanged() {
-        let doc = parse_class_diagram(
-            "classDiagram\n  class A\n  class B\n  A <|-- B : extends\n",
-        )
-        .expect("parse");
+        let doc = parse_class_diagram("classDiagram\n  class A\n  class B\n  A <|-- B : extends\n")
+            .expect("parse");
         let rel = &doc.relationships[0];
         assert_eq!((rel.from.as_str(), rel.to.as_str()), ("A", "B"));
         assert_eq!(rel.rel_type, "inheritance");

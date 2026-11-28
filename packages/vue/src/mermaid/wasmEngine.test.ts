@@ -64,8 +64,10 @@ describe("wasmMermaidEngine", () => {
     ) as MermaidClassDoc;
     expect(doc).not.toBeNull();
     expect(doc!.kind).toBe("class");
-    expect(doc!.classes).toHaveLength(1);
-    expect(doc!.classes[0]!.name).toBe("Animal");
+    // MUT:implied-classes — `Dog <|-- Animal` implies Dog (an endpoint is a
+    // class even without a `class` block); dropping the pass never passes
+    // this length assertion.
+    expect(doc!.classes.map((c) => c.name)).toEqual(["Animal", "Dog"]);
     // Members split: +name is an attribute, +speak() is a method.
     expect(doc!.classes[0]!.attributes).toHaveLength(1);
     expect(doc!.classes[0]!.methods).toHaveLength(1);

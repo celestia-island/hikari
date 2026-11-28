@@ -1362,9 +1362,12 @@ export {
 // Site meta — the single upstream definition of host-injected site variables
 // (GA measurement id boot tag, compliance/beian footer lines).
 export {
+  BEIAN_TAG_ID,
   GA_TAG_ID,
   isValidGaMeasurementId,
+  readBeianLines,
   readGaMeasurementId,
+  readSiteMeta,
   parseBeianLines,
 } from "./siteMeta";
-export type { SiteBeianLine } from "./siteMeta";
+export type { SiteBeianLine, SiteMeta } from "./siteMeta";

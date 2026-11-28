@@ -61,6 +61,17 @@
   stroke-linejoin: round;
 }
 
+.hk-board-edge-endlabel {
+  // One step smaller than the midpoint caption: the multiplicities are
+  // metadata, the caption is the message.
+  font-size: 10px;
+  fill: rgb(var(--color-text) / 85%);
+  paint-order: stroke;
+  stroke: rgb(var(--color-surface));
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
 // Edge ink (fill/stroke/linecap) is set as presentation attributes on every
 // emitted path (HkBoard.tsx) — no CSS declaration here, only per-edge attrs.
 

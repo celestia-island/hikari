@@ -45,7 +45,8 @@ describe("HkMermaidDiagram loading state", () => {
 
     // Drive the actual reactive seam: the engine OBJECT was registered from
     // the start, but its document only becomes available with the ready
-    // promise. A mere registration must never select the source fallback.
+    // promise. MUT:mermaid-loading-gate — a mere registration must never
+    // select the source fallback.
     allowDocument = true;
     ready.resolve();
     await nextTick();

@@ -754,6 +754,9 @@
 @import './vue-mirror/components/HkTagDotRow.scss';
 @import './vue-mirror/components/HkUserPicker.scss';
 @import './vue-mirror/components/HkExpansionPanel.scss';
+// SSR segmented wave (2026-11-28): SegmentedTabs ships the vendored
+// HkTabs sheet so the bundle lane renders the family pill too.
+@import './vue-mirror/components/HkTabs.scss';
 @import './vue-mirror/components/HkStarSystem.scss';
 @import './vue-mirror/components/HkBlankCanvas.scss';
 @import './vue-mirror/components/HkTokenInput.scss';

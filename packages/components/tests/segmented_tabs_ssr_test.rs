@@ -42,9 +42,9 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
         aria_label: "Preview / Source".to_string(),
         ..Default::default()
     });
-    // Root carries the segmented variant marker (attribute ORDER is not part
-    // of the contract — the SSR emitter sorts attrs its own way — so every
-    // pin below matches presence, never sequence).
+    // Root carries the segmented variant marker. MUT:segmented-static-shape
+    // (order is not contracted — the SSR emitter sorts attrs — so these
+    // pins match presence, never sequence).
     assert!(html.contains(r#"class="hk-tabs""#), "root missing: {html}");
     assert!(
         html.contains("data-variant=\"segmented\""),
@@ -70,7 +70,8 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
         "variant marker on root AND track: {html}"
     );
     assert!(html.contains(r#"aria-label="Preview / Source""#), "{html}");
-    // …the indicator node exists in its unmeasured (data-ready-less) state…
+    // …the indicator node exists in its unmeasured state (no data-ready;
+    // MUT:segmented-static-shape covers this line's assertion)…
     assert!(html.contains(r#"class="hk-tabs-indicator""#), "{html}");
     assert!(
         !html.contains("data-ready"),
@@ -94,8 +95,9 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
     );
     assert!(!html.contains("aria-checked=\"aria-checked\""), "{html}");
     // Every trigger is an explicit submit-proof button (`type="button"`, the
-    // literal the Vue render emits) — never the RSX raw identifier `r#type`,
-    // which leaks into the emitted markup as the attribute NAME `r#type`.
+    // literal the Vue render emits) — never the RSX raw identifier `r#type`.
+    // MUT:segmented-type-attr — flipping the rsx key back to `r#type` is
+    // what both assertions below were proven to catch (R3 mutation b).
     // The match is BOUNDARY-anchored on purpose: a plain
     // `matches("type=\"button\"")` is satisfied by the SUBSTRING inside
     // `r#type="button"`, so it would stay green through exactly the defect
@@ -126,9 +128,10 @@ fn the_static_dom_matches_the_vue_pre_measurement_shape() {
         html.contains(r#"tabindex="-1""#),
         "roving tabindex missing: {html}"
     );
-    // Per-TRIGGER grouping (attribute order inside one trigger is not part
-    // of the contract): exactly one trigger carries checked+active together
-    // and never -1; the other carries unchecked + -1 and never data-active.
+    // Per-TRIGGER grouping. MUT:segmented-static-shape (R4 mutation a also
+    // reads this grouping): exactly one trigger carries checked+active
+    // together and never -1; the other carries unchecked + -1 and never
+    // data-active.
     let triggers: Vec<&str> = html.split("<button").skip(1).collect();
     assert_eq!(triggers.len(), 2, "trigger count: {html}");
     let with_active: Vec<&&str> = triggers

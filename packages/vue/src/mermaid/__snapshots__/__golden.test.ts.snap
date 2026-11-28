@@ -22,6 +22,11 @@ exports[`mermaid golden snapshots (wasm is the reference) > mermaid: class-basic
       ],
       "name": "Animal",
     },
+    {
+      "attributes": [],
+      "methods": [],
+      "name": "Dog",
+    },
   ],
   "kind": "class",
   "relationships": [

@@ -64,8 +64,9 @@ describe("wasmMermaidEngine", () => {
     ) as MermaidClassDoc;
     expect(doc).not.toBeNull();
     expect(doc!.kind).toBe("class");
-    expect(doc!.classes).toHaveLength(1);
-    expect(doc!.classes[0]!.name).toBe("Animal");
+    // `Dog <|-- Animal` implies Dog: an endpoint is a class even without a
+    // `class` block (the old contract dropped it and failed the whole parse).
+    expect(doc!.classes.map((c) => c.name)).toEqual(["Animal", "Dog"]);
     // Members split: +name is an attribute, +speak() is a method.
     expect(doc!.classes[0]!.attributes).toHaveLength(1);
     expect(doc!.classes[0]!.methods).toHaveLength(1);

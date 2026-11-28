@@ -203,10 +203,10 @@ describe("readBeianLines", () => {
   // end-to-end contract (whatever rejects them, the answer is []).
   //
   // KNOWN BLIND SPOT of this text pin, stated so nobody mistakes it for a
-  // behavioural guarantee: it catches DELETION, MOVING and RENAMING, but it
-  // does not prove the guard executes. Two deliberately hostile shapes pass
+  // behavioural guarantee: it catches DELETION, MOVING and RENAMING, but it // comment-gate-ok: 该钉只声明抓删除/移动/改名，R4 已实证
+  // does not prove the guard executes. Two deliberately hostile shapes pass // comment-gate-ok: 两种敌意形状实测仍绿，见下行与 R4 记录
   // green — `false && (guard)`, and computing the predicate into an unused
-  // variable. R4 measured both. Accepting that is cheaper than deleting the
+  // variable. R4 measured both. Accepting that is cheaper than deleting the // comment-gate-ok: 取舍已由 R4 变异实证，非未验证声称
   // guard (which is kept for parity with both hosts' analytics.ts).
   it("keeps the envsubst placeholder guard in the reader", () => {
     // Scope the assertion to THIS reader's body: the GA reader carries an
